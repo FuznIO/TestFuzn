@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Authors>Team TestFusion</Authors>
+    <Company></Company>
+    <RepositoryUrl>https://github.com/TestFusionLabs/TestFusion</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/TestFusionLabs/TestFusion</PackageProjectUrl>
+  </PropertyGroup>
+</Project>

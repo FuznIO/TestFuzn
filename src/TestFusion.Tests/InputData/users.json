@@ -1,0 +1,36 @@
+[
+  {
+    "Name": "John Doe",
+    "Username": "jdoe",
+    "Address": [
+      { "Street": "Main St", "City": "Oslo" }
+    ],
+    "PhoneNumbers": [
+      { "CountyCode": "+47", "Number": "12345678" }
+    ],
+    "Counter": 0
+  },
+  {
+    "Name": "Jane Smith",
+    "Username": "jsmith",
+    "Address": [
+      { "Street": "Second St", "City": "Bergen" }
+    ],
+    "PhoneNumbers": [
+      { "CountyCode": "+47", "Number": "87654321" },
+      { "CountyCode": "+46", "Number": "11223344" }
+    ],
+    "Counter": 0
+  },
+  {
+    "Name": "Alice Johnson",
+    "Username": "ajohnson",
+    "Address": [
+      { "Street": "Third St", "City": "Trondheim" }
+    ],
+    "PhoneNumbers": [
+      { "CountyCode": "+45", "Number": "99887766" }
+    ],
+    "Counter": 0
+  }
+]

@@ -1,0 +1,23 @@
+﻿namespace TestFusion.Tests.Load.Simulations;
+
+[FeatureTest]
+public class FixedLoadTests : BaseFeatureTest
+{
+    [ScenarioTest]
+    public async Task Test()
+    {
+        var stepExecutionCounter = 0;
+
+        await Scenario("Fixed Load Test")
+            .Step("Test", context =>
+            {
+                Interlocked.Increment(ref stepExecutionCounter);
+
+                return Task.CompletedTask;
+            })
+            .Load().FixedLoad(1000, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(6))
+            .Run();
+
+        Assert.AreEqual(3000, stepExecutionCounter);
+    }
+}
