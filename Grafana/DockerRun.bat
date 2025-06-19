@@ -1,0 +1,1 @@
+docker run -d --name=grafana -p 3000:3000 -v grafana-storage:/var/lib/grafana -e "GF_SECURITY_ADMIN_USER=admin" -e "GF_SECURITY_ADMIN_PASSWORD=admin" grafana/grafana
