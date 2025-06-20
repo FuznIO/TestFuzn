@@ -28,13 +28,28 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore src
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build src --configuration Release --no-restore
 
     - name: Pack
-      run: dotnet pack --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+      run: |
+        dotnet pack src/TestFusion/TestFusion.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFusion.BrowserTesting/TestFusion.BrowserTesting.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFusion.HttpTesting/TestFusion.HttpTesting.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFusion.MsTestAdapter/TestFusion.MsTestAdapter.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFusion.Sink.InfluxDB/TestFusion.Sink.InfluxDB.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFusion.Tests.Runner/TestFusion.Tests.Runner.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+
+    - name: Publish to NuGet
+      run: |
+        dotnet nuget push src/TestFusion/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFusion.BrowserTesting/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFusion.HttpTesting/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFusion.MsTestAdapter/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFusion.Sink.InfluxDB/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFusion.Tests.Runner/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
     #
     # 👇 Choose ONE of the publishing strategies below
