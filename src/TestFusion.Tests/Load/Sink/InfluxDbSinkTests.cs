@@ -29,7 +29,7 @@ public class InfluxDbSinkTests : BaseFeatureTest
                 //Assert.IsTrue(products.Count > 0, "Expected more than one product to be returned.");
             })
 
-            .Load().OneTimeLoad(1)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(1))
             //.Load().FixedLoad(10000, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30))
             .Run();
 

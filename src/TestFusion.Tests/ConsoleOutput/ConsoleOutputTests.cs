@@ -45,8 +45,11 @@
                 .Step("Step 5", (context) => { })
                 .Step("Step 6", (context) => { })
                 .Step("Step 7", (context) => { })
-                .Load().OneTimeLoad(5)
-                .Load().FixedLoad(2, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2))
+                .Load().Simulations((context, simulations) =>
+                {
+                    simulations.OneTimeLoad(5);
+                    simulations.FixedLoad(2, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2));
+                })
                 .Run();
         }
 
@@ -59,7 +62,7 @@
                 .Step("Step 3", (context) => { })
                 .Step("Step 4", (context) => { })
                 .Step("Step 5", (context) => { })
-                .Load().FixedLoad(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10));
+                .Load().Simulations((context, simulations) => simulations.FixedLoad(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10)));
 
             await Scenario("Scenario1")
                 .Step("Step 1", (context) => { })
@@ -69,7 +72,7 @@
                 .Step("Step 5", (context) => { })
                 .Step("Step 6", (context) => { })
                 .Step("Step 7", (context) => { })
-                .Load().FixedLoad(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(20))
+                .Load().Simulations((context, simulations) => simulations.FixedLoad(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(20)))
                 .Load().IncludeScenario(scenario2)
                 .Run();
         }
@@ -91,7 +94,7 @@
                 })
                 .Step("Step 6", (context) => { })
                 .Step("Step 7", (context) => { })
-                .Load().OneTimeLoad(2)
+                .Load().Simulations((context, simulations) => simulations.OneTimeLoad(2))
                 .Run();
         }
 
@@ -114,7 +117,7 @@
                 })
                 .Step("Step 6", (context) => { })
                 .Step("Step 7", (context) => { })
-                .Load().FixedLoad(400, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60))
+                .Load().Simulations((context, simulations) => simulations.FixedLoad(400, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60)))
                 .Run();
         }
 
@@ -130,7 +133,7 @@
                 .Step("Step 5", (context) => { })
                 .Step("Step 6", (context) => { })
                 .Step("Step 7", (context) => { })
-                .Load().FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60))
+                .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60)))
                 .Run();
         }
 

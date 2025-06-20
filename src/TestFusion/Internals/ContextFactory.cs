@@ -36,6 +36,7 @@ internal class ContextFactory
 
     private static void PopulateSharedProperties(ITestFrameworkProvider testFramework, Context context)
     {
+        context.EnvironmentName = GlobalState.Configuration.EnvironmentName;
         context.TestRunId = GlobalState.TestRunId;
         context.NodeName = GlobalState.NodeName;
         context.Logger = GlobalState.Logger;

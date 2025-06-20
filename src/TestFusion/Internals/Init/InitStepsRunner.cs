@@ -27,7 +27,7 @@ internal class InitStepsRunner
         await Task.WhenAll(initPerScenarioTasks);
     }
 
-    public async Task ExecuteInitBeforeScenarioTest()
+    private async Task ExecuteInitBeforeScenarioTest()
     {
         var context = ContextFactory.CreateContext(_testFramework, "BeforeEachScenarioTest");
         await _sharedExecutionState.FeatureTestClassInstance.InitScenarioTest(context);

@@ -134,16 +134,6 @@ public class ScenarioBuilder<TStepContext>
         return new LoadBuilder<TStepContext>(this);
     }
 
-    public ScenarioBuilder<TStepContext> Pause(TimeSpan timespan)
-    {
-        var step = new Step<TStepContext>();
-        step.Name = "Pause";
-        step.Action = async (context) => await Task.Delay(timespan);
-
-        Scenario.Steps.Add(step);
-        return this;
-    }
-
     public ScenarioBuilder<TStepContext> CleanupAfterEachIteration(Action<TStepContext> action)
     {
         Scenario.CleanupAfterEachIteration = (context) => {

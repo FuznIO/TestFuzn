@@ -4,6 +4,7 @@ namespace TestFusion;
 
 public class Context
 {
+    public string EnvironmentName { get; internal set; }
     public string NodeName { get; internal set; }
     public string TestRunId { get; internal set; }
     public ContextInternals Internals { get; internal set; }

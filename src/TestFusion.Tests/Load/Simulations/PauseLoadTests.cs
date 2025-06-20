@@ -15,7 +15,7 @@ public class PauseLoadTests : BaseFeatureTest
 
                 return Task.CompletedTask;
             })
-            .Load().Pause(TimeSpan.FromSeconds(2))
+            .Load().Simulations((context, simulations) => simulations.Pause(TimeSpan.FromSeconds(2)))
             .Run();
 
         Assert.AreEqual(0, stepExecutionCount);

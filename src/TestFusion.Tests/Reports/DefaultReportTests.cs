@@ -15,7 +15,7 @@ public class DefaultReportsTests : BaseFeatureTest
                 if (Random.Shared.NextDouble() < 0.33)
                     Assert.Fail();
             })
-            .Load().OneTimeLoad(50)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
             .Run();
     }
 
@@ -38,7 +38,7 @@ public class DefaultReportsTests : BaseFeatureTest
                 })
                 .Step("Step 6", (context) => { })
                 .Step("Step 7", (context) => { })
-                .Load().FixedLoad(3, TimeSpan.FromSeconds(10))
+                .Load().Simulations((context, simulations) => simulations.FixedLoad(3, TimeSpan.FromSeconds(10)))
                 .Run();
     }
 }

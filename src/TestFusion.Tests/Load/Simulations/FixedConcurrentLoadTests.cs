@@ -15,8 +15,11 @@ public class FixedConcurrentLoadTests : BaseFeatureTest
 
                 await Task.Delay(TimeSpan.FromSeconds(1));
             })
-            .Load().FixedConcurrentLoad(50, TimeSpan.FromSeconds(3))
-            .Load().OneTimeLoad(1)
+            .Load().Simulations((context, simulations) =>
+            {
+                simulations.FixedConcurrentLoad(50, TimeSpan.FromSeconds(3));
+                simulations.OneTimeLoad(1);
+            })
             .Run();
 
         Assert.IsTrue(stepExecutionCount > 0);

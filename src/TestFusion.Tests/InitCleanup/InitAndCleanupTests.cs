@@ -33,7 +33,7 @@ public class InitAndCleanupTests : BaseFeatureTest
                 initCalled = true;
             })
             .Step("Step 1", (context) => { })
-            .Load().OneTimeLoad(3)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
             .CleanupAfterEachIteration((context) =>
             {
                 Interlocked.Add(ref cleanupIterationCalled, 1);
@@ -64,7 +64,7 @@ public class InitAndCleanupTests : BaseFeatureTest
                 initCalled = true;
             })
             .Step("Step 1", (context) => { })
-            .Load().OneTimeLoad(3)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
             .CleanupAfterEachIteration(async (context) =>
             {
                 Interlocked.Add(ref cleanupIterationCalled, 1);

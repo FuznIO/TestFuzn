@@ -11,6 +11,7 @@ public class ConfigurationManager
     public static TestFusionConfiguration LoadConfiguration()
     {
         var config = new TestFusionConfiguration();
+        config.EnvironmentName = "dev";
         config.TestSuiteName = GlobalState.AssemblyWithTestsName;
         if (config.TestSuiteName == null)
             config.TestSuiteName = Assembly.GetExecutingAssembly().GetName().Name;

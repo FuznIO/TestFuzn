@@ -1,15 +1,18 @@
 ﻿using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
+using TestFusion.Plugins.TestFrameworkProviders;
 
 namespace TestFusion.Internals.Assertions;
 
 internal class AssertionWhenDoneExecuter
 {
+    private readonly ITestFrameworkProvider _testFramework;
     private readonly SharedExecutionState _sharedExecutionState;
     private readonly LoadResultsManager _loadResultsManager;
 
-    public AssertionWhenDoneExecuter(SharedExecutionState sharedExecutionState, LoadResultsManager loadResultsManager)
+    public AssertionWhenDoneExecuter(ITestFrameworkProvider testFramework, SharedExecutionState sharedExecutionState, LoadResultsManager loadResultsManager)
     {
+        _testFramework = testFramework;
         _sharedExecutionState = sharedExecutionState;
         _loadResultsManager = loadResultsManager;
     }
@@ -21,7 +24,10 @@ internal class AssertionWhenDoneExecuter
             var scenarioResult = _loadResultsManager.GetScenarioCollector(scenario.Name).GetCurrentResult(false);
 
             if (scenario.AssertWhenDoneAction != null)
-                scenario.AssertWhenDoneAction(new AssertScenarioStats(scenarioResult));
+            {
+                var context = ContextFactory.CreateContext(_testFramework, "AssertWhenDone");
+                scenario.AssertWhenDoneAction(context, new AssertScenarioStats(scenarioResult));
+            }
         }
     }
 }

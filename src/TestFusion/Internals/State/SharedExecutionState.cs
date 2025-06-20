@@ -29,7 +29,7 @@ internal class SharedExecutionState
     {
         FeatureTestClassInstance = featureTest;
 
-        if (scenarios.First().SimulationsInternal.Count == 0)
+        if (scenarios.First().Simulations == null)
             TestType = TestType.Feature;
         else
             TestType = TestType.Load;

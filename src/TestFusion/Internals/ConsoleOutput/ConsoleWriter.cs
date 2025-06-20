@@ -25,25 +25,6 @@ internal class ConsoleWriter
         _loadResultsManager = loadResultsManager;
     }
 
-    public void ScenarioStart()
-    {
-        if (_sharedExecutionState.TestType == Internals.TestType.Load)
-            return;
-
-        //TODO: medium pri, implementer for featuretest testfusionprovider live view
-        //var scenario = _sharedExecutionState.Scenarios.Single();
-        //_testFramework.WritePanel([$"[bold yellow]{scenario.Name}[/]"], "[bold]Scenario Start[/]");
-    }
-
-    public void IterationExecutionStart(IterationResult iterationResult)
-    {
-        if (_sharedExecutionState.TestType == Internals.TestType.Load || !_testFramework.SupportsRealTimeConsoleOutput)
-            return;
-
-        //TODO: medium pri, implementer for featuretest testfusionprovider live view
-        //_testFramework.WriteMarkup($"[blue]➡️ {PropertyHelper.GetStringFromProperties(iterationResult.InputData)} - Executing[/]");
-    }
-
     public void StepExecutionStart(int stepIndex, int totalSteps, BaseStep step)
     {
         if (_sharedExecutionState.TestType == Internals.TestType.Load || !_testFramework.SupportsRealTimeConsoleOutput)
@@ -51,50 +32,6 @@ internal class ConsoleWriter
 
         //TODO: medium pri, implementer for featuretest testfusionprovider live view
         //_testFramework.WriteMarkup($"[yellow]🔄 Step {stepIndex}/{totalSteps}: [bold]{step.Name}[/] - Executing[/]");
-    }
-
-    public void StepExecutionEnd(int stepIndex, int totalSteps, StepResult stepResult)
-    {
-        if (_sharedExecutionState.TestType == Internals.TestType.Load)
-            return;
-
-        //TODO: medium pri, implementer for featuretest testfusionprovider live view
-        //string duration = stepResult.Duration.ToTestFusionResponseTime();
-        //switch (stepResult.Status)
-        //{
-        //    case StepStatus.Passed:
-        //        _testFramework.WriteMarkup($"[green]✅ Step {stepIndex}/{totalSteps}: {stepResult.Name} - Passed ({duration})[/]");
-        //        break;
-        //    case StepStatus.Failed:
-        //        _testFramework.WriteMarkup($"[red]❌ Step {stepIndex}/{totalSteps}: {stepResult.Name} - Failed ({duration})[/]");
-        //        if (stepResult.Exception != null)
-        //        {
-        //            _testFramework.WriteMarkup($"[red]   Message: {stepResult.Exception.Message}[/]");
-        //            _testFramework.WriteMarkup($"[grey]   Callstack: {stepResult.Exception.StackTrace.Replace("[","<").Replace("]",">")}[/]");
-        //        }
-        //        break;
-        //    case StepStatus.Skipped:
-        //        _testFramework.WriteMarkup($"[yellow]⏭️ Step {stepIndex}/{totalSteps}: {stepResult.Name} - Skipped - Previous step failed[/]");
-        //        break;
-        //    default:
-        //        throw new NotImplementedException("StepStatus is not implemented");
-        //}
-    }
-
-    public void IterationExecutionEnd(StepContext context, IterationResult iterationResult)
-    {
-        if (_sharedExecutionState.TestType == Internals.TestType.Load)
-            return;
-
-        //TODO: medium pri, implementer for featuretest testfusionprovider live view
-        //if (context.InputDataInternal != null)
-        //{
-        //    var duration = iterationResult.Duration.ToTestFusionResponseTime();
-        //    if (iterationResult.StepResults.All(x => x.Value.Status == StepStatus.Passed))
-        //        _testFramework.WriteMarkup($"[green]✅ Input {iterationResult.InputData} - Passed ({duration})[/]\n");
-        //    else
-        //        _testFramework.WriteMarkup($"[red]❌ Input {iterationResult.InputData} - Failed ({duration})[/]\n");
-        //}
     }
 
     public void WriteSummary()

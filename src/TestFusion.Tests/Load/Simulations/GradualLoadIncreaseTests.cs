@@ -15,7 +15,7 @@ public class GradualLoadIncreaseTests : BaseFeatureTest
 
                 return Task.CompletedTask;
             })
-            .Load().GradualLoadIncrease(5, 50, TimeSpan.FromSeconds(5))
+            .Load().Simulations((context, simulations) => simulations.GradualLoadIncrease(5, 50, TimeSpan.FromSeconds(5)))
             .Run();
 
         Assert.IsTrue(stepExecutionCounter > 0);

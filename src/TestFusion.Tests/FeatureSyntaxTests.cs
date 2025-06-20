@@ -19,7 +19,7 @@ public class SyntaxTests : BaseFeatureTest
 
     [Ignore]
     [ScenarioTest]
-    public async Task DefaultContext()
+    public async Task DefaultContext_Feature()
     {
         await Scenario("Default Context Showcase")
             .Init((context) =>
@@ -130,20 +130,31 @@ public class SyntaxTests : BaseFeatureTest
 
                 // Some code goes here.
             })
-            .Pause(TimeSpan.FromSeconds(2)) // Pause for 2 seconds.
             .Step("Step 2 - Async with context", async (context) =>
             {
                 // Some code goes here.
                 await Task.CompletedTask;
             })
             .Step("Step 3 - Shared step", SharedStep)
-            .Load().GradualLoadIncrease(1, 10, TimeSpan.FromSeconds(5))
-            .Load().FixedLoad(10, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(100))
-            .Load().OneTimeLoad(100)
-            .Load().Pause(TimeSpan.FromSeconds(5))
-            .Load().FixedConcurrentLoad(1000, TimeSpan.FromSeconds(100))
-            .Load().RandomLoadPerSecond(10, 50, TimeSpan.FromSeconds(100))
-            .Load().AssertWhileRunning(stats =>
+            .Load().Simulations((context, simulations) =>
+            {
+                simulations.GradualLoadIncrease(1, 10, TimeSpan.FromSeconds(5));
+                simulations.FixedLoad(10, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(100));
+                simulations.OneTimeLoad(100);
+                simulations.Pause(TimeSpan.FromSeconds(5));
+                simulations.FixedConcurrentLoad(1000, TimeSpan.FromSeconds(100));
+                simulations.RandomLoadPerSecond(10, 50, TimeSpan.FromSeconds(100));
+            })
+            .Load().Simulations(async (context, simulations) =>
+            {
+                simulations.GradualLoadIncrease(1, 10, TimeSpan.FromSeconds(5));
+                simulations.FixedLoad(10, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(100));
+                simulations.OneTimeLoad(100);
+                simulations.Pause(TimeSpan.FromSeconds(5));
+                simulations.FixedConcurrentLoad(1000, TimeSpan.FromSeconds(100));
+                simulations.RandomLoadPerSecond(10, 50, TimeSpan.FromSeconds(100));
+            })
+            .Load().AssertWhileRunning((context, stats) =>
             {
                 Assert.IsTrue(stats.RequestCount < 1000);
                 Assert.AreEqual(0, stats.Ok.RequestCount);
@@ -153,7 +164,7 @@ public class SyntaxTests : BaseFeatureTest
                 Assert.IsTrue(stats.Ok.ResponseTimeMean < TimeSpan.FromSeconds(0.8));
                 Assert.IsTrue(stats.Failed.ResponseTimeMean < TimeSpan.FromSeconds(0.8));
             })
-            .Load().AssertWhenDone(stats =>
+            .Load().AssertWhenDone((context, stats) =>
             {
                 Assert.IsTrue(stats.RequestCount == 100);
                 Assert.IsTrue(stats.Ok.RequestCount == 100);
@@ -162,6 +173,7 @@ public class SyntaxTests : BaseFeatureTest
                 Assert.IsTrue(stats.Ok.ResponseTimeMean > TimeSpan.FromSeconds(0.5));
                 Assert.IsTrue(stats.Ok.ResponseTimeMean < TimeSpan.FromSeconds(0.8));
             })
+            .Load().IncludeScenario(Scenario("Scenario2").Step("Step1", (context) => { }))
             .CleanupAfterEachIteration((context) =>
             {
             })
