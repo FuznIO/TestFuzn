@@ -60,7 +60,7 @@ jobs:
     - name: Unlist packages after publishing
       run: |
           VERSION=${{ steps.get-version.outputs.version }}
-          curl -X POST -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion   /$VERSION"
+          curl -X POST -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion/$VERSION"
           curl -X POST -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion.Plugins.Playwright/$VERSION"
           curl -X POST -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion.Plugins.Http/$VERSION"
           curl -X POST -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion.Adapters.MSTest/$VERSION"
