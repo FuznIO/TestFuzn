@@ -1,14 +1,14 @@
 ﻿using TestFusion.Internals.State;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 
 namespace TestFusion.Internals.Cleanup;
 
 internal class CleanupRunner
 {
-    private readonly ITestFrameworkProvider _testFramework;
+    private readonly ITestFrameworkAdapter _testFramework;
     private readonly SharedExecutionState _sharedExecutionState;
 
-    public CleanupRunner(ITestFrameworkProvider testFramework, SharedExecutionState sharedExecutionState)
+    public CleanupRunner(ITestFrameworkAdapter testFramework, SharedExecutionState sharedExecutionState)
     {
         _testFramework = testFramework;
         _sharedExecutionState = sharedExecutionState;
@@ -29,13 +29,13 @@ internal class CleanupRunner
         await Task.WhenAll(cleanupPerScenarioTasks);
     }
 
-    public async Task ExecuteCleanupAfterScenarioTest(ITestFrameworkProvider testFramework)
+    public async Task ExecuteCleanupAfterScenarioTest(ITestFrameworkAdapter testFramework)
     {
         var context = ContextFactory.CreateContext(testFramework, "AfterEachScenarioTest");
         await _sharedExecutionState.FeatureTestClassInstance.CleanupScenarioTest(context);
     }
 
-    private async Task ExecuteScenarioCleanup(ITestFrameworkProvider testFramework, Scenario scenario)
+    private async Task ExecuteScenarioCleanup(ITestFrameworkAdapter testFramework, Scenario scenario)
     {
         var context = ContextFactory.CreateContext(testFramework, "CleanupAfterScenario");
         await scenario.CleanupAfterScenario(context);

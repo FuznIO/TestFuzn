@@ -1,5 +1,5 @@
 ﻿using TestFusion;
-using TestFusion.HttpTesting;
+using TestFusion.Plugins.Http;
 
 namespace Samples.LoadTests;
 

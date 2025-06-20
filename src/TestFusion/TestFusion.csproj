@@ -19,6 +19,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Nullable>enable</Nullable>
+    <AssemblyName>TestFusion</AssemblyName>
+    <RootNamespace>TestFusion</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

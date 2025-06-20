@@ -1,15 +1,15 @@
 ﻿using TestFusion.Internals.Producers.Simulations;
 using TestFusion.Internals.State;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 
 namespace TestFusion.Internals;
 
 internal class ScenarioSimulationsSetup
 {
-    private readonly ITestFrameworkProvider _testFramework;
+    private readonly ITestFrameworkAdapter _testFramework;
     private readonly SharedExecutionState _sharedExecutionState;
 
-    public ScenarioSimulationsSetup(ITestFrameworkProvider testFramework, SharedExecutionState sharedExecutionState)
+    public ScenarioSimulationsSetup(ITestFrameworkAdapter testFramework, SharedExecutionState sharedExecutionState)
     {
         _testFramework = testFramework ?? throw new ArgumentNullException(nameof(testFramework));
         _sharedExecutionState = sharedExecutionState ?? throw new ArgumentNullException(nameof(sharedExecutionState));

@@ -1,5 +1,5 @@
 ﻿using TestFusion.Internals.State;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 
 namespace TestFusion;
 

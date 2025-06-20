@@ -1,4 +1,4 @@
-﻿using TestFusion.Plugins.TestFrameworkProviders;
+﻿using TestFusion.Contracts.Adapters;
 
 namespace TestFusion;
 
@@ -11,6 +11,6 @@ public class Context
     public ILogger Logger { get; set; }
     public CurrentStep Step { get; internal set; }
     public string CorrelationId { get; set; }
-    public ITestFrameworkProvider TestFramework { get; internal set; }
+    public ITestFrameworkAdapter TestFramework { get; internal set; }
 }
 

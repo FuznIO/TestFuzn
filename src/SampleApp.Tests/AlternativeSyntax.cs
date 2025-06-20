@@ -1,6 +1,6 @@
 ﻿using SampleApp.WebApp.Models;
 using TestFusion;
-using TestFusion.HttpTesting;
+using TestFusion.Plugins.Http;
 
 namespace SampleApp.Tests.FeatureTests;
 

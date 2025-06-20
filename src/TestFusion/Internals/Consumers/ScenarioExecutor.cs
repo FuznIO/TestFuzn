@@ -5,7 +5,7 @@ using TestFusion.Internals.InputData;
 using TestFusion.Internals.Results.Feature;
 using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 using TestFusion.Results.Feature;
 using TestFusion.Results.Load;
 
@@ -13,7 +13,7 @@ namespace TestFusion.Internals.Consumers;
 
 internal class ScenarioExecutor
 {
-    private readonly ITestFrameworkProvider _testFramework;
+    private readonly ITestFrameworkAdapter _testFramework;
     private readonly SharedExecutionState _sharedExecutionState;
     private readonly LoadResultsManager _loadResultsManager;
     private readonly InputDataFeeder _loadInputFeeder;
@@ -22,7 +22,7 @@ internal class ScenarioExecutor
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _sinkSemaphores = new();
 
 
-    public ScenarioExecutor(ITestFrameworkProvider testFramework,
+    public ScenarioExecutor(ITestFrameworkAdapter testFramework,
         SharedExecutionState sharedExecutionState,
         LoadResultsManager loadResultsManager,
         InputDataFeeder loadInputFeeder,

@@ -1,4 +1,4 @@
-﻿using TestFusion.HttpTesting;
+﻿using TestFusion.Plugins.Http;
 
 namespace TestFusion.Tests.Http;
 

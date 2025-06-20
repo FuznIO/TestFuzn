@@ -1,11 +1,11 @@
 ﻿using TestFusion.Internals.State;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 
 namespace TestFusion.Internals;
 
 internal class ContextFactory
 {
-    public static Context CreateContext(ITestFrameworkProvider testFramework, string stepName)
+    public static Context CreateContext(ITestFrameworkAdapter testFramework, string stepName)
     {
         var context = new Context();
 
@@ -18,7 +18,7 @@ internal class ContextFactory
         return context;
     }
 
-    public static StepContext CreateStepContext(ITestFrameworkProvider testFramework, Scenario scenario, string stepName, object currentInput)
+    public static StepContext CreateStepContext(ITestFrameworkAdapter testFramework, Scenario scenario, string stepName, object currentInput)
     {
         var context = (StepContext) Activator.CreateInstance(scenario.ContextType);
 
@@ -34,7 +34,7 @@ internal class ContextFactory
         return context;
     }
 
-    private static void PopulateSharedProperties(ITestFrameworkProvider testFramework, Context context)
+    private static void PopulateSharedProperties(ITestFrameworkAdapter testFramework, Context context)
     {
         context.EnvironmentName = GlobalState.Configuration.EnvironmentName;
         context.TestRunId = GlobalState.TestRunId;

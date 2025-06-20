@@ -1,16 +1,16 @@
 ﻿using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 
 namespace TestFusion.Internals;
 
 internal class ScenarioFinalizer
 {
-    private readonly ITestFrameworkProvider _testFramework;
+    private readonly ITestFrameworkAdapter _testFramework;
     private readonly SharedExecutionState _sharedExecutionState;
     private readonly LoadResultsManager _loadResultsManager;
 
-    public ScenarioFinalizer(ITestFrameworkProvider testFramework, 
+    public ScenarioFinalizer(ITestFrameworkAdapter testFramework, 
         SharedExecutionState sharedExecutionState,
         LoadResultsManager loadResultsManager)
     {

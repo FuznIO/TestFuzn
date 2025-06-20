@@ -3,7 +3,7 @@ using TestFusion.ConsoleOutput;
 using TestFusion.Internals.ConsoleOutput;
 using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 using TestFusion.Results.Feature;
 using TestFusion.Results.Load;
 
@@ -11,12 +11,12 @@ namespace TestFusion.Internals.ConsoleOutput;
 
 internal class ConsoleWriter
 {
-    private readonly ITestFrameworkProvider _testFramework;
+    private readonly ITestFrameworkAdapter _testFramework;
     private readonly SharedExecutionState _sharedExecutionState;
     private readonly LoadResultsManager _loadResultsManager;
     private CursorPosition _cursorPosition;
 
-    public ConsoleWriter(ITestFrameworkProvider testFramework,
+    public ConsoleWriter(ITestFrameworkAdapter testFramework,
         SharedExecutionState sharedExecutionState,
         LoadResultsManager loadResultsManager)
     {

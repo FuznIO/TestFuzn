@@ -1,12 +1,12 @@
 ﻿using TestFusion.Internals.ConsoleOutput;
 using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 
 namespace TestFusion.Internals.Logger;
 
 internal class ConsoleManager(
-    ITestFrameworkProvider _testFramework,
+    ITestFrameworkAdapter _testFramework,
     SharedExecutionState _sharedExecutionState,
     ConsoleWriter _consoleWriter,
     LoadResultsManager loadResultsManager)

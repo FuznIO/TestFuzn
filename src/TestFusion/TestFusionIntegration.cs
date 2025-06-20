@@ -1,9 +1,8 @@
-﻿using TestFusion.Internals.Reports;
-using TestFusion.Internals.State;
+﻿using TestFusion.Internals.State;
 using TestFusion.Internals;
 using TestFusion.Internals.Results.Feature;
-using TestFusion.Plugins.TestFrameworkProviders;
-using TestFusion.Plugins.Report;
+using TestFusion.Contracts.Adapters;
+using TestFusion.Contracts.Reports;
 
 namespace TestFusion;
 
@@ -11,7 +10,7 @@ public static class TestFusionIntegration
 {
     private static IStartup _startupInstance;
 
-    public static async Task InitGlobal(ITestFrameworkProvider testFramework)
+    public static async Task InitGlobal(ITestFrameworkAdapter testFramework)
     {
         GlobalState.Init();
 
@@ -55,7 +54,7 @@ public static class TestFusionIntegration
         }
     }
 
-    public static async Task CleanupGlobal(ITestFrameworkProvider testFramework)
+    public static async Task CleanupGlobal(ITestFrameworkAdapter testFramework)
     {
         if (_startupInstance == null)
             throw new InvalidOperationException("TestFusionIntegration has not been initialized. Please call TestFusionIntegration.InitializeGlobal() before running tests.");

@@ -6,7 +6,7 @@ public class TestFusionMsTestIntegration
     [AssemblyInitialize]
     public static async Task Initialize(TestContext testContext)
     {
-        var testFramework = new MsTestProvider(testContext);
+        var testFramework = new MsTestAdapter(testContext);
 
         await TestFusionIntegration.InitGlobal(testFramework);
     }
@@ -14,7 +14,7 @@ public class TestFusionMsTestIntegration
     [AssemblyCleanup]
     public static async Task Cleanup(TestContext testContext)
     {
-        var testFramework = new MsTestProvider(testContext);
+        var testFramework = new MsTestAdapter(testContext);
 
         await TestFusionIntegration.CleanupGlobal(testFramework);
     }

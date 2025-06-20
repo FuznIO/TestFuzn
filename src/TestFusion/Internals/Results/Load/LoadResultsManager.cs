@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using TestFusion.Internals.State;
-using TestFusion.Plugins.Report;
+using TestFusion.Contracts.Reports;
 
 namespace TestFusion.Internals.Results.Load;
 

@@ -1,5 +1,6 @@
-﻿using TestFusion.BrowserTesting;
-using TestFusion.HttpTesting;
+﻿using TestFusion.Plugins.Playwright;
+using TestFusion.Plugins.Http;
+using TestFusion.Sinks.InfluxDB;
 
 namespace TestFusion.Tests;
 
@@ -9,9 +10,9 @@ public class Startup : BaseStartup
     {
         var configuration = ConfigurationManager.LoadConfiguration();
         configuration.EnvironmentName = "development";
-        configuration.UseBrowserTesting();
-        configuration.UseHttpTesting();
-        configuration.UseInfluxDbSink();
+        configuration.UsePlaywright();
+        configuration.UseHttp();
+        configuration.UseInfluxDb();
         configuration.UseDefaultReports();
 
         return configuration;

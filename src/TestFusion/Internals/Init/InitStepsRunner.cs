@@ -1,15 +1,15 @@
 ﻿using TestFusion.Internals.InputData;
 using TestFusion.Internals.State;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 
 namespace TestFusion.Internals.Init;
 
 internal class InitStepsRunner
 {
-    private readonly ITestFrameworkProvider _testFramework;
+    private readonly ITestFrameworkAdapter _testFramework;
     private readonly SharedExecutionState _sharedExecutionState;
 
-    public InitStepsRunner(ITestFrameworkProvider testFramework, SharedExecutionState sharedExecutionState)
+    public InitStepsRunner(ITestFrameworkAdapter testFramework, SharedExecutionState sharedExecutionState)
     {
         _testFramework = testFramework;
         _sharedExecutionState = sharedExecutionState;

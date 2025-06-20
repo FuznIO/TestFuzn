@@ -1,17 +1,17 @@
 ﻿using TestFusion.Internals;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 
 namespace TestFusion;
 
 public class ScenarioBuilder<TStepContext>
     where TStepContext : StepContext, new()
 {
-    private ITestFrameworkProvider _testFramework;
+    private ITestFrameworkAdapter _testFramework;
     private readonly IFeatureTest _featureTest;
     internal Scenario Scenario;
     internal List<Func<Scenario>> IncludeScenarios;
 
-    public ScenarioBuilder(ITestFrameworkProvider testFramework, 
+    public ScenarioBuilder(ITestFrameworkAdapter testFramework, 
         IFeatureTest featureTest, 
         string name)
     {

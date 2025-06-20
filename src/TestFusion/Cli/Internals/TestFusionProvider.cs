@@ -1,12 +1,12 @@
 ﻿using Spectre.Console;
 using System.Text;
 using TestFusion.ConsoleOutput;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 using TestFusion.Results.Load;
 
 namespace TestFusion.Cli.Internals;
 
-internal class TestFusionProvider : ITestFrameworkProvider
+internal class TestFusionProvider : ITestFrameworkAdapter
 {
     public bool SupportsRealTimeConsoleOutput => true;
 

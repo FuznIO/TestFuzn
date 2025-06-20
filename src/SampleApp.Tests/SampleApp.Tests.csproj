@@ -18,9 +18,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SampleApp.WebApp\SampleApp.WebApp.csproj" />
-    <ProjectReference Include="..\TestFusion.BrowserTesting\TestFusion.BrowserTesting.csproj" />
-    <ProjectReference Include="..\TestFusion.HttpTesting\TestFusion.HttpTesting.csproj" />
-    <ProjectReference Include="..\TestFusion.MsTestAdapter\TestFusion.MsTestAdapter.csproj" />
+    <ProjectReference Include="..\TestFusion.Adapters.MSTest\TestFusion.Adapters.MSTest.csproj" />
+    <ProjectReference Include="..\TestFusion.Plugins.Http\TestFusion.Plugins.Http.csproj" />
+    <ProjectReference Include="..\TestFusion.Plugins.Playwright\TestFusion.Plugins.Playwright.csproj" />
+    <ProjectReference Include="..\TestFusion.Sinks.InfluxDB\TestFusion.Sinks.InfluxDB.csproj" />
     <ProjectReference Include="..\TestFusion\TestFusion.csproj" />
   </ItemGroup>
 

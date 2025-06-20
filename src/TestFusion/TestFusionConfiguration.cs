@@ -1,7 +1,7 @@
 ﻿using TestFusion.Internals.Reports;
-using TestFusion.Plugins.Context;
-using TestFusion.Plugins.Report;
-using TestFusion.Plugins.Sink;
+using TestFusion.Contracts.Plugins;
+using TestFusion.Contracts.Reports;
+using TestFusion.Contracts.Sinks;
 
 namespace TestFusion
 {

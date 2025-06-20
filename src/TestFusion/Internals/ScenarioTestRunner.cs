@@ -9,17 +9,17 @@ using TestFusion.Internals.InputData;
 using TestFusion.Internals.State;
 using TestFusion.Cli.Internals;
 using TestFusion.Internals.Results.Feature;
-using TestFusion.Plugins.TestFrameworkProviders;
+using TestFusion.Contracts.Adapters;
 using TestFusion.Internals.ConsoleOutput;
 
 namespace TestFusion.Internals;
 
 internal class ScenarioTestRunner
 {
-    private readonly ITestFrameworkProvider _testFramework;
+    private readonly ITestFrameworkAdapter _testFramework;
     private readonly IFeatureTest _featureTest;
 
-    public ScenarioTestRunner(ITestFrameworkProvider testFramework, IFeatureTest featureTest)
+    public ScenarioTestRunner(ITestFrameworkAdapter testFramework, IFeatureTest featureTest)
     {
         if (GlobalState.CustomTestRunner)
             _testFramework = new TestFusionProvider();
