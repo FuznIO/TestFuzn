@@ -1,0 +1,55 @@
+name: Build and (Optionally) Publish NuGet Package
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'  # Adjust as needed
+
+    - name: Install xmllint
+      run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+
+    - name: Extract version from Directory.Build.props
+      id: get-version
+      run: |
+        VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/Version)" Directory.Build.props)
+        echo "Version found: $VERSION"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Pack
+      run: dotnet pack --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+
+    #
+    # 👇 Choose ONE of the publishing strategies below
+    #
+
+    # ---- Real NuGet push (enabled) ----
+    - name: Publish to NuGet
+      run: dotnet nuget push **/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+
+    # ---- Test push to local directory (won't publish anywhere) ----
+    # - name: Simulate push (save to output folder only)
+    #   run: |
+    #     mkdir -p output-nupkg
+    #     find . -name '*.nupkg' -exec cp {} output-nupkg/ \;
+    #     echo "Simulated push to ./output-nupkg"
+
+    # ---- OPTIONAL: Push to GitHub Packages (if configured) ----
+    # - name: Publish to GitHub Packages
+    #   run: dotnet nuget push **/*.nupkg --skip-duplicate --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --api-key ${{ secrets.GITHUB_TOKEN }}
