@@ -3,6 +3,7 @@ name: Build and (Optionally) Publish NuGet Package
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
