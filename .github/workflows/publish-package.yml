@@ -6,7 +6,6 @@ on:
     types: [published]
 
 env:
-  PROJECTS_TO_PUBLISH: "src/TestFusion/TestFusion.csproj src/TestFusion.BrowserTesting/TestFusion.BrowserTesting.csproj src/TestFusion.HttpTesting/TestFusion.HttpTesting.csproj src/TestFusion.MsTestAdapter/TestFusion.MsTestAdapter.csproj src/TestFusion.Sink.InfluxDB/TestFusion.Sink.InfluxDB.csproj"
   NUGET_SOURCE: "https://api.nuget.org/v3/index.json"
 
 jobs:
@@ -44,31 +43,26 @@ jobs:
 
     - name: Pack only selected projects
       run: |
-        for proj in $PROJECTS_TO_PUBLISH; do
-          dotnet pack "$proj" --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        done
+        dotnet pack src/TestFusion/TestFusion.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFusion.Plugins.Playwright/TestFusion.Plugins.Playwright.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFusion.Plugins.Http/TestFusion.Plugins.Http.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFusion.Adapters.MSTest/TestFusion.Adapters.MSTest.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFusion.Sinks.InfluxDB/TestFusion.Sinks.InfluxDB.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
 
     - name: Push packages to NuGet
       run: |
-        for proj in $PROJECTS_TO_PUBLISH; do
-          proj_dir=$(dirname "$proj")
-          dotnet nuget push "$proj_dir/bin/Release/*.nupkg" --skip-duplicate --source $NUGET_SOURCE --api-key ${{ secrets.NUGET_API_KEY }}
-        done
+        dotnet nuget push src/TestFusion/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFusion.Plugins.Playwright/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFusion.Plugins.Http/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFusion.Adapters.MSTest/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFusion.Sinks.InfluxDB/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
     - name: Unlist packages after publishing
       run: |
-        for proj in $PROJECTS_TO_PUBLISH; do
-          # Extract package ID from the .csproj file
-          ID=$(xmllint --xpath "string(//Project/PropertyGroup/PackageId | //Project/PropertyGroup/AssemblyName)" "$proj")
-          if [ -z "$ID" ]; then
-            echo "⚠️  Could not find PackageId or AssemblyName in $proj"
-            continue
-          fi
           VERSION=${{ steps.get-version.outputs.version }}
-          echo "🔕 Unlisting $ID version $VERSION..."
-          curl -X POST \
-            -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{}' \
-            "https://www.nuget.org/api/v2/package/$ID/$VERSION"
-        done
+          curl -X POST -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion   /$VERSION"
+          curl -X POST -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion.Plugins.Playwright/$VERSION"
+          curl -X POST -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion.Plugins.Http/$VERSION"
+          curl -X POST -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion.Adapters.MSTest/$VERSION"
+          curl -X POST -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion.Sinks.InfluxDB/$VERSION"
+
