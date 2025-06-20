@@ -1,13 +1,18 @@
-name: Build and Publish NuGet Package
+name: Build and Publish NuGet Packages
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
-  workflow_dispatch:
+
+env:
+  PROJECTS_TO_PUBLISH: "src/TestFusion/TestFusion.csproj src/TestFusion.BrowserTesting/TestFusion.BrowserTesting.csproj src/TestFusion.HttpTesting/TestFusion.HttpTesting.csproj src/TestFusion.MsTestAdapter/TestFusion.MsTestAdapter.csproj src/TestFusion.Sink.InfluxDB/TestFusion.Sink.InfluxDB.csproj"
+  NUGET_SOURCE: "https://api.nuget.org/v3/index.json"
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -15,42 +20,52 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'  # Adjust as needed
-
-    - name: Install xmllint
-      run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+        dotnet-version: '8.0.x'
 
     - name: Extract version from Directory.Build.props
       id: get-version
       run: |
+        if [ ! -f src/Directory.Build.props ]; then
+          echo "❌ src/Directory.Build.props not found!"
+          exit 1
+        fi
         VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/Version)" src/Directory.Build.props)
-        echo "Version found: $VERSION"
+        echo "📦 Version found: $VERSION"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Restore dependencies
       run: dotnet restore src
 
-    - name: Build
+    - name: Build all selected projects
       run: dotnet build src --configuration Release --no-restore
 
-    - name: Pack
+    - name: Pack only selected projects
       run: |
-        dotnet pack src/TestFusion/TestFusion.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFusion.BrowserTesting/TestFusion.BrowserTesting.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFusion.HttpTesting/TestFusion.HttpTesting.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFusion.MsTestAdapter/TestFusion.MsTestAdapter.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFusion.Sink.InfluxDB/TestFusion.Sink.InfluxDB.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFusion.Tests.Runner/TestFusion.Tests.Runner.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        for proj in $PROJECTS_TO_PUBLISH; do
+          dotnet pack "$proj" --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        done
 
-    - name: Publish to NuGet
+    - name: Push packages to NuGet
       run: |
-        dotnet nuget push src/TestFusion/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFusion.BrowserTesting/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFusion.HttpTesting/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFusion.MsTestAdapter/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFusion.Sink.InfluxDB/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFusion.Tests.Runner/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        for proj in $PROJECTS_TO_PUBLISH; do
+          proj_dir=$(dirname "$proj")
+          dotnet nuget push "$proj_dir/bin/Release/*.nupkg" --skip-duplicate --source $NUGET_SOURCE --api-key ${{ secrets.NUGET_API_KEY }}
+        done
 
-    # ---- Real NuGet push (enabled) ----
-    - name: Publish to NuGet
-      run: dotnet nuget push **/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+    - name: Unlist packages after publishing
+      run: |
+        for proj in $PROJECTS_TO_PUBLISH; do
+          # Extract package ID from the .csproj file
+          ID=$(xmllint --xpath "string(//Project/PropertyGroup/PackageId | //Project/PropertyGroup/AssemblyName)" "$proj")
+          if [ -z "$ID" ]; then
+            echo "⚠️  Could not find PackageId or AssemblyName in $proj"
+            continue
+          fi
+          VERSION=${{ steps.get-version.outputs.version }}
+          echo "🔕 Unlisting $ID version $VERSION..."
+          curl -X POST \
+            -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "https://www.nuget.org/api/v2/package/$ID/$VERSION"
+        done
