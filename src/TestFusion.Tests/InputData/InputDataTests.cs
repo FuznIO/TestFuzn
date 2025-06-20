@@ -25,7 +25,7 @@ public class InputDataTests : BaseFeatureTest
                 var user = context.InputData<User>();
                 userExecuted[user.Name] = true;
             })
-            .Load().OneTimeLoad(6)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(6))
             .Run();
 
         foreach (var user in userExecuted)
@@ -58,7 +58,7 @@ public class InputDataTests : BaseFeatureTest
                 var user = context.InputData<User>();
                 userExecuted[user.Name] = true;
             })
-            .Load().OneTimeLoad(6)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(6))
             .Run();
 
         foreach (var user in userExecuted)
@@ -90,7 +90,7 @@ public class InputDataTests : BaseFeatureTest
                 var user = context.InputData<User>();
                 userExecuted[user.Name] = true;
             })
-            .Load().OneTimeLoad(6)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(6))
             .Run();
 
         foreach (var user in userExecuted)

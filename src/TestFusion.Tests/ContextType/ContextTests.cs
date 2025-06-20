@@ -44,7 +44,7 @@ public class ContextTests : BaseFeatureTest
                 Assert.IsTrue(!string.IsNullOrEmpty(context.TestRunId));
                 Assert.AreEqual("CleanupAfterScenario", context.Step.Name);
             })
-            .Load().OneTimeLoad(10)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(10))
             .Run();
     }
 }

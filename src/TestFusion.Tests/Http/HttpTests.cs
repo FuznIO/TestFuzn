@@ -33,7 +33,7 @@ public class GetProductsE2ETests : BaseFeatureTest
                 Assert.IsTrue(response.Ok);
                 Assert.AreEqual("Pong", response.BodyAs<string>());
             })
-            .Load().FixedLoad(1500, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1))
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(1500, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
             .Run();
     }
 
@@ -49,7 +49,7 @@ public class GetProductsE2ETests : BaseFeatureTest
                 var products = response.BodyAs<List<Product>>();
                 Assert.IsTrue(products.Count > 0, "Expected more than one product to be returned.");
             })
-            .Load().FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1))
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
             .Run();
     }
 }

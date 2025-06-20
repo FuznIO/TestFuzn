@@ -17,8 +17,8 @@ public class AssertionTests : BaseFeatureTest
                     Interlocked.Increment(ref stepExecutionCount);
                     Assert.Fail();
                 })
-                .Load().FixedLoad(1, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2))
-                .Load().AssertWhileRunning(stats =>
+                .Load().Simulations((context, simulations) => simulations.FixedLoad(1, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)))
+                .Load().AssertWhileRunning((context, stats) =>
                 {
                     assertExecuted = true;
                     Assert.AreEqual(0, stats.Failed.RequestCount);

@@ -26,12 +26,12 @@ public class InputDataFileLoadTests : BaseFeatureTest
                     (s, i) => i + 1);
                 await Task.Delay(35);
             })
-            .Load().AssertWhenDone(stats =>
+            .Load().AssertWhenDone((context, stats) =>
             {
                 foreach (var e in dict)
                     Assert.AreEqual(3, e.Value);
             })
-            .Load().OneTimeLoad(9)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(9))
             .Run();
     }
 
@@ -53,12 +53,12 @@ public class InputDataFileLoadTests : BaseFeatureTest
                     (s, i) => i + 1);
                 await Task.Delay(55);
             })
-            .Load().AssertWhenDone(metrics =>
+            .Load().AssertWhenDone((context, stats) =>
             {
                 foreach (var e in dict)
                     Assert.AreEqual(3, e.Value);
             })
-            .Load().OneTimeLoad(9)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(9))
             .Run();
     }
 }

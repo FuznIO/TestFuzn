@@ -51,14 +51,12 @@ internal class ScenarioExecutor
             if (currentInputData != null)
             {
                 iterationResult.InputData = PropertyHelper.GetStringFromProperties(currentInputData);
-
-                _consoleWriter.IterationExecutionStart(iterationResult);
             }
 
             _sharedExecutionState.ScenarioResult.IterationResults.Add(iterationResult);
         }
 
-        var context = ContextFactory.CreateStepContext(_testFramework, scenario, "", currentInputData);
+        var stepContext = ContextFactory.CreateStepContext(_testFramework, scenario, "", currentInputData);
         
         var scenarioDuration = new Stopwatch();
         scenarioDuration.Start();
@@ -87,8 +85,8 @@ internal class ScenarioExecutor
                 {
                     try
                     {
-                        context.Step = new CurrentStep(context, step.Name);
-                        await step.Action(context);
+                        stepContext.Step = new CurrentStep(stepContext, step.Name);
+                        await step.Action(stepContext);
                         stepResult.Status = StepStatus.Passed;
                         scenarioStatus = ScenarioStatus.Passed;
                     }
@@ -104,12 +102,12 @@ internal class ScenarioExecutor
                     }
                     finally
                     {
-                        if (context.Step != null
-                            && context.Step.Attachments != null
-                            && context.Step.Attachments.Count > 0)
+                        if (stepContext.Step != null
+                            && stepContext.Step.Attachments != null
+                            && stepContext.Step.Attachments.Count > 0)
                         {
                             stepResult.Attachments = new();
-                            stepResult.Attachments.AddRange(context.Step.Attachments);
+                            stepResult.Attachments.AddRange(stepContext.Step.Attachments);
                         }
                     }
                 }
@@ -118,8 +116,6 @@ internal class ScenarioExecutor
                 stepResult.Duration = stepDuration.Elapsed;
 
                 iterationResult.StepResults.Add(stepResult.Name, stepResult);
-
-                _consoleWriter.StepExecutionEnd(stepIndex, totalSteps, stepResult);
             }
         }
         finally
@@ -130,11 +126,9 @@ internal class ScenarioExecutor
 
             if (scenario.CleanupAfterEachIteration != null)
             {
-                context.Step = new CurrentStep(context, "CleanupAfterEachIteration");
-                await scenario.CleanupAfterEachIteration(context);
+                stepContext.Step = new CurrentStep(stepContext, "CleanupAfterEachIteration");
+                await scenario.CleanupAfterEachIteration(stepContext);
             }
-
-            _consoleWriter.IterationExecutionEnd(context, iterationResult);
         }
 
         scenarioLoadCollector.Record(scenarioStatus ?? ScenarioStatus.Failed, iterationResult);
@@ -146,7 +140,7 @@ internal class ScenarioExecutor
             if (!plugin.RequireState)
                 continue;
 
-            var state = context.Internals.Plugins.GetState(plugin.GetType());
+            var state = stepContext.Internals.Plugins.GetState(plugin.GetType());
             await plugin.CleanupContext(state);
         }
 
@@ -154,7 +148,8 @@ internal class ScenarioExecutor
         {
             try
             {
-                scenario.AssertWhileRunningAction(new AssertScenarioStats(scenarioLoadResult));
+                var context = ContextFactory.CreateContext(_testFramework, "AssertWhileRunning");
+                scenario.AssertWhileRunningAction(context, new AssertScenarioStats(scenarioLoadResult));
             }
             catch (Exception ex)
             {

@@ -7,6 +7,7 @@ namespace TestFusion
 {
     public class TestFusionConfiguration
     {
+        public string EnvironmentName { get; set; } = "";
         public string TestSuiteName { get; set; }
         internal List<IContextPlugin> ContextPlugins { get; set; } = new();
         internal List<IFeatureReport> FeatureReports { get; set; } = new();

@@ -8,6 +8,7 @@ public class Startup : BaseStartup
     public override TestFusionConfiguration Configuration()
     {
         var configuration = ConfigurationManager.LoadConfiguration();
+        configuration.EnvironmentName = "development";
         configuration.UseBrowserTesting();
         configuration.UseHttpTesting();
         configuration.UseInfluxDbSink();

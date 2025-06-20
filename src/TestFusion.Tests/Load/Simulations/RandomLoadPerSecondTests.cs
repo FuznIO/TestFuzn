@@ -17,7 +17,7 @@ public class RandomLoadPerSecondTests : BaseFeatureTest
 
                 return Task.CompletedTask;
             })
-            .Load().RandomLoadPerSecond(1, 10, TimeSpan.FromSeconds(3))
+            .Load().Simulations((context, simulations) => simulations.RandomLoadPerSecond(1, 10, TimeSpan.FromSeconds(3)))
             .Run();
 
         Assert.IsTrue(stepExecutionCount > 0);

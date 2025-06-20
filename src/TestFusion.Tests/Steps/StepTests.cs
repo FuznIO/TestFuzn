@@ -41,7 +41,7 @@ public class StepsTests : BaseFeatureTest
                 Assert.AreEqual("true", context.GetSharedData<string>("SharedStepOnAllStepContextTypes_Executed"));
                 step4Executed = true;
             })
-            .Load().OneTimeLoad(1)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(1))
             .Run();
 
         Assert.IsTrue(step1Executed);
@@ -83,7 +83,7 @@ public class StepsTests : BaseFeatureTest
                 Assert.AreEqual("true", context.GetSharedData<string>("SharedStepOnAllStepContextTypes_Executed"));
                 step4Executed = true;
             })
-            .Load().OneTimeLoad(1)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(1))
             .Run();
 
         Assert.IsTrue(step1Executed);

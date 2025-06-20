@@ -17,7 +17,7 @@ public class GetProductsLoadTests : BaseFeatureTest
 
                 Assert.IsTrue(response.Ok);
             })
-            .Load().FixedLoad(1000, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(3))
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(1000, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(3)))
             .Run();
     }
 }

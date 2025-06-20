@@ -15,7 +15,7 @@ public class FixedLoadTests : BaseFeatureTest
 
                 return Task.CompletedTask;
             })
-            .Load().FixedLoad(1000, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(6))
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(1000, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(6)))
             .Run();
 
         Assert.AreEqual(3000, stepExecutionCounter);

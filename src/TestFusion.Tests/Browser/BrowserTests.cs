@@ -21,8 +21,8 @@ public class BrowserTests : BaseFeatureTest
 
                 Assert.AreEqual("Swagger UI", title);
             })
-            .Load().OneTimeLoad(10)
-            .Load().AssertWhenDone(stats =>
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(10))
+            .Load().AssertWhenDone((context, stats) =>
             {
                 Assert.IsTrue(stats.Ok.RequestCount == 10);
             })

@@ -31,11 +31,11 @@ public class InputDataBehaviorTests : BaseFeatureTest
                 var user = userExecuted[userName];
                 Interlocked.Increment(ref user.Counter);
             })
-            .Load().AssertWhenDone(stats =>
+            .Load().AssertWhenDone((context, stats) =>
             {
                 Assert.AreEqual(8, stats.Ok.RequestCount);
             })
-            .Load().OneTimeLoad(8)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(8))
             .Run();
 
         Assert.AreEqual(3, userExecuted["user1"].Counter);
@@ -66,11 +66,11 @@ public class InputDataBehaviorTests : BaseFeatureTest
                 var user = userExecuted[userName];
                 Interlocked.Increment(ref user.Counter);
             })
-            .Load().AssertWhenDone(stats =>
+            .Load().AssertWhenDone((context, stats) =>
             {
                 Assert.AreEqual(100, stats.Ok.RequestCount);
             })
-            .Load().OneTimeLoad(100)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(100))
             .Run();
 
         Assert.AreEqual(1, userExecuted["user1"].Counter);
@@ -102,11 +102,11 @@ public class InputDataBehaviorTests : BaseFeatureTest
                 var user = userExecuted[userName];
                 Interlocked.Increment(ref user.Counter);
             })
-            .Load().AssertWhenDone(stats =>
+            .Load().AssertWhenDone((context, stats) =>
             {
                 Assert.AreEqual(30, stats.Ok.RequestCount);
             })
-            .Load().OneTimeLoad(30)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(30))
             .Run();
 
         Assert.IsTrue(userExecuted["user1"].Counter > 1);
@@ -138,11 +138,11 @@ public class InputDataBehaviorTests : BaseFeatureTest
                 var user = userExecuted[userName];
                 Interlocked.Increment(ref user.Counter);
             })
-            .Load().AssertWhenDone(stats =>
+            .Load().AssertWhenDone((context, stats) =>
             {
                 Assert.AreEqual(30, stats.Ok.RequestCount);
             })
-            .Load().OneTimeLoad(30)
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(30))
             .Run();
 
         Assert.IsTrue(userExecuted["user1"].Counter > 1);

@@ -3,7 +3,6 @@ using TestFusion.Internals.Producers;
 using TestFusion.Internals.Logger;
 using TestFusion.Internals.Init;
 using TestFusion.Internals.Cleanup;
-using TestFusion.Internals.Producers.Simulations;
 using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.Consumers;
 using TestFusion.Internals.InputData;
@@ -41,11 +40,13 @@ internal class ScenarioTestRunner
         var loadResultsManager = new LoadResultsManager(sharedExecutionState);
         var producerManager = new ProducerManager(sharedExecutionState);
         var initStepsRunner = new InitStepsRunner(_testFramework, sharedExecutionState);
-        var inputFeeder = new InputDataFeeder(sharedExecutionState);
+        var inputDataFeeder = new InputDataFeeder(sharedExecutionState);
+        var scenarioSimulationsSetup = new ScenarioSimulationsSetup(_testFramework, sharedExecutionState);
         var consoleWriter = new ConsoleWriter(_testFramework, sharedExecutionState, loadResultsManager);
-        var scenarioExecutor = new ScenarioExecutor(_testFramework, sharedExecutionState, loadResultsManager, inputFeeder, consoleWriter);
+        var scenarioExecutor = new ScenarioExecutor(_testFramework, sharedExecutionState, loadResultsManager, inputDataFeeder, consoleWriter);
         var consumerManager = new ConsumerManager(sharedExecutionState, scenarioExecutor, loadResultsManager);
         var consoleManager = new ConsoleManager(_testFramework, sharedExecutionState, consoleWriter, loadResultsManager);
+        var scenarioFinalizer = new ScenarioFinalizer(_testFramework, sharedExecutionState, loadResultsManager);
 
         sharedExecutionState.Init(_featureTest, scenarios);
 
@@ -55,21 +56,9 @@ internal class ScenarioTestRunner
 
             await initStepsRunner.Run();
 
-            inputFeeder.Init();
+            inputDataFeeder.Init();
 
-            foreach (var scenario in scenarios)
-            {
-                if (sharedExecutionState.TestType == TestType.Feature)
-                {
-                    var totalExecutions = 1;
-                    if (scenario.InputDataInfo.HasInputData)
-                        totalExecutions = scenario.InputDataInfo.InputDataList.Count;
-
-                    scenario.SimulationsInternal.Add(new FixedConcurrentLoadConfiguration(1, totalExecutions));
-                }
-            }
-
-            consoleWriter.ScenarioStart();
+            await scenarioSimulationsSetup.Setup();
 
             producerManager.StartProducers();
 
@@ -81,38 +70,11 @@ internal class ScenarioTestRunner
 
             await consumerManager.WaitForConsumersToFinish();
 
-            sharedExecutionState.ScenarioResult.MarkAsCompleted();
-
-            if (sharedExecutionState.TestType == TestType.Load)
-            {
-                if (sharedExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
-                {
-                    foreach (var scenario in scenarios)
-                    {
-                        var scenarioCollector = loadResultsManager.GetScenarioCollector(scenario.Name);
-                        scenarioCollector.MarkAsCompleted();
-                        var scenarioResult = scenarioCollector.GetCurrentResult();
-                        if (scenario.AssertWhenDoneAction != null)
-                        {
-                            try
-                            {
-                                scenario.AssertWhenDoneAction(new AssertScenarioStats(scenarioResult));
-                            }
-                            catch (Exception e)
-                            {
-                                sharedExecutionState.FirstException = e;
-                                scenarioCollector.AssertWhenDoneException(e);
-                                scenarioCollector.SetStatus(ScenarioStatus.Failed);
-                            }
-                        }
-                    }
-                }
-                loadResultsManager.Complete();
-            }
-
-            await consoleManager.Complete();
+            scenarioFinalizer.Complete();
 
             loadResultsManager.WriteReports();
+
+            await consoleManager.Complete();
 
             if (sharedExecutionState.FirstException != null)
                 ExceptionDispatchInfo.Capture(sharedExecutionState.FirstException).Throw();
