@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using TestFusion.Internals.State;
 
-namespace TestFusion.Internals.Producers.Simulations;
+namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class FixedLoadHandler : ILoadHandler
 {
@@ -41,7 +41,7 @@ internal class FixedLoadHandler : ILoadHandler
 
             for (int i = 0; i < rate; i++)
             {
-                var scenarioExecution = new ScenarioExecutionInfo(_scenarioName);
+                var scenarioExecution = new ScenarioExecutionInfo(_scenarioName, _configuration.IsWarmup);
                 _sharedExecutionState.EnqueueScenarioExecution(scenarioExecution);
 
                 var nextEnqueueTime = delayBetweenEnqueue.Ticks * (i + 1);

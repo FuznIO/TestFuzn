@@ -1,7 +1,8 @@
-﻿namespace TestFusion.Internals.Producers.Simulations;
+﻿namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class RandomLoadPerSecondConfiguration : ILoadConfiguration
 {
+    public bool IsWarmup { get; set; }
     public int MinRate { get; }
     public int MaxRate { get; }
     public TimeSpan Duration { get; }

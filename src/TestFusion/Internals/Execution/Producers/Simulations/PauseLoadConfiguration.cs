@@ -1,7 +1,8 @@
-﻿namespace TestFusion.Internals.Producers.Simulations;
+﻿namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class PauseLoadConfiguration : ILoadConfiguration
 {
+    public bool IsWarmup { get; set; }
     public TimeSpan Duration { get; }
 
     public PauseLoadConfiguration(TimeSpan duration)

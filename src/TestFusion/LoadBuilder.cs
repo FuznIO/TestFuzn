@@ -10,6 +10,22 @@ public class LoadBuilder<TStepContext>
         _scenarioBuilder = scenarioBuilder;
     }
 
+    public ScenarioBuilder<TStepContext> Warmup(Action<Context, SimulationsBuilder> action)
+    {
+        _scenarioBuilder.Scenario.Warmup = (context, simulations) =>
+            {
+                action(context, simulations);
+                return Task.CompletedTask;
+            };
+        return _scenarioBuilder;
+    }
+
+    public ScenarioBuilder<TStepContext> Warmup(Func<Context, SimulationsBuilder, Task> action)
+    {
+        _scenarioBuilder.Scenario.Warmup = action;
+        return _scenarioBuilder;
+    }
+
     public ScenarioBuilder<TStepContext> Simulations(Action<Context, SimulationsBuilder> action)
     {
         _scenarioBuilder.Scenario.Simulations = (context, simulations) =>

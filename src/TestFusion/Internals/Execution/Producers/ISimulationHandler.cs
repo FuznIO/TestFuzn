@@ -1,4 +1,4 @@
-﻿namespace TestFusion.Internals.Producers;
+﻿namespace TestFusion.Internals.Execution.Producers;
 
 internal interface ILoadHandler
 {

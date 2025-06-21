@@ -1,16 +1,17 @@
 ﻿using System.Runtime.ExceptionServices;
-using TestFusion.Internals.Producers;
+using TestFusion.Internals.Execution.Producers;
 using TestFusion.Internals.Logger;
 using TestFusion.Internals.Init;
 using TestFusion.Internals.Cleanup;
 using TestFusion.Internals.Results.Load;
-using TestFusion.Internals.Consumers;
+using TestFusion.Internals.Execution.Consumers;
 using TestFusion.Internals.InputData;
 using TestFusion.Internals.State;
 using TestFusion.Cli.Internals;
 using TestFusion.Internals.Results.Feature;
 using TestFusion.Contracts.Adapters;
 using TestFusion.Internals.ConsoleOutput;
+using TestFusion.Internals.Execution;
 
 namespace TestFusion.Internals;
 
@@ -38,12 +39,12 @@ internal class ScenarioTestRunner
         var featureResultsManager = new FeatureResultsManager();
         var sharedExecutionState = new SharedExecutionState(featureResultsManager);
         var loadResultsManager = new LoadResultsManager(sharedExecutionState);
-        var producerManager = new ProducerManager(sharedExecutionState);
+        var producerManager = new ProducerManager(sharedExecutionState, loadResultsManager);
         var initStepsRunner = new InitStepsRunner(_testFramework, sharedExecutionState);
         var inputDataFeeder = new InputDataFeeder(sharedExecutionState);
-        var scenarioSimulationsSetup = new ScenarioSimulationsSetup(_testFramework, sharedExecutionState);
+        var scenarioSimulationsInit = new ScenarioSimulationsInit(_testFramework, sharedExecutionState);
         var consoleWriter = new ConsoleWriter(_testFramework, sharedExecutionState, loadResultsManager);
-        var scenarioExecutor = new ScenarioExecutor(_testFramework, sharedExecutionState, loadResultsManager, inputDataFeeder, consoleWriter);
+        var scenarioExecutor = new ScenarioExecutor(_testFramework, sharedExecutionState, loadResultsManager, inputDataFeeder);
         var consumerManager = new ConsumerManager(sharedExecutionState, scenarioExecutor, loadResultsManager);
         var consoleManager = new ConsoleManager(_testFramework, sharedExecutionState, consoleWriter, loadResultsManager);
         var scenarioFinalizer = new ScenarioFinalizer(_testFramework, sharedExecutionState, loadResultsManager);
@@ -58,7 +59,7 @@ internal class ScenarioTestRunner
 
             inputDataFeeder.Init();
 
-            await scenarioSimulationsSetup.Setup();
+            await scenarioSimulationsInit.Setup();
 
             producerManager.StartProducers();
 

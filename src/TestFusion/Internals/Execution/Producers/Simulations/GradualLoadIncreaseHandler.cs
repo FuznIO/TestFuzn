@@ -1,6 +1,6 @@
 ﻿using TestFusion.Internals.State;
 
-namespace TestFusion.Internals.Producers.Simulations;
+namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class GradualLoadIncreaseHandler : ILoadHandler
 {
@@ -31,7 +31,7 @@ internal class GradualLoadIncreaseHandler : ILoadHandler
         {
             for (int i = 0; i < currentRate; i++)
             {
-                var scenarioExecution = new ScenarioExecutionInfo(_scenarioName);
+                var scenarioExecution = new ScenarioExecutionInfo(_scenarioName, _configuration.IsWarmup);
 
                 _sharedExecutionState.EnqueueScenarioExecution(scenarioExecution);
             }

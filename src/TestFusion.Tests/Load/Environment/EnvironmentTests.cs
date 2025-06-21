@@ -1,4 +1,4 @@
-﻿namespace TestFusion.Tests.Environment;
+﻿namespace TestFusion.Tests.Load.Environment;
 
 [FeatureTest]
 public class EnvironmentTests : BaseFeatureTest

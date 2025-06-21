@@ -1,6 +1,4 @@
-﻿using TestFusion.Internals.Producers;
-
-namespace TestFusion.Internals.Producers.Simulations;
+﻿namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class PauseLoadHandler : ILoadHandler
 {

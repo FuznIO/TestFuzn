@@ -1,6 +1,7 @@
 ﻿using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
 using TestFusion.Contracts.Adapters;
+using TestFusion.Internals.Execution;
 
 namespace TestFusion.Internals;
 
@@ -31,7 +32,7 @@ internal class ScenarioFinalizer
             foreach (var scenario in _sharedExecutionState.Scenarios)
             {
                 var scenarioCollector = _loadResultsManager.GetScenarioCollector(scenario.Name);
-                scenarioCollector.MarkAsCompleted();
+                scenarioCollector.MarkPhaseAsCompleted(TestPhase.Measurement);
                 var scenarioResult = scenarioCollector.GetCurrentResult();
                 if (scenario.AssertWhenDoneAction != null)
                 {

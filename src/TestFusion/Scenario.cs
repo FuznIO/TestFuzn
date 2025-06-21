@@ -13,6 +13,7 @@ public class Scenario
     internal Func<Context, Task> CleanupAfterScenario { get; set; }
     internal InputDataInfo InputDataInfo { get; private set; } = new InputDataInfo();
     internal List<BaseStep> Steps { get; } = new List<BaseStep>();
+    internal Func<Context, SimulationsBuilder, Task> Warmup;
     internal Func<Context, SimulationsBuilder, Task> Simulations;
     internal List<ILoadConfiguration> SimulationsInternal { get; } = new List<ILoadConfiguration>();
     internal Action<Context, AssertScenarioStats>? AssertWhileRunningAction;

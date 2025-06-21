@@ -1,10 +1,8 @@
 ﻿using System.Text;
 using TestFusion.ConsoleOutput;
-using TestFusion.Internals.ConsoleOutput;
 using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
 using TestFusion.Contracts.Adapters;
-using TestFusion.Contracts.Results.Feature;
 using TestFusion.Contracts.Results.Load;
 
 namespace TestFusion.Internals.ConsoleOutput;
@@ -23,15 +21,6 @@ internal class ConsoleWriter
         _testFramework = testFramework;
         _sharedExecutionState = sharedExecutionState;
         _loadResultsManager = loadResultsManager;
-    }
-
-    public void StepExecutionStart(int stepIndex, int totalSteps, BaseStep step)
-    {
-        if (_sharedExecutionState.TestType == Internals.TestType.Load || !_testFramework.SupportsRealTimeConsoleOutput)
-            return;
-
-        //TODO: medium pri, implementer for featuretest testfusionprovider live view
-        //_testFramework.WriteMarkup($"[yellow]🔄 Step {stepIndex}/{totalSteps}: [bold]{step.Name}[/] - Executing[/]");
     }
 
     public void WriteSummary()

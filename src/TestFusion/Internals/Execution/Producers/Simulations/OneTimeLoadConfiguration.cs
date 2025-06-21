@@ -1,7 +1,8 @@
-﻿namespace TestFusion.Internals.Producers.Simulations;
+﻿namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class OneTimeLoadConfiguration : ILoadConfiguration
 {
+    public bool IsWarmup { get; set; }
     public int Count { get; private set; }
 
     public OneTimeLoadConfiguration(int count)

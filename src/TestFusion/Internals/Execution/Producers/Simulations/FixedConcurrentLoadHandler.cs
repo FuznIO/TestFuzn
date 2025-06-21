@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using TestFusion.Internals.State;
 
-namespace TestFusion.Internals.Producers.Simulations;
+namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class FixedConcurrentLoadHandler : ILoadHandler
 {
@@ -46,7 +46,7 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
                 addCount--;
                 i++;
 
-                var execution = new ScenarioExecutionInfo(_scenarioName);
+                var execution = new ScenarioExecutionInfo(_scenarioName, _configuration.IsWarmup);
 
                 _sharedExecutionState.AddToConstantQueue(execution);
                 _sharedExecutionState.EnqueueScenarioExecution(execution);

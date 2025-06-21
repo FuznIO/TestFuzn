@@ -1,15 +1,15 @@
-﻿using TestFusion.Internals.Producers.Simulations;
+﻿using TestFusion.Internals.Execution.Producers.Simulations;
 using TestFusion.Internals.State;
 using TestFusion.Contracts.Adapters;
 
 namespace TestFusion.Internals;
 
-internal class ScenarioSimulationsSetup
+internal class ScenarioSimulationsInit
 {
     private readonly ITestFrameworkAdapter _testFramework;
     private readonly SharedExecutionState _sharedExecutionState;
 
-    public ScenarioSimulationsSetup(ITestFrameworkAdapter testFramework, SharedExecutionState sharedExecutionState)
+    public ScenarioSimulationsInit(ITestFrameworkAdapter testFramework, SharedExecutionState sharedExecutionState)
     {
         _testFramework = testFramework ?? throw new ArgumentNullException(nameof(testFramework));
         _sharedExecutionState = sharedExecutionState ?? throw new ArgumentNullException(nameof(sharedExecutionState));
@@ -29,9 +29,16 @@ internal class ScenarioSimulationsSetup
             }
             else if (_sharedExecutionState.TestType == TestType.Load)
             {
-                var context = ContextFactory.CreateContext(_testFramework, "Simulations");
-                var simulationsBuilder = new SimulationsBuilder(scenario);
-                await scenario.Simulations(context, simulationsBuilder);
+                if (scenario.Warmup != null)
+                {
+                    await scenario.Warmup(
+                        ContextFactory.CreateContext(_testFramework, "Warmup"),
+                        new SimulationsBuilder(scenario, isWarmup: true));
+                }
+
+                await scenario.Simulations(
+                    ContextFactory.CreateContext(_testFramework, "Simulations"), 
+                    new SimulationsBuilder(scenario, isWarmup: false));
             }
 
             if (scenario.SimulationsInternal.Count == 0)

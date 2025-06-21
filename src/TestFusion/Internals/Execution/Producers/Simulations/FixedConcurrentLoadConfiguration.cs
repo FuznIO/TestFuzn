@@ -1,7 +1,8 @@
-﻿namespace TestFusion.Internals.Producers.Simulations;
+﻿namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class FixedConcurrentLoadConfiguration : ILoadConfiguration
 {
+    public bool IsWarmup { get; set; }
     public readonly int FixedCount;
     public readonly TimeSpan Duration;
     internal readonly int TotalCount;

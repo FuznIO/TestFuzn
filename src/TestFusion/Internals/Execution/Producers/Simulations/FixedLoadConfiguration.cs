@@ -1,11 +1,12 @@
-﻿namespace TestFusion.Internals.Producers.Simulations;
+﻿namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class FixedLoadConfiguration : ILoadConfiguration
 {
+    public bool IsWarmup { get; set; }
     public int Rate { get; }
     public TimeSpan Interval { get; }
     public TimeSpan Duration { get; }
-
+    
     public FixedLoadConfiguration(int rate, TimeSpan interval, TimeSpan duration)
     {
         Rate = rate;

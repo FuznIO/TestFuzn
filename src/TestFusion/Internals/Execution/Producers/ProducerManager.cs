@@ -1,16 +1,20 @@
-using TestFusion.Internals.Producers.Simulations;
+using TestFusion.Internals.Execution.Producers.Simulations;
+using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
 
-namespace TestFusion.Internals.Producers;
+namespace TestFusion.Internals.Execution.Producers;
 
 internal class ProducerManager
 {
     private readonly SharedExecutionState _sharedExecutionState;
+    private readonly LoadResultsManager _loadResultsManager;
     private List<Task> _producerTasks = new();
 
-    public ProducerManager(SharedExecutionState sharedExecutionState)
+    public ProducerManager(SharedExecutionState sharedExecutionState,
+        LoadResultsManager loadResultsManager)
     {
         _sharedExecutionState = sharedExecutionState;
+        _loadResultsManager = loadResultsManager;
     }
 
     public void StartProducers()
@@ -24,6 +28,10 @@ internal class ProducerManager
 
     private async Task Produce(Scenario scenario)
     {
+        var scenarioCollector = _loadResultsManager.GetScenarioCollector(scenario.Name);
+        var hasWarmupPhase = false;
+        var measurementPhaseStarted = false;
+
         foreach (var loadSimulation in scenario.SimulationsInternal)
         {
             if (_sharedExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
@@ -39,6 +47,26 @@ internal class ProducerManager
                 PauseLoadConfiguration gradualLoadIncrease => new PauseLoadHandler(gradualLoadIncrease),
                 _ => throw new NotSupportedException($"Load simulation type {loadSimulation.GetType().Name} is not supported."),
             };
+
+            if (loadSimulation.IsWarmup && !hasWarmupPhase)
+            {
+                hasWarmupPhase = true;
+                scenarioCollector.MarkPhaseAsStarted(TestPhase.Warmup);
+            }
+
+            if (hasWarmupPhase && !loadSimulation.IsWarmup)
+            {
+                while (_sharedExecutionState.IsExecutionQueueEmpty(scenario.Name) == false)
+                    await Task.Delay(TimeSpan.FromMilliseconds(100));
+
+                scenarioCollector.MarkPhaseAsCompleted(TestPhase.Warmup);
+            }
+
+            if (!loadSimulation.IsWarmup && !measurementPhaseStarted)
+            {
+                measurementPhaseStarted = true;
+                scenarioCollector.MarkPhaseAsStarted(TestPhase.Measurement);
+            }
 
             await handler.Execute();
         }

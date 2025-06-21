@@ -1,7 +1,8 @@
-﻿namespace TestFusion.Internals.Producers.Simulations;
+﻿namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class GradualLoadIncreaseConfiguration : ILoadConfiguration
 {
+    public bool IsWarmup { get; set; }
     public int StartRate { get; }
     public int EndRate { get; }
     public TimeSpan Duration { get; }

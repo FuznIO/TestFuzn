@@ -45,7 +45,7 @@ internal class LoadResultsManager
 
         foreach (var scenario in _scenarios)
         {
-            scenario.Value.MarkAsCompleted();
+            scenario.Value.MarkPhaseAsCompleted(Execution.TestPhase.Measurement);
         }
     }
 

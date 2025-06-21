@@ -1,32 +1,33 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.Extensions.Configuration;
+using System.Diagnostics;
 using TestFusion.Internals.State;
 
-namespace TestFusion.Internals.Producers.Simulations;
+namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class RandomLoadPerSecondHandler : ILoadHandler
 {
-    private readonly RandomLoadPerSecondConfiguration _randomLoadPerSecond;
+    private readonly RandomLoadPerSecondConfiguration _configuration;
     private readonly string _scenarioName;
     private readonly SharedExecutionState _sharedExecutionState;
 
     public RandomLoadPerSecondHandler(
-        RandomLoadPerSecondConfiguration randomLoadPerSecond,
+        RandomLoadPerSecondConfiguration configuration,
         string scenarioName,
         SharedExecutionState sharedExecutionState)
     {
-        _randomLoadPerSecond = randomLoadPerSecond;
+        _configuration = configuration;
         _scenarioName = scenarioName;
         _sharedExecutionState = sharedExecutionState;
     }
 
     public async Task Execute()
     {   
-        var minRate = _randomLoadPerSecond.MinRate;
-        var maxRate = _randomLoadPerSecond.MaxRate;
+        var minRate = _configuration.MinRate;
+        var maxRate = _configuration.MaxRate;
         var random = new Random();
         var stopwatch = new Stopwatch();
 
-        var end = DateTime.UtcNow.Add(_randomLoadPerSecond.Duration);
+        var end = DateTime.UtcNow.Add(_configuration.Duration);
 
         while (DateTime.UtcNow < end
             && _sharedExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
@@ -38,7 +39,7 @@ internal class RandomLoadPerSecondHandler : ILoadHandler
 
             for (int i = 0; i < currentRate; i++)
             {
-                var scenarioExecution = new ScenarioExecutionInfo(_scenarioName);
+                var scenarioExecution = new ScenarioExecutionInfo(_scenarioName, _configuration.IsWarmup);
 
                 _sharedExecutionState.EnqueueScenarioExecution(scenarioExecution);
             }

@@ -1,8 +1,7 @@
-﻿using TestFusion.Internals.Results.Feature;
-using TestFusion.Internals.Results.Load;
+﻿using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
 
-namespace TestFusion.Internals.Consumers;
+namespace TestFusion.Internals.Execution.Consumers;
 
 internal class ConsumerManager(
     SharedExecutionState sharedExecutionState,
@@ -31,17 +30,19 @@ internal class ConsumerManager(
 
             var scenario = _sharedExecutionState.Scenarios.Single(s => s.Name == scenarioExecution.ScenarioName);
 
-            await _scenarioExecutor.Execute(scenario);
+            await _scenarioExecutor.Execute(scenario, scenarioExecution.IsWarmup);
 
             _sharedExecutionState.RemoveFromQueues(scenarioExecution);
 
             if (_sharedExecutionState.IsScenarioExecutionComplete(scenarioExecution.ScenarioName))
             {
                 if (_sharedExecutionState.TestType == TestType.Feature)
+                {
                     _sharedExecutionState.ScenarioResult.MarkAsCompleted();
+                }
                 else if (_sharedExecutionState.TestType == TestType.Load)
                 {
-                    _loadResultsManager.GetScenarioCollector(scenarioExecution.ScenarioName).MarkAsCompleted();
+                    _loadResultsManager.GetScenarioCollector(scenarioExecution.ScenarioName).MarkPhaseAsCompleted(TestPhase.Measurement);
                     var scenarioLoadResult = _loadResultsManager.GetScenarioCollector(scenarioExecution.ScenarioName).GetCurrentResult(true);
                     await _scenarioExecutor.WriteToSinks(scenario, scenarioLoadResult, true);
                 }

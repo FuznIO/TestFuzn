@@ -1,6 +1,6 @@
 ﻿using TestFusion.Internals.State;
 
-namespace TestFusion.Internals.Producers.Simulations;
+namespace TestFusion.Internals.Execution.Producers.Simulations;
 
 internal class OneTimeLoadHandler : ILoadHandler
 {
@@ -27,7 +27,7 @@ internal class OneTimeLoadHandler : ILoadHandler
             if (_sharedExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
                 return Task.CompletedTask;
 
-            var scenarioExecution = new ScenarioExecutionInfo(_scenarioName);
+            var scenarioExecution = new ScenarioExecutionInfo(_scenarioName, _configuration.IsWarmup);
 
             _sharedExecutionState.EnqueueScenarioExecution(scenarioExecution);
         }

@@ -91,13 +91,20 @@ public class SyntaxTests : BaseFeatureTest
     [ScenarioTest]
     public async Task DefaultContext_Load()
     {
+        // Definition of test types:
+        // Feature Test = A test runs once with one set of input data, or run multiple times with different input data.
+        // Load Test = A test runs multiple times with the same input data, simulating load on the system.
         await Scenario("Default Context Showcase")
+            // Init is the first method that will be run.
             .Init((context) =>
             {
             })
             .Init(async (context) =>
             {
             })
+            // InputData will run before steps. Only one of the InputData* methods should be used.
+            // For feature test: Defines the number of iterations the test will be run.
+            // For load test: Load().Simulations() defines the number of iterations the test will run, input data provides test data for each iteration.
             .InputData("user1", "user2", "user3")
             .InputDataFromList((context) =>
             {
@@ -116,9 +123,19 @@ public class SyntaxTests : BaseFeatureTest
                 // Some async code goes here, read from database / api etc.
                 return await Task.FromResult(inputData);
             })
+            // Defines how the input data is provided to each execution
+            // Runs through the input data sequentially.
+            .InputDataBehavior(InputDataBehavior.Loop)
+            // Runs through the input data randomly.
+            .InputDataBehavior(InputDataBehavior.Random)
+            // Load test specific: Runs through the input data sequentially, then randomly.
+            .InputDataBehavior(InputDataBehavior.LoopThenRandom)
+            // Load test specific: Runs through the input data sequentially, then repeats the last input data for the remaining iterations.
+            .InputDataBehavior(InputDataBehavior.LoopThenRepeatLast)
+            // Steps are executed in order. If one steps fails within an execution, the rest of the steps will be skipped (=not executed).
             .Step("Step 1 - Sync with context", context =>
             {
-                // Get current row.
+                // Get input data for the row row.
                 var user = context.InputData<string>();
 
                 // Set data in context which is shared between steps.
@@ -136,6 +153,13 @@ public class SyntaxTests : BaseFeatureTest
                 await Task.CompletedTask;
             })
             .Step("Step 3 - Shared step", SharedStep)
+            // Warmup simulations run before .Load().Simulations(). 
+            // For these simulations no stats will be recorded, AssertWhileRunning, AssertWhenDone and sinks will not be called.
+            .Load().Warmup((context, simulations) =>
+            {
+                simulations.FixedConcurrentLoad(10, TimeSpan.FromSeconds(3));
+            })
+            // Supports both sync and async.
             .Load().Simulations((context, simulations) =>
             {
                 simulations.GradualLoadIncrease(1, 10, TimeSpan.FromSeconds(5));
@@ -153,6 +177,7 @@ public class SyntaxTests : BaseFeatureTest
                 simulations.Pause(TimeSpan.FromSeconds(5));
                 simulations.FixedConcurrentLoad(1000, TimeSpan.FromSeconds(100));
                 simulations.RandomLoadPerSecond(10, 50, TimeSpan.FromSeconds(100));
+                await Task.CompletedTask;
             })
             .Load().AssertWhileRunning((context, stats) =>
             {

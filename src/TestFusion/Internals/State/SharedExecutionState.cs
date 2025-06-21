@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using TestFusion.Internals.Results.Feature;
 using TestFusion.Contracts.Results.Feature;
+using TestFusion.Internals.Execution;
 
 namespace TestFusion.Internals.State;
 
@@ -86,6 +87,14 @@ internal class SharedExecutionState
         if (!_producersCompleted.ContainsKey(scenarioName))
             return false;
 
+        if (_scenarioExecutionQueuedCount[scenarioName] == 0)
+            return true;
+
+        return false;
+    }
+
+    public bool IsExecutionQueueEmpty(string scenarioName)
+    {
         if (_scenarioExecutionQueuedCount[scenarioName] == 0)
             return true;
 
