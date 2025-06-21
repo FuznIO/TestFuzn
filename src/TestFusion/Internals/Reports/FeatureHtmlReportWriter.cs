@@ -2,6 +2,7 @@
 using TestFusion.Internals.ConsoleOutput;
 using TestFusion.Contracts.Reports;
 using TestFusion.Results.Feature;
+using TestFusion.Internals.Reports.EmbeddedResources;
 
 namespace TestFusion.Internals.Reports;
 
@@ -11,6 +12,8 @@ internal class FeatureHtmlReportWriter : IFeatureReport
     {
         try
         {
+            await IncludeEmbeddedResources(featureReportData);
+
             var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "TestFusion_Report_Features.html");
 
             var htmlContent = GenerateHtmlReport(featureReportData);
@@ -150,5 +153,12 @@ internal class FeatureHtmlReportWriter : IFeatureReport
             }
             builder.AppendLine("</ul>");
         }
+    }
+
+    private async Task IncludeEmbeddedResources(FeatureReportData featureReportData)
+    {
+        await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
+            "TestFusion.Internals.Reports.EmbeddedResources.Scripts.chart.js",
+            Path.Combine(featureReportData.TestsOutputDirectory, "assets/scripts/chart.js"));
     }
 }

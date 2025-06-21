@@ -171,7 +171,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         builder.AppendLine("</table>");
 
         // Chart.js CDN and script
-        builder.AppendLine("<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>");
+        builder.AppendLine("<script src='assets/scripts/chart.js'></script>");
         builder.AppendLine("<script>");
         builder.AppendLine("const chartData = [");
         builder.AppendLine(string.Join(",", chartDataList));
