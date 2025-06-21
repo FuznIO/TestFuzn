@@ -9,12 +9,12 @@ public class Scenario
 
     internal Type ContextType { get; set; }
     internal Func<Context, Task> Init { get; set; }
-    internal Func<StepContext, Task> CleanupAfterEachIteration { get; set; }
-    internal Func<Context, Task> CleanupAfterScenario { get; set; }
+    internal Func<StepContext, Task> CleanupAfterEachIterationAction { get; set; }
+    internal Func<Context, Task> CleanupAfterScenarioAction { get; set; }
     internal InputDataInfo InputDataInfo { get; private set; } = new InputDataInfo();
     internal List<BaseStep> Steps { get; } = new List<BaseStep>();
-    internal Func<Context, SimulationsBuilder, Task> Warmup;
-    internal Func<Context, SimulationsBuilder, Task> Simulations;
+    internal Func<Context, SimulationsBuilder, Task> WarmupAction;
+    internal Func<Context, SimulationsBuilder, Task> SimulationsAction;
     internal List<ILoadConfiguration> SimulationsInternal { get; } = new List<ILoadConfiguration>();
     internal Action<Context, AssertScenarioStats>? AssertWhileRunningAction;
     internal Action<Context, AssertScenarioStats>? AssertWhenDoneAction;

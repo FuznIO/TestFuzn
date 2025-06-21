@@ -22,7 +22,7 @@ internal class CleanupRunner
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            if (scenario.CleanupAfterScenario != null)
+            if (scenario.CleanupAfterScenarioAction != null)
                 cleanupPerScenarioTasks.Add(ExecuteScenarioCleanup(_testFramework, scenario));
         }
 
@@ -38,6 +38,6 @@ internal class CleanupRunner
     private async Task ExecuteScenarioCleanup(ITestFrameworkAdapter testFramework, Scenario scenario)
     {
         var context = ContextFactory.CreateContext(testFramework, "CleanupAfterScenario");
-        await scenario.CleanupAfterScenario(context);
+        await scenario.CleanupAfterScenarioAction(context);
     }
 }

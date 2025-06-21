@@ -12,7 +12,7 @@ public class LoadBuilder<TStepContext>
 
     public ScenarioBuilder<TStepContext> Warmup(Action<Context, SimulationsBuilder> action)
     {
-        _scenarioBuilder.Scenario.Warmup = (context, simulations) =>
+        _scenarioBuilder.Scenario.WarmupAction = (context, simulations) =>
             {
                 action(context, simulations);
                 return Task.CompletedTask;
@@ -22,13 +22,13 @@ public class LoadBuilder<TStepContext>
 
     public ScenarioBuilder<TStepContext> Warmup(Func<Context, SimulationsBuilder, Task> action)
     {
-        _scenarioBuilder.Scenario.Warmup = action;
+        _scenarioBuilder.Scenario.WarmupAction = action;
         return _scenarioBuilder;
     }
 
     public ScenarioBuilder<TStepContext> Simulations(Action<Context, SimulationsBuilder> action)
     {
-        _scenarioBuilder.Scenario.Simulations = (context, simulations) =>
+        _scenarioBuilder.Scenario.SimulationsAction = (context, simulations) =>
             {
                 action(context, simulations);
                 return Task.CompletedTask;
@@ -38,7 +38,7 @@ public class LoadBuilder<TStepContext>
 
     public ScenarioBuilder<TStepContext> Simulations(Func<Context, SimulationsBuilder, Task> action)
     {
-        _scenarioBuilder.Scenario.Simulations = action;
+        _scenarioBuilder.Scenario.SimulationsAction = action;
         return _scenarioBuilder;
     }
 

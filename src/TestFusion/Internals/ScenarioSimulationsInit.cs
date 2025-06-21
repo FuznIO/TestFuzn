@@ -29,14 +29,14 @@ internal class ScenarioSimulationsInit
             }
             else if (_sharedExecutionState.TestType == TestType.Load)
             {
-                if (scenario.Warmup != null)
+                if (scenario.WarmupAction != null)
                 {
-                    await scenario.Warmup(
+                    await scenario.WarmupAction(
                         ContextFactory.CreateContext(_testFramework, "Warmup"),
                         new SimulationsBuilder(scenario, isWarmup: true));
                 }
 
-                await scenario.Simulations(
+                await scenario.SimulationsAction(
                     ContextFactory.CreateContext(_testFramework, "Simulations"), 
                     new SimulationsBuilder(scenario, isWarmup: false));
             }

@@ -119,10 +119,10 @@ internal class ScenarioExecutor
 
             iterationResult.ExecutionDuration = scenarioDuration.Elapsed;
 
-            if (scenario.CleanupAfterEachIteration != null)
+            if (scenario.CleanupAfterEachIterationAction != null)
             {
                 stepContext.Step = new CurrentStep(stepContext, "CleanupAfterEachIteration");
-                await scenario.CleanupAfterEachIteration(stepContext);
+                await scenario.CleanupAfterEachIterationAction(stepContext);
             }
         }
 

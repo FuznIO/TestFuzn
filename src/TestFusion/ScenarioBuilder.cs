@@ -136,7 +136,7 @@ public class ScenarioBuilder<TStepContext>
 
     public ScenarioBuilder<TStepContext> CleanupAfterEachIteration(Action<TStepContext> action)
     {
-        Scenario.CleanupAfterEachIteration = (context) => {
+        Scenario.CleanupAfterEachIterationAction = (context) => {
             action((TStepContext) context);
             return Task.CompletedTask;
         };
@@ -145,7 +145,7 @@ public class ScenarioBuilder<TStepContext>
 
     public ScenarioBuilder<TStepContext> CleanupAfterEachIteration(Func<TStepContext, Task> action)
     {
-        Scenario.CleanupAfterEachIteration = (context) => {
+        Scenario.CleanupAfterEachIterationAction = (context) => {
             return action((TStepContext) context);
         };
         return this;
@@ -153,7 +153,7 @@ public class ScenarioBuilder<TStepContext>
 
     public ScenarioBuilder<TStepContext> CleanupAfterScenario(Action<Context> action)
     {
-        Scenario.CleanupAfterScenario = (context) => {
+        Scenario.CleanupAfterScenarioAction = (context) => {
             action(context);
             return Task.CompletedTask;
         };
@@ -162,7 +162,7 @@ public class ScenarioBuilder<TStepContext>
 
     public ScenarioBuilder<TStepContext> CleanupAfterScenario(Func<Context, Task> action)
     {
-        Scenario.CleanupAfterScenario = (context) => {
+        Scenario.CleanupAfterScenarioAction = (context) => {
             return action(context);
         };
         return this;
