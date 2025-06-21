@@ -54,7 +54,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
         writer.WriteEndElement();
     }
 
-    private void WriteScenario(XmlWriter writer, ScenarioResult scenarioResult)
+    private void WriteScenario(XmlWriter writer, ScenarioFeatureResult scenarioResult)
     {
         writer.WriteStartElement("Scenario");
         writer.WriteAttributeString("name", scenarioResult.Name);
@@ -77,7 +77,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
         writer.WriteEndElement();
     }
 
-    private void WriteIteration(XmlWriter writer, IterationResult iterationResult)
+    private void WriteIteration(XmlWriter writer, IterationFeatureResult iterationResult)
     {
         writer.WriteStartElement("Iteration");
         writer.WriteAttributeString("status", iterationResult.Passed ? "Passed" : "Failed");
@@ -89,7 +89,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
         writer.WriteEndElement();
     }
 
-    private void WriteSteps(XmlWriter writer, IterationResult iterationResult)
+    private void WriteSteps(XmlWriter writer, IterationFeatureResult iterationResult)
     {
         writer.WriteStartElement("Steps");
         foreach (var step in iterationResult.StepResults)

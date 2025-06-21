@@ -1,6 +1,6 @@
 ﻿namespace TestFusion.Contracts.Results.Feature;
 
-public class StepResult
+public class StepFeatureResult
 {
     public string Name { get; internal set; }
     public StepStatus Status { get; internal set; } = StepStatus.Failed;

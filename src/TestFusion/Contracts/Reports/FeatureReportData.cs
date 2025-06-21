@@ -7,5 +7,5 @@ public class FeatureReportData
     public string TestSuiteName { get; internal set; }
     public string TestRunId { get; internal set; }
     public string TestsOutputDirectory { get; internal set; }
-    public TestSuiteResults Results { get; internal set; }
+    public TestSuiteFeatureResult Results { get; internal set; }
 }

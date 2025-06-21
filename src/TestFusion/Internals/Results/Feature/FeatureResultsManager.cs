@@ -2,15 +2,15 @@
 
 namespace TestFusion.Internals.Results.Feature;
 
-internal class ResultsManager
+internal class FeatureResultsManager
 {
-    private static TestSuiteResults _testSuiteResults { get; } = new TestSuiteResults();
+    private static TestSuiteFeatureResult _testSuiteResults { get; } = new TestSuiteFeatureResult();
 
-    internal ScenarioResult CreateScenarioResult(string featureName, Scenario scenario)
+    internal ScenarioFeatureResult CreateScenarioResult(string featureName, Scenario scenario)
     {
         var featureResult = _testSuiteResults.FeatureResults.GetOrAdd(featureName, new FeatureResult(featureName));
 
-        var scenarioResult = new ScenarioResult(scenario);
+        var scenarioResult = new ScenarioFeatureResult(scenario);
 
         lock (featureResult.ScenarioResults)
             featureResult.ScenarioResults.Add(scenarioResult);
@@ -18,7 +18,7 @@ internal class ResultsManager
         return scenarioResult;
     }
 
-    public TestSuiteResults GetTestSuiteResults()
+    public TestSuiteFeatureResult GetTestSuiteResults()
     {
         return _testSuiteResults;
     }

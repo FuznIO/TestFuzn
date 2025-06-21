@@ -6,7 +6,7 @@ namespace TestFusion.Internals.State;
 
 internal class SharedExecutionState
 {
-    private ResultsManager _resultsManager;
+    private FeatureResultsManager _featureResultsManager;
     public List<Scenario> Scenarios { get; set; } = new();
     public BlockingCollection<ScenarioExecutionInfo> ScenarioExecutionQueue { get; set; } = new();
     private Dictionary<string, ConcurrentDictionary<Guid, bool>> _constantQueue { get; set; } = new();
@@ -16,13 +16,13 @@ internal class SharedExecutionState
     public ExecutionStatus ExecutionStatus { get; set; } = ExecutionStatus.NotStarted;
     public Exception ExecutionStoppedReason { get; set; }
     public Exception FirstException { get; set; }
-    public ScenarioResult ScenarioResult { get; set; }
+    public ScenarioFeatureResult ScenarioResult { get; set; }
     public TestType TestType { get; set; }
     public IFeatureTest FeatureTestClassInstance { get; set; }
 
-    public SharedExecutionState(ResultsManager resultsManager)
+    public SharedExecutionState(FeatureResultsManager featureResultsManager)
     {
-        _resultsManager = resultsManager;
+        _featureResultsManager = featureResultsManager;
     }
 
     public void Init(IFeatureTest featureTest, params Scenario[] scenarios)
@@ -34,7 +34,7 @@ internal class SharedExecutionState
         else
             TestType = TestType.Load;
 
-        ScenarioResult = _resultsManager.CreateScenarioResult(FeatureTestClassInstance.FeatureName, scenarios.First());
+        ScenarioResult = _featureResultsManager.CreateScenarioResult(FeatureTestClassInstance.FeatureName, scenarios.First());
 
         ExecutionStatus = ExecutionStatus.Running;
         foreach (var scenario in scenarios)

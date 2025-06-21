@@ -139,7 +139,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         return builder.ToString();
     }
 
-    private void WriteStepResult(StringBuilder builder, StepResult stepResult)
+    private void WriteStepResult(StringBuilder builder, StepFeatureResult stepResult)
     {
         builder.AppendLine($"<li><span class='icon'>{SymbolSet.MapStepStatus(stepResult.Status)}</span>Step: {stepResult.Name} - <span class='{stepResult.Status.ToString().ToLower()}'>{stepResult.Status}</span> - Duration: {stepResult.Duration.ToTestFusionResponseTime()}</li>");
 

@@ -61,8 +61,8 @@ public static class TestFusionIntegration
 
         await _startupInstance.CleanupGlobal(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
 
-        var resultsManager = new ResultsManager();
-        var featureResults = resultsManager.GetTestSuiteResults();
+        var featureResultsManager = new FeatureResultsManager();
+        var featureResults = featureResultsManager.GetTestSuiteResults();
 
         var featureReportData = new FeatureReportData();
         featureReportData.TestSuiteName = GlobalState.Configuration.TestSuiteName;

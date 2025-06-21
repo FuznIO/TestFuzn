@@ -36,7 +36,7 @@ internal class ScenarioLoadCollector
         }
     }
 
-    internal void Record(ScenarioStatus status, IterationResult result)
+    internal void Record(ScenarioStatus status, IterationFeatureResult result)
     {
         lock (_lock)
         {

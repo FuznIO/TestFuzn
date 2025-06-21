@@ -2,7 +2,7 @@
 
 namespace TestFusion.Contracts.Results.Feature;
 
-public class TestSuiteResults
+public class TestSuiteFeatureResult
 {
     public ConcurrentDictionary<string, FeatureResult> FeatureResults { get; } = new();
 }

@@ -35,8 +35,8 @@ internal class ScenarioTestRunner
 
     public async Task Run(params Scenario[] scenarios)
     {
-        var resultsManager = new ResultsManager();
-        var sharedExecutionState = new SharedExecutionState(resultsManager);
+        var featureResultsManager = new FeatureResultsManager();
+        var sharedExecutionState = new SharedExecutionState(featureResultsManager);
         var loadResultsManager = new LoadResultsManager(sharedExecutionState);
         var producerManager = new ProducerManager(sharedExecutionState);
         var initStepsRunner = new InitStepsRunner(_testFramework, sharedExecutionState);

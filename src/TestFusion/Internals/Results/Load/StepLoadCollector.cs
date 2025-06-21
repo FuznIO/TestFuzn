@@ -18,7 +18,7 @@ internal class StepLoadCollector
         _name = name;
     }
 
-    internal void Record(StepResult result, DateTime startTime, DateTime endTime)
+    internal void Record(StepFeatureResult result, DateTime startTime, DateTime endTime)
     {
         lock (_lock)
         {

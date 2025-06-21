@@ -44,7 +44,7 @@ internal class ScenarioExecutor
         if (scenario.InputDataInfo.HasInputData)
             currentInputData = _loadInputFeeder.GetNextInput(scenario.Name);
 
-        var iterationResult = new IterationResult();
+        var iterationResult = new IterationFeatureResult();
 
         if (_sharedExecutionState.TestType == TestType.Feature)
         {
@@ -74,7 +74,7 @@ internal class ScenarioExecutor
 
                 stepDuration.Restart();
 
-                var stepResult = new StepResult();
+                var stepResult = new StepFeatureResult();
                 stepResult.Name = step.Name;
 
                 _consoleWriter.StepExecutionStart(stepIndex, totalSteps, step);
