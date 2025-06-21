@@ -6,8 +6,8 @@ using TestFusion.Internals.Results.Feature;
 using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
 using TestFusion.Contracts.Adapters;
-using TestFusion.Results.Feature;
-using TestFusion.Results.Load;
+using TestFusion.Contracts.Results.Feature;
+using TestFusion.Contracts.Results.Load;
 
 namespace TestFusion.Internals.Consumers;
 

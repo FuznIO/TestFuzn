@@ -1,6 +1,6 @@
 ﻿using TestFusion;
 using TestFusion.Internals.State;
-using TestFusion.Results.Feature;
+using TestFusion.Contracts.Results.Feature;
 
 public class CurrentStep
 {

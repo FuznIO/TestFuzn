@@ -1,5 +1,5 @@
 ﻿using Spectre.Console;
-using TestFusion.Results.Load;
+using TestFusion.Contracts.Results.Load;
 
 namespace TestFusion.Internals.ConsoleOutput;
 

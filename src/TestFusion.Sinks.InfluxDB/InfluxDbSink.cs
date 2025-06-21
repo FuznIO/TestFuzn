@@ -2,7 +2,7 @@
 using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Writes;
 using TestFusion.Contracts.Sinks;
-using TestFusion.Results.Load;
+using TestFusion.Contracts.Results.Load;
 
 namespace TestFusion.Sinks.InfluxDB;
 

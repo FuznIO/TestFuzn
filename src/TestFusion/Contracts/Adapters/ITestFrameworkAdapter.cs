@@ -1,5 +1,5 @@
 ﻿using TestFusion.ConsoleOutput;
-using TestFusion.Results.Load;
+using TestFusion.Contracts.Results.Load;
 
 namespace TestFusion.Contracts.Adapters;
 

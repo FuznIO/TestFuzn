@@ -1,4 +1,4 @@
-﻿namespace TestFusion.Results.Load;
+﻿namespace TestFusion.Contracts.Results.Load;
 
 public class ScenarioLoadResult
 {

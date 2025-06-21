@@ -4,7 +4,7 @@
 public class DefaultReportsTests : BaseFeatureTest
 {
     [ScenarioTest]
-    public async Task ShortRunning()
+    public async Task ShortRunning_WithErrors()
     {
         await Scenario("Verify report")
             .Step("Test", (context) =>
@@ -14,6 +14,29 @@ public class DefaultReportsTests : BaseFeatureTest
             {
                 if (Random.Shared.NextDouble() < 0.33)
                     Assert.Fail();
+            })
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
+            .Run();
+    }
+
+    [ScenarioTest]
+    public async Task ShortRunning_NoErrors()
+    {
+        await Scenario("Verify report")
+            .Step("Test Step 1", (context) =>
+            {
+            })
+            .Step("Test Step 2", (context) =>
+            {
+            })
+            .Step("Test Step 3", (context) =>
+            {
+            })
+            .Step("Test Step 4", (context) =>
+            {
+            })
+            .Step("Test Step 5", (context) =>
+            {
             })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
             .Run();

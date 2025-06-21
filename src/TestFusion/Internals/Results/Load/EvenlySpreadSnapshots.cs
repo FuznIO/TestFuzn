@@ -1,5 +1,5 @@
 ﻿using TestFusion.Internals.State;
-using TestFusion.Results.Load;
+using TestFusion.Contracts.Results.Load;
 
 namespace TestFusion.Internals.Results.Load;
 

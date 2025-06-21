@@ -1,6 +1,6 @@
 ﻿using TestFusion.Internals.Results.Load;
 using TestFusion.Contracts.Sinks;
-using TestFusion.Results.Load;
+using TestFusion.Contracts.Results.Load;
 
 namespace TestFusion.Internals.Reports;
 

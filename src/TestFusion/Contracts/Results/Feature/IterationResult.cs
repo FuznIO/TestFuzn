@@ -1,4 +1,4 @@
-﻿namespace TestFusion.Results.Feature;
+﻿namespace TestFusion.Contracts.Results.Feature;
 
 public class IterationResult
 {

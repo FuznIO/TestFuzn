@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using TestFusion.Internals.Results.Feature;
-using TestFusion.Results.Feature;
+using TestFusion.Contracts.Results.Feature;
 
 namespace TestFusion.Internals.State;
 

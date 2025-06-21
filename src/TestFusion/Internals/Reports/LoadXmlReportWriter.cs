@@ -2,7 +2,7 @@
 using System.Xml;
 using TestFusion.Internals.State;
 using TestFusion.Contracts.Reports;
-using TestFusion.Results.Load;
+using TestFusion.Contracts.Results.Load;
 
 namespace TestFusion.Internals.Reports;
 

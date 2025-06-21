@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using TestFusion.Internals.ConsoleOutput;
 using TestFusion.Contracts.Reports;
-using TestFusion.Results.Feature;
+using TestFusion.Contracts.Results.Feature;
 using TestFusion.Internals.Reports.EmbeddedResources;
 
 namespace TestFusion.Internals.Reports;

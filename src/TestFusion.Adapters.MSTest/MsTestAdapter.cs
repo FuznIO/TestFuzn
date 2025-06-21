@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using TestFusion.ConsoleOutput;
 using TestFusion.Contracts.Adapters;
-using TestFusion.Results.Load;
+using TestFusion.Contracts.Results.Load;
 
 namespace TestFusion;
 

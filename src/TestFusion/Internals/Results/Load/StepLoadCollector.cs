@@ -1,5 +1,5 @@
-﻿using TestFusion.Results.Feature;
-using TestFusion.Results.Load;
+﻿using TestFusion.Contracts.Results.Feature;
+using TestFusion.Contracts.Results.Load;
 
 namespace TestFusion.Internals.Results.Load;
 

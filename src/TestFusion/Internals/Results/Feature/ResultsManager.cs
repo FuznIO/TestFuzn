@@ -1,4 +1,4 @@
-﻿using TestFusion.Results.Feature;
+﻿using TestFusion.Contracts.Results.Feature;
 
 namespace TestFusion.Internals.Results.Feature;
 

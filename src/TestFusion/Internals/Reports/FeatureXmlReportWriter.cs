@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Xml;
 using TestFusion.Contracts.Reports;
-using TestFusion.Results.Feature;
+using TestFusion.Contracts.Results.Feature;
 
 namespace TestFusion.Internals.Reports;
 
