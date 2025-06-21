@@ -12,7 +12,7 @@ builder.Services.AddSwaggerGen();
 
 // EF Core + SQLite
 builder.Services.AddDbContext<ProductDbContext>(options =>
-    options.UseSqlite("Data Source=products.db"));
+    options.UseSqlite("Data Source=App_Data/products.db"));
 
 // App Services
 builder.Services.AddTransient<ProductService>();

@@ -402,5 +402,4 @@ FodyWeavers.xsd
 # Local appsettings
 **/appsettings.frankintel.json
 **/appsettings.void.json
-/src/SampleApp.WebApp/products.db-shm
-/src/SampleApp.WebApp/products.db-wal
+/src/SampleApp.WebApp/App_Data/
