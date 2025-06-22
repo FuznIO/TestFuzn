@@ -26,13 +26,13 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteStartElement("LoadTestResults");
                 writer.WriteAttributeString("version", "1.0");
 
-                WriteScenario(writer, loadReportData.ScenarioResult);
+                WriteScenario(writer, loadReportData.FeatureName, loadReportData.ScenarioResult);
 
                 writer.WriteEndElement();
                 writer.WriteEndDocument();
             }
 
-            InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.ScenarioResult.ScenarioName);
+            InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.FeatureName, loadReportData.ScenarioResult.ScenarioName);
 
             await File.WriteAllTextAsync(filePath, stringBuilder.ToString());
         }
@@ -43,7 +43,7 @@ internal class LoadXmlReportWriter : ILoadReport
         }
     }
 
-    private void WriteScenario(XmlWriter writer, ScenarioLoadResult scenarioResult)
+    private void WriteScenario(XmlWriter writer, string featureName, ScenarioLoadResult scenarioResult)
     {
         writer.WriteStartElement("Scenario");
         writer.WriteAttributeString("name", scenarioResult.ScenarioName);
@@ -52,7 +52,7 @@ internal class LoadXmlReportWriter : ILoadReport
 
         WriteSteps(writer, scenarioResult);
 
-        WriteSnapshots(writer, scenarioResult.ScenarioName);
+        WriteSnapshots(writer, featureName, scenarioResult.ScenarioName);
 
         writer.WriteEndElement();
     }
@@ -96,9 +96,9 @@ internal class LoadXmlReportWriter : ILoadReport
         }
     }
 
-    private void WriteSnapshots(XmlWriter writer, string scenarioName)
+    private void WriteSnapshots(XmlWriter writer, string featureName, string scenarioName)
     {
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(scenarioName);
+        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(featureName, scenarioName);
 
         writer.WriteStartElement("Snapshots");
 

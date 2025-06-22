@@ -3,8 +3,6 @@
 public class ScenarioLoadResult
 {
     public string ScenarioName { get; internal set; }
-    public DateTime StartTime { get; internal set; }
-    public DateTime EndTime { get; internal set; }
     public DateTime InitStartTime { get; internal set; }
     public DateTime InitEndTime { get; internal set; }
     public DateTime WarmupStartTime { get; internal set; }
@@ -68,18 +66,18 @@ public class ScenarioLoadResult
         return CleanupEndTime - CleanupStartTime;
     }
 
-    internal DateTime TestStartTime()
+    internal DateTime StartTime()
     {
         return InitStartTime;
     }
 
-    internal DateTime TestEndTime()
+    internal DateTime EndTime()
     {
         return CleanupEndTime;
     }
 
     internal TimeSpan TestRunTotalDuration()
     {
-        return TestEndTime() - TestStartTime();
+        return EndTime() - StartTime();
     }
 }

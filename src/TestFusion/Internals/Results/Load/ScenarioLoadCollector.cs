@@ -16,8 +16,6 @@ internal class ScenarioLoadCollector
     private DateTime _measurementEndTime;
     private DateTime _cleanupStartTime;
     private DateTime _cleanupEndTime;
-    private DateTime _startTime;
-    private DateTime _endTime;
     private bool _isCompleted;
     private ScenarioStatus _status;
     private Dictionary<string, StepLoadCollector> _steps = new();
@@ -35,7 +33,6 @@ internal class ScenarioLoadCollector
 
     public ScenarioLoadCollector(Scenario scenario)
     {
-        _startTime = DateTime.UtcNow;
         _scenarioName = scenario.Name;
         _status = ScenarioStatus.Passed;
         foreach (var step in scenario.Steps)
@@ -63,7 +60,7 @@ internal class ScenarioLoadCollector
             _lastUpdated = DateTime.UtcNow;
             _requestCount++;
 
-            var testRunTimeInSeconds = (int) (_lastUpdated - _startTime).TotalSeconds;
+            var testRunTimeInSeconds = (int) (_lastUpdated - _measurementStartTime).TotalSeconds;
             if (testRunTimeInSeconds == 0)
                 _requestsPerSecond = _requestCount;
             else
@@ -71,18 +68,18 @@ internal class ScenarioLoadCollector
 
             if (status == ScenarioStatus.Passed)
             {
-                _ok.Record(result.ExecutionDuration, _startTime, _lastUpdated);
+                _ok.Record(result.ExecutionDuration, _measurementStartTime, _lastUpdated);
             }
             else if (status == ScenarioStatus.Failed)
             {
-                _failed.Record(result.ExecutionDuration, _startTime, _lastUpdated);
+                _failed.Record(result.ExecutionDuration, _measurementStartTime, _lastUpdated);
             }
 
             foreach (var step in _steps)
             {
                 var stepIterationResult = result.StepResults[step.Key];
 
-                step.Value.Record(stepIterationResult, _startTime, _lastUpdated);
+                step.Value.Record(stepIterationResult, _measurementStartTime, _lastUpdated);
             }
         }
     }
@@ -131,7 +128,6 @@ internal class ScenarioLoadCollector
                 {
                     _measurementEndTime = _lastUpdated;
                     _isCompleted = true;
-                    _endTime = _lastUpdated;
                     _ = GetCurrentResult(true);
                     break;
                 }
@@ -174,8 +170,6 @@ internal class ScenarioLoadCollector
             // Measurement phase.
             result.MeasurementStartTime = _measurementStartTime;
             result.MeasurementEndTime = _measurementEndTime;
-            result.StartTime = _startTime;
-            result.EndTime = _endTime;
             
             result.Created = _lastUpdated;
             result.Status = _status;

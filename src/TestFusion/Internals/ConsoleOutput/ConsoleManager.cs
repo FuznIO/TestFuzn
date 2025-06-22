@@ -71,7 +71,7 @@ internal class ConsoleManager(
             else
             {
                 loadTestMetrics[scenario.Name].Status = "Running";
-                loadTestMetrics[scenario.Name].Duration = DateTime.UtcNow - updatedSnapshot.StartTime;
+                loadTestMetrics[scenario.Name].Duration = DateTime.UtcNow - updatedSnapshot.StartTime();
             }
 
             loadTestMetrics[scenario.Name].ScenarioLoadResultSnapshot = updatedSnapshot;

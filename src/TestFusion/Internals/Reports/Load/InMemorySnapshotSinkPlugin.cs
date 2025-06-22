@@ -14,14 +14,16 @@ internal class InMemorySnapshotCollectorSinkPlugin : ISinkPlugin
         return Task.CompletedTask;
     }
 
-    public Task WriteMetrics(string testRunId, string scenarioName, ScenarioLoadResult scenarioResult)
+    public Task WriteMetrics(string testRunId, string featureName, ScenarioLoadResult scenarioResult)
     {
+        var key = GetKey(featureName, scenarioResult.ScenarioName);
+
         lock (_lock)
         {
-            if ( !_snapshotsPerScenario.TryGetValue(scenarioName, out var snapshots))
+            if ( !_snapshotsPerScenario.TryGetValue(key, out var snapshots))
             {
                 snapshots = new EvenlySpreadSnapshots(100);
-                _snapshotsPerScenario[scenarioName] = snapshots;
+                _snapshotsPerScenario[key] = snapshots;
             }
 
             snapshots.AddSnapshot(scenarioResult);
@@ -29,27 +31,32 @@ internal class InMemorySnapshotCollectorSinkPlugin : ISinkPlugin
         }
     }
 
-    public static IReadOnlyList<ScenarioLoadResult> GetSnapshots(string scenarioName)
+    public static IReadOnlyList<ScenarioLoadResult> GetSnapshots(string featureName, string scenarioName)
     {
         lock (_lock)
         {
-            if (_snapshotsPerScenario.TryGetValue(scenarioName, out var snapshots))
+            if (_snapshotsPerScenario.TryGetValue(GetKey(featureName, scenarioName), out var snapshots))
                 return snapshots.GetSnapshots();
 
             return new List<ScenarioLoadResult>();
         }
     }
 
-    public static void RemoveSnapshots(string name)
+    public static void RemoveSnapshots(string featureName, string scenarioName)
     {
         lock (_lock)
         { 
-            _snapshotsPerScenario.Remove(name);
+            _snapshotsPerScenario.Remove(GetKey(featureName, scenarioName));
         }
     }
 
     public Task CleanupGlobal()
     {
         return Task.CompletedTask;
+    }
+
+    private static string GetKey(string featureName, string scenarioName)
+    {
+        return $"{featureName}_{scenarioName}";
     }
 }

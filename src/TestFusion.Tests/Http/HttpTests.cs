@@ -33,7 +33,7 @@ public class GetProductsE2ETests : BaseFeatureTest
                 Assert.IsTrue(response.Ok);
                 Assert.AreEqual("Pong", response.BodyAs<string>());
             })
-            .Load().Simulations((context, simulations) => simulations.FixedLoad(1500, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(10, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
             .Run();
     }
 

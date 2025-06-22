@@ -66,9 +66,9 @@ internal class LoadHtmlReportWriter : ILoadReport
         builder.AppendLine("<th>Property</th>");
         builder.AppendLine("<th>Value</th>");
         builder.AppendLine("</tr");
-        builder.AppendLine($"<tr><td>Feature</td><td>{loadReportData.FeatureName}</td></tr>");
-        builder.AppendLine($"<tr><td>Scenario</td><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
         builder.AppendLine($"<tr><td>Test Run Id</td><td>{loadReportData.TestRunId}</td></tr>");
+        builder.AppendLine($"<tr><td>Feature Name</td><td>{loadReportData.FeatureName}</td></tr>");
+        builder.AppendLine($"<tr><td>Scenario Name</td><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
         builder.AppendLine("</table>");
         builder.AppendLine("</tbody>");
         
@@ -86,8 +86,8 @@ internal class LoadHtmlReportWriter : ILoadReport
         builder.AppendLine("<tr>");
         builder.AppendLine($"<td>Test Run</td>");
         builder.AppendLine($"<td>{scenarioResult.TestRunTotalDuration().ToTestFusionFormattedDuration()}</td>");
-        builder.AppendLine($"<td>{scenarioResult.TestStartTime().ToLocalTime()}</td>");
-        builder.AppendLine($"<td>{scenarioResult.TestEndTime().ToLocalTime()}</td>");
+        builder.AppendLine($"<td>{scenarioResult.StartTime().ToLocalTime()}</td>");
+        builder.AppendLine($"<td>{scenarioResult.EndTime().ToLocalTime()}</td>");
         builder.AppendLine("</tr>");
         // Init
         builder.AppendLine("<tr>");
@@ -208,7 +208,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         builder.AppendLine("</thead>");
         builder.AppendLine("<tbody>");
 
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(scenario.ScenarioName);
+        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.FeatureName, scenario.ScenarioName);
 
         foreach (var snapshot in snapshots)
         {

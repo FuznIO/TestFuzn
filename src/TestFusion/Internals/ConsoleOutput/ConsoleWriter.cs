@@ -151,7 +151,7 @@ internal class ConsoleWriter
                 loadtestResults.TryAdd(scenario, _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult());
             }
             
-            _testFramework.WriteSummary(loadtestResults.First().Value.StartTime, _sharedExecutionState.TestRunState.TestRunDuration(), loadtestResults);
+            _testFramework.WriteSummary(loadtestResults.First().Value.StartTime(), _sharedExecutionState.TestRunState.TestRunDuration(), loadtestResults);
             return;
         }
 
@@ -163,7 +163,7 @@ internal class ConsoleWriter
             if (_sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
                 _testFramework.WriteMarkup($"[red]Status: Stopped, reason: {_sharedExecutionState.TestRunState.ExecutionStoppedReason.Message}[/]\r\n");
             else
-                _testFramework.WriteMarkup("[green]Status: ConsoleCompleted successfully.[/]\r\n");
+                _testFramework.WriteMarkup("[green]Status: Completed successfully.[/]\r\n");
         }
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
@@ -190,7 +190,7 @@ internal class ConsoleWriter
                 {
                     new AdvancedTableCell($"", 3),
                     new AdvancedTableCell($"{loadResult.TotalExecutionDuration.ToTestFusionFormattedDuration()}", 1),
-                    new AdvancedTableCell($"{(loadResult.EndTime - loadResult.StartTime).ToTestFusionFormattedDuration()}", 1)
+                    new AdvancedTableCell($"{(loadResult.TestRunTotalDuration()).ToTestFusionFormattedDuration()}", 1)
                 }
             });
             table.Rows.Add(new AdvancedTableRow

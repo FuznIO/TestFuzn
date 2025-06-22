@@ -43,7 +43,7 @@ internal class TestFusionProvider : ITestFrameworkAdapter
             headerTable.AddRow(
                 $"{scenario.Key.Name}",
                 $"{scenario.Value.TotalExecutionDuration.ToTestFusionFormattedDuration()}",
-                $"{(scenario.Value.EndTime - scenario.Value.StartTime).ToTestFusionFormattedDuration()}",
+                $"{(scenario.Value.TestRunTotalDuration()).ToTestFusionFormattedDuration()}",
                 $"{(scenario.Value.Status == ScenarioStatus.Passed ? "[green]Passed[/]" : "[red]Failed[/]")}"
             );
 
