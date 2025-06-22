@@ -3,7 +3,7 @@ using System.Xml;
 using TestFusion.Contracts.Reports;
 using TestFusion.Contracts.Results.Feature;
 
-namespace TestFusion.Internals.Reports;
+namespace TestFusion.Internals.Reports.Feature;
 
 internal class FeatureXmlReportWriter : IFeatureReport
 {
@@ -48,7 +48,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
 
         foreach (var scenarioResult in featureResult.ScenarioResults)
         {
-            WriteScenario(writer, scenarioResult);
+            WriteScenario(writer, scenarioResult.Value);
         }
 
         writer.WriteEndElement();

@@ -7,14 +7,11 @@ namespace TestFusion.Internals.Execution.Producers;
 internal class ProducerManager
 {
     private readonly SharedExecutionState _sharedExecutionState;
-    private readonly LoadResultsManager _loadResultsManager;
     private List<Task> _producerTasks = new();
 
-    public ProducerManager(SharedExecutionState sharedExecutionState,
-        LoadResultsManager loadResultsManager)
+    public ProducerManager(SharedExecutionState sharedExecutionState)
     {
         _sharedExecutionState = sharedExecutionState;
-        _loadResultsManager = loadResultsManager;
     }
 
     public void StartProducers()
@@ -28,13 +25,13 @@ internal class ProducerManager
 
     private async Task Produce(Scenario scenario)
     {
-        var scenarioCollector = _loadResultsManager.GetScenarioCollector(scenario.Name);
+        var scenarioCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
         var hasWarmupPhase = false;
         var measurementPhaseStarted = false;
 
         foreach (var loadSimulation in scenario.SimulationsInternal)
         {
-            if (_sharedExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
+            if (_sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
                 break;
 
             ILoadHandler handler = loadSimulation switch
@@ -51,7 +48,7 @@ internal class ProducerManager
             if (loadSimulation.IsWarmup && !hasWarmupPhase)
             {
                 hasWarmupPhase = true;
-                scenarioCollector.MarkPhaseAsStarted(TestPhase.Warmup);
+                scenarioCollector.MarkPhaseAsStarted(LoadTestPhase.Warmup);
             }
 
             if (hasWarmupPhase && !loadSimulation.IsWarmup)
@@ -59,13 +56,13 @@ internal class ProducerManager
                 while (_sharedExecutionState.IsExecutionQueueEmpty(scenario.Name) == false)
                     await Task.Delay(TimeSpan.FromMilliseconds(100));
 
-                scenarioCollector.MarkPhaseAsCompleted(TestPhase.Warmup);
+                scenarioCollector.MarkPhaseAsCompleted(LoadTestPhase.Warmup);
             }
 
             if (!loadSimulation.IsWarmup && !measurementPhaseStarted)
             {
                 measurementPhaseStarted = true;
-                scenarioCollector.MarkPhaseAsStarted(TestPhase.Measurement);
+                scenarioCollector.MarkPhaseAsStarted(LoadTestPhase.Measurement);
             }
 
             await handler.Execute();
@@ -77,6 +74,6 @@ internal class ProducerManager
     public async Task WaitForProducersToComplete()
     {
         await Task.WhenAll(_producerTasks);
-        _sharedExecutionState.ScenarioExecutionQueue.CompleteAdding();
+        _sharedExecutionState.ExecutionState.MessageQueue.CompleteAdding();
     }
 }

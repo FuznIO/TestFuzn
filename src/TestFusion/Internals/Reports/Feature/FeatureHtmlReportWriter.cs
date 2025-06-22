@@ -4,7 +4,7 @@ using TestFusion.Contracts.Reports;
 using TestFusion.Contracts.Results.Feature;
 using TestFusion.Internals.Reports.EmbeddedResources;
 
-namespace TestFusion.Internals.Reports;
+namespace TestFusion.Internals.Reports.Feature;
 
 internal class FeatureHtmlReportWriter : IFeatureReport
 {
@@ -76,7 +76,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         // Summary
         var totalFeatures = featureReportData.Results.FeatureResults.Count;
         var totalScenarios = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count);
-        var totalPassedScenarios = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Status == ScenarioStatus.Passed));
+        var totalPassedScenarios = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Passed));
         var totalFailedScenarios = totalScenarios - totalPassedScenarios;
 
         builder.AppendLine("<div class='summary'>");
@@ -94,12 +94,12 @@ internal class FeatureHtmlReportWriter : IFeatureReport
 
             foreach (var scenarioResult in featureResult.Value.ScenarioResults)
             {
-                builder.AppendLine($"<button class='collapsible'>Scenario: {scenarioResult.Name} - <span class='{(scenarioResult.Status == ScenarioStatus.Passed ? "passed" : "failed")}'>{(scenarioResult.Status == ScenarioStatus.Passed ? "Passed" : "Failed")}</span></button>");
+                builder.AppendLine($"<button class='collapsible'>Scenario: {scenarioResult.Value.Name} - <span class='{(scenarioResult.Value.Status == ScenarioStatus.Passed ? "passed" : "failed")}'>{(scenarioResult.Value.Status == ScenarioStatus.Passed ? "Passed" : "Failed")}</span></button>");
                 builder.AppendLine("<div class='content'>");
 
-                if (scenarioResult.HasInputData)
+                if (scenarioResult.Value.HasInputData)
                 {
-                    foreach (var iteration in scenarioResult.IterationResults)
+                    foreach (var iteration in scenarioResult.Value.IterationResults)
                     {
                         builder.AppendLine($"<button class='collapsible'>Input Data: <span class='{(iteration.Passed ? "passed" : "failed")}'>{(iteration.Passed ? "Passed" : "Failed")}</span></button>");
                         builder.AppendLine("<div class='content'>");
@@ -115,7 +115,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
                 }
                 else
                 {
-                    var iteration = scenarioResult.IterationResults.FirstOrDefault();
+                    var iteration = scenarioResult.Value.IterationResults.FirstOrDefault();
                     if (iteration != null)
                     {
                         builder.AppendLine("<ul>");

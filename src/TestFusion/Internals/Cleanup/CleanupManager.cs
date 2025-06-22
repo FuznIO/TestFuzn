@@ -3,41 +3,41 @@ using TestFusion.Contracts.Adapters;
 
 namespace TestFusion.Internals.Cleanup;
 
-internal class CleanupRunner
+internal class CleanupManager
 {
     private readonly ITestFrameworkAdapter _testFramework;
     private readonly SharedExecutionState _sharedExecutionState;
 
-    public CleanupRunner(ITestFrameworkAdapter testFramework, SharedExecutionState sharedExecutionState)
+    public CleanupManager(ITestFrameworkAdapter testFramework, SharedExecutionState sharedExecutionState)
     {
         _testFramework = testFramework;
         _sharedExecutionState = sharedExecutionState;
     }
 
-    internal async Task Cleanup()
+    public async Task Run()
     {
-        await ExecuteCleanupAfterScenarioTest(_testFramework);
-
         var cleanupPerScenarioTasks = new List<Task>();
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
             if (scenario.CleanupAfterScenarioAction != null)
-                cleanupPerScenarioTasks.Add(ExecuteScenarioCleanup(_testFramework, scenario));
+                cleanupPerScenarioTasks.Add(ExecuteCleanupAfterScenario(_testFramework, scenario));
         }
 
         await Task.WhenAll(cleanupPerScenarioTasks);
+
+        await IFeatureTestCleanup();
     }
 
-    public async Task ExecuteCleanupAfterScenarioTest(ITestFrameworkAdapter testFramework)
-    {
-        var context = ContextFactory.CreateContext(testFramework, "AfterEachScenarioTest");
-        await _sharedExecutionState.FeatureTestClassInstance.CleanupScenarioTest(context);
-    }
-
-    private async Task ExecuteScenarioCleanup(ITestFrameworkAdapter testFramework, Scenario scenario)
+    private async Task ExecuteCleanupAfterScenario(ITestFrameworkAdapter testFramework, Scenario scenario)
     {
         var context = ContextFactory.CreateContext(testFramework, "CleanupAfterScenario");
         await scenario.CleanupAfterScenarioAction(context);
+    }
+
+    private async Task IFeatureTestCleanup()
+    {
+        var context = ContextFactory.CreateContext(_testFramework, "CleanupScenarioTest");
+        await _sharedExecutionState.IFeatureTestClassInstance.CleanupScenarioTest(context);
     }
 }

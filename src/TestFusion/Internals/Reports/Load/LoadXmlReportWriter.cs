@@ -4,7 +4,7 @@ using TestFusion.Internals.State;
 using TestFusion.Contracts.Reports;
 using TestFusion.Contracts.Results.Load;
 
-namespace TestFusion.Internals.Reports;
+namespace TestFusion.Internals.Reports.Load;
 
 internal class LoadXmlReportWriter : ILoadReport
 {

@@ -1,4 +1,5 @@
-﻿using TestFusion.Internals.Reports;
+﻿using TestFusion.Internals.Reports.Feature;
+using TestFusion.Internals.Reports.Load;
 using TestFusion.Contracts.Plugins;
 using TestFusion.Contracts.Reports;
 using TestFusion.Contracts.Sinks;

@@ -30,7 +30,7 @@ internal class RandomLoadPerSecondHandler : ILoadHandler
         var end = DateTime.UtcNow.Add(_configuration.Duration);
 
         while (DateTime.UtcNow < end
-            && _sharedExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
+            && _sharedExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
         {
             var currentRate = random.Next(minRate, maxRate);
 
@@ -39,9 +39,9 @@ internal class RandomLoadPerSecondHandler : ILoadHandler
 
             for (int i = 0; i < currentRate; i++)
             {
-                var scenarioExecution = new ScenarioExecutionInfo(_scenarioName, _configuration.IsWarmup);
+                var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
 
-                _sharedExecutionState.EnqueueScenarioExecution(scenarioExecution);
+                _sharedExecutionState.EnqueueScenarioExecution(message);
             }
             stopwatch.Stop();
 

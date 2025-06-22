@@ -7,7 +7,6 @@ namespace TestFusion.Internals.Results.Load;
 internal class ScenarioLoadCollector
 {
     private readonly object _lock = new object();
-    private string _featureName;
     private string _scenarioName;
     private DateTime _initStartTime;
     private DateTime _initEndTime;
@@ -19,7 +18,7 @@ internal class ScenarioLoadCollector
     private DateTime _cleanupEndTime;
     private DateTime _startTime;
     private DateTime _endTime;
-    private TestPhase _testPhase = TestPhase.Init;
+    private LoadTestPhase _testPhase = LoadTestPhase.Init;
     private bool _isCompleted;
     private ScenarioStatus _status;
     private Dictionary<string, StepLoadCollector> _steps = new();
@@ -35,11 +34,10 @@ internal class ScenarioLoadCollector
 
     public string ScenarioName { get => _scenarioName; set => _scenarioName = value; }
 
-    internal void Init(Scenario scenario, string featureName)
+    public ScenarioLoadCollector(Scenario scenario)
     {
-        MarkPhaseAsStartedNoLocking(TestPhase.Init);
+        MarkPhaseAsStartedNoLocking(LoadTestPhase.Init);
         _startTime = DateTime.UtcNow;
-        _featureName = featureName;
         _scenarioName = scenario.Name;
         _status = ScenarioStatus.Passed;
         foreach (var step in scenario.Steps)
@@ -91,20 +89,20 @@ internal class ScenarioLoadCollector
         }
     }
 
-    private void MarkPhaseAsStartedNoLocking(TestPhase testPhase)
+    private void MarkPhaseAsStartedNoLocking(LoadTestPhase testPhase)
     { 
         switch (testPhase)
         {
-            case TestPhase.Init:
+            case LoadTestPhase.Init:
                 _initStartTime = DateTime.UtcNow;
                 break;
-            case TestPhase.Warmup:
+            case LoadTestPhase.Warmup:
                 _warmupStartTime = DateTime.UtcNow;
                 break;
-            case TestPhase.Measurement:
+            case LoadTestPhase.Measurement:
                 _measurementStartTime = DateTime.UtcNow;
                 break;
-            case TestPhase.Cleanup:
+            case LoadTestPhase.Cleanup:
                 _cleanupStartTime = DateTime.UtcNow;
                 break;
             default:
@@ -112,7 +110,7 @@ internal class ScenarioLoadCollector
         }
     }
 
-    internal void MarkPhaseAsStarted(TestPhase testPhase)
+    internal void MarkPhaseAsStarted(LoadTestPhase testPhase)
     {
         lock (_lock)
         {
@@ -120,23 +118,23 @@ internal class ScenarioLoadCollector
         }
     }
 
-    internal void MarkPhaseAsCompleted(TestPhase testPhase)
+    internal void MarkPhaseAsCompleted(LoadTestPhase testPhase)
     {
         lock (_lock)
         {
             switch (testPhase)
             {
-                case TestPhase.Init:
+                case LoadTestPhase.Init:
                 {
                     _initEndTime = DateTime.UtcNow;
                     break;
                 }
-                case TestPhase.Warmup:
+                case LoadTestPhase.Warmup:
                 {
                     _warmupEndTime = DateTime.UtcNow;
                     break;
                 }
-                case TestPhase.Measurement:
+                case LoadTestPhase.Measurement:
                 {
                     _measurementEndTime = _lastUpdated;
                     _isCompleted = true;
@@ -144,7 +142,7 @@ internal class ScenarioLoadCollector
                     _ = GetCurrentResult(true);
                     break;
                 }
-                case TestPhase.Cleanup:
+                case LoadTestPhase.Cleanup:
                 {
                     _cleanupEndTime = DateTime.UtcNow;
                     break;
@@ -172,7 +170,6 @@ internal class ScenarioLoadCollector
             }
 
             var result = new ScenarioLoadResult();
-            result.FeatureName = _featureName;
             result.ScenarioName = _scenarioName;
             result.InitStartTime = _initStartTime;
             result.InitEndTime = _initEndTime;

@@ -1,6 +1,6 @@
 ﻿namespace TestFusion.Internals.Execution;
 
-internal enum TestPhase
+internal enum LoadTestPhase
 {
     Init,
     Warmup,

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using TestFusion.Internals.InputData;
-using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
 using TestFusion.Contracts.Adapters;
 using TestFusion.Contracts.Results.Feature;
@@ -9,30 +8,26 @@ using TestFusion.Contracts.Results.Load;
 
 namespace TestFusion.Internals.Execution;
 
-internal class ScenarioExecutor
+internal class ExecuteScenarioMessageHandler
 {
     private readonly ITestFrameworkAdapter _testFramework;
     private readonly SharedExecutionState _sharedExecutionState;
-    private readonly LoadResultsManager _loadResultsManager;
     private readonly InputDataFeeder _loadInputFeeder;
     private readonly static ConcurrentDictionary<string, DateTime> _lastSinkWrite = new();
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _sinkSemaphores = new();
 
-
-    public ScenarioExecutor(ITestFrameworkAdapter testFramework,
+    public ExecuteScenarioMessageHandler(ITestFrameworkAdapter testFramework,
         SharedExecutionState sharedExecutionState,
-        LoadResultsManager loadResultsManager,
         InputDataFeeder loadInputFeeder)
     {
         _testFramework = testFramework;
         _sharedExecutionState = sharedExecutionState;
-        _loadResultsManager = loadResultsManager;
         _loadInputFeeder = loadInputFeeder;
     }
 
-    public async Task Execute(Scenario scenario, bool isWarmup)
+    public async Task Execute(ExecuteScenarioMessage message, Scenario scenario)
     {
-        var scenarioLoadCollector = _loadResultsManager.GetScenarioCollector(scenario.Name);
+        var scenarioLoadCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
 
         object currentInputData = null;
 
@@ -48,7 +43,7 @@ internal class ScenarioExecutor
                 iterationResult.InputData = PropertyHelper.GetStringFromProperties(currentInputData);
             }
 
-            _sharedExecutionState.ScenarioResult.IterationResults.Add(iterationResult);
+            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].IterationResults.Add(iterationResult);
         }
 
         var stepContext = ContextFactory.CreateStepContext(_testFramework, scenario, "", currentInputData);
@@ -92,8 +87,8 @@ internal class ScenarioExecutor
                         stepResult.Exception = ex;
                         if (_sharedExecutionState.TestType == TestType.Feature
                             && !scenario.InputDataInfo.HasInputData
-                            && _sharedExecutionState.FirstException == null)
-                            _sharedExecutionState.FirstException = ex;
+                            && _sharedExecutionState.TestRunState.FirstException == null)
+                            _sharedExecutionState.TestRunState.FirstException = ex;
                     }
                     finally
                     {
@@ -126,7 +121,7 @@ internal class ScenarioExecutor
             }
         }
 
-        if (isWarmup)
+        if (message.IsWarmup)
             return;
 
         scenarioLoadCollector.RecordMeasurement(scenarioStatus ?? ScenarioStatus.Failed, iterationResult);
@@ -151,8 +146,8 @@ internal class ScenarioExecutor
             }
             catch (Exception ex)
             {
-                _sharedExecutionState.ExecutionStatus = ExecutionStatus.Stopped;
-                _sharedExecutionState.ExecutionStoppedReason = ex;
+                _sharedExecutionState.TestRunState.ExecutionStatus = ExecutionStatus.Stopped;
+                _sharedExecutionState.TestRunState.ExecutionStoppedReason = ex;
             }
         }
 

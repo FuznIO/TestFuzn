@@ -7,14 +7,14 @@ public class ContextTests : BaseFeatureTest
     public override Task InitScenarioTest(TestFusion.Context context)
     {
         Assert.IsTrue(!string.IsNullOrEmpty(context.TestRunId));
-        Assert.AreEqual("BeforeEachScenarioTest", context.Step.Name);
+        Assert.AreEqual("InitScenarioTest", context.Step.Name);
         return Task.CompletedTask;
     }
 
     public override Task CleanupScenarioTest(TestFusion.Context context)
     {
         Assert.IsTrue(!string.IsNullOrEmpty(context.TestRunId));
-        Assert.AreEqual("AfterEachScenarioTest", context.Step.Name);
+        Assert.AreEqual("CleanupScenarioTest", context.Step.Name);
         return Task.CompletedTask;
     }
 

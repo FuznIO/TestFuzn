@@ -2,24 +2,25 @@
 
 namespace TestFusion.Internals.Results.Feature;
 
-internal class FeatureResultsManager
+internal class FeatureResultManager
 {
     private static TestSuiteFeatureResult _testSuiteResult { get; } = new TestSuiteFeatureResult();
-
-    internal ScenarioFeatureResult CreateScenarioResult(string featureName, Scenario scenario)
-    {
-        var featureResult = _testSuiteResult.FeatureResults.GetOrAdd(featureName, new FeatureResult(featureName));
-
-        var scenarioResult = new ScenarioFeatureResult(scenario);
-
-        lock (featureResult.ScenarioResults)
-            featureResult.ScenarioResults.Add(scenarioResult);
-
-        return scenarioResult;
-    }
 
     public TestSuiteFeatureResult GetTestSuiteResults()
     {
         return _testSuiteResult;
+    }
+
+    internal void AddScenarioResults(string featureName, Dictionary<string, ScenarioFeatureResult> scenarioCollectors)
+    {
+        var featureResult = _testSuiteResult.FeatureResults.GetOrAdd(featureName, (key) => new FeatureResult(featureName));
+
+        foreach (var scenarioCollector in scenarioCollectors)
+        {
+            if (!featureResult.ScenarioResults.TryAdd(scenarioCollector.Key, scenarioCollector.Value))
+            {
+                throw new Exception($"Scenario '{scenarioCollector.Key}' already exists in feature '{featureName}'.");
+            }
+        }
     }
 }

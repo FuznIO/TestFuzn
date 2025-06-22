@@ -1,5 +1,4 @@
 ﻿using TestFusion.Internals.ConsoleOutput;
-using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.State;
 using TestFusion.Contracts.Adapters;
 
@@ -8,8 +7,7 @@ namespace TestFusion.Internals.Logger;
 internal class ConsoleManager(
     ITestFrameworkAdapter _testFramework,
     SharedExecutionState _sharedExecutionState,
-    ConsoleWriter _consoleWriter,
-    LoadResultsManager loadResultsManager)
+    ConsoleWriter _consoleWriter)
 {
     private Task _realtimeLogging;
     private CancellationTokenSource _ctSource = new CancellationTokenSource();
@@ -35,7 +33,7 @@ internal class ConsoleManager(
         {
             loadTestMetrics.TryAdd(scenario.Name, new LiveMetrics
             {
-                ScenarioLoadResultSnapshot = loadResultsManager.GetScenarioCollector(scenario.Name).GetCurrentResult(),
+                ScenarioLoadResultSnapshot = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult(),
                 Status = "Running"
             });
         }
@@ -64,8 +62,8 @@ internal class ConsoleManager(
             if (_sharedExecutionState.IsScenarioExecutionComplete(scenario.Name) && loadTestMetrics[scenario.Name].ConsoleCompleted)
                 continue;
 
-            var updatedSnapshot = loadResultsManager.GetScenarioCollector(scenario.Name).GetCurrentResult();
-            if (_sharedExecutionState.IsScenarioExecutionComplete(scenario.Name) || _sharedExecutionState.ExecutionStatus == ExecutionStatus.Completed)
+            var updatedSnapshot = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult();
+            if (_sharedExecutionState.IsScenarioExecutionComplete(scenario.Name) || _sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Completed)
             {
                 loadTestMetrics[scenario.Name].Status = updatedSnapshot.Status.ToString();
                 loadTestMetrics[scenario.Name].ConsoleCompleted = true;

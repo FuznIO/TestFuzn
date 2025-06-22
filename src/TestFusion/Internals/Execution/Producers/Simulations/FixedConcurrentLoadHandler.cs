@@ -27,7 +27,7 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
         var totalCount = _configuration.TotalCount;
         var i = 0;
 
-        while (_sharedExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
+        while (_sharedExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
         {
             if (totalCount > 0)
             {
@@ -46,10 +46,10 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
                 addCount--;
                 i++;
 
-                var execution = new ScenarioExecutionInfo(_scenarioName, _configuration.IsWarmup);
+                var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
 
-                _sharedExecutionState.AddToConstantQueue(execution);
-                _sharedExecutionState.EnqueueScenarioExecution(execution);
+                _sharedExecutionState.AddToConstantQueue(message);
+                _sharedExecutionState.EnqueueScenarioExecution(message);
             }
             await Task.Delay(TimeSpan.FromMilliseconds(10));
         }

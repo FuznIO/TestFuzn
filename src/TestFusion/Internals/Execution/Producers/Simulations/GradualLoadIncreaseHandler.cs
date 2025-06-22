@@ -27,13 +27,13 @@ internal class GradualLoadIncreaseHandler : ILoadHandler
         var currentRate = startRate;
 
         while (currentRate <= endRate
-            && _sharedExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
+            && _sharedExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
         {
             for (int i = 0; i < currentRate; i++)
             {
-                var scenarioExecution = new ScenarioExecutionInfo(_scenarioName, _configuration.IsWarmup);
+                var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
 
-                _sharedExecutionState.EnqueueScenarioExecution(scenarioExecution);
+                _sharedExecutionState.EnqueueScenarioExecution(message);
             }
 
             if (sleepBetweenQueueAdding > 0)

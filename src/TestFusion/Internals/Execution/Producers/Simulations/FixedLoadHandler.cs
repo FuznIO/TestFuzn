@@ -32,7 +32,7 @@ internal class FixedLoadHandler : ILoadHandler
         var currentIntervalIndex = 0;
 
         while (currentIntervalIndex < totalIntervals
-            && _sharedExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
+            && _sharedExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
         {
             currentIntervalIndex++;
 
@@ -41,8 +41,8 @@ internal class FixedLoadHandler : ILoadHandler
 
             for (int i = 0; i < rate; i++)
             {
-                var scenarioExecution = new ScenarioExecutionInfo(_scenarioName, _configuration.IsWarmup);
-                _sharedExecutionState.EnqueueScenarioExecution(scenarioExecution);
+                var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
+                _sharedExecutionState.EnqueueScenarioExecution(message);
 
                 var nextEnqueueTime = delayBetweenEnqueue.Ticks * (i + 1);
                 var delay = TimeSpan.FromTicks(nextEnqueueTime - intervalStopwatch.ElapsedTicks);

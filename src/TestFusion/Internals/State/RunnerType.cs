@@ -1,4 +1,4 @@
-﻿namespace TestFusion.Internals;
+﻿namespace TestFusion.Internals.State;
 
 internal enum TestType
 {

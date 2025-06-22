@@ -2,7 +2,7 @@
 using TestFusion.Contracts.Sinks;
 using TestFusion.Contracts.Results.Load;
 
-namespace TestFusion.Internals.Reports;
+namespace TestFusion.Internals.Reports.Load;
 
 internal class InMemorySnapshotCollectorSinkPlugin : ISinkPlugin
 {

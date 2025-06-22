@@ -3,7 +3,6 @@ using TestFusion.Internals.Execution.Producers;
 using TestFusion.Internals.Logger;
 using TestFusion.Internals.Init;
 using TestFusion.Internals.Cleanup;
-using TestFusion.Internals.Results.Load;
 using TestFusion.Internals.Execution.Consumers;
 using TestFusion.Internals.InputData;
 using TestFusion.Internals.State;
@@ -12,6 +11,7 @@ using TestFusion.Internals.Results.Feature;
 using TestFusion.Contracts.Adapters;
 using TestFusion.Internals.ConsoleOutput;
 using TestFusion.Internals.Execution;
+using TestFusion.Internals.Reports;
 
 namespace TestFusion.Internals;
 
@@ -36,62 +36,40 @@ internal class ScenarioTestRunner
 
     public async Task Run(params Scenario[] scenarios)
     {
-        var featureResultsManager = new FeatureResultsManager();
-        var sharedExecutionState = new SharedExecutionState(featureResultsManager);
-        var loadResultsManager = new LoadResultsManager(sharedExecutionState);
-        var producerManager = new ProducerManager(sharedExecutionState, loadResultsManager);
-        var initStepsRunner = new InitStepsRunner(_testFramework, sharedExecutionState);
+        var sharedExecutionState = new SharedExecutionState(_featureTest, scenarios);
+        var consoleWriter = new ConsoleWriter(_testFramework, sharedExecutionState);
+        var consoleManager = new ConsoleManager(_testFramework, sharedExecutionState, consoleWriter);
         var inputDataFeeder = new InputDataFeeder(sharedExecutionState);
-        var scenarioSimulationsInit = new ScenarioSimulationsInit(_testFramework, sharedExecutionState);
-        var consoleWriter = new ConsoleWriter(_testFramework, sharedExecutionState, loadResultsManager);
-        var scenarioExecutor = new ScenarioExecutor(_testFramework, sharedExecutionState, loadResultsManager, inputDataFeeder);
-        var consumerManager = new ConsumerManager(sharedExecutionState, scenarioExecutor, loadResultsManager);
-        var consoleManager = new ConsoleManager(_testFramework, sharedExecutionState, consoleWriter, loadResultsManager);
-        var scenarioFinalizer = new ScenarioFinalizer(_testFramework, sharedExecutionState, loadResultsManager);
-
-        sharedExecutionState.Init(_featureTest, scenarios);
+        var initManager = new InitManager(_testFramework, sharedExecutionState, inputDataFeeder);
+        var producerManager = new ProducerManager(sharedExecutionState);
+        var executeScenarioMessageHandler = new ExecuteScenarioMessageHandler(_testFramework, sharedExecutionState, inputDataFeeder);
+        var consumerManager = new ConsumerManager(sharedExecutionState, executeScenarioMessageHandler);
+        var executionManager = new ExecutionManager(_testFramework, sharedExecutionState, producerManager, consumerManager);
+        var cleanupManager = new CleanupManager(_testFramework, sharedExecutionState);
+        var featureResultManager = new FeatureResultManager();
+        var reportManager = new ReportManager();
 
         try
         {
-            loadResultsManager.Init(scenarios);
-
-            await initStepsRunner.Run();
-
-            inputDataFeeder.Init();
-
-            await scenarioSimulationsInit.Setup();
-
-            producerManager.StartProducers();
-
-            consumerManager.StartConsumers();
-
             consoleManager.StartRealtimeConsoleOutputIfEnabled();
-
-            await producerManager.WaitForProducersToComplete();
-
-            await consumerManager.WaitForConsumersToFinish();
-
-            scenarioFinalizer.Complete();
-
-            loadResultsManager.WriteReports();
-
+            await initManager.Run();
+            await executionManager.Execute();
+            await cleanupManager.Run();
+            featureResultManager.AddScenarioResults(sharedExecutionState.FeatureName, sharedExecutionState.ResultState.FeatureCollectors);
+            await reportManager.WriteLoadReports(sharedExecutionState);
             await consoleManager.Complete();
 
-            if (sharedExecutionState.FirstException != null)
-                ExceptionDispatchInfo.Capture(sharedExecutionState.FirstException).Throw();
+            if (sharedExecutionState.TestRunState.FirstException != null)
+                ExceptionDispatchInfo.Capture(sharedExecutionState.TestRunState.FirstException).Throw();
         }
         catch (Exception)
         {
-            if (sharedExecutionState.ExecutionStoppedReason != null)
+            if (sharedExecutionState.TestRunState.ExecutionStoppedReason != null)
             {
-                throw sharedExecutionState.ExecutionStoppedReason;
+                throw sharedExecutionState.TestRunState.ExecutionStoppedReason;
             }
 
             throw;
-        }
-        finally
-        {
-            await new CleanupRunner(_testFramework, sharedExecutionState).Cleanup();
         }
     }
 }

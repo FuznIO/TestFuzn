@@ -3,8 +3,6 @@
 [FeatureTest]
 public class InputDataFileFeatureTests : BaseFeatureTest
 {
-    public override string FeatureName => "";
-
     [ScenarioTest]
     public async Task Verify_Csv_InputData()
     {

@@ -2,7 +2,7 @@
 using TestFusion.Internals;
 using TestFusion.Internals.Results.Feature;
 using TestFusion.Contracts.Adapters;
-using TestFusion.Contracts.Reports;
+using TestFusion.Internals.Reports;
 
 namespace TestFusion;
 
@@ -61,17 +61,7 @@ public static class TestFusionIntegration
 
         await _startupInstance.CleanupGlobal(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
 
-        var featureResultsManager = new FeatureResultsManager();
-        var featureResults = featureResultsManager.GetTestSuiteResults();
-
-        var featureReportData = new FeatureReportData();
-        featureReportData.TestSuiteName = GlobalState.Configuration.TestSuiteName;
-        featureReportData.TestRunId = GlobalState.TestRunId;
-        featureReportData.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
-        featureReportData.Results = featureResults;
-        
-        foreach (var featureReport in GlobalState.Configuration.FeatureReports)
-            await featureReport.WriteReport(featureReportData);
+        await new ReportManager().WriteFeatureReports(new FeatureResultManager());
 
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)
             await plugin.CleanupGlobal();

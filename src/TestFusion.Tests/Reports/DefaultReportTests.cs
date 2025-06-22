@@ -6,7 +6,7 @@ public class DefaultReportsTests : BaseFeatureTest
     [ScenarioTest]
     public async Task ShortRunning_WithErrors()
     {
-        await Scenario("Verify report")
+        await Scenario()
             .Step("Test", (context) =>
             {
             })
@@ -20,9 +20,31 @@ public class DefaultReportsTests : BaseFeatureTest
     }
 
     [ScenarioTest]
+    public async Task ShortRunningFeature()
+    {
+        await Scenario()
+            .Step("Test Step 1", (context) =>
+            {
+            })
+            .Step("Test Step 2", (context) =>
+            {
+            })
+            .Step("Test Step 3", (context) =>
+            {
+            })
+            .Step("Test Step 4", (context) =>
+            {
+            })
+            .Step("Test Step 5", (context) =>
+            {
+            })
+            .Run();
+    }
+
+    [ScenarioTest]
     public async Task ShortRunning_NoErrors()
     {
-        await Scenario("Verify report")
+        await Scenario()
             .Step("Test Step 1", (context) =>
             {
             })
