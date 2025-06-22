@@ -122,7 +122,10 @@ internal class ExecuteScenarioMessageHandler
         }
 
         if (message.IsWarmup)
+        {
+            scenarioLoadCollector.RecordWarmup(scenarioStatus ?? ScenarioStatus.Failed);
             return;
+        }
 
         scenarioLoadCollector.RecordMeasurement(scenarioStatus ?? ScenarioStatus.Failed, iterationResult);
 

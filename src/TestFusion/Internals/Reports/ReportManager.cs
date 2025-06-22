@@ -37,8 +37,9 @@ internal class ReportManager
         {
             var loadReportData = new LoadReportData();
             loadReportData.TestRunId = GlobalState.TestRunId;
+            loadReportData.FeatureName = sharedExecutionState.FeatureName;
             loadReportData.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
-            loadReportData.ScenarioResult = sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult();
+            loadReportData.ScenarioResult = sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
 
             foreach (var loadReport in loadReports)
                 await loadReport.WriteReport(loadReportData);

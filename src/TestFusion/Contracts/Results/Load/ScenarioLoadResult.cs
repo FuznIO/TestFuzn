@@ -40,12 +40,46 @@ public class ScenarioLoadResult
         }
     }
 
-
-    public bool HasWarmupStep()
+    internal bool HasWarmupStep()
     {
         if (WarmupRequestCountOk > 0 || WarmupRequestCountFailed > 0)
             return true;
 
         return false;
+    }
+
+    internal TimeSpan InitTotalDuration()
+    {
+        return InitEndTime - InitStartTime;
+    }
+
+    internal TimeSpan WarmupTotalDuration()
+    {
+        return WarmupEndTime - WarmupStartTime;
+    }
+
+    internal TimeSpan MeasurementTotalDuration()
+    {
+        return MeasurementEndTime - MeasurementStartTime;
+    }
+
+    internal TimeSpan CleanupTotalDuration()
+    {
+        return CleanupEndTime - CleanupStartTime;
+    }
+
+    internal DateTime TestStartTime()
+    {
+        return InitStartTime;
+    }
+
+    internal DateTime TestEndTime()
+    {
+        return CleanupEndTime;
+    }
+
+    internal TimeSpan TestRunTotalDuration()
+    {
+        return TestEndTime() - TestStartTime();
     }
 }
