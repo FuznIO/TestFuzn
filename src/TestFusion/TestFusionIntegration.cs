@@ -61,6 +61,8 @@ public static class TestFusionIntegration
 
         await _startupInstance.CleanupGlobal(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
 
+        GlobalState.TestRunEndTime = DateTime.UtcNow;
+
         await new ReportManager().WriteFeatureReports(new FeatureResultManager());
 
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)

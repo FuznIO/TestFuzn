@@ -8,5 +8,5 @@ public class LoadReportData
     public string TestsOutputDirectory { get; internal set; }
     public DateTime TestStarted { get; set; }
     public DateTime TestFinished { get; set; }
-    public ScenarioLoadResult ScenarioResults { get; internal set; }
+    public ScenarioLoadResult ScenarioResult { get; internal set; }
 }

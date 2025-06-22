@@ -38,12 +38,7 @@ internal class ExecutionManager
     }
 
     private void ExecuteAssertWhenDone()
-    {
-        foreach (var scenario in _sharedExecutionState.Scenarios)
-        {
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkAsCompleted();
-        }
-        
+    {        
         if (_sharedExecutionState.TestType == TestType.Feature)
             return;
 
@@ -52,7 +47,6 @@ internal class ExecutionManager
             foreach (var scenario in _sharedExecutionState.Scenarios)
             {
                 var scenarioCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
-                scenarioCollector.MarkPhaseAsCompleted(LoadTestPhase.Measurement);
                 var scenarioResult = scenarioCollector.GetCurrentResult();
                 if (scenario.AssertWhenDoneAction != null)
                 {

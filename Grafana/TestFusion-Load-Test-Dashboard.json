@@ -547,11 +547,11 @@
             "uid": "dennjp7mu34lce"
           },
           "hide": false,
-          "query": "testStart = from(bucket: \"TestFusion\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> first()\r\n  |> findRecord(fn: (key) => true, idx: 0)\r\n\r\n  from(bucket: \"TestFusion\")\r\n  |> range(start: testStart._time)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> aggregateWindow(every: 10s, fn: mean)",
+          "query": "testStart = from(bucket: \"TestFusion\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> first()\r\n  |> findRecord(fn: (key) => true, idx: 0)\r\n\r\n  from(bucket: \"TestFusion\")\r\n  |> range(start: testStart._time)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")",
           "refId": "C"
         },
         {
-          "query": "testStart = from(bucket: \"TestFusion\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\n  |> filter(fn: (r) => r._field == \"ok_requests_per_second\")\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\n  |> first()\n  |> findRecord(fn: (key) => true, idx: 0)\n\nfrom(bucket: \"TestFusion\")\n  |> range(start: testStart._time)\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\n  |> filter(fn: (r) => r._field == \"ok_requests_per_second\")\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: 10s, fn: mean)",
+          "query": "testStart = from(bucket: \"TestFusion\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\n  |> filter(fn: (r) => r._field == \"ok_requests_per_second\")\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\n  |> first()\n  |> findRecord(fn: (key) => true, idx: 0)\n\nfrom(bucket: \"TestFusion\")\n  |> range(start: testStart._time)\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\n  |> filter(fn: (r) => r._field == \"ok_requests_per_second\")\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")",
           "refId": "A"
         },
         {
@@ -560,7 +560,7 @@
             "uid": "dennjp7mu34lce"
           },
           "hide": false,
-          "query": "testStart = from(bucket: \"TestFusion\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"failed_requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> first()\r\n  |> findRecord(fn: (key) => true, idx: 0)\r\n\r\n  from(bucket: \"TestFusion\")\r\n  |> range(start: testStart._time)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"failed_requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> aggregateWindow(every: 10s, fn: mean)",
+          "query": "testStart = from(bucket: \"TestFusion\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"failed_requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> first()\r\n  |> findRecord(fn: (key) => true, idx: 0)\r\n\r\n  from(bucket: \"TestFusion\")\r\n  |> range(start: testStart._time)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"failed_requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")",
           "refId": "B"
         }
       ],
@@ -1053,8 +1053,8 @@
     "list": [
       {
         "current": {
-          "text": "2025-06-16_23-06__3a7cea",
-          "value": "2025-06-16_23-06__3a7cea"
+          "text": "2025-06-22_22-20__11a035",
+          "value": "2025-06-22_22-20__11a035"
         },
         "definition": "    import \"influxdata/influxdb/schema\"\r\n    schema.tagValues(\r\n      bucket: \"TestFusion\",\r\n      tag: \"test_run_id\",\r\n      start: -30d\r\n    )",
         "name": "test_run_id",
@@ -1070,7 +1070,7 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {
@@ -1085,5 +1085,5 @@
   "timezone": "browser",
   "title": "TestFusion – Load Test Dashboard",
   "uid": "185cc6b3-8987-4402-b394-e4c0e4a84baf",
-  "version": 84
+  "version": 85
 }

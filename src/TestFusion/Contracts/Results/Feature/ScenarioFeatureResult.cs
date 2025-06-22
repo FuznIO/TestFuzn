@@ -42,11 +42,6 @@ public class ScenarioFeatureResult
         IterationResults.Add(iterationResult);
     }
 
-    public void MarkAsCompleted()
-    {
-        EndTime = DateTime.UtcNow;
-    }
-
     internal void MarkPhaseAsStarted(FeatureTestPhase featureTestPhase)
     {
         switch (featureTestPhase)
@@ -65,7 +60,7 @@ public class ScenarioFeatureResult
         }
     }
 
-    internal void MarkPhaseAsComplete(FeatureTestPhase featureTestPhase)
+    internal void MarkPhaseAsCompleted(FeatureTestPhase featureTestPhase)
     {
         switch (featureTestPhase)
         {

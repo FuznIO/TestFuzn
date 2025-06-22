@@ -1,5 +1,6 @@
 ﻿using TestFusion.Internals.State;
 using TestFusion.Contracts.Adapters;
+using TestFusion.Internals.Execution;
 
 namespace TestFusion.Internals.Cleanup;
 
@@ -16,6 +17,12 @@ internal class CleanupManager
 
     public async Task Run()
     {
+        foreach (var scenario in _sharedExecutionState.Scenarios)
+        {
+            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsStarted(FeatureTestPhase.Cleanup);
+            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Cleanup);
+        }
+
         var cleanupPerScenarioTasks = new List<Task>();
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
@@ -27,6 +34,12 @@ internal class CleanupManager
         await Task.WhenAll(cleanupPerScenarioTasks);
 
         await IFeatureTestCleanup();
+
+        foreach (var scenario in _sharedExecutionState.Scenarios)
+        {
+            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsCompleted(FeatureTestPhase.Cleanup);
+            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Cleanup);
+        }
     }
 
     private async Task ExecuteCleanupAfterScenario(ITestFrameworkAdapter testFramework, Scenario scenario)

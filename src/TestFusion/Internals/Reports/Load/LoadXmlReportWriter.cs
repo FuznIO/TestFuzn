@@ -16,7 +16,7 @@ internal class LoadXmlReportWriter : ILoadReport
     {
         try
         {
-            var reportName = FileNameHelper.MakeFilenameSafe(loadReportData.ScenarioResults.ScenarioName);
+            var reportName = FileNameHelper.MakeFilenameSafe(loadReportData.ScenarioResult.ScenarioName);
             var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"TestFusion_Report_Load_{reportName}.xml");
 
             var stringBuilder = new StringBuilder();
@@ -26,13 +26,13 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteStartElement("LoadTestResults");
                 writer.WriteAttributeString("version", "1.0");
 
-                WriteScenario(writer, loadReportData.ScenarioResults);
+                WriteScenario(writer, loadReportData.ScenarioResult);
 
                 writer.WriteEndElement();
                 writer.WriteEndDocument();
             }
 
-            InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.ScenarioResults.ScenarioName);
+            InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.ScenarioResult.ScenarioName);
 
             await File.WriteAllTextAsync(filePath, stringBuilder.ToString());
         }

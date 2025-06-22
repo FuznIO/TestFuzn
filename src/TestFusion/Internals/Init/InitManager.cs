@@ -2,6 +2,7 @@
 using TestFusion.Internals.State;
 using TestFusion.Contracts.Adapters;
 using TestFusion.Internals.Execution.Producers.Simulations;
+using TestFusion.Internals.Execution;
 
 namespace TestFusion.Internals.Init;
 
@@ -24,9 +25,8 @@ internal class InitManager
     {
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            var startTime = DateTime.UtcNow;
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].InitStartTime = startTime;
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].InitStartTime = startTime;
+            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsStarted(FeatureTestPhase.Init);
+            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init);
         }
 
         await ExecuteInitBeforeScenarioTest();
@@ -41,6 +41,12 @@ internal class InitManager
          _inputDataFeeder.Init();
 
         await SetupSimulations();
+
+        foreach (var scenario in _sharedExecutionState.Scenarios)
+        {
+            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsCompleted(FeatureTestPhase.Init);
+            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init);
+        }
     }
 
     private async Task ExecuteInitBeforeScenarioTest()

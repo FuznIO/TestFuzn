@@ -25,7 +25,8 @@ internal class ProducerManager
 
     private async Task Produce(Scenario scenario)
     {
-        var scenarioCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
+        var featureCollector = _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name];
+        var loadCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
         var hasWarmupPhase = false;
         var measurementPhaseStarted = false;
 
@@ -48,7 +49,7 @@ internal class ProducerManager
             if (loadSimulation.IsWarmup && !hasWarmupPhase)
             {
                 hasWarmupPhase = true;
-                scenarioCollector.MarkPhaseAsStarted(LoadTestPhase.Warmup);
+                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Warmup);
             }
 
             if (hasWarmupPhase && !loadSimulation.IsWarmup)
@@ -56,13 +57,14 @@ internal class ProducerManager
                 while (_sharedExecutionState.IsExecutionQueueEmpty(scenario.Name) == false)
                     await Task.Delay(TimeSpan.FromMilliseconds(100));
 
-                scenarioCollector.MarkPhaseAsCompleted(LoadTestPhase.Warmup);
+                loadCollector.MarkPhaseAsCompleted(LoadTestPhase.Warmup);
             }
 
             if (!loadSimulation.IsWarmup && !measurementPhaseStarted)
             {
                 measurementPhaseStarted = true;
-                scenarioCollector.MarkPhaseAsStarted(LoadTestPhase.Measurement);
+                featureCollector.MarkPhaseAsStarted(FeatureTestPhase.Execute);
+                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Measurement);
             }
 
             await handler.Execute();

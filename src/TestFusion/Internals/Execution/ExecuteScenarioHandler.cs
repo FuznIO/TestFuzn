@@ -181,7 +181,7 @@ internal class ExecuteScenarioMessageHandler
                         {
                             foreach (var sinkPlugin in GlobalState.Configuration.SinkPlugins)
                             {
-                                await sinkPlugin.WriteMetrics(GlobalState.TestRunId, scenario.Name, scenarioLoadResult);
+                                await sinkPlugin.WriteMetrics(GlobalState.TestRunId, _sharedExecutionState.FeatureName, scenarioLoadResult);
                             }
                         }
                         _lastSinkWrite[scenario.Name] = now;

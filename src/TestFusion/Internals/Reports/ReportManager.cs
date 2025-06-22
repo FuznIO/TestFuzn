@@ -13,6 +13,9 @@ internal class ReportManager
         var data = new FeatureReportData();
         data.TestSuiteName = GlobalState.Configuration.TestSuiteName;
         data.TestRunId = GlobalState.TestRunId;
+        data.TestRunStartTime = GlobalState.TestRunStartTime;
+        data.TestRunEndTime = GlobalState.TestRunEndTime;
+        data.TestRunDuration = data.TestRunEndTime - data.TestRunStartTime;
         data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
         data.Results = featureResults;
         
@@ -35,7 +38,7 @@ internal class ReportManager
             var loadReportData = new LoadReportData();
             loadReportData.TestRunId = GlobalState.TestRunId;
             loadReportData.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
-            loadReportData.ScenarioResults = sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult();
+            loadReportData.ScenarioResult = sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult();
 
             foreach (var loadReport in loadReports)
                 await loadReport.WriteReport(loadReportData);

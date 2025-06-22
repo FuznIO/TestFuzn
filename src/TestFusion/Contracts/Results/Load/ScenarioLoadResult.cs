@@ -2,7 +2,6 @@
 
 public class ScenarioLoadResult
 {
-    public string FeatureName { get; internal set; }
     public string ScenarioName { get; internal set; }
     public DateTime StartTime { get; internal set; }
     public DateTime EndTime { get; internal set; }
@@ -39,5 +38,14 @@ public class ScenarioLoadResult
         {
             return 100.0 * Ok.RequestCount / Math.Max(1, RequestCount);
         }
+    }
+
+
+    public bool HasWarmupStep()
+    {
+        if (WarmupRequestCountOk > 0 || WarmupRequestCountFailed > 0)
+            return true;
+
+        return false;
     }
 }

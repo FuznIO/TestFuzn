@@ -18,7 +18,6 @@ internal class ScenarioLoadCollector
     private DateTime _cleanupEndTime;
     private DateTime _startTime;
     private DateTime _endTime;
-    private LoadTestPhase _testPhase = LoadTestPhase.Init;
     private bool _isCompleted;
     private ScenarioStatus _status;
     private Dictionary<string, StepLoadCollector> _steps = new();
@@ -36,7 +35,6 @@ internal class ScenarioLoadCollector
 
     public ScenarioLoadCollector(Scenario scenario)
     {
-        MarkPhaseAsStartedNoLocking(LoadTestPhase.Init);
         _startTime = DateTime.UtcNow;
         _scenarioName = scenario.Name;
         _status = ScenarioStatus.Passed;
@@ -89,32 +87,27 @@ internal class ScenarioLoadCollector
         }
     }
 
-    private void MarkPhaseAsStartedNoLocking(LoadTestPhase testPhase)
-    { 
-        switch (testPhase)
-        {
-            case LoadTestPhase.Init:
-                _initStartTime = DateTime.UtcNow;
-                break;
-            case LoadTestPhase.Warmup:
-                _warmupStartTime = DateTime.UtcNow;
-                break;
-            case LoadTestPhase.Measurement:
-                _measurementStartTime = DateTime.UtcNow;
-                break;
-            case LoadTestPhase.Cleanup:
-                _cleanupStartTime = DateTime.UtcNow;
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(testPhase), testPhase, null);
-        }
-    }
-
     internal void MarkPhaseAsStarted(LoadTestPhase testPhase)
     {
         lock (_lock)
         {
-            MarkPhaseAsCompleted(testPhase);
+            switch (testPhase)
+            {
+                case LoadTestPhase.Init:
+                    _initStartTime = DateTime.UtcNow;
+                    break;
+                case LoadTestPhase.Warmup:
+                    _warmupStartTime = DateTime.UtcNow;
+                    break;
+                case LoadTestPhase.Measurement:
+                    _measurementStartTime = DateTime.UtcNow;
+                    break;
+                case LoadTestPhase.Cleanup:
+                    _cleanupStartTime = DateTime.UtcNow;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(testPhase), testPhase, null);
+            }
         }
     }
 

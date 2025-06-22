@@ -22,7 +22,7 @@ public class InfluxDbSink : ISinkPlugin
         return Task.CompletedTask;
     }
 
-    public async Task WriteMetrics(string testRunId, string scenarioName, ScenarioLoadResult metrics)
+    public async Task WriteMetrics(string testRunId, string featureName, ScenarioLoadResult results)
     {
         var points = new List<PointData>();
 
@@ -30,57 +30,57 @@ public class InfluxDbSink : ISinkPlugin
         var scenarioPoint = PointData
             .Measurement("scenario_metrics")
             .Tag("test_run_id", testRunId)
-            .Tag("feature_name", metrics.FeatureName)
-            .Tag("scenario_name", metrics.ScenarioName)
-            .Field("request_count", metrics.RequestCount)
-            .Field("total_execution_duration_ms", metrics.TotalExecutionDuration.TotalMilliseconds)
-            .Field("requests_per_second", metrics.RequestsPerSecond)
+            .Tag("feature_name", featureName)
+            .Tag("scenario_name", results.ScenarioName)
+            .Field("request_count", results.RequestCount)
+            .Field("total_execution_duration_ms", results.TotalExecutionDuration.TotalMilliseconds)
+            .Field("requests_per_second", results.RequestsPerSecond)
 
             // OK metrics
-            .Field("ok_request_count", metrics.Ok.RequestCount)
-            .Field("ok_requests_per_second", metrics.Ok.RequestsPerSecond)
-            .Field("ok_response_time_min_ms", metrics.Ok.ResponseTimeMin.TotalMilliseconds)
-            .Field("ok_response_time_max_ms", metrics.Ok.ResponseTimeMax.TotalMilliseconds)
-            .Field("ok_response_time_mean_ms", metrics.Ok.ResponseTimeMean.TotalMilliseconds)
-            .Field("ok_response_time_stddev_ms", metrics.Ok.ResponseTimeStandardDeviation.TotalMilliseconds)
-            .Field("ok_response_time_median_ms", metrics.Ok.ResponseTimeMedian.TotalMilliseconds)
-            .Field("ok_response_time_percentile_75_ms", metrics.Ok.ResponseTimePercentile75.TotalMilliseconds)
-            .Field("ok_response_time_percentile_95_ms", metrics.Ok.ResponseTimePercentile95.TotalMilliseconds)
-            .Field("ok_response_time_percentile_99_ms", metrics.Ok.ResponseTimePercentile99.TotalMilliseconds)
-            .Field("ok_total_execution_duration_ms", metrics.Ok.TotalExecutionDuration.TotalMilliseconds)
+            .Field("ok_request_count", results.Ok.RequestCount)
+            .Field("ok_requests_per_second", results.Ok.RequestsPerSecond)
+            .Field("ok_response_time_min_ms", results.Ok.ResponseTimeMin.TotalMilliseconds)
+            .Field("ok_response_time_max_ms", results.Ok.ResponseTimeMax.TotalMilliseconds)
+            .Field("ok_response_time_mean_ms", results.Ok.ResponseTimeMean.TotalMilliseconds)
+            .Field("ok_response_time_stddev_ms", results.Ok.ResponseTimeStandardDeviation.TotalMilliseconds)
+            .Field("ok_response_time_median_ms", results.Ok.ResponseTimeMedian.TotalMilliseconds)
+            .Field("ok_response_time_percentile_75_ms", results.Ok.ResponseTimePercentile75.TotalMilliseconds)
+            .Field("ok_response_time_percentile_95_ms", results.Ok.ResponseTimePercentile95.TotalMilliseconds)
+            .Field("ok_response_time_percentile_99_ms", results.Ok.ResponseTimePercentile99.TotalMilliseconds)
+            .Field("ok_total_execution_duration_ms", results.Ok.TotalExecutionDuration.TotalMilliseconds)
 
             // Failed metrics
-            .Field("failed_request_count", metrics.Failed.RequestCount)
-            .Field("failed_requests_per_second", metrics.Failed.RequestsPerSecond)
-            .Field("failed_response_time_min_ms", metrics.Failed.ResponseTimeMin.TotalMilliseconds)
-            .Field("failed_response_time_max_ms", metrics.Failed.ResponseTimeMax.TotalMilliseconds)
-            .Field("failed_response_time_mean_ms", metrics.Failed.ResponseTimeMean.TotalMilliseconds)
-            .Field("failed_response_time_stddev_ms", metrics.Failed.ResponseTimeStandardDeviation.TotalMilliseconds)
-            .Field("failed_response_time_median_ms", metrics.Failed.ResponseTimeMedian.TotalMilliseconds)
-            .Field("failed_response_time_percentile_75_ms", metrics.Failed.ResponseTimePercentile75.TotalMilliseconds)
-            .Field("failed_response_time_percentile_95_ms", metrics.Failed.ResponseTimePercentile95.TotalMilliseconds)
-            .Field("failed_response_time_percentile_99_ms", metrics.Failed.ResponseTimePercentile99.TotalMilliseconds)
-            .Field("failed_total_execution_duration_ms", metrics.Failed.TotalExecutionDuration.TotalMilliseconds)
+            .Field("failed_request_count", results.Failed.RequestCount)
+            .Field("failed_requests_per_second", results.Failed.RequestsPerSecond)
+            .Field("failed_response_time_min_ms", results.Failed.ResponseTimeMin.TotalMilliseconds)
+            .Field("failed_response_time_max_ms", results.Failed.ResponseTimeMax.TotalMilliseconds)
+            .Field("failed_response_time_mean_ms", results.Failed.ResponseTimeMean.TotalMilliseconds)
+            .Field("failed_response_time_stddev_ms", results.Failed.ResponseTimeStandardDeviation.TotalMilliseconds)
+            .Field("failed_response_time_median_ms", results.Failed.ResponseTimeMedian.TotalMilliseconds)
+            .Field("failed_response_time_percentile_75_ms", results.Failed.ResponseTimePercentile75.TotalMilliseconds)
+            .Field("failed_response_time_percentile_95_ms", results.Failed.ResponseTimePercentile95.TotalMilliseconds)
+            .Field("failed_response_time_percentile_99_ms", results.Failed.ResponseTimePercentile99.TotalMilliseconds)
+            .Field("failed_total_execution_duration_ms", results.Failed.TotalExecutionDuration.TotalMilliseconds)
 
             .Timestamp(DateTime.UtcNow, WritePrecision.Ns);
 
         points.Add(scenarioPoint);
 
         // Step-level metrics
-        foreach (var step in metrics.Steps)
+        foreach (var step in results.Steps)
         {
             var stepMetrics = step.Value;
             var stepPoint = PointData
                 .Measurement("step_metrics")
                 .Tag("test_run_id", testRunId)
-                .Tag("feature_name", metrics.FeatureName)
-                .Tag("scenario_name", scenarioName)
+                .Tag("feature_name", featureName)
+                .Tag("scenario_name", results.ScenarioName)
                 .Tag("step_name", step.Key)
                 .Field("total_execution_duration_ms", stepMetrics.TotalExecutionDuration.TotalMilliseconds)
 
                 // OK metrics
                 .Field("ok_request_count", stepMetrics.Ok.RequestCount)
-                .Field("ok_requests_per_second", metrics.Ok.RequestsPerSecond)
+                .Field("ok_requests_per_second", results.Ok.RequestsPerSecond)
                 .Field("ok_response_time_min_ms", stepMetrics.Ok.ResponseTimeMin.TotalMilliseconds)
                 .Field("ok_response_time_max_ms", stepMetrics.Ok.ResponseTimeMax.TotalMilliseconds)
                 .Field("ok_response_time_mean_ms", stepMetrics.Ok.ResponseTimeMean.TotalMilliseconds)
@@ -93,7 +93,7 @@ public class InfluxDbSink : ISinkPlugin
 
                 // Failed metrics
                 .Field("failed_request_count", stepMetrics.Failed.RequestCount)
-                .Field("failed_requests_per_second", metrics.Failed.RequestsPerSecond)
+                .Field("failed_requests_per_second", results.Failed.RequestsPerSecond)
                 .Field("failed_response_time_min_ms", stepMetrics.Failed.ResponseTimeMin.TotalMilliseconds)
                 .Field("failed_response_time_max_ms", stepMetrics.Failed.ResponseTimeMax.TotalMilliseconds)
                 .Field("failed_response_time_mean_ms", stepMetrics.Failed.ResponseTimeMean.TotalMilliseconds)
@@ -104,7 +104,7 @@ public class InfluxDbSink : ISinkPlugin
                 .Field("failed_response_time_percentile_99_ms", stepMetrics.Failed.ResponseTimePercentile99.TotalMilliseconds)
                 .Field("failed_total_execution_duration_ms", stepMetrics.Failed.TotalExecutionDuration.TotalMilliseconds)
 
-                .Timestamp(metrics.Created, WritePrecision.Ns);
+                .Timestamp(results.Created, WritePrecision.Ns);
 
             points.Add(stepPoint);
         }
