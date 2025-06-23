@@ -14,7 +14,17 @@ namespace TestFusion
         internal List<IFeatureReport> FeatureReports { get; set; } = new();
         internal List<ILoadReport> LoadReports { get; set; } = new();
         internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
-        
+
+        public TestFusionConfiguration()
+        {
+            AddFeatureReport(new FeatureXmlReportWriter());
+            AddFeatureReport(new FeatureHtmlReportWriter());
+
+            AddSinkPlugin(new InMemorySnapshotCollectorSinkPlugin());
+            AddLoadReport(new LoadHtmlReportWriter());
+            AddLoadReport(new LoadXmlReportWriter());
+        }
+
         public void AddContextPlugin(IContextPlugin plugin)
         {
             if (plugin == null)
@@ -43,28 +53,15 @@ namespace TestFusion
             SinkPlugins.Add(plugin);
         }
 
-        public void UseDefaultFeatureHtmlReport()
+        public void ClearReports()
         {
-            AddFeatureReport(new FeatureHtmlReportWriter());
-        }
-
-        public void UseDefaultReports()
-        {
-            UseDefaultFeatureReports();
-            UseDefaultLoadReports();
-        }
-
-        public void UseDefaultFeatureReports()
-        {
-            AddFeatureReport(new FeatureXmlReportWriter());
-            AddFeatureReport(new FeatureHtmlReportWriter());
-        }
-
-        public void UseDefaultLoadReports()
-        {
-            AddSinkPlugin(new InMemorySnapshotCollectorSinkPlugin());
-            AddLoadReport(new LoadHtmlReportWriter());
-            AddLoadReport(new LoadXmlReportWriter());
+            FeatureReports.Clear();
+            LoadReports.Clear();
+            var sinkPlugin = SinkPlugins.OfType<InMemorySnapshotCollectorSinkPlugin>().FirstOrDefault();
+            if (sinkPlugin != null)
+            {
+                SinkPlugins.Remove(sinkPlugin);
+            }
         }
     }
 }
