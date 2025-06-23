@@ -32,106 +32,95 @@ internal class LoadHtmlReportWriter : ILoadReport
     {
         var scenarioResult = loadReportData.ScenarioResult;
 
-        var builder = new StringBuilder();
+        var b = new StringBuilder();
 
-        builder.AppendLine("<!DOCTYPE html>");
-        builder.AppendLine("<html lang='en'>");
-        builder.AppendLine("<head>");
-        builder.AppendLine("<meta charset='UTF-8'>");
-        builder.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        builder.AppendLine("<title>TestFusion - Load Test Report</title>");
-        builder.AppendLine("<style>");
-        builder.AppendLine("body { font-family: Arial, sans-serif; margin: 20px; }");
-        builder.AppendLine("h1 { color: #333; }");
-        builder.AppendLine("h2 { color: #555; margin-top: 40px; }");
-        builder.AppendLine("h3 { color: #555; margin-top: 40px; }");
-        builder.AppendLine("table { width: 100%; border-collapse: collapse; margin-top: 20px; }");
-        builder.AppendLine("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }");
-        builder.AppendLine("th { background-color: #f4f4f4; }");
-        builder.AppendLine(".metric-header { text-align: center; }");
-        builder.AppendLine(".ok-row { background-color: #d4edda; }");
-        builder.AppendLine(".failed-row { background-color: #ffcccc; }");
-        builder.AppendLine(".details-btn { background: #eee; border: 1px solid #bbb; padding: 4px 12px; cursor: pointer; border-radius: 4px; font-size: 1em; }");
-        builder.AppendLine("</style>");
-        builder.AppendLine("</head>");
-        builder.AppendLine("<body>");
+        b.AppendLine("<!DOCTYPE html>");
+        b.AppendLine("<html lang='en'>");
+        b.AppendLine("<head>");
+        b.AppendLine("<meta charset='UTF-8'>");
+        b.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+        b.AppendLine("<title>TestFusion - Load Test Report</title>");
+        b.AppendLine("<link rel='stylesheet' href='assets/styles/testfusion.css'>");
+        b.AppendLine("</head>");
+        b.AppendLine("<body>");
 
         // Header
-        builder.AppendLine($"<h1>TestFusion - Load Test Report</h>");
-        builder.AppendLine($"<h2>Test Metadata</h2>");
-        builder.AppendLine($"<h3>Test Info</h3>");
-        builder.AppendLine("<table>");
-        builder.AppendLine("<tbody>");
-        builder.AppendLine("<tr>");
-        builder.AppendLine("<th>Property</th>");
-        builder.AppendLine("<th>Value</th>");
-        builder.AppendLine("</tr");
-        builder.AppendLine($"<tr><td>Test Run Id</td><td>{loadReportData.TestRunId}</td></tr>");
-        builder.AppendLine($"<tr><td>Feature Name</td><td>{loadReportData.FeatureName}</td></tr>");
-        builder.AppendLine($"<tr><td>Scenario Name</td><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
-        builder.AppendLine("</table>");
-        builder.AppendLine("</tbody>");
+        b.AppendLine($"<h1>TestFusion - Load Test Report</h>");
+        b.AppendLine($"<h2>Test Metadata</h2>");
+        b.AppendLine($"<h3>Test Info</h3>");
+        b.AppendLine("<table>");
+        b.AppendLine("<tbody>");
+        b.AppendLine("<tr>");
+        b.AppendLine("<th>Property</th>");
+        b.AppendLine("<th>Value</th>");
+        b.AppendLine("</tr");
+        b.AppendLine($"<tr><td>Test Run Id</td><td>{loadReportData.TestRunId}</td></tr>");
+        b.AppendLine($"<tr><td>Feature Name</td><td>{loadReportData.FeatureName}</td></tr>");
+        b.AppendLine($"<tr><td>Scenario Name</td><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
+        b.AppendLine("</tbody>");
+        b.AppendLine("</table>");
         
-        builder.AppendLine($"<h3>Phase Timings</h3>");
+        
+        b.AppendLine($"<h3>Phase Timings</h3>");
 
-        builder.AppendLine("<table>");
-        builder.AppendLine("<tbody>");
-        builder.AppendLine("<tr>");
-        builder.AppendLine("<th>Phase</th>");
-        builder.AppendLine("<th>Duration</th>");
-        builder.AppendLine("<th>Started</th>");
-        builder.AppendLine("<th>Ended</th>");
-        builder.AppendLine("</tr>");
-        // Test Run
-        builder.AppendLine("<tr>");
-        builder.AppendLine($"<td>Test Run</td>");
-        builder.AppendLine($"<td>{scenarioResult.TestRunTotalDuration().ToTestFusionFormattedDuration()}</td>");
-        builder.AppendLine($"<td>{scenarioResult.StartTime().ToLocalTime()}</td>");
-        builder.AppendLine($"<td>{scenarioResult.EndTime().ToLocalTime()}</td>");
-        builder.AppendLine("</tr>");
+        b.AppendLine("<table>");
+        b.AppendLine("<tbody>");
+        b.AppendLine("<tr>");
+        b.AppendLine("<th>Phase</th>");
+        b.AppendLine("<th>Duration</th>");
+        b.AppendLine("<th>Started</th>");
+        b.AppendLine("<th>Ended</th>");
+        b.AppendLine("</tr>");
         // Init
-        builder.AppendLine("<tr>");
-        builder.AppendLine($"<td>Init</td>");
-        builder.AppendLine($"<td>{scenarioResult.InitTotalDuration().ToTestFusionFormattedDuration()}</td>");
-        builder.AppendLine($"<td>{scenarioResult.InitStartTime.ToLocalTime()}</td>");
-        builder.AppendLine($"<td>{scenarioResult.InitEndTime.ToLocalTime()}</td>");
-        builder.AppendLine("</tr>");
+        b.AppendLine("<tr>");
+        b.AppendLine($"<td>Init</td>");
+        b.AppendLine($"<td>{scenarioResult.InitTotalDuration().ToTestFusionFormattedDuration()}</td>");
+        b.AppendLine($"<td>{scenarioResult.InitStartTime.ToLocalTime()}</td>");
+        b.AppendLine($"<td>{scenarioResult.InitEndTime.ToLocalTime()}</td>");
+        b.AppendLine("</tr>");
         // Warmup
         if (loadReportData.ScenarioResult.HasWarmupStep())
         {
-            builder.AppendLine("<tr>");
-            builder.AppendLine($"<td>Warmup</td>");
-            builder.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupTotalDuration().ToTestFusionFormattedDuration()}</td>");
-            builder.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupStartTime.ToLocalTime()}</td>");
-            builder.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupEndTime.ToLocalTime()}</td>");
-            builder.AppendLine("</tr>");
+            b.AppendLine("<tr>");
+            b.AppendLine($"<td>Warmup</td>");
+            b.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupTotalDuration().ToTestFusionFormattedDuration()}</td>");
+            b.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupStartTime.ToLocalTime()}</td>");
+            b.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupEndTime.ToLocalTime()}</td>");
+            b.AppendLine("</tr>");
         }
         // Execution
-        builder.AppendLine("<tr>");
-        builder.AppendLine($"<td>Execution</td>");
-        builder.AppendLine($"<td>{scenarioResult.MeasurementTotalDuration().ToTestFusionFormattedDuration()}</td>");
-        builder.AppendLine($"<td>{scenarioResult.MeasurementStartTime.ToLocalTime()}</td>");
-        builder.AppendLine($"<td>{scenarioResult.MeasurementEndTime.ToLocalTime()}</td>");
-        builder.AppendLine("</tr>");
+        b.AppendLine("<tr>");
+        b.AppendLine($"<td>Execution</td>");
+        b.AppendLine($"<td>{scenarioResult.MeasurementTotalDuration().ToTestFusionFormattedDuration()}</td>");
+        b.AppendLine($"<td>{scenarioResult.MeasurementStartTime.ToLocalTime()}</td>");
+        b.AppendLine($"<td>{scenarioResult.MeasurementEndTime.ToLocalTime()}</td>");
+        b.AppendLine("</tr>");
         // Cleanup
-        builder.AppendLine("<tr>");
-        builder.AppendLine($"<td>Cleanup</td>");
-        builder.AppendLine($"<td>{scenarioResult.CleanupTotalDuration().ToTestFusionFormattedDuration()}</td>");
-        builder.AppendLine($"<td>{scenarioResult.CleanupStartTime.ToLocalTime()}</td>");
-        builder.AppendLine($"<td>{scenarioResult.CleanupEndTime.ToLocalTime()}</td>");
-        builder.AppendLine("</tr>");
+        b.AppendLine("<tr>");
+        b.AppendLine($"<td>Cleanup</td>");
+        b.AppendLine($"<td>{scenarioResult.CleanupTotalDuration().ToTestFusionFormattedDuration()}</td>");
+        b.AppendLine($"<td>{scenarioResult.CleanupStartTime.ToLocalTime()}</td>");
+        b.AppendLine($"<td>{scenarioResult.CleanupEndTime.ToLocalTime()}</td>");
+        b.AppendLine("</tr>");
+        // Test Run
+        b.AppendLine("<tr>");
+        b.AppendLine($"<td>Total Test Run</td>");
+        b.AppendLine($"<td>{scenarioResult.TestRunTotalDuration().ToTestFusionFormattedDuration()}</td>");
+        b.AppendLine($"<td>{scenarioResult.StartTime().ToLocalTime()}</td>");
+        b.AppendLine($"<td>{scenarioResult.EndTime().ToLocalTime()}</td>");
+        b.AppendLine("</tr>");
 
-        builder.AppendLine("</tbody>");
-        builder.AppendLine("</table>");
+        b.AppendLine("</tbody>");
+        b.AppendLine("</table>");
 
-        builder.AppendLine($"<h2>Test Statistics</h2>");
+        b.AppendLine($"<h2>Test Statistics</h2>");
 
         var chartDataList = new List<string>();
         int chartIndex = 0;
 
         // Add a canvas for the pie chart
         string chartId = $"chart_{chartIndex}";
-        builder.AppendLine($"<div class='chart-container'><canvas id='{chartId}'></canvas></div>");
+        b.AppendLine($"<div class='chart-container'><canvas id='{chartId}'></canvas></div>");
 
         // Prepare chart data for JavaScript
         chartDataList.Add($@"{{ 
@@ -145,105 +134,105 @@ internal class LoadHtmlReportWriter : ILoadReport
         chartIndex++;
 
         // Table for the scenario
-        builder.AppendLine("<table>");
-        builder.AppendLine("<thead>");
-        builder.AppendLine("<tr>");
-        builder.AppendLine("<th>Step</th>");
-        builder.AppendLine("<th>Type</th>");
-        builder.AppendLine("<th>RPS</th>");
-        builder.AppendLine("<th>Requests</th>");
-        builder.AppendLine("<th>Mean (ms)</th>");
-        builder.AppendLine("<th>Median (ms)</th>");
-        builder.AppendLine("<th>P75 (ms)</th>");
-        builder.AppendLine("<th>P99 (ms)</th>");
-        builder.AppendLine("<th>Min (ms)</th>");
-        builder.AppendLine("<th>Max (ms)</th>");
-        builder.AppendLine("<th>StdDev (ms)</th>");
-        builder.AppendLine("</tr>");
-        builder.AppendLine("</thead>");
-        builder.AppendLine("<tbody>");
+        b.AppendLine("<table>");
+        b.AppendLine("<thead>");
+        b.AppendLine("<tr>");
+        b.AppendLine("<th>Step</th>");
+        b.AppendLine("<th>Type</th>");
+        b.AppendLine("<th>RPS</th>");
+        b.AppendLine("<th>Requests</th>");
+        b.AppendLine("<th>Mean (ms)</th>");
+        b.AppendLine("<th>Median (ms)</th>");
+        b.AppendLine("<th>P75 (ms)</th>");
+        b.AppendLine("<th>P99 (ms)</th>");
+        b.AppendLine("<th>Min (ms)</th>");
+        b.AppendLine("<th>Max (ms)</th>");
+        b.AppendLine("<th>StdDev (ms)</th>");
+        b.AppendLine("</tr>");
+        b.AppendLine("</thead>");
+        b.AppendLine("<tbody>");
 
         // All rows.
         var scenario = loadReportData.ScenarioResult;
-        builder.AppendLine("<tr>");
-        Rows(builder, "All steps", "Ok", scenario.Ok);
-        builder.AppendLine("</tr>");
-        builder.AppendLine("<tr>");
-        Rows(builder, "", "Failed", scenario.Failed);
-        builder.AppendLine("</tr>");
+        b.AppendLine("<tr>");
+        Rows(b, "All steps", "Ok", scenario.Ok);
+        b.AppendLine("</tr>");
+        b.AppendLine("<tr>");
+        Rows(b, "", "Failed", scenario.Failed);
+        b.AppendLine("</tr>");
 
         foreach (var step in scenario.Steps)
         {
             // Step rows.
-            builder.AppendLine("<tr>");
-            Rows(builder, step.Value.Name, "Ok", step.Value.Ok);
-            builder.AppendLine("</tr>");
-            builder.AppendLine("<tr>");
-            Rows(builder, "", "Failed", step.Value.Failed);
-            builder.AppendLine("</tr>");
+            b.AppendLine("<tr>");
+            Rows(b, step.Value.Name, "Ok", step.Value.Ok);
+            b.AppendLine("</tr>");
+            b.AppendLine("<tr>");
+            Rows(b, "", "Failed", step.Value.Failed);
+            b.AppendLine("</tr>");
         }
 
-        builder.AppendLine("</tbody>");
-        builder.AppendLine("</table>");
+        b.AppendLine("</tbody>");
+        b.AppendLine("</table>");
 
         // Table for snapshots
-        builder.AppendLine("<h2>Snapshot Timeline</h2>");
+        b.AppendLine("<h2>Snapshot Timeline</h2>");
 
-        builder.AppendLine("<table>");
-        builder.AppendLine("<thead>");
-        builder.AppendLine("<tr>");
-        builder.AppendLine("<th>Created</th>");
-        builder.AppendLine("<th>Step</th>");
-        builder.AppendLine("<th>Type</th>");
-        builder.AppendLine("<th>RPS</th>");
-        builder.AppendLine("<th>Requests</th>");
-        builder.AppendLine("<th>Mean (ms)</th>");
-        builder.AppendLine("<th>Median (ms)</th>");
-        builder.AppendLine("<th>P75 (ms)</th>");
-        builder.AppendLine("<th>P99 (ms)</th>");
-        builder.AppendLine("<th>Min (ms)</th>");
-        builder.AppendLine("<th>Max (ms)</th>");
-        builder.AppendLine("<th>StdDev (ms)</th>");
-        builder.AppendLine("</tr>");
-        builder.AppendLine("</thead>");
-        builder.AppendLine("<tbody>");
+        b.AppendLine("<table>");
+        b.AppendLine("<thead>");
+        b.AppendLine("<tr>");
+        b.AppendLine("<th>Created</th>");
+        b.AppendLine("<th>Step</th>");
+        b.AppendLine("<th>Type</th>");
+        b.AppendLine("<th>RPS</th>");
+        b.AppendLine("<th>Requests</th>");
+        b.AppendLine("<th>Mean (ms)</th>");
+        b.AppendLine("<th>Median (ms)</th>");
+        b.AppendLine("<th>P75 (ms)</th>");
+        b.AppendLine("<th>P99 (ms)</th>");
+        b.AppendLine("<th>Min (ms)</th>");
+        b.AppendLine("<th>Max (ms)</th>");
+        b.AppendLine("<th>StdDev (ms)</th>");
+        b.AppendLine("</tr>");
+        b.AppendLine("</thead>");
+        b.AppendLine("<tbody>");
 
         var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.FeatureName, scenario.ScenarioName);
 
         foreach (var snapshot in snapshots)
         {
-            builder.AppendLine("<tr class='snapshot'>");
-            builder.AppendLine($"<td>{snapshot.Created:yyyy-MM-dd HH:mm:ss.fff}</td>");
-            Rows(builder, "All steps", "Ok", snapshot.Ok);
-            builder.AppendLine("</tr>");
-            builder.AppendLine("<tr class='snapshot'>");
-            builder.AppendLine($"<td></td>");
-            Rows(builder, "", "Failed", snapshot.Failed);
-            builder.AppendLine("</tr>");
+            b.AppendLine("<tr class='snapshot'>");
+            b.AppendLine($"<td>{snapshot.Created:yyyy-MM-dd HH:mm:ss.fff}</td>");
+            Rows(b, "All steps", "Ok", snapshot.Ok);
+            b.AppendLine("</tr>");
+            b.AppendLine("<tr class='snapshot'>");
+            b.AppendLine($"<td></td>");
+            Rows(b, "", "Failed", snapshot.Failed);
+            b.AppendLine("</tr>");
          
             foreach (var step in scenario.Steps)
             {
-                builder.AppendLine("<tr>");
-                builder.AppendLine($"<td></td>");
-                Rows(builder, step.Value.Name, "Ok", step.Value.Ok);
-                builder.AppendLine("</tr>");
-                builder.AppendLine("<tr>");
-                builder.AppendLine($"<td></td>");
-                Rows(builder, "", "Failed", step.Value.Failed);
-                builder.AppendLine("</tr>");
+                b.AppendLine("<tr>");
+                b.AppendLine($"<td></td>");
+                Rows(b, step.Value.Name, "Ok", step.Value.Ok);
+                b.AppendLine("</tr>");
+                b.AppendLine("<tr>");
+                b.AppendLine($"<td></td>");
+                Rows(b, "", "Failed", step.Value.Failed);
+                b.AppendLine("</tr>");
             }
         }
 
-        builder.AppendLine("</tbody>");
-        builder.AppendLine("</table>");
+        b.AppendLine("</tbody>");
+        b.AppendLine("</table>");
 
         // Chart.js CDN and script
-        builder.AppendLine("<script src='assets/scripts/chart.js'></script>");
-        builder.AppendLine("<script>");
-        builder.AppendLine("const chartData = [");
-        builder.AppendLine(string.Join(",", chartDataList));
-        builder.AppendLine("];");
-        builder.AppendLine(@"
+        b.AppendLine("<script src='assets/scripts/chart.js'></script>");
+        b.AppendLine("<script>");
+        b.AppendLine("const chartData = [");
+        b.AppendLine(string.Join(",", chartDataList));
+        b.AppendLine("];");
+        b.AppendLine(@"
         chartData.forEach(data => {
             const ctx = document.getElementById(data.id).getContext('2d');
             new Chart(ctx, {
@@ -280,25 +269,25 @@ internal class LoadHtmlReportWriter : ILoadReport
             });
         }
         ");
-        builder.AppendLine("</script>");
-        builder.AppendLine("</body>");
-        builder.AppendLine("</html>");
+        b.AppendLine("</script>");
+        b.AppendLine("</body>");
+        b.AppendLine("</html>");
 
-        return builder.ToString();
+        return b.ToString();
     }
     
-    private void Rows(StringBuilder builder, string stepName, string type, Stats stats)
+    private void Rows(StringBuilder b, string stepName, string type, Stats stats)
     {
-        builder.AppendLine($"<td>{stepName}</td>");
-        builder.AppendLine($"<td>{type}</td>");
-        builder.AppendLine($"<td>{stats.RequestsPerSecond}</td>");
-        builder.AppendLine($"<td>{stats.RequestCount}</td>");
-        builder.AppendLine($"<td>{stats.ResponseTimeMean.ToTestFusionResponseTime()}</td>");
-        builder.AppendLine($"<td>{stats.ResponseTimeMedian.ToTestFusionResponseTime()}</td>");
-        builder.AppendLine($"<td>{stats.ResponseTimePercentile75.ToTestFusionResponseTime()}</td>");
-        builder.AppendLine($"<td>{stats.ResponseTimePercentile99.ToTestFusionResponseTime()}</td>");
-        builder.AppendLine($"<td>{stats.ResponseTimeMin.ToTestFusionResponseTime()}</td>");
-        builder.AppendLine($"<td>{stats.ResponseTimeMax.ToTestFusionResponseTime()}</td>");
-        builder.AppendLine($"<td>{stats.ResponseTimeStandardDeviation.ToTestFusionResponseTime()}</td>");
+        b.AppendLine($"<td>{stepName}</td>");
+        b.AppendLine($"<td>{type}</td>");
+        b.AppendLine($"<td>{stats.RequestsPerSecond}</td>");
+        b.AppendLine($"<td>{stats.RequestCount}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimeMean.ToTestFusionResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimeMedian.ToTestFusionResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimePercentile75.ToTestFusionResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimePercentile99.ToTestFusionResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimeMin.ToTestFusionResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimeMax.ToTestFusionResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimeStandardDeviation.ToTestFusionResponseTime()}</td>");
     }
 }

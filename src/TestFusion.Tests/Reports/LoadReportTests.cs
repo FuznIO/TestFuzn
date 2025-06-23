@@ -1,7 +1,7 @@
 ﻿namespace TestFusion.Tests.Reports;
 
 [FeatureTest]
-public class DefaultReportsTests : BaseFeatureTest
+public class LoadReportTests : BaseFeatureTest
 {
     [ScenarioTest]
     public async Task ShortRunning_WithErrors()
@@ -16,28 +16,6 @@ public class DefaultReportsTests : BaseFeatureTest
                     Assert.Fail();
             })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
-            .Run();
-    }
-
-    [ScenarioTest]
-    public async Task ShortRunningFeature()
-    {
-        await Scenario()
-            .Step("Test Step 1", (context) =>
-            {
-            })
-            .Step("Test Step 2", (context) =>
-            {
-            })
-            .Step("Test Step 3", (context) =>
-            {
-            })
-            .Step("Test Step 4", (context) =>
-            {
-            })
-            .Step("Test Step 5", (context) =>
-            {
-            })
             .Run();
     }
 

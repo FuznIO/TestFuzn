@@ -24,9 +24,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Internals\Reports\EmbeddedResources\Styles\testfusion.css" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="Internals\Reports\EmbeddedResources\Scripts\chart.js">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="Internals\Reports\EmbeddedResources\Styles\testfusion.css" />
   </ItemGroup>
 
   <ItemGroup>
