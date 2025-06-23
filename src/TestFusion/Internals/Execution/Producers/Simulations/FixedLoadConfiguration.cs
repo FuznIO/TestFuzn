@@ -14,5 +14,5 @@ internal class FixedLoadConfiguration : ILoadConfiguration
         Duration = duration;
     }
 
-    public string GetDescription() => $"Fixed Load - Rate: {Rate}, Interval: {Interval:g}, Duration: {Duration:g}";
+    public string GetDescription() => $"Fixed Load - Rate: {Rate}, Interval: {Interval:g}, Duration: {Duration:g} {DescriptionHelper.AddWarmupIfWarmup(IsWarmup)}";
 }

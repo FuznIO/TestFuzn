@@ -19,5 +19,5 @@ internal class FixedConcurrentLoadConfiguration : ILoadConfiguration
         TotalCount = totalCount;
     }
 
-    public string GetDescription() => $"Fixed Concurrent Load - Fixed count: {FixedCount}, Total count: {TotalCount}";
+    public string GetDescription() => $"Fixed Concurrent Load - Fixed count: {FixedCount}, Total count: {TotalCount} {DescriptionHelper.AddWarmupIfWarmup(IsWarmup)}";
 }

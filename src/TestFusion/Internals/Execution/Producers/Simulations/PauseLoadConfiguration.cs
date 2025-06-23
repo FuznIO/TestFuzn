@@ -10,5 +10,5 @@ internal class PauseLoadConfiguration : ILoadConfiguration
         Duration = duration;
     }
 
-    public string GetDescription() => $"Pause Load - Duration: {Duration:g}";
+    public string GetDescription() => $"Pause Load - Duration: {Duration:g} {DescriptionHelper.AddWarmupIfWarmup(IsWarmup)}";
 }

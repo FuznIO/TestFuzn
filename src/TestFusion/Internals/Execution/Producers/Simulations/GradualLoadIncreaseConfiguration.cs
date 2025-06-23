@@ -14,5 +14,5 @@ internal class GradualLoadIncreaseConfiguration : ILoadConfiguration
         Duration = duration;
     }
 
-    public string GetDescription() => $"Gradual Load - Start rate: {StartRate}, End rate: {EndRate}, Duration: {Duration:g}";
+    public string GetDescription() => $"Gradual Load - Start rate: {StartRate}, End rate: {EndRate}, Duration: {Duration:g} {DescriptionHelper.AddWarmupIfWarmup(IsWarmup)}";
 }

@@ -14,5 +14,5 @@ internal class RandomLoadPerSecondConfiguration : ILoadConfiguration
         Duration = duration;
     }
 
-    public string GetDescription() => $"Random Load pr Second - Min rate: {MinRate}, Max rate: {MaxRate}, Duration: {Duration:g}";
+    public string GetDescription() => $"Random Load pr Second - Min rate: {MinRate}, Max rate: {MaxRate}, Duration: {Duration:g} {DescriptionHelper.AddWarmupIfWarmup(IsWarmup)}";
 }

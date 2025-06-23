@@ -10,5 +10,5 @@ internal class OneTimeLoadConfiguration : ILoadConfiguration
         Count = count;
     }
 
-    public string GetDescription() => $"One Time Load - Count: {Count}";
+    public string GetDescription() => $"One Time Load - Count: {Count} {DescriptionHelper.AddWarmupIfWarmup(IsWarmup)}";
 }
