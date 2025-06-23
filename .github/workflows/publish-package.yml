@@ -56,13 +56,3 @@ jobs:
         dotnet nuget push src/TestFusion.Plugins.Http/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFusion.Adapters.MSTest/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFusion.Sinks.InfluxDB/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-
-    - name: Unlist packages
-      run: |
-          VERSION=${{ steps.get-version.outputs.version }}
-          curl -X DELETE -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion/$VERSION"
-          curl -X DELETE -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion.Plugins.Playwright/$VERSION"
-          curl -X DELETE -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion.Plugins.Http/$VERSION"
-          curl -X DELETE -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion.Adapters.MSTest/$VERSION"
-          curl -X DELETE -H "X-NuGet-ApiKey: ${{ secrets.NUGET_API_KEY }}" -H "Content-Type: application/json" -d '{}' "https://www.nuget.org/api/v2/package/TestFusion.Sinks.InfluxDB/$VERSION"
-
