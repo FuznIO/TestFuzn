@@ -54,7 +54,7 @@ internal class ConsoleWriter
                 Cells =
                 {
                     new AdvancedTableCell($"", 4),
-                    new AdvancedTableCell($"{(scenarioResult.EndTime - scenarioResult.StartTime).ToTestFusionFormattedDuration()}", 1)
+                    new AdvancedTableCell($"{scenarioResult.TestRunTotalDuration().ToTestFusionFormattedDuration()}", 1)
                 }
             });
             table.Rows.Add(new AdvancedTableRow
@@ -179,18 +179,16 @@ internal class ConsoleWriter
             table.Rows.Add(new AdvancedTableRow {
                 Cells =
                 {
-                    new AdvancedTableCell($"Scenario: {scenario.Name}", 3),
-                    new AdvancedTableCell($"Execution Time", 1),
-                    new AdvancedTableCell($"Test Run Time", 1)
+                    new AdvancedTableCell($"Scenario: {scenario.Name}", 4),
+                    new AdvancedTableCell($"Duration", 1)
                 }
             });
             table.Rows.Add(new AdvancedTableRow
             {
                 Cells =
                 {
-                    new AdvancedTableCell($"", 3),
-                    new AdvancedTableCell($"{loadResult.TotalExecutionDuration.ToTestFusionFormattedDuration()}", 1),
-                    new AdvancedTableCell($"{(loadResult.TestRunTotalDuration()).ToTestFusionFormattedDuration()}", 1)
+                    new AdvancedTableCell($"", 4),
+                    new AdvancedTableCell($"{loadResult.TestRunTotalDuration().ToTestFusionFormattedDuration()}", 1),
                 }
             });
             table.Rows.Add(new AdvancedTableRow

@@ -62,8 +62,8 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("<th>Property</th>");
         b.AppendLine("<th>Value</th>");
         b.AppendLine("</tr");
-        b.AppendLine("<tr><td>Test Suite</td><td>" + featureReportData.TestSuiteName + "</td></tr>");
         b.AppendLine("<tr><td>Test Run ID</td><td>" + featureReportData.TestRunId + "</td></tr>");
+        b.AppendLine("<tr><td>Test Suite</td><td>" + featureReportData.TestSuiteName + "</td></tr>");
         b.AppendLine("<tr><td>Test Run - Start Time</td><td>" + featureReportData.TestRunStartTime.ToLocalTime() + "</td></tr>");
         b.AppendLine("<tr><td>Test Run - End Time</td><td>" + featureReportData.TestRunEndTime.ToLocalTime() + "</td></tr>");
         b.AppendLine("<tr><td>Test Run - Duration</td><td>" + featureReportData.TestRunDuration.ToTestFusionFormattedDuration() + "</td></tr>");
@@ -75,7 +75,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         var totalFailedScenarios = totalScenarios - totalPassedScenarios;
 
         b.AppendLine("<tr><td>Total Features</td><td>" + totalFeatures + "</td></tr>");
-        b.AppendLine("<tr><td>Total Scenarios</td><td>" + totalScenarios + "</td></tr>");
+        b.AppendLine("<tr><td>Total Scenarios Tests</td><td>" + totalScenarios + "</td></tr>");
         b.AppendLine("<tr><td>Passed Scenario Tests</td><td><span class='passed'>" + totalPassedScenarios + "</span></td></tr>");
         b.AppendLine("<tr><td>Failed Scenarios Tests</td><td><span class='failed'>" + totalFailedScenarios + "</span></td></tr>");
 

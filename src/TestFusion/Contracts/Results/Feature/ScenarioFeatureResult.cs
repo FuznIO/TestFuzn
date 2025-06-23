@@ -11,8 +11,6 @@ public class ScenarioFeatureResult
     public DateTime ExecuteEndTime { get; set; }
     public DateTime CleanupStartTime { get; set; } 
     public DateTime CleanupEndTime { get; set; }
-    public DateTime StartTime { get; private set; }
-    public DateTime EndTime { get; private set; }
     public bool HasInputData { get; set; } = false;
     public bool IsLoadTest { get; set; } = false;
 
@@ -34,7 +32,6 @@ public class ScenarioFeatureResult
     {
         Name = scenario.Name;
         HasInputData = scenario.InputDataInfo.HasInputData;
-        StartTime = DateTime.UtcNow;
     }
 
     internal void AddIterationResult(IterationFeatureResult iterationResult)
@@ -76,6 +73,21 @@ public class ScenarioFeatureResult
             default:
                 throw new ArgumentOutOfRangeException(nameof(featureTestPhase), featureTestPhase, null);
         }
+    }
+
+    public DateTime StartTime()
+    {
+        return InitStartTime;
+    }
+
+    public DateTime EndTime()
+    {
+        return CleanupEndTime;
+    }
+
+    public TimeSpan TestRunTotalDuration()
+    {
+        return EndTime() - StartTime();
     }
 }
 
