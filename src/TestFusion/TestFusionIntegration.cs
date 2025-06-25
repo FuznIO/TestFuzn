@@ -41,7 +41,6 @@ public static class TestFusionIntegration
 
         GlobalState.Logger = LoggerFactory.CreateLogger();
 
-        GlobalState.IsInitializeGlobalExecuted = true;
 
         foreach (var plugin in GlobalState.Configuration.SinkPlugins)
         {
@@ -52,6 +51,7 @@ public static class TestFusionIntegration
         {
             await plugin.InitGlobal();
         }
+        GlobalState.IsInitializeGlobalExecuted = true;
     }
 
     public static async Task CleanupGlobal(ITestFrameworkAdapter testFramework)
@@ -63,6 +63,9 @@ public static class TestFusionIntegration
 
         GlobalState.TestRunEndTime = DateTime.UtcNow;
 
+        if (!GlobalState.IsInitializeGlobalExecuted)
+            return;
+        
         await new ReportManager().WriteFeatureReports(new FeatureResultManager());
 
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)
