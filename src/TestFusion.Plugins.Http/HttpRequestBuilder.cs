@@ -16,6 +16,7 @@ public class HttpRequestBuilder
     private Hooks _hooks = new();
     private LoggingVerbosity _loggingVerbosity = LoggingVerbosity.Full;
     private string _userAgent = "TestFusionHttpTesting/1.0";
+    private TimeSpan _timeout = TimeSpan.FromSeconds(10);
 
     public HttpRequestBuilder(Context context, string url)
     {
@@ -107,6 +108,12 @@ public class HttpRequestBuilder
         return this;
     }
 
+    public HttpRequestBuilder Timeout(TimeSpan timeout)
+    {
+        _timeout = timeout;
+        return this;
+    }
+
     public HttpRequest Build(HttpMethod method)
     {
         var request = new HttpRequest(_context, method, _url, _contentType)
@@ -116,7 +123,8 @@ public class HttpRequestBuilder
             Auth = _auth,
             Hooks = _hooks,
             Cookies = new List<Cookie>(_cookies),
-            UserAgent = _userAgent
+            UserAgent = _userAgent,
+            Timeout = _timeout
         };
         foreach (var header in _headers)
             request.Headers[header.Key] = header.Value;
