@@ -13,7 +13,6 @@ public class Startup : BaseStartup
         configuration.UsePlaywright();
         configuration.UseHttp();
         configuration.UseInfluxDb();
-
         return configuration;
     }
 }

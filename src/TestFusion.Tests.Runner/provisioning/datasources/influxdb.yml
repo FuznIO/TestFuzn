@@ -1,0 +1,15 @@
+apiVersion: 1
+
+datasources:
+  - name: TestFusion_InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    basicAuth: false
+    isDefault: true
+    jsonData:
+      version: Flux
+      organization: DefaultOrg
+      defaultBucket: TestFusion
+    secureJsonData:
+      token: default_admin_token
