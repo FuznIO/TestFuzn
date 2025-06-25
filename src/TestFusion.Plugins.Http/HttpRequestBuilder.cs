@@ -43,13 +43,17 @@ public class HttpRequestBuilder
 
     public HttpRequestBuilder Cookie(Cookie cookie)
     {
+        if (cookie.Expires < DateTime.UtcNow)
+            cookie.Expires = DateTime.UtcNow.AddSeconds(10);
         _cookies.Add(cookie);
         return this;
     }
 
-    public HttpRequestBuilder Cookie(string name, string value, string? path = null, string? domain = null)
+    public HttpRequestBuilder Cookie(string name, string value, string? path = null, string? domain = null, TimeSpan? duration = null)
     {
-        _cookies.Add(new Cookie(name, value, path, domain));
+        var cookie = new Cookie(name, value, path, domain);
+        cookie.Expires = duration.HasValue ? DateTime.UtcNow.Add(duration.Value) : DateTime.UtcNow.AddSeconds(10);
+        _cookies.Add(cookie);
         return this;
     }
 
