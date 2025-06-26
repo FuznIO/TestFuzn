@@ -23,7 +23,7 @@ public class HttpRequest
     public Dictionary<string, string> Headers { get; private set; } = new();
     public Hooks? Hooks { get; set; } = new();
     public string UserAgent { get; set; } = "TestFusionHttp/1.0";
-    public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
+    public TimeSpan Timeout { get; set; } = GlobalState.Configuration.DefaultRequestTimeout;
 
     internal HttpRequest(Context context, HttpMethod method, string url, ContentTypes contentType = ContentTypes.Json)
     {
@@ -106,7 +106,6 @@ public class HttpRequest
             var httpClientFactory = GlobalState.Configuration.CustomHttpClientFactory ?? _context.Internals.Plugins.GetState<IHttpClientFactory>(typeof(HttpPlugin));
             var client = httpClientFactory.CreateClient("TestFusion");
             client.BaseAddress = baseUri;
-            client.Timeout = GlobalState.Configuration.HttpClientTimeout;
 
             var cts = new CancellationTokenSource(Timeout);
             response = await client.SendAsync(request, cts.Token);

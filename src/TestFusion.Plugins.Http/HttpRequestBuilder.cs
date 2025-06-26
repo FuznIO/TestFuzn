@@ -16,7 +16,7 @@ public class HttpRequestBuilder
     private Hooks _hooks = new();
     private LoggingVerbosity _loggingVerbosity = LoggingVerbosity.Full;
     private string _userAgent = "TestFusionHttpTesting/1.0";
-    private TimeSpan _timeout = TimeSpan.FromSeconds(10);
+    private TimeSpan _timeout = GlobalState.Configuration.DefaultRequestTimeout;
 
     public HttpRequestBuilder(Context context, string url)
     {
