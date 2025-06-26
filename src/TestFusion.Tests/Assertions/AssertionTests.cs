@@ -4,6 +4,7 @@
 public class AssertionTests : BaseFeatureTest
 {
     [ScenarioTest]
+    [ExpectedException(typeof(AssertFailedException))]
     public async Task Verify_assertions_while_running_should_fail()
     {
         var stepExecutionCount = 0;
