@@ -22,7 +22,7 @@ internal class ExecutionManager
         _producerManager = producerManager;
         _consumerManager = consumerManager;
     }
-    public async Task Execute()
+    public async Task Run()
     {
         _producerManager.StartProducers();
 
@@ -38,32 +38,32 @@ internal class ExecutionManager
     }
 
     private void ExecuteAssertWhenDone()
-    {        
+    {
         if (_sharedExecutionState.TestType == TestType.Feature)
             return;
 
-        if (_sharedExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
+        if (_sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+            return;
+
+        foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            foreach (var scenario in _sharedExecutionState.Scenarios)
+            var scenarioCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
+            var scenarioResult = scenarioCollector.GetCurrentResult();
+            if (scenario.AssertWhenDoneAction != null)
             {
-                var scenarioCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
-                var scenarioResult = scenarioCollector.GetCurrentResult();
-                if (scenario.AssertWhenDoneAction != null)
+                try
                 {
-                    try
-                    {
-                        var context = ContextFactory.CreateContext(_testFramework, "AssertWhenDoneAction");
-                        scenario.AssertWhenDoneAction(context, new AssertScenarioStats(scenarioResult));
-                    }
-                    catch (Exception e)
-                    {
-                        _sharedExecutionState.TestRunState.FirstException = e;
-                        scenarioCollector.AssertWhenDoneException(e);
-                        scenarioCollector.SetStatus(ScenarioStatus.Failed);
-                    }
+                    var context = ContextFactory.CreateContext(_testFramework, "AssertWhenDoneAction");
+                    scenario.AssertWhenDoneAction(context, new AssertScenarioStats(scenarioResult));
+                }
+                catch (Exception e)
+                {
+                    _sharedExecutionState.TestRunState.FirstException = e;
+                    scenarioCollector.AssertWhenDoneException(e);
+                    scenarioCollector.SetStatus(ScenarioStatus.Failed);
                 }
             }
         }
-        
+
     }
 }

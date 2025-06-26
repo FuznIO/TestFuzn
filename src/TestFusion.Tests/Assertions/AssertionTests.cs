@@ -8,6 +8,7 @@ public class AssertionTests : BaseFeatureTest
     {
         var stepExecutionCount = 0;
         var assertExecuted = false;
+        var catchExecuted = false;
 
         try
         {
@@ -17,7 +18,7 @@ public class AssertionTests : BaseFeatureTest
                     Interlocked.Increment(ref stepExecutionCount);
                     Assert.Fail();
                 })
-                .Load().Simulations((context, simulations) => simulations.FixedLoad(1, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)))
+                .Load().Simulations((context, simulations) => simulations.FixedLoad(1, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5)))
                 .Load().AssertWhileRunning((context, stats) =>
                 {
                     assertExecuted = true;
@@ -27,8 +28,13 @@ public class AssertionTests : BaseFeatureTest
         }
         catch (AssertFailedException)
         {
+            catchExecuted = true;
+        }
+        finally
+        {
+            // Expected failure due to assertion in AssertWhileRunning
             Assert.IsTrue(assertExecuted);
-            // Expected failure due to assertion in step
+            Assert.IsTrue(catchExecuted);
         }
     }
 }

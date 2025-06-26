@@ -63,7 +63,9 @@ internal class ConsoleManager(
                 continue;
 
             var updatedSnapshot = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult();
-            if (_sharedExecutionState.IsScenarioExecutionComplete(scenario.Name) || _sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Completed)
+            if (_sharedExecutionState.IsScenarioExecutionComplete(scenario.Name) || 
+                _sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Completed
+                || _sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
             {
                 loadTestMetrics[scenario.Name].Status = updatedSnapshot.Status.ToString();
                 loadTestMetrics[scenario.Name].ConsoleCompleted = true;

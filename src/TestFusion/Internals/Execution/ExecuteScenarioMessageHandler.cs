@@ -140,7 +140,8 @@ internal class ExecuteScenarioMessageHandler
             await plugin.CleanupContext(state);
         }
 
-        if (scenario.AssertWhileRunningAction != null)
+        if (scenario.AssertWhileRunningAction != null
+            && _sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Running)
         {
             try
             {
@@ -151,6 +152,7 @@ internal class ExecuteScenarioMessageHandler
             {
                 _sharedExecutionState.TestRunState.ExecutionStatus = ExecutionStatus.Stopped;
                 _sharedExecutionState.TestRunState.ExecutionStoppedReason = ex;
+                scenarioLoadCollector.SetStatus(ScenarioStatus.Failed);
             }
         }
 

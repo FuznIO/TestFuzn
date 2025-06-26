@@ -53,7 +53,7 @@ internal class ScenarioTestRunner
         {
             consoleManager.StartRealtimeConsoleOutputIfEnabled();
             await initManager.Run();
-            await executionManager.Execute();
+            await executionManager.Run();
             await cleanupManager.Run();
             featureResultManager.AddScenarioResults(sharedExecutionState.FeatureName, sharedExecutionState.ResultState.FeatureCollectors);
             await reportManager.WriteLoadReports(sharedExecutionState);
