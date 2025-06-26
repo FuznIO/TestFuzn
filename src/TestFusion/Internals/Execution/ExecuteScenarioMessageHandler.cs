@@ -38,6 +38,7 @@ internal class ExecuteScenarioMessageHandler
 
         if (_sharedExecutionState.TestType == TestType.Feature)
         {
+            
             if (currentInputData != null)
             {
                 iterationResult.InputData = PropertyHelper.GetStringFromProperties(currentInputData);
@@ -47,6 +48,9 @@ internal class ExecuteScenarioMessageHandler
         }
 
         var stepContext = ContextFactory.CreateStepContext(_testFramework, scenario, "", currentInputData);
+
+        if (_sharedExecutionState.TestType == TestType.Feature)
+            iterationResult.CorrelationId = stepContext.CorrelationId;
         
         var scenarioDuration = new Stopwatch();
         scenarioDuration.Start();

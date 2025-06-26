@@ -98,4 +98,27 @@ public class InputDataTests : BaseFeatureTest
             Assert.IsTrue(user.Value);
         }
     }
+
+    [ScenarioTest]
+    public async Task Verify_Params_based_InputData_Feature()
+    {
+        var userExecuted = new Dictionary<string, bool>();
+        userExecuted["user1"] = false;
+        userExecuted["user2"] = false;
+        userExecuted["user3"] = false;
+
+        await Scenario()
+            .InputData(
+                new User("user1"),
+                new User("user2"),
+                new User("user3")
+            )
+            .InputDataBehavior(InputDataBehavior.LoopThenRepeatLast)
+            .Step("Verify", context =>
+            {
+                var user = context.InputData<User>();
+                userExecuted[user.Name] = true;
+            })
+            .Run();
+    }
 }

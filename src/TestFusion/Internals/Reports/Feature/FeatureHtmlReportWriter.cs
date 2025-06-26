@@ -102,6 +102,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
                         b.AppendLine("<div class='content'>");
                         b.AppendLine("<ul>");
                         b.AppendLine($"<li>{(string.IsNullOrEmpty(iteration.InputData) ? " " : iteration.InputData)}</li>");
+                        b.AppendLine($"<li>CorrelationId: {iteration.CorrelationId}</li>");
                         foreach (var stepResult in iteration.StepResults)
                         {
                             WriteStepResult(b, stepResult.Value);
