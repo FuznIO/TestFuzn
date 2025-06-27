@@ -4,9 +4,9 @@
     <AssemblyName>TestFusion.Sinks.InfluxDB</AssemblyName>
     <RootNamespace>TestFusion.Sinks.InfluxDB</RootNamespace>
     <OutputType>Library</OutputType>
-    <PackageId>TestFusion.Plugins.InfluxDB</PackageId>
-    <Title>TestFusion.Plugins.InfluxDB</Title>
-    <Description>InfluxDB plugin for TestFusion</Description>
+    <PackageId>TestFusion.Sinks.InfluxDB</PackageId>
+    <Title>TestFusion.Sinks.InfluxDB</Title>
+    <Description>InfluxDB sink for TestFusion</Description>
     <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFusion;influxdb;influx</PackageTags>
   </PropertyGroup>
 
