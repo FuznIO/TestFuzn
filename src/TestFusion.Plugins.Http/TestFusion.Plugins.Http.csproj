@@ -1,11 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <AssemblyName>TestFusion.Plugins.Http</AssemblyName>
     <RootNamespace>TestFusion.Plugins.Http</RootNamespace>
+    <OutputType>Library</OutputType>
+    <PackageId>TestFusion.Plugins.Http</PackageId>
+    <Title>TestFusion.Plugins.Http</Title>
+    <Description>Http plugin for TestFusion</Description>
+    <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFusion;http</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

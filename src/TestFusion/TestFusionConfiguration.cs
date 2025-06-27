@@ -1,6 +1,7 @@
 ﻿using TestFusion.Internals.Reports.Feature;
 using TestFusion.Internals.Reports.Load;
 using TestFusion.Contracts.Plugins;
+using TestFusion.Contracts.Providers;
 using TestFusion.Contracts.Reports;
 using TestFusion.Contracts.Sinks;
 
@@ -14,6 +15,7 @@ namespace TestFusion
         internal List<IFeatureReport> FeatureReports { get; set; } = new();
         internal List<ILoadReport> LoadReports { get; set; } = new();
         internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
+        internal List<ISerializerProvider> SerializerProviders { get; set; } = new();
 
         public TestFusionConfiguration()
         {
@@ -23,6 +25,8 @@ namespace TestFusion
             AddSinkPlugin(new InMemorySnapshotCollectorSinkPlugin());
             AddLoadReport(new LoadHtmlReportWriter());
             AddLoadReport(new LoadXmlReportWriter());
+
+            AddSerializerProvider(new DefaultSerializerProvider());
         }
 
         public void AddContextPlugin(IContextPlugin plugin)
@@ -51,6 +55,13 @@ namespace TestFusion
             if (plugin == null)
                 throw new ArgumentNullException(nameof(plugin), "Sink plugin cannot be null");
             SinkPlugins.Add(plugin);
+        }
+
+        public void AddSerializerProvider(ISerializerProvider serializerProvider)
+        {
+            if (serializerProvider == null)
+                throw new ArgumentNullException(nameof(serializerProvider), "SerializerProvider plugin cannot be null");
+            SerializerProviders.Add(serializerProvider);
         }
 
         public void ClearReports()

@@ -26,7 +26,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
+		..\.github\workflows\publish-package.yml = ..\.github\workflows\publish-package.yml
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFusion.Plugins.Newtonsoft", "TestFusion.Plugins.Newtonsoft\TestFusion.Plugins.Newtonsoft.csproj", "{0AF4C479-61B1-1367-2B4C-0B5A441FCC92}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -70,6 +73,10 @@ Global
 		{AF4FC856-7A2E-9ECE-343C-4A988E3EA6ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AF4FC856-7A2E-9ECE-343C-4A988E3EA6ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AF4FC856-7A2E-9ECE-343C-4A988E3EA6ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AF4C479-61B1-1367-2B4C-0B5A441FCC92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AF4C479-61B1-1367-2B4C-0B5A441FCC92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AF4C479-61B1-1367-2B4C-0B5A441FCC92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AF4C479-61B1-1367-2B4C-0B5A441FCC92}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

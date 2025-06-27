@@ -46,6 +46,7 @@ jobs:
         dotnet pack src/TestFusion/TestFusion.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
         dotnet pack src/TestFusion.Plugins.Playwright/TestFusion.Plugins.Playwright.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
         dotnet pack src/TestFusion.Plugins.Http/TestFusion.Plugins.Http.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFusion.Plugins.Newtonsoft/TestFusion.Plugins.Newtonsoft.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
         dotnet pack src/TestFusion.Adapters.MSTest/TestFusion.Adapters.MSTest.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
         dotnet pack src/TestFusion.Sinks.InfluxDB/TestFusion.Sinks.InfluxDB.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
 
@@ -54,5 +55,6 @@ jobs:
         dotnet nuget push src/TestFusion/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFusion.Plugins.Playwright/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFusion.Plugins.Http/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFusion.Plugins.Newtonsoft/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFusion.Adapters.MSTest/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFusion.Sinks.InfluxDB/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}

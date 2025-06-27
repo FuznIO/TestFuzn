@@ -1,20 +1,21 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Net;
 using System.Net.Http.Headers;
-using System.Text.Json;
+using TestFusion.Contracts.Providers;
 using TestFusion.Plugins.Http.Internals;
 
 namespace TestFusion.Plugins.Http;
 
 public class HttpResponse
 {
-    public HttpResponse(
-        HttpRequestMessage request,
+    internal HttpResponse(HttpRequestMessage request,
         HttpResponseMessage response,
         CookieContainer? cookieContainer,
-        string body)
+        string body,
+        ISerializerProvider serializerProvider)
     {
         _request = request;
+        _serializerProvider = serializerProvider;
         InnerResponse = response;
         RawResponse = response.ToString();
         Body = body;
@@ -31,6 +32,7 @@ public class HttpResponse
     
     private List<Cookie> _cookies = new List<Cookie>();
     private HttpRequestMessage _request;
+    private ISerializerProvider _serializerProvider;
 
     public string Url { get; set; }
     public HttpResponseMessage InnerResponse { get; set; }
@@ -74,15 +76,11 @@ public class HttpResponse
 
         try
         {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-            obj = JsonSerializer.Deserialize<T>(Body, options);
+            obj = _serializerProvider.Deserialize<T>(Body);
         }
         catch (Exception ex)
         {
-            //Assert.Fail($"The response body was not a valid {typeof(T)}. \nURL: {_request.RequestUri} \nResponse body: \n{Body}");
+            Assert.Fail($"The response body was not a valid {typeof(T)}. \nURL: {_request.RequestUri} \nResponse body: \n{Body}");
         }
 
         return obj;

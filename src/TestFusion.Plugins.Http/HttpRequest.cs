@@ -140,7 +140,7 @@ public class HttpRequest
             }
         }
 
-        return new HttpResponse(request, response, responseCookies, body: responseBody);
+        return new HttpResponse(request, response, responseCookies, body: responseBody, _context.SerializerProvider);
     }
 
     private static CookieContainer? ExtractResponseCookies(HttpResponseMessage response, Uri uri)

@@ -43,6 +43,7 @@ internal class ContextFactory
         context.TestFramework = testFramework;
         context.CorrelationId = Guid.NewGuid().ToString();
         context.Internals = new ContextInternals();
+        context.SerializerProvider = GlobalState.Configuration.SerializerProviders.Last();
         
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)
         {

@@ -1,4 +1,5 @@
 ﻿using TestFusion.Contracts.Adapters;
+using TestFusion.Contracts.Providers;
 
 namespace TestFusion;
 
@@ -12,5 +13,6 @@ public class Context
     public CurrentStep Step { get; internal set; }
     public string CorrelationId { get; set; }
     public ITestFrameworkAdapter TestFramework { get; internal set; }
+    public ISerializerProvider SerializerProvider { get; set; }
 }
 

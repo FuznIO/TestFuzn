@@ -1,4 +1,6 @@
 ﻿using TestFusion;
+using TestFusion.Plugins.Http;
+using TestFusion.Plugins.Playwright;
 
 namespace SampleApp.Tests;
 
@@ -9,6 +11,9 @@ public class Startup : BaseStartup
     {
         var configuration = new TestFusionConfiguration();
         configuration.TestSuiteName = "SampleApp.Tests";
+
+        configuration.UseHttp();
+        configuration.UsePlaywright();
 
         return configuration;
     }
