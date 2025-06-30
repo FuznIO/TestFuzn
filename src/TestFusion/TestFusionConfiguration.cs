@@ -1,9 +1,10 @@
-﻿using TestFusion.Internals.Reports.Feature;
-using TestFusion.Internals.Reports.Load;
-using TestFusion.Contracts.Plugins;
+﻿using TestFusion.Contracts.Plugins;
 using TestFusion.Contracts.Providers;
 using TestFusion.Contracts.Reports;
 using TestFusion.Contracts.Sinks;
+using TestFusion.Internals.Comparers;
+using TestFusion.Internals.Reports.Feature;
+using TestFusion.Internals.Reports.Load;
 
 namespace TestFusion
 {
@@ -15,7 +16,7 @@ namespace TestFusion
         internal List<IFeatureReport> FeatureReports { get; set; } = new();
         internal List<ILoadReport> LoadReports { get; set; } = new();
         internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
-        internal List<ISerializerProvider> SerializerProviders { get; set; } = new();
+        internal HashSet<ISerializerProvider> SerializerProviders { get; set; } = new(new SerializerProviderComparer());
 
         public TestFusionConfiguration()
         {
@@ -26,7 +27,7 @@ namespace TestFusion
             AddLoadReport(new LoadHtmlReportWriter());
             AddLoadReport(new LoadXmlReportWriter());
 
-            AddSerializerProvider(new DefaultSerializerProvider());
+            AddSerializerProvider(new SystemTextJsonSerializerProvider());
         }
 
         public void AddContextPlugin(IContextPlugin plugin)
@@ -60,7 +61,11 @@ namespace TestFusion
         public void AddSerializerProvider(ISerializerProvider serializerProvider)
         {
             if (serializerProvider == null)
-                throw new ArgumentNullException(nameof(serializerProvider), "SerializerProvider plugin cannot be null");
+                throw new ArgumentNullException(nameof(serializerProvider), "SerializerProvider cannot be null");
+
+            if (SerializerProviders.Contains(serializerProvider))
+                SerializerProviders.Remove(serializerProvider);
+
             SerializerProviders.Add(serializerProvider);
         }
 

@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TestFusion.Adapters.MSTest\TestFusion.Adapters.MSTest.csproj" />
     <ProjectReference Include="..\TestFusion.Plugins.Http\TestFusion.Plugins.Http.csproj" />
+    <ProjectReference Include="..\TestFusion.Plugins.Newtonsoft\TestFusion.Plugins.Newtonsoft.csproj" />
     <ProjectReference Include="..\TestFusion.Plugins.Playwright\TestFusion.Plugins.Playwright.csproj" />
     <ProjectReference Include="..\TestFusion.Sinks.InfluxDB\TestFusion.Sinks.InfluxDB.csproj" />
     <ProjectReference Include="..\TestFusion\TestFusion.csproj" />

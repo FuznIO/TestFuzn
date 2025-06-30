@@ -13,6 +13,6 @@ public class Context
     public CurrentStep Step { get; internal set; }
     public string CorrelationId { get; set; }
     public ITestFrameworkAdapter TestFramework { get; internal set; }
-    public ISerializerProvider SerializerProvider { get; set; }
+    public HashSet<ISerializerProvider> SerializerProvider { get; set; }
 }
 

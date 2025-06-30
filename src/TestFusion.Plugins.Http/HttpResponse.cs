@@ -12,10 +12,10 @@ public class HttpResponse
         HttpResponseMessage response,
         CookieContainer? cookieContainer,
         string body,
-        ISerializerProvider serializerProvider)
+        HashSet<ISerializerProvider> serializerProviders)
     {
         _request = request;
-        _serializerProvider = serializerProvider;
+        _serializerProviders = serializerProviders;
         InnerResponse = response;
         RawResponse = response.ToString();
         Body = body;
@@ -30,9 +30,9 @@ public class HttpResponse
         }
     }
     
-    private List<Cookie> _cookies = new List<Cookie>();
-    private HttpRequestMessage _request;
-    private ISerializerProvider _serializerProvider;
+    private readonly List<Cookie> _cookies = new List<Cookie>();
+    private readonly HttpRequestMessage _request;
+    private readonly HashSet<ISerializerProvider> _serializerProviders;
 
     public string Url { get; set; }
     public HttpResponseMessage InnerResponse { get; set; }
@@ -69,21 +69,33 @@ public class HttpResponse
     public T BodyAs<T>()
         where T : class
     {
-        if (Body == null)
+        if (string.IsNullOrEmpty(Body))
             return null;
 
-        T obj = null;
-
-        try
+        foreach (var serializerProvider in _serializerProviders.OrderBy(sp => sp.Priority))
         {
-            obj = _serializerProvider.Deserialize<T>(Body);
-        }
-        catch (Exception ex)
-        {
-            Assert.Fail($"The response body was not a valid {typeof(T)}. \nURL: {_request.RequestUri} \nResponse body: \n{Body}");
+            if (serializerProvider.IsSerializerSpecific<T>())
+                return serializerProvider.Deserialize<T>(Body);
         }
 
-        return obj;
+        Exception? exception = null;
+
+        foreach (var serializerProvider in _serializerProviders.OrderBy(sp => sp.Priority))
+        {
+            try
+            {
+                var obj = serializerProvider.Deserialize<T>(Body);
+                if (obj == null)
+                    throw new AssertFailedException($"Deserialized object is null.");
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+            }
+        }
+
+        throw new AssertFailedException($"Unable to deserialize into {typeof(T)}. \nURL: {_request?.RequestUri} \nResponse body: \n{Body}\nException message: \n{exception?.Message}");
     }
 
     public dynamic BodyAsJson()
@@ -104,6 +116,7 @@ public class HttpResponse
 
         return json;
     }
+
     // Generates a curl command that reproduces the current HTTP request
     private string GetCurlCommand()
     {
