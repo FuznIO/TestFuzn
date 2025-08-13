@@ -108,8 +108,22 @@ public class HttpRequest
             client.BaseAddress = baseUri;
 
             var cts = new CancellationTokenSource(Timeout);
+
+            _context.Logger.LogInformation($"Step {_context.Step.Name} - HTTP Request: {request.Method} {request.RequestUri} - CorrelationId: {_context.CorrelationId}");
+
+            if (request.Content != null)
+            {
+                var requestBody = await request.Content.ReadAsStringAsync(cts.Token);
+                _context.Logger.LogInformation($"Step {_context.Step.Name} - Request Body: {requestBody} - CorrelationId: {_context.CorrelationId}");
+            }
+
             response = await client.SendAsync(request, cts.Token);
             responseBody = await response.Content.ReadAsStringAsync(cts.Token);
+
+            _context.Logger.LogInformation($"Step {_context.Step.Name} - HTTP Response: {(int)response.StatusCode} {response.ReasonPhrase} - CorrelationId: {_context.CorrelationId}");
+            if (responseBody != null)
+                _context.Logger.LogInformation($"Step {_context.Step.Name} - Response Body: {responseBody} - CorrelationId: {_context.CorrelationId}");
+
             responseCookies = ExtractResponseCookies(response, uri);
 
             if (!response.IsSuccessStatusCode)

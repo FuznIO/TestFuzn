@@ -23,6 +23,12 @@ public static class TestFusionIntegration
         if (startupType == null)
             throw new InvalidOperationException("No class implementing IStartup was found in the loaded assemblies.");
 
+        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, $"TestFusion_{GlobalState.TestRunId}");
+        Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
+
+        GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
+        GlobalState.Logger.LogInformation("Logging initialized");
+
         _startupInstance = Activator.CreateInstance(startupType) as IStartup;
 
         var configuration = _startupInstance.Configuration();
@@ -36,21 +42,12 @@ public static class TestFusionIntegration
         var context = ContextFactory.CreateContext(testFramework, "InitGlobal");
         await _startupInstance.InitGlobal(context);
 
-        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, $"TestFusion_{GlobalState.TestRunId}");
-        Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
-
-        GlobalState.Logger = LoggerFactory.CreateLogger();
-
-
         foreach (var plugin in GlobalState.Configuration.SinkPlugins)
-        {
             await plugin.InitGlobal();
-        }
 
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)
-        {
             await plugin.InitGlobal();
-        }
+
         GlobalState.IsInitializeGlobalExecuted = true;
     }
 
