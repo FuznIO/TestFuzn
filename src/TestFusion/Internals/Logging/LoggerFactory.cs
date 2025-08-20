@@ -33,7 +33,6 @@ internal static class LoggerFactory
             _loggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
             {
                 builder
-                    .AddConsole() // Always add console for fallback logging
                     .AddProvider(new FileLoggerProvider(logFilePath))
                     .SetMinimumLevel(LogLevel.Debug);
             });
