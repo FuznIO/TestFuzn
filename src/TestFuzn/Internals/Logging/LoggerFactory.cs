@@ -66,7 +66,7 @@ internal static class LoggerFactory
     /// <summary>
     /// Creates a logger instance with the specified name
     /// </summary>
-    public static ILogger CreateLogger(string categoryName = "TestFusion") => 
+    public static ILogger CreateLogger(string categoryName = "TestFuzn") => 
         _loggerFactory.CreateLogger(categoryName);
 
     /// <summary>

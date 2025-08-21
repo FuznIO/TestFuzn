@@ -15,7 +15,7 @@ public class ConfigurationManager
         config.TestSuiteName = GlobalState.AssemblyWithTestsName;
         if (config.TestSuiteName == null)
             config.TestSuiteName = Assembly.GetExecutingAssembly().GetName().Name;
-        GetConfigRoot().Bind("TestFusion", config);
+        GetConfigRoot().Bind("TestFuzn", config);
 
         return config;
     }
@@ -24,7 +24,7 @@ public class ConfigurationManager
     {
         try
         {
-            GetConfigRoot().GetSection("TestFusion").Bind(pluginName, configInstance);
+            GetConfigRoot().GetSection("TestFuzn").Bind(pluginName, configInstance);
         }
         catch (Exception ex)
         {

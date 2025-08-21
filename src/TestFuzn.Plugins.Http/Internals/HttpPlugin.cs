@@ -9,7 +9,7 @@ internal class HttpPlugin : IContextPlugin
     public HttpPlugin()
     {
         var serviceCollection = new ServiceCollection();
-        serviceCollection.AddHttpClient("TestFusion");
+        serviceCollection.AddHttpClient("TestFuzn");
         _serviceProvider = serviceCollection.BuildServiceProvider();
     }
         

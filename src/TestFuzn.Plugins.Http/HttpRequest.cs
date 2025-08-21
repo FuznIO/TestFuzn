@@ -104,7 +104,7 @@ public class HttpRequest
         try
         {
             var httpClientFactory = GlobalState.Configuration.CustomHttpClientFactory ?? _context.Internals.Plugins.GetState<IHttpClientFactory>(typeof(HttpPlugin));
-            var client = httpClientFactory.CreateClient("TestFusion");
+            var client = httpClientFactory.CreateClient("TestFuzn");
             client.BaseAddress = baseUri;
 
             var cts = new CancellationTokenSource(Timeout);
