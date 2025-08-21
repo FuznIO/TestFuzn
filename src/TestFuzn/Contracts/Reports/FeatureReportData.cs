@@ -1,0 +1,15 @@
+﻿using FuznLabs.TestFuzn.Contracts.Results.Feature;
+
+namespace FuznLabs.TestFuzn.Contracts.Reports;
+
+public class FeatureReportData
+{
+    public string TestSuiteName { get; internal set; }
+    public string TestRunId { get; internal set; }
+    public DateTime TestRunStartTime { get; internal set; }
+    public DateTime TestRunEndTime { get; internal set; }
+    public TimeSpan TestRunDuration { get; internal set; }
+    public string TestsOutputDirectory { get; internal set; }
+    public TestSuiteFeatureResult Results { get; internal set; }
+    
+}

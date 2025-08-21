@@ -1,6 +1,6 @@
 ﻿//using SampleApp.WebApp.Models;
-//using TestFusion.Feature;
-//using TestFusion.Http;
+//using FuznLabs.TestFuzn.Feature;
+//using FuznLabs.TestFuzn.Http;
 
 //namespace SampleApp.Tests.FeatureTests;
 

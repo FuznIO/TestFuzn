@@ -1,4 +1,4 @@
-﻿using TestFusion;
+﻿using FuznLabs.TestFuzn;
 
 namespace SampleApp.Tests.FeatureTests;
 

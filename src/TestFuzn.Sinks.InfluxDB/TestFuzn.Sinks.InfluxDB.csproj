@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TestFuzn.Sinks.InfluxDB</AssemblyName>
+    <RootNamespace>TestFuzn.Sinks.InfluxDB</RootNamespace>
+    <OutputType>Library</OutputType>
+    <PackageId>TestFuzn.Sinks.InfluxDB</PackageId>
+    <Title>TestFuzn.Sinks.InfluxDB</Title>
+    <Description>InfluxDB sink for TestFuzn</Description>
+    <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;influxdb;influx</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="InfluxDB.Client" Version="4.18.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
+  </ItemGroup>
+
+</Project>

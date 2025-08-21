@@ -11,11 +11,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SampleApp.WebApp\SampleApp.WebApp.csproj" />
-    <ProjectReference Include="..\TestFusion.Adapters.MSTest\TestFusion.Adapters.MSTest.csproj" />
-    <ProjectReference Include="..\TestFusion.Plugins.Http\TestFusion.Plugins.Http.csproj" />
-    <ProjectReference Include="..\TestFusion.Plugins.Playwright\TestFusion.Plugins.Playwright.csproj" />
-    <ProjectReference Include="..\TestFusion.Sinks.InfluxDB\TestFusion.Sinks.InfluxDB.csproj" />
-    <ProjectReference Include="..\TestFusion\TestFusion.csproj" />
+    <ProjectReference Include="..\TestFuzn.Adapters.MSTest\TestFuzn.Adapters.MSTest.csproj" />
+    <ProjectReference Include="..\TestFuzn.Plugins.Http\TestFuzn.Plugins.Http.csproj" />
+    <ProjectReference Include="..\TestFuzn.Plugins.Playwright\TestFuzn.Plugins.Playwright.csproj" />
+    <ProjectReference Include="..\TestFuzn.Sinks.InfluxDB\TestFuzn.Sinks.InfluxDB.csproj" />
+    <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,6 @@
 ﻿using SampleApp.WebApp.Models;
-using TestFusion.Plugins.Http;
-using TestFusion;
+using FuznLabs.TestFuzn.Plugins.Http;
+using FuznLabs.TestFuzn;
 
 namespace SampleApp.Tests.FeatureTests;
 

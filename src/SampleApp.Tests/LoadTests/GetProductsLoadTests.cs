@@ -1,5 +1,5 @@
-﻿using TestFusion;
-using TestFusion.Plugins.Http;
+﻿using FuznLabs.TestFuzn;
+using FuznLabs.TestFuzn.Plugins.Http;
 
 namespace Samples.LoadTests;
 

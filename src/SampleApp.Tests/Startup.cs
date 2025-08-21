@@ -1,6 +1,6 @@
-﻿using TestFusion;
-using TestFusion.Plugins.Http;
-using TestFusion.Plugins.Playwright;
+﻿using FuznLabs.TestFuzn;
+using FuznLabs.TestFuzn.Plugins.Http;
+using FuznLabs.TestFuzn.Plugins.Playwright;
 
 namespace SampleApp.Tests;
 
