@@ -1,41 +1,49 @@
 ﻿namespace FuznLabs.TestFuzn;
 
-public class StepContext : Context
+public class StepContext : StepContext<StepContext>
 {
-    public Scenario Scenario { get; internal set; }
-    internal Dictionary<string, object> SharedData { get; } = new Dictionary<string, object>();
-    internal object InputDataInternal { get; set; }
-
-    public StepContext()
-    {
-    }
-
-    public T InputData<T>()
-    {
-        try
-        {
-            return (T) InputDataInternal;
-        }
-        catch (InvalidCastException)
-        {
-            throw new InvalidCastException($"Input data is not of type {typeof(T).Name}");
-        }
-    }
-
-    public T GetSharedData<T>(string key)
-    {
-        if (SharedData.TryGetValue(key, out var value))
-        {
-            return (T) value;
-        }
-        throw new KeyNotFoundException($"Key '{key}' not found in StepContext.Data.");
-    }
-
-    public void SetSharedData(string key, object value)
-    {
-        SharedData[key] = value;
-    }
-
-
 }
 
+public class StepContext<TStepContext> : BaseStepContext
+    where TStepContext : StepContext<TStepContext>
+{
+    public async Task Step(string name, Func<TStepContext, Task> action)
+    {
+        var stepType = typeof(Step<>).MakeGenericType(typeof(TStepContext));
+        var step = (BaseStep?) Activator.CreateInstance(stepType);
+
+        if (step == null)
+        {
+            throw new InvalidOperationException($"Failed to create an instance of type {stepType.FullName}");
+        }
+
+        step.ContextType = typeof(TStepContext);
+        step.Name = name;
+        step.ParentName = CurrentStep.Name;
+        step.Action = (Func<BaseStepContext, Task>) (ctx => action((TStepContext) ctx));
+
+        await ExecuteStepHandler.ExecuteStep(step);
+    }
+
+    public void Step(string name, Action<TStepContext> action)
+    {
+        var stepType = typeof(Step<>).MakeGenericType(typeof(TStepContext));
+        var step = (BaseStep?) Activator.CreateInstance(stepType);
+
+        if (step == null)
+        {
+            throw new InvalidOperationException($"Failed to create an instance of type {stepType.FullName}");
+        }
+
+        step.ContextType = typeof(TStepContext);
+        step.Name = name;
+        step.ParentName = CurrentStep.Name;
+        step.Action = (Func<BaseStepContext, Task>) (ctx =>
+        {
+            action((TStepContext) ctx);
+            return Task.CompletedTask;
+        });
+
+        ExecuteStepHandler.ExecuteStep(step).GetAwaiter().GetResult();
+    }
+}

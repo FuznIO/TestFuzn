@@ -1,7 +1,7 @@
 ﻿namespace FuznLabs.TestFuzn.Tests.Steps;
 
 [FeatureTest]
-public class StepsTests : BaseFeatureTest
+public class StepTests : BaseFeatureTest
 {
     public override string FeatureName => "";
 
@@ -123,22 +123,4 @@ public class StepsTests : BaseFeatureTest
             Assert.AreEqual("A step with the name 'Step1' already exists in the scenario.", ex.Message);
         }
     }
-
-    //[ScenarioTest]
-    //public async Task ChildStep()
-    //{
-    //    await Scenario()
-    //        .Step("Parent step 1", async (context) =>
-    //        {
-    //            context.Step
-
-    //            Assert.IsNotNull(context);
-    //            await Task.CompletedTask;
-    //        })
-    //        .Step("Parent step 2", (context) =>
-    //        {
-    //            Assert.IsNotNull(context);
-    //        })
-    //        .Run();
-    //}
 }

@@ -37,7 +37,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("<meta charset='UTF-8'>");
         b.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         b.AppendLine("<title>TestFusion - Feature Test Report</title>");
-        b.AppendLine("<link rel='stylesheet' href='assets/styles/testfusion.css'>");
+        b.AppendLine("<link rel='stylesheet' href='assets/styles/testfuzn.css'>");
         b.AppendLine("<script>");
         b.AppendLine("document.addEventListener('DOMContentLoaded', function() {");
         b.AppendLine("  document.querySelectorAll('.collapsible').forEach(function(button) {");
@@ -156,11 +156,11 @@ internal class FeatureHtmlReportWriter : IFeatureReport
     private async Task IncludeEmbeddedResources(FeatureReportData featureReportData)
     {
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
-            "TestFusion.Internals.Reports.EmbeddedResources.Styles.testfusion.css",
-            Path.Combine(featureReportData.TestsOutputDirectory, "assets/styles/testfusion.css"));
+            "TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
+            Path.Combine(featureReportData.TestsOutputDirectory, "assets/styles/testfuzn.css"));
 
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
-            "TestFusion.Internals.Reports.EmbeddedResources.Scripts.chart.js",
+            "TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
             Path.Combine(featureReportData.TestsOutputDirectory, "assets/scripts/chart.js"));
     }
 }

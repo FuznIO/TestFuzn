@@ -40,7 +40,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<meta charset='UTF-8'>");
         b.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         b.AppendLine("<title>TestFusion - Load Test Report</title>");
-        b.AppendLine("<link rel='stylesheet' href='assets/styles/testfusion.css'>");
+        b.AppendLine("<link rel='stylesheet' href='assets/styles/testfuzn.css'>");
         b.AppendLine("</head>");
         b.AppendLine("<body>");
 

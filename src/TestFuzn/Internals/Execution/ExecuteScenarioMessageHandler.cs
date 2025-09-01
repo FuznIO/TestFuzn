@@ -5,6 +5,7 @@ using FuznLabs.TestFuzn.Internals.State;
 using FuznLabs.TestFuzn.Contracts.Adapters;
 using FuznLabs.TestFuzn.Contracts.Results.Feature;
 using FuznLabs.TestFuzn.Contracts.Results.Load;
+using NATS.Client.KeyValueStore;
 
 namespace FuznLabs.TestFuzn.Internals.Execution;
 
@@ -66,50 +67,10 @@ internal class ExecuteScenarioMessageHandler
             {
                 stepIndex++;
 
-                stepDuration.Restart();
+                var executeStepHandler = new ExecuteStepHandler(_sharedExecutionState, scenario, stepContext, scenarioStatus);
+                await executeStepHandler.ExecuteStep(step);
 
-                var stepResult = new StepFeatureResult();
-                stepResult.Name = step.Name;
-
-                if (scenarioStatus == ScenarioStatus.Failed)
-                {
-                    stepResult.Status = StepStatus.Skipped;
-                }
-                else
-                {
-                    try
-                    {
-                        stepContext.CurrentStep = new CurrentStep(stepContext, step.Name);
-                        await step.Action(stepContext);
-                        stepResult.Status = StepStatus.Passed;
-                        scenarioStatus = ScenarioStatus.Passed;
-                    }
-                    catch (Exception ex)
-                    {
-                        stepResult.Status = StepStatus.Failed;
-                        scenarioStatus = ScenarioStatus.Failed;
-                        stepResult.Exception = ex;
-                        if (_sharedExecutionState.TestType == TestType.Feature
-                            && !scenario.InputDataInfo.HasInputData
-                            && _sharedExecutionState.TestRunState.FirstException == null)
-                            _sharedExecutionState.TestRunState.FirstException = ex;
-                    }
-                    finally
-                    {
-                        if (stepContext.CurrentStep != null
-                            && stepContext.CurrentStep.Attachments != null
-                            && stepContext.CurrentStep.Attachments.Count > 0)
-                        {
-                            stepResult.Attachments = new();
-                            stepResult.Attachments.AddRange(stepContext.CurrentStep.Attachments);
-                        }
-                    }
-                }
-
-                stepDuration.Stop();
-                stepResult.Duration = stepDuration.Elapsed;
-
-                iterationResult.StepResults.Add(stepResult.Name, stepResult);
+                iterationResult.StepResults.Add(executeStepHandler.OuterStepResult.Name, executeStepHandler.OuterStepResult);
             }
         }
         finally

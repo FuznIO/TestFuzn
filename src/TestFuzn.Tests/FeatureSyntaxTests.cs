@@ -59,6 +59,14 @@ public class SyntaxTests : BaseFeatureTest
 
                 context.Logger.LogInformation($"User: {user}"); // Log information.
 
+                // Define sub-steps.
+                context.Step("Sub step 1.1", subcontext1 =>
+                { 
+                    context.Step("Sub step 1.1.1", subcontext2 =>
+                    {
+                    });
+                });
+
                 // Some code goes here.
             })
             .Step("Step 2 - Async with context", async (context) =>
@@ -146,11 +154,22 @@ public class SyntaxTests : BaseFeatureTest
                 context.Logger.LogInformation($"User: {user}"); // Log information.
 
                 // Some code goes here.
+
+                context.Step("Step 1.1", (inlineContext) =>
+                {
+                    // Some code goes here.
+                });
             })
             .Step("Step 2 - Async with context", async (context) =>
             {
                 // Some code goes here.
                 await Task.CompletedTask;
+
+                await context.Step("Step 2.1", async (inlineContext) =>
+                {
+                    // Some code goes here.
+                    await Task.CompletedTask;
+                });
             })
             .Step("Step 3 - Shared step", SharedStep)
             // Warmup simulations run before .Load().Simulations(). 
@@ -252,7 +271,7 @@ public class SyntaxTests : BaseFeatureTest
     }
 }
 
-public class CustomContext : StepContext
+public class CustomContext : StepContext<CustomContext>
 {
     public string CustomProperty { get; set; }
 }

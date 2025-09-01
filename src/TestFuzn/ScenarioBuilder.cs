@@ -4,7 +4,7 @@ using FuznLabs.TestFuzn.Contracts.Adapters;
 namespace FuznLabs.TestFuzn;
 
 public class ScenarioBuilder<TStepContext>
-    where TStepContext : StepContext, new()
+    where TStepContext : StepContext<TStepContext>, new()
 {
     private ITestFrameworkAdapter _testFramework;
     private readonly IFeatureTest _featureTest;

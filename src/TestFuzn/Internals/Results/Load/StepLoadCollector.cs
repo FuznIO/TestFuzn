@@ -8,6 +8,7 @@ internal class StepLoadCollector
     private readonly object _lock = new object();
     private int _maxDistinctErrorCount = 10;
     private string _name;
+    private string _parentName;
     private StatsCollector _ok = new();
     private StatsCollector _failed = new();
     private int _skippedCount;

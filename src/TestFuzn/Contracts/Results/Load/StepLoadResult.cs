@@ -23,4 +23,5 @@ public class StepLoadResult
     public Stats Failed { get; internal set; }
     public int SkippedCount { get; internal set; }
     internal Dictionary<string, ErrorEntry> Errors { get; set; }
+    public List<StepLoadResult> Steps { get; set; }
 }

@@ -18,9 +18,9 @@ internal class ContextFactory
         return context;
     }
 
-    public static StepContext CreateStepContext(ITestFrameworkAdapter testFramework, Scenario scenario, string stepName, object currentInput)
+    public static BaseStepContext CreateStepContext(ITestFrameworkAdapter testFramework, Scenario scenario, string stepName, object currentInput)
     {
-        var context = (StepContext) Activator.CreateInstance(scenario.ContextType);
+        var context = (BaseStepContext) Activator.CreateInstance(scenario.ContextType);
 
         if (context == null)
             throw new InvalidOperationException($"Failed to create instance of {scenario.ContextType}");

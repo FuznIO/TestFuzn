@@ -1,17 +1,20 @@
-﻿using FuznLabs.TestFuzn;
-using FuznLabs.TestFuzn.Internals.State;
+﻿using FuznLabs.TestFuzn.Internals.State;
 using FuznLabs.TestFuzn.Contracts.Results.Feature;
+
+namespace FuznLabs.TestFuzn;
 
 public class CurrentStep
 {
-    private readonly StepContext _context;
+    private readonly BaseStepContext _context;
     public string? Name { get; internal set; }
+    internal string? ParentName { get; set; }
     internal List<Attachment> Attachments { get; set; }
 
-    public CurrentStep(StepContext context, string name)
+    public CurrentStep(BaseStepContext context, string name, string? parentName = null)
     {
         _context = context;
         Name = name;
+        ParentName = parentName;
     }
 
     public async Task Attach(string fileName, string content)

@@ -30,7 +30,7 @@ public static class SharedStepsExtensionMethods
 
     public static ScenarioBuilder<TStepContext> SharedStepOnAllStepContextTypes<TStepContext>(
         this ScenarioBuilder<TStepContext> scenario)
-        where TStepContext : StepContext, new()
+        where TStepContext : StepContext<TStepContext>, new()
     {
         scenario.Step("SharedStepOnAllStepContextTypes", (context) =>
         {

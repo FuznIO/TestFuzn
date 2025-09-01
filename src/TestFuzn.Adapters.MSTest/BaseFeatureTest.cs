@@ -26,7 +26,7 @@ public abstract class BaseFeatureTest : IFeatureTest
     }
 
     public ScenarioBuilder<TStepContext> Scenario<TStepContext>([CallerMemberName] string scenarioName = null)
-        where TStepContext : StepContext, new()
+        where TStepContext : StepContext<TStepContext>, new()
     {
         var scenario = new ScenarioBuilder<TStepContext>(new MsTestAdapter(TestContext), this, scenarioName);
         return scenario;
