@@ -70,6 +70,7 @@ internal class ExecuteScenarioMessageHandler
                 var executeStepHandler = new ExecuteStepHandler(_sharedExecutionState, scenario, stepContext, scenarioStatus);
                 await executeStepHandler.ExecuteStep(step);
 
+                scenarioStatus = executeStepHandler.CurrentScenarioStatus;
                 iterationResult.StepResults.Add(executeStepHandler.OuterStepResult.Name, executeStepHandler.OuterStepResult);
             }
         }

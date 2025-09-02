@@ -53,7 +53,7 @@ internal class ExecuteStepHandler
             }
         }
 
-        if (CurrentScenarioStatus == ScenarioStatus.Failed)
+        if (CurrentScenarioStatus != null && CurrentScenarioStatus == ScenarioStatus.Failed)
         {
             stepResult.Status = StepStatus.Skipped;
         }
