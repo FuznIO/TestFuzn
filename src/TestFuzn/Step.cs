@@ -9,7 +9,7 @@ public abstract class BaseStep
     internal List<BaseStep> Steps { get; set; }
 }
 
-public class Step<TCustomStepContext> : BaseStep
+public class Step<TStepContext> : BaseStep
     where TCustomStepContext : BaseStepContext
 {
     public Step()
