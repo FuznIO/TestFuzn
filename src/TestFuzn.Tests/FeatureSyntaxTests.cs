@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace FuznLabs.TestFuzn.Tests;
+namespace Fuzn.TestFuzn.Tests;
 
 [FeatureTest]
 public class SyntaxTests : BaseFeatureTest

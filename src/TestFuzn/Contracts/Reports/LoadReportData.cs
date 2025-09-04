@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Contracts.Results.Load;
+﻿using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn.Contracts.Reports;
+namespace Fuzn.TestFuzn.Contracts.Reports;
 
 public class LoadReportData
 {

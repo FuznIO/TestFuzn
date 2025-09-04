@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace FuznLabs.TestFuzn.Internals.Logging;
+namespace Fuzn.TestFuzn.Internals.Logging;
 
 /// <summary>
 /// Provides file-based logging functionality with enhanced reliability

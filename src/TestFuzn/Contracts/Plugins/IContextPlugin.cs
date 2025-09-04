@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Contracts.Plugins;
+﻿namespace Fuzn.TestFuzn.Contracts.Plugins;
 
 public interface IContextPlugin
 {

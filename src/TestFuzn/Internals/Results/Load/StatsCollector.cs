@@ -1,7 +1,7 @@
 ﻿using HdrHistogram;
-using FuznLabs.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn.Internals.Results.Load;
+namespace Fuzn.TestFuzn.Internals.Results.Load;
 
 internal class StatsCollector
 {

@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Internals.Execution.Producers.Simulations;
+﻿using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 public class SimulationsBuilder
 {

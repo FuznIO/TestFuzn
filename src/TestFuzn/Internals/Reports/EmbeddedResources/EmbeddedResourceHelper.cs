@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace FuznLabs.TestFuzn.Internals.Reports.EmbeddedResources;
+namespace Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
 
 public static class EmbeddedResourceHelper
 {

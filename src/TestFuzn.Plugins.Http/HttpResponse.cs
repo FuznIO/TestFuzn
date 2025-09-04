@@ -1,10 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Net;
 using System.Net.Http.Headers;
-using FuznLabs.TestFuzn.Contracts.Providers;
-using FuznLabs.TestFuzn.Plugins.Http.Internals;
+using Fuzn.TestFuzn.Contracts.Providers;
+using Fuzn.TestFuzn.Plugins.Http.Internals;
 
-namespace FuznLabs.TestFuzn.Plugins.Http;
+namespace Fuzn.TestFuzn.Plugins.Http;
 
 public class HttpResponse
 {

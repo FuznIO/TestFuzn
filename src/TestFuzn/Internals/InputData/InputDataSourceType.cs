@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Internals.InputData;
+﻿namespace Fuzn.TestFuzn.Internals.InputData;
 
 internal enum InputDataSourceType
 {

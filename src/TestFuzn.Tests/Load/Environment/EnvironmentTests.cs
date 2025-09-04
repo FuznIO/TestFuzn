@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.Load.Environment;
+﻿namespace Fuzn.TestFuzn.Tests.Load.Environment;
 
 [FeatureTest]
 public class EnvironmentTests : BaseFeatureTest

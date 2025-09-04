@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Contracts.Results.Load;
+﻿using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 public class AssertStats
 {

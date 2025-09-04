@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.SerializerProvider;
+﻿namespace Fuzn.TestFuzn.Tests.SerializerProvider;
 
 public class ProductSystemTextJson
 {

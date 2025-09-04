@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Internals.Execution;
+﻿using Fuzn.TestFuzn.Internals.Execution;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 public abstract class BaseStepContext : Context
 {

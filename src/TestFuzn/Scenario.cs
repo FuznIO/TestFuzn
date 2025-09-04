@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Internals.InputData;
+﻿using Fuzn.TestFuzn.Internals.InputData;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 public class Scenario
 {

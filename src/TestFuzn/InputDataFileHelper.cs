@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.Json;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 public static class InputDataFileHelper
 {
     private static JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };

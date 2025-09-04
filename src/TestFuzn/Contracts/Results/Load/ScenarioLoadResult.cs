@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Contracts.Results.Load;
+﻿namespace Fuzn.TestFuzn.Contracts.Results.Load;
 
 public class ScenarioLoadResult
 {

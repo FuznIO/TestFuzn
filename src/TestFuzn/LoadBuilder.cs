@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn;
+﻿namespace Fuzn.TestFuzn;
 
 public class LoadBuilder<TStepContext>
     where TStepContext : BaseStepContext

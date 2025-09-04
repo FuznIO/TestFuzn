@@ -1,5 +1,5 @@
 ﻿
-namespace FuznLabs.TestFuzn.Internals.State;
+namespace Fuzn.TestFuzn.Internals.State;
 
 internal static class GlobalState
 {

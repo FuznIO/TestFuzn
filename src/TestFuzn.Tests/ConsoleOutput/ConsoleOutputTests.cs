@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.ConsoleOutput
+﻿namespace Fuzn.TestFuzn.Tests.ConsoleOutput
 {
     [FeatureTest]
     public class ConsoleOutputTests : BaseFeatureTest

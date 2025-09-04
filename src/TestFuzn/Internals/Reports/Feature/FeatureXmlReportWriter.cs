@@ -1,9 +1,9 @@
 ﻿using System.Text;
 using System.Xml;
-using FuznLabs.TestFuzn.Contracts.Reports;
-using FuznLabs.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Contracts.Reports;
+using Fuzn.TestFuzn.Contracts.Results.Feature;
 
-namespace FuznLabs.TestFuzn.Internals.Reports.Feature;
+namespace Fuzn.TestFuzn.Internals.Reports.Feature;
 
 internal class FeatureXmlReportWriter : IFeatureReport
 {

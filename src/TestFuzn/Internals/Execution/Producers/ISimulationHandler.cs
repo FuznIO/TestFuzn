@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Internals.Execution.Producers;
+﻿namespace Fuzn.TestFuzn.Internals.Execution.Producers;
 
 internal interface ILoadHandler
 {

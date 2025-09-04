@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.Http;
+﻿namespace Fuzn.TestFuzn.Tests.Http;
 
 public class Product
 {

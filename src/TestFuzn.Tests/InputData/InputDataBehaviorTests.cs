@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Internals.Results.Load;
+﻿using Fuzn.TestFuzn.Internals.Results.Load;
 
-namespace FuznLabs.TestFuzn.Tests.InputData;
+namespace Fuzn.TestFuzn.Tests.InputData;
 
 [FeatureTest]
 public class InputDataBehaviorTests : BaseFeatureTest

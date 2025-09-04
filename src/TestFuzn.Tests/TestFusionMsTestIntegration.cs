@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests;
+﻿namespace Fuzn.TestFuzn.Tests;
 
 [TestClass]
 public class TestFusionMsTestIntegration

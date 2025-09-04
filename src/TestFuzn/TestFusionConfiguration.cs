@@ -1,12 +1,12 @@
-﻿using FuznLabs.TestFuzn.Contracts.Plugins;
-using FuznLabs.TestFuzn.Contracts.Providers;
-using FuznLabs.TestFuzn.Contracts.Reports;
-using FuznLabs.TestFuzn.Contracts.Sinks;
-using FuznLabs.TestFuzn.Internals.Comparers;
-using FuznLabs.TestFuzn.Internals.Reports.Feature;
-using FuznLabs.TestFuzn.Internals.Reports.Load;
+﻿using Fuzn.TestFuzn.Contracts.Plugins;
+using Fuzn.TestFuzn.Contracts.Providers;
+using Fuzn.TestFuzn.Contracts.Reports;
+using Fuzn.TestFuzn.Contracts.Sinks;
+using Fuzn.TestFuzn.Internals.Comparers;
+using Fuzn.TestFuzn.Internals.Reports.Feature;
+using Fuzn.TestFuzn.Internals.Reports.Load;
 
-namespace FuznLabs.TestFuzn
+namespace Fuzn.TestFuzn
 {
     public class TestFusionConfiguration
     {

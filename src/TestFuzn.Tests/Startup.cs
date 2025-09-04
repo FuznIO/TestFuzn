@@ -1,9 +1,9 @@
-﻿using FuznLabs.TestFuzn.Plugins.Playwright;
-using FuznLabs.TestFuzn.Plugins.Http;
-using FuznLabs.TestFuzn.Plugins.Newtonsoft;
-using FuznLabs.TestFuzn.Sinks.InfluxDB;
+﻿using Fuzn.TestFuzn.Plugins.Playwright;
+using Fuzn.TestFuzn.Plugins.Http;
+using Fuzn.TestFuzn.Plugins.Newtonsoft;
+using Fuzn.TestFuzn.Sinks.InfluxDB;
 
-namespace FuznLabs.TestFuzn.Tests;
+namespace Fuzn.TestFuzn.Tests;
 
 public class Startup : BaseStartup
 {

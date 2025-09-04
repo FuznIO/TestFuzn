@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Internals.Execution;
+﻿using Fuzn.TestFuzn.Internals.Execution;
 
-namespace FuznLabs.TestFuzn.Contracts.Results.Feature;
+namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
 public class ScenarioFeatureResult
 {

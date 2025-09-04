@@ -1,5 +1,5 @@
 ﻿
-namespace FuznLabs.TestFuzn.Tests.ContextType;
+namespace Fuzn.TestFuzn.Tests.ContextType;
 
 [FeatureTest]
 public class ContextTests : BaseFeatureTest

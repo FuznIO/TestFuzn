@@ -1,19 +1,19 @@
 ﻿using System.Runtime.ExceptionServices;
-using FuznLabs.TestFuzn.Internals.Execution.Producers;
-using FuznLabs.TestFuzn.Internals.Logger;
-using FuznLabs.TestFuzn.Internals.Init;
-using FuznLabs.TestFuzn.Internals.Cleanup;
-using FuznLabs.TestFuzn.Internals.Execution.Consumers;
-using FuznLabs.TestFuzn.Internals.InputData;
-using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Cli.Internals;
-using FuznLabs.TestFuzn.Internals.Results.Feature;
-using FuznLabs.TestFuzn.Contracts.Adapters;
-using FuznLabs.TestFuzn.Internals.ConsoleOutput;
-using FuznLabs.TestFuzn.Internals.Execution;
-using FuznLabs.TestFuzn.Internals.Reports;
+using Fuzn.TestFuzn.Internals.Execution.Producers;
+using Fuzn.TestFuzn.Internals.Logger;
+using Fuzn.TestFuzn.Internals.Init;
+using Fuzn.TestFuzn.Internals.Cleanup;
+using Fuzn.TestFuzn.Internals.Execution.Consumers;
+using Fuzn.TestFuzn.Internals.InputData;
+using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Cli.Internals;
+using Fuzn.TestFuzn.Internals.Results.Feature;
+using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals.ConsoleOutput;
+using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Internals.Reports;
 
-namespace FuznLabs.TestFuzn.Internals;
+namespace Fuzn.TestFuzn.Internals;
 
 internal class ScenarioTestRunner
 {

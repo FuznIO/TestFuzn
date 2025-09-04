@@ -1,7 +1,7 @@
-﻿using FuznLabs.TestFuzn.Plugins.Http;
-using FuznLabs.TestFuzn.Tests.Http;
+﻿using Fuzn.TestFuzn.Plugins.Http;
+using Fuzn.TestFuzn.Tests.Http;
 
-namespace FuznLabs.TestFuzn.Tests.Load.Simulations;
+namespace Fuzn.TestFuzn.Tests.Load.Simulations;
 
 [FeatureTest]
 public class InfluxDbSinkTests : BaseFeatureTest

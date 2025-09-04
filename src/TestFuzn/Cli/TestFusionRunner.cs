@@ -1,9 +1,9 @@
 ﻿using System.Reflection;
 using System.Text;
-using FuznLabs.TestFuzn.Cli.Internals;
-using FuznLabs.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Cli.Internals;
+using Fuzn.TestFuzn.Internals.State;
 
-namespace FuznLabs.TestFuzn.Cli;
+namespace Fuzn.TestFuzn.Cli;
 
 public class CliTestRunner
 {

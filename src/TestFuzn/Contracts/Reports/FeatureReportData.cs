@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Contracts.Results.Feature;
+﻿using Fuzn.TestFuzn.Contracts.Results.Feature;
 
-namespace FuznLabs.TestFuzn.Contracts.Reports;
+namespace Fuzn.TestFuzn.Contracts.Reports;
 
 public class FeatureReportData
 {

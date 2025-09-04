@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Internals.Logging;
+﻿namespace Fuzn.TestFuzn.Internals.Logging;
 
 /// <summary>
 /// File-based logger implementation with thread-safety and error handling

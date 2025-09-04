@@ -1,10 +1,10 @@
 ﻿using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Writes;
-using FuznLabs.TestFuzn.Contracts.Sinks;
-using FuznLabs.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Contracts.Sinks;
+using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn.Sinks.InfluxDB;
+namespace Fuzn.TestFuzn.Sinks.InfluxDB;
 
 public class InfluxDbSink : ISinkPlugin
 {

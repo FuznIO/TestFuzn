@@ -1,9 +1,9 @@
 ﻿using System.Text;
-using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Contracts.Reports;
-using FuznLabs.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Contracts.Reports;
+using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn.Internals.Reports.Load;
+namespace Fuzn.TestFuzn.Internals.Reports.Load;
 
 internal class LoadHtmlReportWriter : ILoadReport
 {

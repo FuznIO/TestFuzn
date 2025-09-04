@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 public static class TestFusionConfigurationExtensions
 {
     private static readonly JsonSerializerOptions DefaultOptions = new JsonSerializerOptions

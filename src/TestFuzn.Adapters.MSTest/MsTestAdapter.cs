@@ -1,10 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Text.RegularExpressions;
-using FuznLabs.TestFuzn.ConsoleOutput;
-using FuznLabs.TestFuzn.Contracts.Adapters;
-using FuznLabs.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.ConsoleOutput;
+using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 public class MsTestAdapter(TestContext testContext) : ITestFrameworkAdapter
 {

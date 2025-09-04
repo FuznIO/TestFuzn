@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>TestFuzn.Plugins.Newtonsoft</AssemblyName>
-    <RootNamespace>TestFuzn.Plugins.Newtonsoft</RootNamespace>
+    <AssemblyName>Fuzn.TestFuzn.Plugins.Newtonsoft</AssemblyName>
+    <RootNamespace>Fuzn.TestFuzn.Plugins.Newtonsoft</RootNamespace>
     <OutputType>Library</OutputType>
     <PackageId>TestFuzn.Plugins.Newtonsoft</PackageId>
     <Title>TestFuzn.Plugins.Newtonsoft</Title>

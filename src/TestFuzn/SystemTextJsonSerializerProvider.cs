@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
-using FuznLabs.TestFuzn.Contracts.Providers;
+using Fuzn.TestFuzn.Contracts.Providers;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 public class SystemTextJsonSerializerProvider : ISerializerProvider
 {

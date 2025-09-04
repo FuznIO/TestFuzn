@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Contracts.Results.Load;
+﻿using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn.Contracts.Sinks;
+namespace Fuzn.TestFuzn.Contracts.Sinks;
 
 public interface ISinkPlugin
 {

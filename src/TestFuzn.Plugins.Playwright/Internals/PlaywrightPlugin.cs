@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Contracts.Plugins;
+﻿using Fuzn.TestFuzn.Contracts.Plugins;
 
-namespace FuznLabs.TestFuzn.Plugins.Playwright.Internals;
+namespace Fuzn.TestFuzn.Plugins.Playwright.Internals;
 
 internal class PlaywrightPlugin : IContextPlugin
 {

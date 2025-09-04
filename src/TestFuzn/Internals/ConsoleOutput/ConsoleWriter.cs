@@ -1,11 +1,11 @@
 ﻿using System.Text;
-using FuznLabs.TestFuzn.ConsoleOutput;
-using FuznLabs.TestFuzn.Internals.Results.Load;
-using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Contracts.Adapters;
-using FuznLabs.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.ConsoleOutput;
+using Fuzn.TestFuzn.Internals.Results.Load;
+using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn.Internals.ConsoleOutput;
+namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 
 internal class ConsoleWriter
 {

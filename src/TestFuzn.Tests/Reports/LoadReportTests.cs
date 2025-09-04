@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.Reports;
+﻿namespace Fuzn.TestFuzn.Tests.Reports;
 
 [FeatureTest]
 public class LoadReportTests : BaseFeatureTest

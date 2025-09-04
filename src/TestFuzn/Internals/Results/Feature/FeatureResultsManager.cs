@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Contracts.Results.Feature;
+﻿using Fuzn.TestFuzn.Contracts.Results.Feature;
 
-namespace FuznLabs.TestFuzn.Internals.Results.Feature;
+namespace Fuzn.TestFuzn.Internals.Results.Feature;
 
 internal class FeatureResultManager
 {

@@ -1,7 +1,7 @@
 ﻿
-using FuznLabs.TestFuzn.Plugins.Playwright.Internals;
+using Fuzn.TestFuzn.Plugins.Playwright.Internals;
 
-namespace FuznLabs.TestFuzn.Plugins.Playwright;
+namespace Fuzn.TestFuzn.Plugins.Playwright;
 
 public static class TestFusionConfigurationExtensions
 {

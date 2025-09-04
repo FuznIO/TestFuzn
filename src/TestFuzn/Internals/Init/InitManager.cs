@@ -1,10 +1,10 @@
-﻿using FuznLabs.TestFuzn.Internals.InputData;
-using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Contracts.Adapters;
-using FuznLabs.TestFuzn.Internals.Execution.Producers.Simulations;
-using FuznLabs.TestFuzn.Internals.Execution;
+﻿using Fuzn.TestFuzn.Internals.InputData;
+using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
+using Fuzn.TestFuzn.Internals.Execution;
 
-namespace FuznLabs.TestFuzn.Internals.Init;
+namespace Fuzn.TestFuzn.Internals.Init;
 
 internal class InitManager
 {

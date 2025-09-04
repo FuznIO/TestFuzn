@@ -1,8 +1,8 @@
-﻿using FuznLabs.TestFuzn.Contracts.Reports;
-using FuznLabs.TestFuzn.Internals.Results.Feature;
-using FuznLabs.TestFuzn.Internals.State;
+﻿using Fuzn.TestFuzn.Contracts.Reports;
+using Fuzn.TestFuzn.Internals.Results.Feature;
+using Fuzn.TestFuzn.Internals.State;
 
-namespace FuznLabs.TestFuzn.Internals.Reports;
+namespace Fuzn.TestFuzn.Internals.Reports;
 
 internal class ReportManager
 {

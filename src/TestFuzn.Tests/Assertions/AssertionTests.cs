@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.Assertions;
+﻿namespace Fuzn.TestFuzn.Tests.Assertions;
 
 [FeatureTest]
 public class AssertionTests : BaseFeatureTest

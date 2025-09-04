@@ -1,10 +1,10 @@
 ﻿using Spectre.Console;
 using System.Text;
-using FuznLabs.TestFuzn.ConsoleOutput;
-using FuznLabs.TestFuzn.Contracts.Adapters;
-using FuznLabs.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.ConsoleOutput;
+using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn.Cli.Internals;
+namespace Fuzn.TestFuzn.Cli.Internals;
 
 internal class TestFusionProvider : ITestFrameworkAdapter
 {

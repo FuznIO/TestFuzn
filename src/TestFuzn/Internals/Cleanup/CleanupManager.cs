@@ -1,8 +1,8 @@
-﻿using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Contracts.Adapters;
-using FuznLabs.TestFuzn.Internals.Execution;
+﻿using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals.Execution;
 
-namespace FuznLabs.TestFuzn.Internals.Cleanup;
+namespace Fuzn.TestFuzn.Internals.Cleanup;
 
 internal class CleanupManager
 {

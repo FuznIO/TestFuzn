@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using FuznLabs.TestFuzn.Contracts.Plugins;
+using Fuzn.TestFuzn.Contracts.Plugins;
 
-namespace FuznLabs.TestFuzn.Plugins.Http.Internals;
+namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
 internal class HttpPlugin : IContextPlugin
 {

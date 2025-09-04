@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 [AttributeUsage(AttributeTargets.Method)]
 public class ScenarioTestAttribute : TestMethodAttribute

@@ -1,10 +1,10 @@
-﻿using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Internals;
-using FuznLabs.TestFuzn.Internals.Results.Feature;
-using FuznLabs.TestFuzn.Contracts.Adapters;
-using FuznLabs.TestFuzn.Internals.Reports;
+﻿using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Internals;
+using Fuzn.TestFuzn.Internals.Results.Feature;
+using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals.Reports;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 public static class TestFusionIntegration
 {

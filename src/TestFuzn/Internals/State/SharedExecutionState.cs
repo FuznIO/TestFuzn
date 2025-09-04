@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
-using FuznLabs.TestFuzn.Contracts.Results.Feature;
-using FuznLabs.TestFuzn.Internals.Execution;
-using FuznLabs.TestFuzn.Internals.Results.Load;
+using Fuzn.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Internals.Results.Load;
 
-namespace FuznLabs.TestFuzn.Internals.State;
+namespace Fuzn.TestFuzn.Internals.State;
 
 internal class SharedExecutionState
 {

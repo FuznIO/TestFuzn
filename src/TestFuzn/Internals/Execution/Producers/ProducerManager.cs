@@ -1,8 +1,8 @@
-using FuznLabs.TestFuzn.Internals.Execution.Producers.Simulations;
-using FuznLabs.TestFuzn.Internals.Results.Load;
-using FuznLabs.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
+using Fuzn.TestFuzn.Internals.Results.Load;
+using Fuzn.TestFuzn.Internals.State;
 
-namespace FuznLabs.TestFuzn.Internals.Execution.Producers;
+namespace Fuzn.TestFuzn.Internals.Execution.Producers;
 
 internal class ProducerManager
 {

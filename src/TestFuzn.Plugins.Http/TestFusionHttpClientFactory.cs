@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace FuznLabs.TestFuzn.Plugins.Http;
+namespace Fuzn.TestFuzn.Plugins.Http;
 
 public class TestFusionHttpClientFactory : IHttpClientFactory
 {

@@ -1,10 +1,10 @@
 ﻿using System.Text;
-using FuznLabs.TestFuzn.Internals.ConsoleOutput;
-using FuznLabs.TestFuzn.Contracts.Reports;
-using FuznLabs.TestFuzn.Contracts.Results.Feature;
-using FuznLabs.TestFuzn.Internals.Reports.EmbeddedResources;
+using Fuzn.TestFuzn.Internals.ConsoleOutput;
+using Fuzn.TestFuzn.Contracts.Reports;
+using Fuzn.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
 
-namespace FuznLabs.TestFuzn.Internals.Reports.Feature;
+namespace Fuzn.TestFuzn.Internals.Reports.Feature;
 
 internal class FeatureHtmlReportWriter : IFeatureReport
 {
@@ -156,11 +156,11 @@ internal class FeatureHtmlReportWriter : IFeatureReport
     private async Task IncludeEmbeddedResources(FeatureReportData featureReportData)
     {
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
-            "FuznLabs.TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
+            "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
             Path.Combine(featureReportData.TestsOutputDirectory, "assets/styles/testfuzn.css"));
 
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
-            "FuznLabs.TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
+            "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
             Path.Combine(featureReportData.TestsOutputDirectory, "assets/scripts/chart.js"));
     }
 }

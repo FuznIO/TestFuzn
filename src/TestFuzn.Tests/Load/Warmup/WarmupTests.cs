@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.Load.Warmup;
+﻿namespace Fuzn.TestFuzn.Tests.Load.Warmup;
 
 [FeatureTest]
 public class WarmupTests : BaseFeatureTest

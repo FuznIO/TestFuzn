@@ -1,5 +1,5 @@
 ﻿
-namespace FuznLabs.TestFuzn.Tests.InitCleanup;
+namespace Fuzn.TestFuzn.Tests.InitCleanup;
 
 [FeatureTest]
 public class InitAndCleanupTests : BaseFeatureTest

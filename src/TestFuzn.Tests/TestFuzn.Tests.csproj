@@ -7,6 +7,8 @@
     <EnableMSTestRunner>true</EnableMSTestRunner>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
+    <RootNamespace>Fuzn.TestFuzn.Tests</RootNamespace>
+    <AssemblyName>Fuzn.TestFuzn.Tests</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

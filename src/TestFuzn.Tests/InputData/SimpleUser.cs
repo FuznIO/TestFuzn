@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.InputData;
+﻿namespace Fuzn.TestFuzn.Tests.InputData;
 
 public class SimpleUser
 {

@@ -1,8 +1,8 @@
-﻿using FuznLabs.TestFuzn.Contracts.Adapters;
-using FuznLabs.TestFuzn.Contracts.Providers;
-using FuznLabs.TestFuzn.Internals;
+﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Providers;
+using Fuzn.TestFuzn.Internals;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 public class Context
 {

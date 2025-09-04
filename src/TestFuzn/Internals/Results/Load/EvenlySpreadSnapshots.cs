@@ -1,7 +1,7 @@
-﻿using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Contracts.Results.Load;
+﻿using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn.Internals.Results.Load;
+namespace Fuzn.TestFuzn.Internals.Results.Load;
 
 internal class EvenlySpreadSnapshots
 {

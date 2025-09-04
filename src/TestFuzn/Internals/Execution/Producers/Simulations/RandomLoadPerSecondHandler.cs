@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
-using FuznLabs.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Internals.State;
 
-namespace FuznLabs.TestFuzn.Internals.Execution.Producers.Simulations;
+namespace Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 
 internal class RandomLoadPerSecondHandler : ILoadHandler
 {

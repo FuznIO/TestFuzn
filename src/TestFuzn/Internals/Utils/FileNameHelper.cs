@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace FuznLabs.TestFuzn.Internals.Utils;
+namespace Fuzn.TestFuzn.Internals.Utils;
 
 internal class FileNameHelper
 {

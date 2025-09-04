@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.Steps;
+﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 public class CustomStepContext
 {

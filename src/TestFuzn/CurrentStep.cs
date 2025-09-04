@@ -1,7 +1,7 @@
-﻿using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Contracts.Results.Feature;
+﻿using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Contracts.Results.Feature;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 public class CurrentStep
 {

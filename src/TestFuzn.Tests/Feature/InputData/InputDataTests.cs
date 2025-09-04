@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.Feature.InputData;
+﻿namespace Fuzn.TestFuzn.Tests.Feature.InputData;
 
 [FeatureTest]
 public class InputDataTests :  BaseFeatureTest

@@ -1,7 +1,7 @@
 ﻿using Spectre.Console;
-using FuznLabs.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn.Internals.ConsoleOutput;
+namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 
 internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, CancellationToken stoppingToken)
 {

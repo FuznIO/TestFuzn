@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Sinks.InfluxDB;
+﻿namespace Fuzn.TestFuzn.Sinks.InfluxDB;
 
 public static class TestFusionConfigurationExtensions
 {

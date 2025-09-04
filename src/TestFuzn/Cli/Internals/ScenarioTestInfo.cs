@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace FuznLabs.TestFuzn.Cli.Internals;
+namespace Fuzn.TestFuzn.Cli.Internals;
 
 internal class ScenarioTestInfo
 {

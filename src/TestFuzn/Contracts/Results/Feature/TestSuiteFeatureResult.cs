@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace FuznLabs.TestFuzn.Contracts.Results.Feature;
+namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
 public class TestSuiteFeatureResult
 {

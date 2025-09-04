@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>TestFuzn.Adapters.MSTest</AssemblyName>
-    <RootNamespace>TestFuzn</RootNamespace>
+    <AssemblyName>Fuzn.TestFuzn.Adapters.MSTest</AssemblyName>
+    <RootNamespace>Fuzn.TestFuzn</RootNamespace>
     <OutputType>Library</OutputType>
     <PackageId>TestFuzn.Adapters.MSTest</PackageId>
     <Title>TestFuzn.Adapters.MSTest</Title>

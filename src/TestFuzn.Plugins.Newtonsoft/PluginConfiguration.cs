@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace FuznLabs.TestFuzn.Plugins.Newtonsoft;
+namespace Fuzn.TestFuzn.Plugins.Newtonsoft;
 
 public class PluginConfiguration
 {

@@ -1,7 +1,7 @@
-﻿using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Contracts.Adapters;
+﻿using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Contracts.Adapters;
 
-namespace FuznLabs.TestFuzn.Internals;
+namespace Fuzn.TestFuzn.Internals;
 
 internal class ContextFactory
 {

@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Internals.Execution;
+﻿namespace Fuzn.TestFuzn.Internals.Execution;
 
 internal class ExecuteScenarioMessage
 {

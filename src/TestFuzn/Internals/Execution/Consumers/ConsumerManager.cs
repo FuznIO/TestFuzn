@@ -1,7 +1,7 @@
-﻿using FuznLabs.TestFuzn.Internals.Results.Load;
-using FuznLabs.TestFuzn.Internals.State;
+﻿using Fuzn.TestFuzn.Internals.Results.Load;
+using Fuzn.TestFuzn.Internals.State;
 
-namespace FuznLabs.TestFuzn.Internals.Execution.Consumers;
+namespace Fuzn.TestFuzn.Internals.Execution.Consumers;
 
 internal class ConsumerManager
 {

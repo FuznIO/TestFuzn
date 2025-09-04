@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
-using FuznLabs.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Internals.Execution;
 
-namespace FuznLabs.TestFuzn.Internals.State;
+namespace Fuzn.TestFuzn.Internals.State;
 
 internal class ScenarioExecutionState
 {

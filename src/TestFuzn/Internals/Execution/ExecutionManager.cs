@@ -1,9 +1,9 @@
-﻿using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Contracts.Adapters;
-using FuznLabs.TestFuzn.Internals.Execution.Consumers;
-using FuznLabs.TestFuzn.Internals.Execution.Producers;
+﻿using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals.Execution.Consumers;
+using Fuzn.TestFuzn.Internals.Execution.Producers;
 
-namespace FuznLabs.TestFuzn.Internals.Execution;
+namespace Fuzn.TestFuzn.Internals.Execution;
 
 internal class ExecutionManager
 {

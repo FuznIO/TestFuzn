@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.Load.Simulations;
+﻿namespace Fuzn.TestFuzn.Tests.Load.Simulations;
 
 [FeatureTest]
 public class PauseLoadTests : BaseFeatureTest

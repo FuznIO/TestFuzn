@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Plugins.Http.Internals;
+﻿namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
 internal class GlobalState
 {

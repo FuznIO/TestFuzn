@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Internals.Execution.Producers.Simulations;
+﻿namespace Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 
 internal class GradualLoadIncreaseConfiguration : ILoadConfiguration
 {

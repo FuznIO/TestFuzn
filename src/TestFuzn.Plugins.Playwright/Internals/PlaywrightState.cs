@@ -1,6 +1,6 @@
 ﻿using Microsoft.Playwright;
 
-namespace FuznLabs.TestFuzn.Plugins.Playwright.Internals;
+namespace Fuzn.TestFuzn.Plugins.Playwright.Internals;
 
 internal class PlaywrightState
 {

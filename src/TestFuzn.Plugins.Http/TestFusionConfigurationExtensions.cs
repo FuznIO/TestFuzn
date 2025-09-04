@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Plugins.Http.Internals;
+﻿using Fuzn.TestFuzn.Plugins.Http.Internals;
 
-namespace FuznLabs.TestFuzn.Plugins.Http;
+namespace Fuzn.TestFuzn.Plugins.Http;
 
 public static class TestFusionConfigurationExtensions
 {

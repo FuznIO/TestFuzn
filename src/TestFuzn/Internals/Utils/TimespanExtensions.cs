@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Internals.Utils;
+﻿namespace Fuzn.TestFuzn.Internals.Utils;
 
 internal static class TimespanExtensions
 {

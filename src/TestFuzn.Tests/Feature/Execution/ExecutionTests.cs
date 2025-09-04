@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Tests.Feature.Init;
+﻿namespace Fuzn.TestFuzn.Tests.Feature.Init;
 
 [FeatureTest]
 public class ExecutionTests : BaseFeatureTest

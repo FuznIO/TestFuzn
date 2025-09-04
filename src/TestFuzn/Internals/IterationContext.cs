@@ -1,8 +1,8 @@
-﻿using FuznLabs.TestFuzn.Contracts.Adapters;
-using FuznLabs.TestFuzn.Contracts.Providers;
-using FuznLabs.TestFuzn.Internals.Execution;
+﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Providers;
+using Fuzn.TestFuzn.Internals.Execution;
 
-namespace FuznLabs.TestFuzn.Internals;
+namespace Fuzn.TestFuzn.Internals;
 
 internal class IterationContext
 {

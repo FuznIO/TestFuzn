@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Reflection;
-using FuznLabs.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Internals.State;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 public class ConfigurationManager
 {

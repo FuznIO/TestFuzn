@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Contracts.Adapters;
+﻿namespace Fuzn.TestFuzn.Contracts.Adapters;
 
 public class CursorPosition
 {

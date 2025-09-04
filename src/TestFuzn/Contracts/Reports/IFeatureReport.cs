@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Contracts.Reports;
+﻿namespace Fuzn.TestFuzn.Contracts.Reports;
 
 public interface IFeatureReport
 {

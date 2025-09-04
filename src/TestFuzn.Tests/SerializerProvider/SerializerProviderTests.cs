@@ -1,8 +1,8 @@
 ﻿using System.Runtime.Serialization;
-using FuznLabs.TestFuzn.Contracts.Providers;
-using FuznLabs.TestFuzn.Plugins.Http;
+using Fuzn.TestFuzn.Contracts.Providers;
+using Fuzn.TestFuzn.Plugins.Http;
 
-namespace FuznLabs.TestFuzn.Tests.SerializerProvider;
+namespace Fuzn.TestFuzn.Tests.SerializerProvider;
 
 [FeatureTest]
 public class SerializerProviderTests : BaseFeatureTest

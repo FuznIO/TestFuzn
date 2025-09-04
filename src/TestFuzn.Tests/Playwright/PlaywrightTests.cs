@@ -1,7 +1,7 @@
-﻿using FuznLabs.TestFuzn.Plugins.Playwright;
-using FuznLabs.TestFuzn.Internals.Results.Load;
+﻿using Fuzn.TestFuzn.Plugins.Playwright;
+using Fuzn.TestFuzn.Internals.Results.Load;
 
-namespace FuznLabs.TestFuzn.Tests.Playwright;
+namespace Fuzn.TestFuzn.Tests.Playwright;
 
 [FeatureTest]
 public class PlaywrightTests : BaseFeatureTest

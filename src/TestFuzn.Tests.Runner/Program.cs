@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Cli;
+﻿using Fuzn.TestFuzn.Cli;
 
-namespace FuznLabs.TestFuzn.Tests.Runner;
+namespace Fuzn.TestFuzn.Tests.Runner;
 
 internal class Program
 {

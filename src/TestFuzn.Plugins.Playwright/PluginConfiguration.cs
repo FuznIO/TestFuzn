@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Plugins.Playwright;
+﻿namespace Fuzn.TestFuzn.Plugins.Playwright;
 
 public class PluginConfiguration
 {

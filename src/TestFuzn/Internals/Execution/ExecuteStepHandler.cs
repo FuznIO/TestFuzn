@@ -1,8 +1,8 @@
 using System.Diagnostics;
-using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Contracts.Results.Feature;
 
-namespace FuznLabs.TestFuzn.Internals.Execution;
+namespace Fuzn.TestFuzn.Internals.Execution;
 
 internal class ExecuteStepHandler
 {

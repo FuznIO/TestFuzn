@@ -1,6 +1,6 @@
-using FuznLabs.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Internals.State;
 
-namespace FuznLabs.TestFuzn.Internals.InputData;
+namespace Fuzn.TestFuzn.Internals.InputData;
 
 internal class InputDataFeeder
 {

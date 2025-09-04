@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Contracts.Providers;
+﻿namespace Fuzn.TestFuzn.Contracts.Providers;
 
 public interface ISerializerProvider
 {

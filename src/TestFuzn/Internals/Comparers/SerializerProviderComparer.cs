@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Contracts.Providers;
+﻿using Fuzn.TestFuzn.Contracts.Providers;
 
-namespace FuznLabs.TestFuzn.Internals.Comparers;
+namespace Fuzn.TestFuzn.Internals.Comparers;
 
 internal class SerializerProviderComparer : IEqualityComparer<ISerializerProvider>
 {

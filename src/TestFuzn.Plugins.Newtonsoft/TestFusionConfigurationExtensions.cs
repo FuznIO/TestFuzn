@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Plugins.Newtonsoft.Internals;
+﻿using Fuzn.TestFuzn.Plugins.Newtonsoft.Internals;
 
-namespace FuznLabs.TestFuzn.Plugins.Newtonsoft;
+namespace Fuzn.TestFuzn.Plugins.Newtonsoft;
 
 public static class TestFusionConfigurationExtensions
 {

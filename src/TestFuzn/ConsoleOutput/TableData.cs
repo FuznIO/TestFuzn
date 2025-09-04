@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.ConsoleOutput;
+﻿namespace Fuzn.TestFuzn.ConsoleOutput;
 
 public class TableData
 {

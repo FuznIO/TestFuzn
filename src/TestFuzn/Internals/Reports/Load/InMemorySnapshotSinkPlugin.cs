@@ -1,8 +1,8 @@
-﻿using FuznLabs.TestFuzn.Internals.Results.Load;
-using FuznLabs.TestFuzn.Contracts.Sinks;
-using FuznLabs.TestFuzn.Contracts.Results.Load;
+﻿using Fuzn.TestFuzn.Internals.Results.Load;
+using Fuzn.TestFuzn.Contracts.Sinks;
+using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn.Internals.Reports.Load;
+namespace Fuzn.TestFuzn.Internals.Reports.Load;
 
 internal class InMemorySnapshotCollectorSinkPlugin : ISinkPlugin
 {

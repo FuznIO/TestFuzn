@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace FuznLabs.TestFuzn.Tests.InputData;
+namespace Fuzn.TestFuzn.Tests.InputData;
 
 [FeatureTest]
 public class InputDataFileLoadTests : BaseFeatureTest

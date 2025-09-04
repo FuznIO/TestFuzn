@@ -1,6 +1,6 @@
-﻿using FuznLabs.TestFuzn.Plugins.Http;
+﻿using Fuzn.TestFuzn.Plugins.Http;
 
-namespace FuznLabs.TestFuzn.Tests.Http;
+namespace Fuzn.TestFuzn.Tests.Http;
 
 [FeatureTest]
 public class GetProductsE2ETests : BaseFeatureTest

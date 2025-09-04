@@ -1,7 +1,7 @@
 ﻿using System.Dynamic;
 using System.Text.Json;
 
-namespace FuznLabs.TestFuzn.Plugins.Http.Internals;
+namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
 internal static class DynamicHelper
 {

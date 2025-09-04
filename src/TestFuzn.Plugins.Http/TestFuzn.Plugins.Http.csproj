@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>TestFuzn.Plugins.Http</AssemblyName>
-    <RootNamespace>TestFuzn.Plugins.Http</RootNamespace>
+    <AssemblyName>Fuzn.TestFuzn.Plugins.Http</AssemblyName>
+    <RootNamespace>Fuzn.TestFuzn.Plugins.Http</RootNamespace>
     <OutputType>Library</OutputType>
     <PackageId>TestFuzn.Plugins.Http</PackageId>
     <Title>TestFuzn.Plugins.Http</Title>

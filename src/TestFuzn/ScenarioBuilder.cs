@@ -1,9 +1,9 @@
-﻿using FuznLabs.TestFuzn.Internals;
-using FuznLabs.TestFuzn.Contracts.Adapters;
+﻿using Fuzn.TestFuzn.Internals;
+using Fuzn.TestFuzn.Contracts.Adapters;
 using System.Xml.Linq;
 using System;
 
-namespace FuznLabs.TestFuzn;
+namespace Fuzn.TestFuzn;
 
 public class ScenarioBuilder<TStepContext>
     where TStepContext : BaseStepContext

@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace FuznLabs.TestFuzn.ConsoleOutput;
+namespace Fuzn.TestFuzn.ConsoleOutput;
 
 internal class MarkupHelper
 {

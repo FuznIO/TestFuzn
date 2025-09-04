@@ -1,12 +1,12 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using FuznLabs.TestFuzn.Internals.InputData;
-using FuznLabs.TestFuzn.Internals.State;
-using FuznLabs.TestFuzn.Contracts.Adapters;
-using FuznLabs.TestFuzn.Contracts.Results.Feature;
-using FuznLabs.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Internals.InputData;
+using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace FuznLabs.TestFuzn.Internals.Execution;
+namespace Fuzn.TestFuzn.Internals.Execution;
 
 internal class ExecuteScenarioMessageHandler
 {

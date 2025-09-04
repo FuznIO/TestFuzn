@@ -1,4 +1,4 @@
-﻿namespace FuznLabs.TestFuzn.Internals.ConsoleOutput;
+﻿namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 
 internal class DelayHelper
 {
