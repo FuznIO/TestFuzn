@@ -1,17 +1,17 @@
 ﻿using FuznLabs.TestFuzn.Contracts.Adapters;
 using FuznLabs.TestFuzn.Contracts.Providers;
+using FuznLabs.TestFuzn.Internals;
 
 namespace FuznLabs.TestFuzn;
 
 public class Context
 {
-    public string EnvironmentName { get; internal set; }
-    public string NodeName { get; internal set; }
-    public string TestRunId { get; internal set; }
-    public ContextInternals Internals { get; set; }
-    public ILogger Logger { get; set; }
+    internal IterationContext IterationContext { get; set; }
+
+    public ExecutionInfo Info => IterationContext.Info;
+    public ContextInternals Internals => IterationContext.Internals;
+    public ILogger Logger => IterationContext.Logger; 
+    public ITestFrameworkAdapter TestFramework => IterationContext.TestFramework;
+    public HashSet<ISerializerProvider> SerializerProvider => IterationContext.SerializerProvider;
     public CurrentStep CurrentStep { get; internal set; }
-    public string CorrelationId { get; set; }
-    public ITestFrameworkAdapter TestFramework { get; internal set; }
-    public HashSet<ISerializerProvider> SerializerProvider { get; set; }
 }

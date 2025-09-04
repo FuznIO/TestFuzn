@@ -11,50 +11,56 @@ internal class ContextFactory
 
         if (GlobalState.Configuration != null)
         {
-            PopulateSharedProperties(testFramework, context);
+            context.IterationContext = new IterationContext();
+            PopulateSharedProperties(testFramework, context.IterationContext);
             context.CurrentStep = new CurrentStep(null, stepName);
         }
 
         return context;
     }
 
-    public static BaseStepContext CreateStepContext(ITestFrameworkAdapter testFramework, Scenario scenario, string stepName, object currentInput)
+    public static BaseStepContext CreateStepContext(IterationContext iterationContext, string stepName, string parentName)
     {
-        var context = (BaseStepContext) Activator.CreateInstance(scenario.ContextType);
-
+        var context = (BaseStepContext) Activator.CreateInstance(iterationContext.Scenario.ContextType);
         if (context == null)
-            throw new InvalidOperationException($"Failed to create instance of {scenario.ContextType}");
+            throw new InvalidOperationException($"Failed to create instance of {iterationContext.Scenario.ContextType}");
 
-        // Check if context is StepContext<TCustomStepContext> and set Custom property
-        var contextType = context.GetType();
-        if (contextType.IsGenericType && contextType.GetGenericTypeDefinition() == typeof(StepContext<>))
-        {
-            var customProperty = contextType.GetProperty("Custom");
-            if (customProperty != null && customProperty.CanWrite)
-            {
-                var customType = contextType.GetGenericArguments()[0];
-                var customInstance = Activator.CreateInstance(customType);
-                customProperty.SetValue(context, customInstance);
-            }
-        }
-
-        PopulateSharedProperties(testFramework, context);
-
-        context.CurrentStep = new CurrentStep(context, stepName);
-        context.Scenario = scenario;
-        context.InputDataInternal = currentInput;
+        context.IterationContext = iterationContext;
+        context.CurrentStep = new CurrentStep(context, stepName, parentName);
 
         return context;
     }
 
-    private static void PopulateSharedProperties(ITestFrameworkAdapter testFramework, Context context)
+    public static IterationContext CreateIterationContextForStepContext(ITestFrameworkAdapter testFramework, Scenario scenario, object currentInput)
     {
-        context.EnvironmentName = GlobalState.Configuration.EnvironmentName;
-        context.TestRunId = GlobalState.TestRunId;
-        context.NodeName = GlobalState.NodeName;
+        var context = new IterationContext();
+        if (scenario.ContextType.IsGenericType && scenario.ContextType.GetGenericTypeDefinition() == typeof(StepContext<>))
+        {
+            var customType = scenario.ContextType.GetGenericArguments()[0];
+            var customInstance = Activator.CreateInstance(customType);
+
+            if (customInstance == null)
+                throw new InvalidOperationException($"Failed to create instance of {customType}");
+
+            context.Custom = customInstance;
+        }
+        PopulateSharedProperties(testFramework, context);
+        context.SharedData = new();
+        context.Scenario = scenario;
+        context.InputData = currentInput;
+
+        return context;
+    }
+
+    private static void PopulateSharedProperties(ITestFrameworkAdapter testFramework, IterationContext context)
+    {
+        context.Info = new ExecutionInfo();
+        context.Info.EnvironmentName = GlobalState.Configuration.EnvironmentName;
+        context.Info.NodeName = GlobalState.NodeName;
+        context.Info.TestRunId = GlobalState.TestRunId;
+        context.Info.CorrelationId = Guid.NewGuid().ToString();
         context.Logger = GlobalState.Logger;
         context.TestFramework = testFramework;
-        context.CorrelationId = Guid.NewGuid().ToString();
         context.Internals = new ContextInternals();
         context.SerializerProvider = GlobalState.Configuration.SerializerProviders;
         

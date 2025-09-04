@@ -7,23 +7,20 @@ namespace FuznLabs.TestFuzn.Internals.Execution;
 internal class ExecuteStepHandler
 {
     private readonly SharedExecutionState _sharedExecutionState;
-    private readonly Scenario _scenario;
-    private readonly BaseStepContext _stepContext;
+    private readonly IterationContext _iterationContext;
     public ScenarioStatus? CurrentScenarioStatus { get; set; }
     public StepFeatureResult? OuterStepResult { get; set; }
 
     public ExecuteStepHandler(SharedExecutionState sharedExecutionState,
-        Scenario scenario,
-        BaseStepContext stepContext,
+        IterationContext iterationContext,
         ScenarioStatus? scenarioStatus)
     {
         _sharedExecutionState = sharedExecutionState;
-        _scenario = scenario;
-        _stepContext = stepContext;
+        _iterationContext = iterationContext;
         CurrentScenarioStatus = scenarioStatus;
     }
 
-    public async Task ExecuteStep(Step step)
+    public async Task ExecuteStep(StepType stepType, Step step)
     {
         step.Validate();
 
@@ -33,9 +30,9 @@ internal class ExecuteStepHandler
         var stepResult = new StepFeatureResult();
         stepResult.Name = step.Name;
 
-        if (OuterStepResult == null)
+        if (stepType == StepType.Outer)
             OuterStepResult = stepResult;
-        else
+        else if (stepType == StepType.Inner)
         {
             if (OuterStepResult.Name == step.ParentName)
             {
@@ -61,13 +58,12 @@ internal class ExecuteStepHandler
         }
         else
         {
+            var stepContext = ContextFactory.CreateStepContext(_iterationContext, step.Name, step.ParentName);
+            _iterationContext.ExecuteStepHandler = this;
+
             try
-            {
-                var prevStep = _stepContext.CurrentStep;
-                _stepContext.CurrentStep = new CurrentStep(_stepContext, step.Name, step.ParentName);
-                _stepContext.ExecuteStepHandler = this;
-                await step.Action(_stepContext);
-                _stepContext.CurrentStep = prevStep;
+            {    
+                await step.Action(stepContext);
 
                 stepResult.Status = StepStatus.Passed;
                 CurrentScenarioStatus = ScenarioStatus.Passed;
@@ -78,18 +74,18 @@ internal class ExecuteStepHandler
                 CurrentScenarioStatus = ScenarioStatus.Failed;
                 stepResult.Exception = ex;
                 if (_sharedExecutionState.TestType == TestType.Feature
-                    && !_scenario.InputDataInfo.HasInputData
+                    && !_iterationContext.Scenario.InputDataInfo.HasInputData
                     && _sharedExecutionState.TestRunState.FirstException == null)
                     _sharedExecutionState.TestRunState.FirstException = ex;
             }
             finally
             {
-                if (_stepContext.CurrentStep != null
-                    && _stepContext.CurrentStep.Attachments != null
-                    && _stepContext.CurrentStep.Attachments.Count > 0)
+                if (stepContext.CurrentStep != null
+                    && stepContext.CurrentStep.Attachments != null
+                    && stepContext.CurrentStep.Attachments.Count > 0)
                 {
                     stepResult.Attachments = new();
-                    stepResult.Attachments.AddRange(_stepContext.CurrentStep.Attachments);
+                    stepResult.Attachments.AddRange(stepContext.CurrentStep.Attachments);
                 }
             }
         }
@@ -117,5 +113,11 @@ internal class ExecuteStepHandler
         }
 
         return null;
+    }
+
+    public enum StepType
+    {
+        Outer = 1,
+        Inner = 2
     }
 }

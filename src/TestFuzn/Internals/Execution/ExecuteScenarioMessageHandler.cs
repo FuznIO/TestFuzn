@@ -5,7 +5,6 @@ using FuznLabs.TestFuzn.Internals.State;
 using FuznLabs.TestFuzn.Contracts.Adapters;
 using FuznLabs.TestFuzn.Contracts.Results.Feature;
 using FuznLabs.TestFuzn.Contracts.Results.Load;
-using NATS.Client.KeyValueStore;
 
 namespace FuznLabs.TestFuzn.Internals.Execution;
 
@@ -39,7 +38,6 @@ internal class ExecuteScenarioMessageHandler
 
         if (_sharedExecutionState.TestType == TestType.Feature)
         {
-            
             if (currentInputData != null)
             {
                 iterationResult.InputData = PropertyHelper.GetStringFromProperties(currentInputData);
@@ -48,29 +46,24 @@ internal class ExecuteScenarioMessageHandler
             _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].IterationResults.Add(iterationResult);
         }
 
-        var stepContext = ContextFactory.CreateStepContext(_testFramework, scenario, "", currentInputData);
+        var iterationContext = ContextFactory.CreateIterationContextForStepContext(_testFramework, scenario, currentInputData);
 
         if (_sharedExecutionState.TestType == TestType.Feature)
-            iterationResult.CorrelationId = stepContext.CorrelationId;
+            iterationResult.CorrelationId = iterationContext.Info.CorrelationId;
         
         var scenarioDuration = new Stopwatch();
         scenarioDuration.Start();
         var stepDuration = new Stopwatch();
-        ScenarioStatus? scenarioStatus = null;
+
+        var executeStepHandler = new ExecuteStepHandler(_sharedExecutionState, iterationContext, null);
 
         try
         {
             var totalSteps = scenario.Steps.Count;
-            var stepIndex = 0;
 
             foreach (var step in scenario.Steps)
             {
-                stepIndex++;
-
-                var executeStepHandler = new ExecuteStepHandler(_sharedExecutionState, scenario, stepContext, scenarioStatus);
-                await executeStepHandler.ExecuteStep(step);
-
-                scenarioStatus = executeStepHandler.CurrentScenarioStatus;
+                await executeStepHandler.ExecuteStep(ExecuteStepHandler.StepType.Outer, step);
                 iterationResult.StepResults.Add(executeStepHandler.OuterStepResult.Name, executeStepHandler.OuterStepResult);
             }
         }
@@ -82,18 +75,18 @@ internal class ExecuteScenarioMessageHandler
 
             if (scenario.CleanupAfterEachIterationAction != null)
             {
-                stepContext.CurrentStep = new CurrentStep(stepContext, "CleanupAfterEachIteration");
+                var stepContext = ContextFactory.CreateStepContext(iterationContext, "CleanupAfterEachIteration", null);
                 await scenario.CleanupAfterEachIterationAction(stepContext);
             }
         }
 
         if (message.IsWarmup)
         {
-            scenarioLoadCollector.RecordWarmup(scenarioStatus ?? ScenarioStatus.Failed);
+            scenarioLoadCollector.RecordWarmup(executeStepHandler.CurrentScenarioStatus ?? ScenarioStatus.Failed);
             return;
         }
 
-        scenarioLoadCollector.RecordMeasurement(scenarioStatus ?? ScenarioStatus.Failed, iterationResult);
+        scenarioLoadCollector.RecordMeasurement(executeStepHandler.CurrentScenarioStatus ?? ScenarioStatus.Failed, iterationResult);
 
         var scenarioLoadResult = scenarioLoadCollector.GetCurrentResult();
 
@@ -102,7 +95,7 @@ internal class ExecuteScenarioMessageHandler
             if (!plugin.RequireState)
                 continue;
 
-            var state = stepContext.Internals.Plugins.GetState(plugin.GetType());
+            var state = iterationContext.Internals.Plugins.GetState(plugin.GetType());
             await plugin.CleanupContext(state);
         }
 

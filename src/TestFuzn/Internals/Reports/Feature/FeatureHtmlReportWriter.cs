@@ -156,11 +156,11 @@ internal class FeatureHtmlReportWriter : IFeatureReport
     private async Task IncludeEmbeddedResources(FeatureReportData featureReportData)
     {
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
-            "TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
+            "FuznLabs.TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
             Path.Combine(featureReportData.TestsOutputDirectory, "assets/styles/testfuzn.css"));
 
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
-            "TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
+            "FuznLabs.TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
             Path.Combine(featureReportData.TestsOutputDirectory, "assets/scripts/chart.js"));
     }
 }

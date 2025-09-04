@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>TestFuzn</AssemblyName>
-    <RootNamespace>TestFuzn</RootNamespace>
+    <RootNamespace>FuznLabs.TestFuzn</RootNamespace>
     <OutputType>Library</OutputType>
     <PackageId>TestFuzn</PackageId>
     <Title>TestFuzn</Title>

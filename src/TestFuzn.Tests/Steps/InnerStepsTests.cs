@@ -59,9 +59,10 @@ public class InnerStepsTests : BaseFeatureTest
             })
             .Step("Step 2", async (context) =>
             {
+                Assert.AreEqual("Step 2", context.CurrentStep.Name);
                 await context.Step("Step 2.1", async (subContext1) =>
                 {   
-                    Assert.AreEqual("Step 2.1", context.CurrentStep.Name);
+                    Assert.AreEqual("Step 2.1", subContext1.CurrentStep.Name);
 
                     await Task.CompletedTask;
                 });

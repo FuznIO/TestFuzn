@@ -4,10 +4,7 @@ namespace FuznLabs.TestFuzn;
 
 public abstract class BaseStepContext : Context
 {
-    public Scenario Scenario { get; internal set; }
-    internal Dictionary<string, object> SharedData { get; } = new Dictionary<string, object>();
-    internal object InputDataInternal { get; set; }
-    internal ExecuteStepHandler ExecuteStepHandler { get; set; }
+    public Scenario Scenario => IterationContext.Scenario;
 
     public BaseStepContext()
     {
@@ -17,7 +14,7 @@ public abstract class BaseStepContext : Context
     {
         try
         {
-            return (T) InputDataInternal;
+            return (T) IterationContext.InputData;
         }
         catch (InvalidCastException)
         {
@@ -27,7 +24,7 @@ public abstract class BaseStepContext : Context
 
     public T GetSharedData<T>(string key)
     {
-        if (SharedData.TryGetValue(key, out var value))
+        if (IterationContext.SharedData.TryGetValue(key, out var value))
         {
             return (T) value;
         }
@@ -36,7 +33,17 @@ public abstract class BaseStepContext : Context
 
     public void SetSharedData(string key, object value)
     {
-        SharedData[key] = value;
+        IterationContext.SharedData[key] = value;
+    }
+
+    protected async Task ExecuteStep(string name, Type contextType, Func<BaseStepContext, Task> action)
+    {
+        var step = new Step();
+        step.ContextType = contextType;
+        step.Name = name;
+        step.ParentName = CurrentStep.Name;
+        step.Action = action;
+        await IterationContext.ExecuteStepHandler.ExecuteStep(ExecuteStepHandler.StepType.Inner, step);
     }
 }
 

@@ -62,7 +62,7 @@ public class CurrentStep
         var attachment = new Attachment();
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
         var extension = Path.GetExtension(fileName);
-        attachment.Name = $"{_context.CorrelationId}_{fileNameWithoutExtension}_{Guid.NewGuid().ToString("N")[..6]}{extension}";
+        attachment.Name = $"{_context.Info.CorrelationId}_{fileNameWithoutExtension}_{Guid.NewGuid().ToString("N")[..6]}{extension}";
         attachment.Path = Path.Combine(directory, attachment.Name);
         Attachments.Add(attachment);
 
