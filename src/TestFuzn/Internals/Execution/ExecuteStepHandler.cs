@@ -23,8 +23,10 @@ internal class ExecuteStepHandler
         CurrentScenarioStatus = scenarioStatus;
     }
 
-    public async Task ExecuteStep(BaseStep step)
+    public async Task ExecuteStep(Step step)
     {
+        step.Validate();
+
         var stepDuration = new Stopwatch();
         stepDuration.Start();
 

@@ -25,6 +25,19 @@ internal class ContextFactory
         if (context == null)
             throw new InvalidOperationException($"Failed to create instance of {scenario.ContextType}");
 
+        // Check if context is StepContext<TCustomStepContext> and set Custom property
+        var contextType = context.GetType();
+        if (contextType.IsGenericType && contextType.GetGenericTypeDefinition() == typeof(StepContext<>))
+        {
+            var customProperty = contextType.GetProperty("Custom");
+            if (customProperty != null && customProperty.CanWrite)
+            {
+                var customType = contextType.GetGenericArguments()[0];
+                var customInstance = Activator.CreateInstance(customType);
+                customProperty.SetValue(context, customInstance);
+            }
+        }
+
         PopulateSharedProperties(testFramework, context);
 
         context.CurrentStep = new CurrentStep(context, stepName);

@@ -12,7 +12,7 @@ public class Scenario
     internal Func<BaseStepContext, Task> CleanupAfterEachIterationAction { get; set; }
     internal Func<Context, Task> CleanupAfterScenarioAction { get; set; }
     internal InputDataInfo InputDataInfo { get; private set; } = new();
-    internal List<BaseStep> Steps { get; } = new();
+    internal List<Step> Steps { get; } = new();
     internal Func<Context, SimulationsBuilder, Task> WarmupAction;
     internal Func<Context, SimulationsBuilder, Task> SimulationsAction;
     internal List<ILoadConfiguration> SimulationsInternal { get; } = new();

@@ -2,4 +2,5 @@
 
 public class CustomStepContext
 {
+    public string CustomProperty { get; set; }
 }

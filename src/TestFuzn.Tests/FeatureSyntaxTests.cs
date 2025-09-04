@@ -79,7 +79,8 @@ public class SyntaxTests : BaseFeatureTest
 
                 await Task.CompletedTask;
             })
-            .Step("Step 3 - Shared step", SharedStep)
+            .Step("Step 3 - Shared step", SharedStepAction)
+            .Step(SharedStep())
             .CleanupAfterEachIteration((context) =>
             {
             })
@@ -171,7 +172,6 @@ public class SyntaxTests : BaseFeatureTest
                     await Task.CompletedTask;
                 });
             })
-            .Step("Step 3 - Shared step", SharedStep)
             // Warmup simulations run before .Load().Simulations(). 
             // For these simulations no stats will be recorded, AssertWhileRunning, AssertWhenDone and sinks will not be called.
             .Load().Warmup((context, simulations) =>
@@ -265,7 +265,20 @@ public class SyntaxTests : BaseFeatureTest
             .Run();
     }
 
-    public void SharedStep(BaseStepContext context)
+
+    public Step<BaseStepContext> SharedStep()
+    {
+        var step = new Step<BaseStepContext>();
+        step.Name = "Shared step";
+        step.Action = (context) =>
+        {
+            // Some code goes here.
+            return Task.CompletedTask;
+        };
+        return step;
+    }
+
+    public async Task SharedStepAction(StepContext context)
     {
         // Some code goes here.
     }

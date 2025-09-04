@@ -20,6 +20,8 @@ public static class SharedStepsExtensionMethods
     {
         scenario.Step("SharedStepOnOnlyOnCustomStepContextType", (context) =>
         {
+            Assert.AreEqual("Step2", context.Custom.CustomProperty);
+            context.Custom.CustomProperty = "Step3";
             context.SetSharedData("SharedStepOnOnlyOnCustomStepContextType_Executed", "true");
             
             return Task.CompletedTask;

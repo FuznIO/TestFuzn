@@ -1,5 +1,7 @@
 ﻿using FuznLabs.TestFuzn.Internals;
 using FuznLabs.TestFuzn.Contracts.Adapters;
+using System.Xml.Linq;
+using System;
 
 namespace FuznLabs.TestFuzn;
 
@@ -78,7 +80,8 @@ public class ScenarioBuilder<TStepContext>
         if (action == null)
             throw new ArgumentNullException(nameof(action), "Action cannot be null.");
 
-        var step = new Step<TStepContext>();
+        var step = new Step();
+        step.ContextType = typeof(TStepContext);
         step.Name = name;
         step.Action = context => action((TStepContext) context);
         Scenario.Steps.Add(step);
@@ -93,7 +96,8 @@ public class ScenarioBuilder<TStepContext>
         if (action == null)
             throw new ArgumentNullException(nameof(action), "Action cannot be null.");
 
-        var step = new Step<TStepContext>();
+        var step = new Step();
+        step.ContextType = typeof(TStepContext);
         step.Name = name;
         step.Action = context =>
         {
@@ -105,7 +109,7 @@ public class ScenarioBuilder<TStepContext>
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> Step(Step<TStepContext> step)
+    public ScenarioBuilder<TStepContext> Step(Step<BaseStepContext> step)
     {
         if (step == null)
             throw new ArgumentNullException(nameof(step), "Step cannot be null.");
@@ -113,9 +117,17 @@ public class ScenarioBuilder<TStepContext>
         EnsureStepNameIsUnique(step.Name);
 
         if (step.Action == null)
-            throw new ArgumentException("Step action cannot be null.", nameof(step));
+            throw new ArgumentException("Step action cannot be null.", nameof(step.Action));
 
-        Scenario.Steps.Add(step);
+        var stepInternal = new Step();
+        stepInternal.ContextType = typeof(TStepContext);
+        stepInternal.Name = step.Name;
+        stepInternal.Action = context =>
+        {
+            step.Action((TStepContext) context);
+            return Task.CompletedTask;
+        };
+        Scenario.Steps.Add(stepInternal);
 
         return this;
     }
