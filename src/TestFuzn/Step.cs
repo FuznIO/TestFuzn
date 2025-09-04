@@ -10,10 +10,10 @@ public abstract class BaseStep
 }
 
 public class Step<TCustomStepContext> : BaseStep
-    where TCustomStepContext : new()
+    where TCustomStepContext : BaseStepContext
 {
     public Step()
     {
-        ContextType = typeof(StepContext<TCustomStepContext>);
+        ContextType = typeof(TCustomStepContext);
     }
 }

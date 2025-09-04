@@ -244,7 +244,7 @@ public class SyntaxTests : BaseFeatureTest
             })
             .Step("Step 2 - Read property from context", context =>
             {
-                Assert.AreEqual("value1", context.CustomProperty);
+                Assert.AreEqual("value1", context.Custom.CustomProperty);
             })
             .Run();
     }
@@ -265,13 +265,13 @@ public class SyntaxTests : BaseFeatureTest
             .Run();
     }
 
-    public void SharedStep(StepContext context)
+    public void SharedStep(BaseStepContext context)
     {
         // Some code goes here.
     }
 }
 
-public class CustomContext : StepContext<CustomContext>
+public class CustomContext
 {
     public string CustomProperty { get; set; }
 }

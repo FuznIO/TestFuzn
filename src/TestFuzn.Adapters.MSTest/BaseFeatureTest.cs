@@ -25,10 +25,10 @@ public abstract class BaseFeatureTest : IFeatureTest
         return scenario;
     }
 
-    public ScenarioBuilder<TCustomContext> Scenario<TCustomContext>([CallerMemberName] string scenarioName = null)
-        where TCustomContext : StepContext<TCustomContext>, new()
+    public ScenarioBuilder<StepContext<TCustomContext>> Scenario<TCustomContext>([CallerMemberName] string scenarioName = null)
+        where TCustomContext : new()
     {
-        var scenario = new ScenarioBuilder<TCustomContext>(new MsTestAdapter(TestContext), this, scenarioName);
+        var scenario = new ScenarioBuilder<StepContext<TCustomContext>>(new MsTestAdapter(TestContext), this, scenarioName);
         return scenario;
     }
 

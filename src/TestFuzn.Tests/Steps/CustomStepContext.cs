@@ -1,5 +1,5 @@
 ﻿namespace FuznLabs.TestFuzn.Tests.Steps;
 
-public class CustomStepContext : StepContext<CustomStepContext>
+public class CustomStepContext
 {
 }
