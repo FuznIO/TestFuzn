@@ -3,8 +3,8 @@ using FuznLabs.TestFuzn.Contracts.Adapters;
 
 namespace FuznLabs.TestFuzn;
 
-public class ScenarioBuilder<TStepContext>
-    where TStepContext : StepContext<TStepContext>, new()
+public class ScenarioBuilder<TCustomStepContext>
+    where TCustomStepContext : new()
 {
     private ITestFrameworkAdapter _testFramework;
     private readonly IFeatureTest _featureTest;
@@ -18,10 +18,10 @@ public class ScenarioBuilder<TStepContext>
         _testFramework = testFramework;
         _featureTest = featureTest;
         Scenario = new Scenario(name);
-        Scenario.ContextType = typeof(TStepContext);
+        Scenario.ContextType = typeof(TCustomStepContext);
     }
 
-    public ScenarioBuilder<TStepContext> Init(Action<Context> action)
+    public ScenarioBuilder<TCustomStepContext> Init(Action<Context> action)
     {
         Scenario.Init = (context) => {
             action(context);
@@ -30,7 +30,7 @@ public class ScenarioBuilder<TStepContext>
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> Init(Func<Context, Task> action)
+    public ScenarioBuilder<TCustomStepContext> Init(Func<Context, Task> action)
     {
         Scenario.Init = (context) => {
             return action(context);
@@ -38,14 +38,14 @@ public class ScenarioBuilder<TStepContext>
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> InputData(params object[] inputData)
+    public ScenarioBuilder<TCustomStepContext> InputData(params object[] inputData)
     {
         Scenario.InputDataInfo.AddParams(inputData);
 
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> InputDataFromList(Func<Context, Task<List<object>>> action)
+    public ScenarioBuilder<TCustomStepContext> InputDataFromList(Func<Context, Task<List<object>>> action)
     {
         Scenario.InputDataInfo.AddAction(context =>
         {
@@ -55,7 +55,7 @@ public class ScenarioBuilder<TStepContext>
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> InputDataFromList(Func<Context, List<object>> action)
+    public ScenarioBuilder<TCustomStepContext> InputDataFromList(Func<Context, List<object>> action)
     {
         Scenario.InputDataInfo.AddAction((context) =>
         {
@@ -65,39 +65,39 @@ public class ScenarioBuilder<TStepContext>
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> InputDataBehavior(InputDataBehavior inputDataBehavior)
+    public ScenarioBuilder<TCustomStepContext> InputDataBehavior(InputDataBehavior inputDataBehavior)
     {
         Scenario.InputDataInfo.InputDataBehavior = inputDataBehavior;
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> Step(string name, Func<TStepContext, Task> action)
+    public ScenarioBuilder<TCustomStepContext> Step(string name, Func<StepContext<TCustomStepContext>, Task> action)
     {
         EnsureStepNameIsUnique(name);
 
         if (action == null)
             throw new ArgumentNullException(nameof(action), "Action cannot be null.");
 
-        var step = new Step<TStepContext>();
+        var step = new Step<StepContext<TCustomStepContext>>();
         step.Name = name;
-        step.Action = context => action((TStepContext) context);
+        step.Action = context => action((StepContext<TCustomStepContext>) context);
         Scenario.Steps.Add(step);
 
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> Step(string name, Action<TStepContext> action)
+    public ScenarioBuilder<TCustomStepContext> Step(string name, Action<StepContext<TCustomStepContext>> action)
     {
         EnsureStepNameIsUnique(name);
 
         if (action == null)
             throw new ArgumentNullException(nameof(action), "Action cannot be null.");
 
-        var step = new Step<TStepContext>();
+        var step = new Step<TCustomStepContext>();
         step.Name = name;
         step.Action = context =>
         {
-            action((TStepContext) context);
+            action((StepContext<TCustomStepContext>) context);
             return Task.CompletedTask;
         };
         Scenario.Steps.Add(step);
@@ -105,7 +105,7 @@ public class ScenarioBuilder<TStepContext>
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> Step(Step<TStepContext> step)
+    public ScenarioBuilder<TCustomStepContext> Step(Step<TCustomStepContext> step)
     {
         if (step == null)
             throw new ArgumentNullException(nameof(step), "Step cannot be null.");
@@ -129,29 +129,29 @@ public class ScenarioBuilder<TStepContext>
             throw new InvalidOperationException($"A step with the name '{name}' already exists in the scenario.");
     }
 
-    public LoadBuilder<TStepContext> Load()
+    public LoadBuilder<TCustomStepContext> Load()
     {
-        return new LoadBuilder<TStepContext>(this);
+        return new LoadBuilder<TCustomStepContext>(this);
     }
 
-    public ScenarioBuilder<TStepContext> CleanupAfterEachIteration(Action<TStepContext> action)
+    public ScenarioBuilder<TCustomStepContext> CleanupAfterEachIteration(Action<StepContext<TCustomStepContext>> action)
     {
         Scenario.CleanupAfterEachIterationAction = (context) => {
-            action((TStepContext) context);
+            action((StepContext<TCustomStepContext>) context);
             return Task.CompletedTask;
         };
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> CleanupAfterEachIteration(Func<TStepContext, Task> action)
+    public ScenarioBuilder<TCustomStepContext> CleanupAfterEachIteration(Func<StepContext<TCustomStepContext>, Task> action)
     {
         Scenario.CleanupAfterEachIterationAction = (context) => {
-            return action((TStepContext) context);
+            return action((StepContext<TCustomStepContext>) context);
         };
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> CleanupAfterScenario(Action<Context> action)
+    public ScenarioBuilder<TCustomStepContext> CleanupAfterScenario(Action<Context> action)
     {
         Scenario.CleanupAfterScenarioAction = (context) => {
             action(context);
@@ -160,7 +160,7 @@ public class ScenarioBuilder<TStepContext>
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> CleanupAfterScenario(Func<Context, Task> action)
+    public ScenarioBuilder<TCustomStepContext> CleanupAfterScenario(Func<Context, Task> action)
     {
         Scenario.CleanupAfterScenarioAction = (context) => {
             return action(context);

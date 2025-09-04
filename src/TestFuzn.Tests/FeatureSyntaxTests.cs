@@ -240,7 +240,7 @@ public class SyntaxTests : BaseFeatureTest
         await Scenario<CustomContext>("Syntax Showcase with custom context")
             .Step("Step 1 - Set property on context", context =>
             {
-                context.CustomProperty = "value1"; // Set data in context which is shared between steps.
+                context.Custom.CustomProperty = "value1"; // Set data in context which is shared between steps.
             })
             .Step("Step 2 - Read property from context", context =>
             {
@@ -256,11 +256,11 @@ public class SyntaxTests : BaseFeatureTest
         await Scenario<CustomContext>("Syntax Showcase with custom context")
             .Step("Step 1 - Set property on context", context =>
             {
-                context.CustomProperty = "value1"; // Set data in context which is shared between steps.
+                context.Custom.CustomProperty = "value1"; // Set data in context which is shared between steps.
             })
             .Step("Step 2 - Read property from context", context =>
             {
-                Assert.AreEqual("value1", context.CustomProperty);
+                Assert.AreEqual("value1", context.Custom.CustomProperty);
             })
             .Run();
     }

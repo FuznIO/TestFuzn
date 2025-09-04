@@ -9,11 +9,11 @@ public abstract class BaseStep
     internal List<BaseStep> Steps { get; set; }
 }
 
-public class Step<TStepContext> : BaseStep
-    where TStepContext : StepContext<TStepContext>, new()
+public class Step<TCustomStepContext> : BaseStep
+    where TCustomStepContext : new()
 {
     public Step()
     {
-        ContextType = typeof(TStepContext);
+        ContextType = typeof(StepContext<TCustomStepContext>);
     }
 }

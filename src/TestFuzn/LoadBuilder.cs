@@ -1,16 +1,16 @@
 ﻿namespace FuznLabs.TestFuzn;
 
-public class LoadBuilder<TStepContext>
-    where TStepContext : StepContext<TStepContext>, new()
+public class LoadBuilder<TCustomStepContext>
+    where TCustomStepContext : new()
 {
-    private readonly ScenarioBuilder<TStepContext> _scenarioBuilder;
+    private readonly ScenarioBuilder<TCustomStepContext> _scenarioBuilder;
 
-    public LoadBuilder(ScenarioBuilder<TStepContext> scenarioBuilder)
+    public LoadBuilder(ScenarioBuilder<TCustomStepContext> scenarioBuilder)
     {
         _scenarioBuilder = scenarioBuilder;
     }
 
-    public ScenarioBuilder<TStepContext> Warmup(Action<Context, SimulationsBuilder> action)
+    public ScenarioBuilder<TCustomStepContext> Warmup(Action<Context, SimulationsBuilder> action)
     {
         _scenarioBuilder.Scenario.WarmupAction = (context, simulations) =>
             {
@@ -20,13 +20,13 @@ public class LoadBuilder<TStepContext>
         return _scenarioBuilder;
     }
 
-    public ScenarioBuilder<TStepContext> Warmup(Func<Context, SimulationsBuilder, Task> action)
+    public ScenarioBuilder<TCustomStepContext> Warmup(Func<Context, SimulationsBuilder, Task> action)
     {
         _scenarioBuilder.Scenario.WarmupAction = action;
         return _scenarioBuilder;
     }
 
-    public ScenarioBuilder<TStepContext> Simulations(Action<Context, SimulationsBuilder> action)
+    public ScenarioBuilder<TCustomStepContext> Simulations(Action<Context, SimulationsBuilder> action)
     {
         _scenarioBuilder.Scenario.SimulationsAction = (context, simulations) =>
             {
@@ -36,14 +36,14 @@ public class LoadBuilder<TStepContext>
         return _scenarioBuilder;
     }
 
-    public ScenarioBuilder<TStepContext> Simulations(Func<Context, SimulationsBuilder, Task> action)
+    public ScenarioBuilder<TCustomStepContext> Simulations(Func<Context, SimulationsBuilder, Task> action)
     {
         _scenarioBuilder.Scenario.SimulationsAction = action;
         return _scenarioBuilder;
     }
 
-    public ScenarioBuilder<TStepContext> IncludeScenario<TIncludeScenarioStepContext>(ScenarioBuilder<TIncludeScenarioStepContext> scenarioBuilder)
-        where TIncludeScenarioStepContext : StepContext<TIncludeScenarioStepContext>, new()
+    public ScenarioBuilder<TCustomStepContext> IncludeScenario<TIncludeScenarioCustomStepContext>(ScenarioBuilder<TIncludeScenarioCustomStepContext> scenarioBuilder)
+        where TIncludeScenarioCustomStepContext : StepContext<TIncludeScenarioCustomStepContext>, new()
     {
         if (_scenarioBuilder.IncludeScenarios == null)
             _scenarioBuilder.IncludeScenarios = new();
@@ -52,13 +52,13 @@ public class LoadBuilder<TStepContext>
         return _scenarioBuilder;
     }
 
-    public ScenarioBuilder<TStepContext> AssertWhileRunning(Action<Context, AssertScenarioStats> action)
+    public ScenarioBuilder<TCustomStepContext> AssertWhileRunning(Action<Context, AssertScenarioStats> action)
     {
         _scenarioBuilder.Scenario.AssertWhileRunningAction = action;
         return _scenarioBuilder;
     }
 
-    public ScenarioBuilder<TStepContext> AssertWhenDone(Action<Context, AssertScenarioStats> action)
+    public ScenarioBuilder<TCustomStepContext> AssertWhenDone(Action<Context, AssertScenarioStats> action)
     {
         _scenarioBuilder.Scenario.AssertWhenDoneAction = action;
         return _scenarioBuilder;
