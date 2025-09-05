@@ -54,7 +54,7 @@ internal class ConsoleWriter
                 Cells =
                 {
                     new AdvancedTableCell($"", 4),
-                    new AdvancedTableCell($"{scenarioResult.TestRunTotalDuration().ToTestFusionFormattedDuration()}", 1)
+                    new AdvancedTableCell($"{scenarioResult.TestRunTotalDuration().ToTestFuznFormattedDuration()}", 1)
                 }
             });
             table.Rows.Add(new AdvancedTableRow
@@ -92,7 +92,7 @@ internal class ConsoleWriter
                         Cells =
                     {
                         new AdvancedTableCell($"Step {index + 1}/{iterationResult.StepResults.Count}: {stepResult.Key}", 4),
-                        new KeyValueCell($"{stepResult.Value.Status}", $"{stepResult.Value.Duration.ToTestFusionResponseTime()}", 1)
+                        new KeyValueCell($"{stepResult.Value.Status}", $"{stepResult.Value.Duration.ToTestFuznResponseTime()}", 1)
                     }
                     });
 
@@ -188,7 +188,7 @@ internal class ConsoleWriter
                 Cells =
                 {
                     new AdvancedTableCell($"", 4),
-                    new AdvancedTableCell($"{loadResult.TestRunTotalDuration().ToTestFusionFormattedDuration()}", 1),
+                    new AdvancedTableCell($"{loadResult.TestRunTotalDuration().ToTestFuznFormattedDuration()}", 1),
                 }
             });
             table.Rows.Add(new AdvancedTableRow
@@ -254,10 +254,10 @@ internal class ConsoleWriter
                 Cells =
                 {
                     new AdvancedTableCell("Response Time - Ok", 1),
-                    new KeyValueCell("Min:", $"{loadResult.Ok.ResponseTimeMin.ToTestFusionResponseTime()}", 1),
-                    new KeyValueCell("Mean:", $"{loadResult.Ok.ResponseTimeMean.ToTestFusionResponseTime()}", 1),
-                    new KeyValueCell("Max:", $"{loadResult.Ok.ResponseTimeMax.ToTestFusionResponseTime()}", 1),
-                    new KeyValueCell("StdDev:", $"{loadResult.Ok.ResponseTimeStandardDeviation.ToTestFusionResponseTime()}", 1)
+                    new KeyValueCell("Min:", $"{loadResult.Ok.ResponseTimeMin.ToTestFuznResponseTime()}", 1),
+                    new KeyValueCell("Mean:", $"{loadResult.Ok.ResponseTimeMean.ToTestFuznResponseTime()}", 1),
+                    new KeyValueCell("Max:", $"{loadResult.Ok.ResponseTimeMax.ToTestFuznResponseTime()}", 1),
+                    new KeyValueCell("StdDev:", $"{loadResult.Ok.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}", 1)
                 }
             });
             table.Rows.Add(new AdvancedTableRow
@@ -265,10 +265,10 @@ internal class ConsoleWriter
                 Cells =
                 {
                     new AdvancedTableCell(string.Empty, 1),
-                    new KeyValueCell("Median:", $"{loadResult.Ok.ResponseTimeMedian.ToTestFusionResponseTime()}", 1),
-                    new KeyValueCell("P75:", $"{loadResult.Ok.ResponseTimePercentile75.ToTestFusionResponseTime()}", 1),
-                    new KeyValueCell("P95:", $"{loadResult.Ok.ResponseTimePercentile95.ToTestFusionResponseTime()}", 1),
-                    new KeyValueCell("P99:", $"{loadResult.Ok.ResponseTimePercentile99.ToTestFusionResponseTime()}", 1)
+                    new KeyValueCell("Median:", $"{loadResult.Ok.ResponseTimeMedian.ToTestFuznResponseTime()}", 1),
+                    new KeyValueCell("P75:", $"{loadResult.Ok.ResponseTimePercentile75.ToTestFuznResponseTime()}", 1),
+                    new KeyValueCell("P95:", $"{loadResult.Ok.ResponseTimePercentile95.ToTestFuznResponseTime()}", 1),
+                    new KeyValueCell("P99:", $"{loadResult.Ok.ResponseTimePercentile99.ToTestFuznResponseTime()}", 1)
                 }
             });
             if (loadResult.Failed.RequestCount > 0)
@@ -278,10 +278,10 @@ internal class ConsoleWriter
                     Cells =
                     {
                         new AdvancedTableCell("Response Time - Failed", 1),
-                        new KeyValueCell("Min:", $"{loadResult.Failed.ResponseTimeMin.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("Mean:", $"{loadResult.Failed.ResponseTimeMean.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("Max:", $"{loadResult.Failed.ResponseTimeMax.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("StdDev:", $"{loadResult.Failed.ResponseTimeStandardDeviation.ToTestFusionResponseTime()}", 1)
+                        new KeyValueCell("Min:", $"{loadResult.Failed.ResponseTimeMin.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("Mean:", $"{loadResult.Failed.ResponseTimeMean.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("Max:", $"{loadResult.Failed.ResponseTimeMax.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("StdDev:", $"{loadResult.Failed.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}", 1)
                     }
                 });
 
@@ -290,10 +290,10 @@ internal class ConsoleWriter
                     Cells =
                     {
                         new AdvancedTableCell(string.Empty, 1),
-                        new KeyValueCell("Median:", $"{loadResult.Failed.ResponseTimeMedian.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("P75:", $"{loadResult.Failed.ResponseTimePercentile75.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("P95:", $"{loadResult.Failed.ResponseTimePercentile95.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("P99:", $"{loadResult.Failed.ResponseTimePercentile99.ToTestFusionResponseTime()}", 1)
+                        new KeyValueCell("Median:", $"{loadResult.Failed.ResponseTimeMedian.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("P75:", $"{loadResult.Failed.ResponseTimePercentile75.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("P95:", $"{loadResult.Failed.ResponseTimePercentile95.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("P99:", $"{loadResult.Failed.ResponseTimePercentile99.ToTestFuznResponseTime()}", 1)
                     }
                 });
             }
@@ -338,10 +338,10 @@ internal class ConsoleWriter
                     Cells =
                     {
                         new AdvancedTableCell("Response Time - Ok", 1),
-                        new KeyValueCell("Min:", $"{stepResult.Ok.ResponseTimeMin.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("Mean:", $"{stepResult.Ok.ResponseTimeMean.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("Max:", $"{stepResult.Ok.ResponseTimeMax.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("StdDev:", $"{stepResult.Ok.ResponseTimeStandardDeviation.ToTestFusionResponseTime()}", 1)
+                        new KeyValueCell("Min:", $"{stepResult.Ok.ResponseTimeMin.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("Mean:", $"{stepResult.Ok.ResponseTimeMean.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("Max:", $"{stepResult.Ok.ResponseTimeMax.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("StdDev:", $"{stepResult.Ok.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}", 1)
                     }
                 });
                 table.Rows.Add(new AdvancedTableRow
@@ -349,10 +349,10 @@ internal class ConsoleWriter
                     Cells =
                     {
                         new AdvancedTableCell(string.Empty, 1),
-                        new KeyValueCell("Median:", $"{stepResult.Ok.ResponseTimeMedian.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("P75:", $"{stepResult.Ok.ResponseTimePercentile75.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("P95:", $"{stepResult.Ok.ResponseTimePercentile95.ToTestFusionResponseTime()}", 1),
-                        new KeyValueCell("P99:", $"{stepResult.Ok.ResponseTimePercentile99.ToTestFusionResponseTime()}", 1)
+                        new KeyValueCell("Median:", $"{stepResult.Ok.ResponseTimeMedian.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("P75:", $"{stepResult.Ok.ResponseTimePercentile75.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("P95:", $"{stepResult.Ok.ResponseTimePercentile95.ToTestFuznResponseTime()}", 1),
+                        new KeyValueCell("P99:", $"{stepResult.Ok.ResponseTimePercentile99.ToTestFuznResponseTime()}", 1)
                     }
                 });
                 if (stepResult.Failed.RequestCount > 0)
@@ -362,10 +362,10 @@ internal class ConsoleWriter
                         Cells =
                         {
                             new AdvancedTableCell("Response Time - Failed", 1),
-                            new KeyValueCell("Min:", $"{stepResult.Failed.ResponseTimeMin.ToTestFusionResponseTime()}", 1),
-                            new KeyValueCell("Mean:", $"{stepResult.Failed.ResponseTimeMean.ToTestFusionResponseTime()}", 1),
-                            new KeyValueCell("Max:", $"{stepResult.Failed.ResponseTimeMax.ToTestFusionResponseTime()}", 1),
-                            new KeyValueCell("StdDev:", $"{stepResult.Failed.ResponseTimeStandardDeviation.ToTestFusionResponseTime()}", 1)
+                            new KeyValueCell("Min:", $"{stepResult.Failed.ResponseTimeMin.ToTestFuznResponseTime()}", 1),
+                            new KeyValueCell("Mean:", $"{stepResult.Failed.ResponseTimeMean.ToTestFuznResponseTime()}", 1),
+                            new KeyValueCell("Max:", $"{stepResult.Failed.ResponseTimeMax.ToTestFuznResponseTime()}", 1),
+                            new KeyValueCell("StdDev:", $"{stepResult.Failed.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}", 1)
                         }
                     });
                     table.Rows.Add(new AdvancedTableRow
@@ -373,10 +373,10 @@ internal class ConsoleWriter
                         Cells =
                         {
                             new AdvancedTableCell(string.Empty, 1),
-                            new KeyValueCell("Median:", $"{stepResult.Failed.ResponseTimeMedian.ToTestFusionResponseTime()}", 1),
-                            new KeyValueCell("P75:", $"{stepResult.Failed.ResponseTimePercentile75.ToTestFusionResponseTime()}", 1),
-                            new KeyValueCell("P95:", $"{stepResult.Failed.ResponseTimePercentile95.ToTestFusionResponseTime()}", 1),
-                            new KeyValueCell("P99:", $"{stepResult.Failed.ResponseTimePercentile99.ToTestFusionResponseTime()}", 1)
+                            new KeyValueCell("Median:", $"{stepResult.Failed.ResponseTimeMedian.ToTestFuznResponseTime()}", 1),
+                            new KeyValueCell("P75:", $"{stepResult.Failed.ResponseTimePercentile75.ToTestFuznResponseTime()}", 1),
+                            new KeyValueCell("P95:", $"{stepResult.Failed.ResponseTimePercentile95.ToTestFuznResponseTime()}", 1),
+                            new KeyValueCell("P99:", $"{stepResult.Failed.ResponseTimePercentile99.ToTestFuznResponseTime()}", 1)
                         }
                     });
                 }

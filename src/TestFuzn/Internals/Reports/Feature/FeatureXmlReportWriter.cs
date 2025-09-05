@@ -11,7 +11,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
     {
         try
         {
-            var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "TestFusion_Report_Features.xml");
+            var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "TestFuzn_Report_Features.xml");
 
             var stringBuilder = new StringBuilder();
             using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))
@@ -94,27 +94,42 @@ internal class FeatureXmlReportWriter : IFeatureReport
         writer.WriteStartElement("Steps");
         foreach (var step in iterationResult.StepResults)
         {
-            writer.WriteStartElement("Step");
-            writer.WriteAttributeString("name", step.Value.Name);
-            writer.WriteAttributeString("status", step.Value.Status.ToString());
-            writer.WriteAttributeString("duration", step.Value.Duration.ToString(@"hh\:mm\:ss\.fff"));
+            WriteStep(writer, step.Value);
+        }
+        writer.WriteEndElement();
+    }
 
-            if (step.Value.Attachments != null && step.Value.Attachments.Count > 0)
+    private static void WriteStep(XmlWriter writer, StepFeatureResult step)
+    {
+        writer.WriteStartElement("Step");
+        writer.WriteAttributeString("name", step.Name);
+        writer.WriteAttributeString("status", step.Status.ToString());
+        writer.WriteAttributeString("duration", step.Duration.ToString(@"hh\:mm\:ss\.fff"));
+
+        if (step.Attachments != null && step.Attachments.Count > 0)
+        {
+            writer.WriteStartElement("Attachments");
+            foreach (var attachment in step.Attachments)
             {
-                writer.WriteStartElement("Attachments");
-                foreach (var attachment in step.Value.Attachments)
-                {
-                    writer.WriteStartElement("Attachment");
-                    writer.WriteAttributeString("name", attachment.Name);
-                    writer.WriteAttributeString("path", attachment.Path);
-                    writer.WriteEndElement();
-                }
+                writer.WriteStartElement("Attachment");
+                writer.WriteAttributeString("name", attachment.Name);
+                writer.WriteAttributeString("path", attachment.Path);
                 writer.WriteEndElement();
             }
+
             writer.WriteEndElement();
-
-
         }
+
+        if (step.StepResults != null && step.StepResults.Count > 0)
+        {
+            writer.WriteStartElement("Steps");
+            foreach (var subStep in step.StepResults)
+            {
+                WriteStep(writer, subStep);
+            }
+            writer.WriteEndElement();
+        }
+
         writer.WriteEndElement();
     }
 }

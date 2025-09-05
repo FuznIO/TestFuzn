@@ -116,25 +116,25 @@ internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, Cancel
             
             table.UpdateCell(GetRowIndex(1, index), 2, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.RequestCount}");
             table.UpdateCell(GetRowIndex(1, index), 3, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.RequestsPerSecond}");
-            table.UpdateCell(GetRowIndex(1, index), 4, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimeMin.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(1, index), 5, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimeMean.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(1, index), 6, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimeMax.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(1, index), 7, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimeStandardDeviation.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(1, index), 8, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimeMedian.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(1, index), 9, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimePercentile75.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(1, index), 10, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimePercentile95.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(1, index), 11, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimePercentile99.ToTestFusionResponseTime()}");
+            table.UpdateCell(GetRowIndex(1, index), 4, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimeMin.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(1, index), 5, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimeMean.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(1, index), 6, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimeMax.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(1, index), 7, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(1, index), 8, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimeMedian.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(1, index), 9, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimePercentile75.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(1, index), 10, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimePercentile95.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(1, index), 11, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimePercentile99.ToTestFuznResponseTime()}");
             
             table.UpdateCell(GetRowIndex(2, index), 2, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.RequestCount}");
             table.UpdateCell(GetRowIndex(2, index), 3, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.RequestsPerSecond}");
-            table.UpdateCell(GetRowIndex(2, index), 4, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimeMin.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(2, index), 5, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimeMean.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(2, index), 6, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimeMax.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(2, index), 7, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimeStandardDeviation.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(2, index), 8, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimeMedian.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(2, index), 9, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimePercentile75.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(2, index), 10, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimePercentile95.ToTestFusionResponseTime()}");
-            table.UpdateCell(GetRowIndex(2, index), 11, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimePercentile99.ToTestFusionResponseTime()}");
+            table.UpdateCell(GetRowIndex(2, index), 4, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimeMin.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(2, index), 5, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimeMean.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(2, index), 6, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimeMax.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(2, index), 7, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(2, index), 8, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimeMedian.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(2, index), 9, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimePercentile75.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(2, index), 10, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimePercentile95.ToTestFuznResponseTime()}");
+            table.UpdateCell(GetRowIndex(2, index), 11, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimePercentile99.ToTestFuznResponseTime()}");
         }
     }
 

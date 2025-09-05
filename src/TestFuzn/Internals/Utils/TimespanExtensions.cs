@@ -2,7 +2,7 @@
 
 internal static class TimespanExtensions
 {
-    public static string ToTestFusionResponseTime(this TimeSpan duration)
+    public static string ToTestFuznResponseTime(this TimeSpan duration)
     {
         if (duration == TimeSpan.Zero)
             return "N/A";
@@ -10,12 +10,12 @@ internal static class TimespanExtensions
             return "<1 ms";
         return $"{duration.TotalMilliseconds:F0} ms";
     }
-    public static string ToTestFusionFormattedDuration(this TimeSpan duration)
+    public static string ToTestFuznFormattedDuration(this TimeSpan duration)
     {
         return $"{duration:hh\\:mm\\:ss\\:ff}";
     }
 
-    public static string ToTestFusionReadableString(this TimeSpan duration)
+    public static string ToTestFuznReadableString(this TimeSpan duration)
     {
         return string.Join(" ", new[]
         {

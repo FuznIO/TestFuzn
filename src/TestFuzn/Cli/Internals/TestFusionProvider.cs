@@ -42,8 +42,8 @@ internal class TestFusionProvider : ITestFrameworkAdapter
 
             headerTable.AddRow(
                 $"{scenario.Key.Name}",
-                $"{scenario.Value.TotalExecutionDuration.ToTestFusionFormattedDuration()}",
-                $"{(scenario.Value.TestRunTotalDuration()).ToTestFusionFormattedDuration()}",
+                $"{scenario.Value.TotalExecutionDuration.ToTestFuznFormattedDuration()}",
+                $"{(scenario.Value.TestRunTotalDuration()).ToTestFuznFormattedDuration()}",
                 $"{(scenario.Value.Status == ScenarioStatus.Passed ? "[green]Passed[/]" : "[red]Failed[/]")}"
             );
 
@@ -142,25 +142,25 @@ internal class TestFusionProvider : ITestFrameworkAdapter
         table.AddColumn("[u]P99[/]");
         table.AddRow(
             $"[green]Ok[/]",
-            $"[green]{ok.ResponseTimeMin.ToTestFusionResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeMean.ToTestFusionResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeMax.ToTestFusionResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeStandardDeviation.ToTestFusionResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeMedian.ToTestFusionResponseTime()}[/]",
-            $"[green]{ok.ResponseTimePercentile75.ToTestFusionResponseTime()}[/]",
-            $"[green]{ok.ResponseTimePercentile95.ToTestFusionResponseTime()}[/]",
-            $"[green]{ok.ResponseTimePercentile99.ToTestFusionResponseTime()}[/]"
+            $"[green]{ok.ResponseTimeMin.ToTestFuznResponseTime()}[/]",
+            $"[green]{ok.ResponseTimeMean.ToTestFuznResponseTime()}[/]",
+            $"[green]{ok.ResponseTimeMax.ToTestFuznResponseTime()}[/]",
+            $"[green]{ok.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}[/]",
+            $"[green]{ok.ResponseTimeMedian.ToTestFuznResponseTime()}[/]",
+            $"[green]{ok.ResponseTimePercentile75.ToTestFuznResponseTime()}[/]",
+            $"[green]{ok.ResponseTimePercentile95.ToTestFuznResponseTime()}[/]",
+            $"[green]{ok.ResponseTimePercentile99.ToTestFuznResponseTime()}[/]"
         );
         table.AddRow(
             $"[red]Failed[/]",
-            $"[red]{failed.ResponseTimeMin.ToTestFusionResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeMean.ToTestFusionResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeMax.ToTestFusionResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeStandardDeviation.ToTestFusionResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeMedian.ToTestFusionResponseTime()}[/]",
-            $"[red]{failed.ResponseTimePercentile75.ToTestFusionResponseTime()}[/]",
-            $"[red]{failed.ResponseTimePercentile95.ToTestFusionResponseTime()}[/]",
-            $"[red]{failed.ResponseTimePercentile99.ToTestFusionResponseTime()}[/]"
+            $"[red]{failed.ResponseTimeMin.ToTestFuznResponseTime()}[/]",
+            $"[red]{failed.ResponseTimeMean.ToTestFuznResponseTime()}[/]",
+            $"[red]{failed.ResponseTimeMax.ToTestFuznResponseTime()}[/]",
+            $"[red]{failed.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}[/]",
+            $"[red]{failed.ResponseTimeMedian.ToTestFuznResponseTime()}[/]",
+            $"[red]{failed.ResponseTimePercentile75.ToTestFuznResponseTime()}[/]",
+            $"[red]{failed.ResponseTimePercentile95.ToTestFuznResponseTime()}[/]",
+            $"[red]{failed.ResponseTimePercentile99.ToTestFuznResponseTime()}[/]"
         );
         return table;
     }

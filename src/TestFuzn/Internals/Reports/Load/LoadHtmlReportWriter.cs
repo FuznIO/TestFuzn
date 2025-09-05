@@ -74,7 +74,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         // Init
         b.AppendLine("<tr>");
         b.AppendLine($"<td>Init</td>");
-        b.AppendLine($"<td>{scenarioResult.InitTotalDuration().ToTestFusionFormattedDuration()}</td>");
+        b.AppendLine($"<td>{scenarioResult.InitTotalDuration().ToTestFuznFormattedDuration()}</td>");
         b.AppendLine($"<td>{scenarioResult.InitStartTime.ToLocalTime()}</td>");
         b.AppendLine($"<td>{scenarioResult.InitEndTime.ToLocalTime()}</td>");
         b.AppendLine("</tr>");
@@ -83,7 +83,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         {
             b.AppendLine("<tr>");
             b.AppendLine($"<td>Warmup</td>");
-            b.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupTotalDuration().ToTestFusionFormattedDuration()}</td>");
+            b.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupTotalDuration().ToTestFuznFormattedDuration()}</td>");
             b.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupStartTime.ToLocalTime()}</td>");
             b.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupEndTime.ToLocalTime()}</td>");
             b.AppendLine("</tr>");
@@ -91,21 +91,21 @@ internal class LoadHtmlReportWriter : ILoadReport
         // Execution
         b.AppendLine("<tr>");
         b.AppendLine($"<td>Execution</td>");
-        b.AppendLine($"<td>{scenarioResult.MeasurementTotalDuration().ToTestFusionFormattedDuration()}</td>");
+        b.AppendLine($"<td>{scenarioResult.MeasurementTotalDuration().ToTestFuznFormattedDuration()}</td>");
         b.AppendLine($"<td>{scenarioResult.MeasurementStartTime.ToLocalTime()}</td>");
         b.AppendLine($"<td>{scenarioResult.MeasurementEndTime.ToLocalTime()}</td>");
         b.AppendLine("</tr>");
         // Cleanup
         b.AppendLine("<tr>");
         b.AppendLine($"<td>Cleanup</td>");
-        b.AppendLine($"<td>{scenarioResult.CleanupTotalDuration().ToTestFusionFormattedDuration()}</td>");
+        b.AppendLine($"<td>{scenarioResult.CleanupTotalDuration().ToTestFuznFormattedDuration()}</td>");
         b.AppendLine($"<td>{scenarioResult.CleanupStartTime.ToLocalTime()}</td>");
         b.AppendLine($"<td>{scenarioResult.CleanupEndTime.ToLocalTime()}</td>");
         b.AppendLine("</tr>");
         // Test Run
         b.AppendLine("<tr>");
         b.AppendLine($"<td>Total Test Run</td>");
-        b.AppendLine($"<td>{scenarioResult.TestRunTotalDuration().ToTestFusionFormattedDuration()}</td>");
+        b.AppendLine($"<td>{scenarioResult.TestRunTotalDuration().ToTestFuznFormattedDuration()}</td>");
         b.AppendLine($"<td>{scenarioResult.StartTime().ToLocalTime()}</td>");
         b.AppendLine($"<td>{scenarioResult.EndTime().ToLocalTime()}</td>");
         b.AppendLine("</tr>");
@@ -282,12 +282,12 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine($"<td>{type}</td>");
         b.AppendLine($"<td>{stats.RequestsPerSecond}</td>");
         b.AppendLine($"<td>{stats.RequestCount}</td>");
-        b.AppendLine($"<td>{stats.ResponseTimeMean.ToTestFusionResponseTime()}</td>");
-        b.AppendLine($"<td>{stats.ResponseTimeMedian.ToTestFusionResponseTime()}</td>");
-        b.AppendLine($"<td>{stats.ResponseTimePercentile75.ToTestFusionResponseTime()}</td>");
-        b.AppendLine($"<td>{stats.ResponseTimePercentile99.ToTestFusionResponseTime()}</td>");
-        b.AppendLine($"<td>{stats.ResponseTimeMin.ToTestFusionResponseTime()}</td>");
-        b.AppendLine($"<td>{stats.ResponseTimeMax.ToTestFusionResponseTime()}</td>");
-        b.AppendLine($"<td>{stats.ResponseTimeStandardDeviation.ToTestFusionResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimeMean.ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimeMedian.ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimePercentile75.ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimePercentile99.ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimeMin.ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimeMax.ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td>{stats.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}</td>");
     }
 }

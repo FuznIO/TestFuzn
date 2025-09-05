@@ -14,7 +14,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         {
             await IncludeEmbeddedResources(featureReportData);
 
-            var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "TestFusion_Report_Features.html");
+            var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "TestFuzn_Report_Features.html");
 
             var htmlContent = GenerateHtmlReport(featureReportData);
 
@@ -36,7 +36,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("<head>");
         b.AppendLine("<meta charset='UTF-8'>");
         b.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        b.AppendLine("<title>TestFusion - Feature Test Report</title>");
+        b.AppendLine("<title>TestFuzn - Feature Test Report</title>");
         b.AppendLine("<link rel='stylesheet' href='assets/styles/testfuzn.css'>");
         b.AppendLine("<script>");
         b.AppendLine("document.addEventListener('DOMContentLoaded', function() {");
@@ -66,7 +66,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("<tr><td>Test Suite</td><td>" + featureReportData.TestSuiteName + "</td></tr>");
         b.AppendLine("<tr><td>Test Run - Start Time</td><td>" + featureReportData.TestRunStartTime.ToLocalTime() + "</td></tr>");
         b.AppendLine("<tr><td>Test Run - End Time</td><td>" + featureReportData.TestRunEndTime.ToLocalTime() + "</td></tr>");
-        b.AppendLine("<tr><td>Test Run - Duration</td><td>" + featureReportData.TestRunDuration.ToTestFusionFormattedDuration() + "</td></tr>");
+        b.AppendLine("<tr><td>Test Run - Duration</td><td>" + featureReportData.TestRunDuration.ToTestFuznFormattedDuration() + "</td></tr>");
         
         // Summary
         var totalFeatures = featureReportData.Results.FeatureResults.Count;
@@ -105,7 +105,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
                         b.AppendLine($"<li>CorrelationId: {iteration.CorrelationId}</li>");
                         foreach (var stepResult in iteration.StepResults)
                         {
-                            WriteStepResult(b, stepResult.Value);
+                            WriteStepResult(b, stepResult.Value, 1);
                         }
                         b.AppendLine("</ul>");
                         b.AppendLine("</div>");
@@ -117,9 +117,10 @@ internal class FeatureHtmlReportWriter : IFeatureReport
                     if (iteration != null)
                     {
                         b.AppendLine("<ul>");
+                        b.AppendLine($"<li>CorrelationId: {iteration.CorrelationId}</li>");
                         foreach (var stepResult in iteration.StepResults)
                         {
-                            WriteStepResult(b, stepResult.Value);
+                            WriteStepResult(b, stepResult.Value, 1);
                         }
                         b.AppendLine("</ul>");
                     }
@@ -137,9 +138,10 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         return b.ToString();
     }
 
-    private void WriteStepResult(StringBuilder b, StepFeatureResult stepResult)
+    private void WriteStepResult(StringBuilder b, StepFeatureResult stepResult, int level)
     {
-        b.AppendLine($"<li><span class='icon'>{SymbolSet.MapStepStatus(stepResult.Status)}</span>Step: {stepResult.Name} - <span class='{stepResult.Status.ToString().ToLower()}'>{stepResult.Status}</span> - Duration: {stepResult.Duration.ToTestFusionResponseTime()}</li>");
+        var padding = (20 * level) - 20;
+        b.AppendLine($"<li style='padding-left:{padding}px'><span class='icon'>{SymbolSet.MapStepStatus(stepResult.Status)}</span>Step: {stepResult.Name} - <span class='{stepResult.Status.ToString().ToLower()}'>{stepResult.Status}</span> - Duration: {stepResult.Duration.ToTestFuznResponseTime()}</li>");
 
         if (stepResult.Attachments != null && stepResult.Attachments.Count > 0)
         {
@@ -147,7 +149,17 @@ internal class FeatureHtmlReportWriter : IFeatureReport
             foreach (var attachment in stepResult.Attachments)
             {
                 var fileName = Path.GetFileName(attachment.Path);
-                b.AppendLine($"<li>Attachment: <a href=\"Attachments/{fileName}\" target=\"_blank\">{attachment.Name}</a></li>");
+                b.AppendLine($"<li style='padding-left:{padding + 20}px'>Attachment: <a href=\"Attachments/{fileName}\" target=\"_blank\">{attachment.Name}</a></li>");
+            }
+            b.AppendLine("</ul>");
+        }
+
+        if (stepResult.StepResults != null && stepResult.StepResults.Count > 0)
+        {
+            b.AppendLine("<ul>");
+            foreach (var subStep in stepResult.StepResults)
+            {
+                WriteStepResult(b, subStep, level + 1);
             }
             b.AppendLine("</ul>");
         }
