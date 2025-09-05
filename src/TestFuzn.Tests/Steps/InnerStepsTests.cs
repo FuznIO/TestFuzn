@@ -52,13 +52,13 @@ public class InnerStepsTests : BaseFeatureTest
                     Assert.AreEqual("Step 1.1", subContext1.CurrentStep.Name);
                     await Task.CompletedTask;
 
-                    await context.Step("Step 1.1.1", async (subContext2) =>
+                    await subContext1.Step("Step 1.1.1", async (subContext2) =>
                     {   
                         Assert.AreEqual("Step 1.1.1", subContext2.CurrentStep.Name);
                         await Task.CompletedTask;
                     });
 
-                    await context.Step("Step 1.1.2", async (subContext2) =>
+                    await subContext1.Step("Step 1.1.2", async (subContext2) =>
                     {   
                         Assert.AreEqual("Step 1.1.2", subContext2.CurrentStep.Name);
                         await Task.CompletedTask;
