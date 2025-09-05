@@ -278,7 +278,7 @@ public class SyntaxTests : BaseFeatureTest
         return step;
     }
 
-    public async Task SharedStepAction(StepContext context)
+    public async Task SharedStepAction(StepContext<EmptyCustomStepContext> context)
     {
         // Some code goes here.
     }

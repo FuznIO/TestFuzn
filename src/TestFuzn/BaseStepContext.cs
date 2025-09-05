@@ -35,15 +35,5 @@ public abstract class BaseStepContext : Context
     {
         IterationContext.SharedData[key] = value;
     }
-
-    protected async Task ExecuteStep(string name, Type contextType, Func<BaseStepContext, Task> action)
-    {
-        var step = new Step();
-        step.ContextType = contextType;
-        step.Name = name;
-        step.ParentName = CurrentStep.Name;
-        step.Action = action;
-        await IterationContext.ExecuteStepHandler.ExecuteStep(ExecuteStepHandler.StepType.Inner, step);
-    }
 }
 

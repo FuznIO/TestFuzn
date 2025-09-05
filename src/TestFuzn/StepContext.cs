@@ -1,25 +1,6 @@
-﻿namespace Fuzn.TestFuzn;
+﻿using Fuzn.TestFuzn.Internals.Execution;
 
-public sealed class StepContext : BaseStepContext
-{
-    public async Task Step(string name, Func<StepContext, Task> action)
-    {
-        await ExecuteStep(name,
-            typeof(StepContext),
-            ctx => action((StepContext) ctx));
-    }
-
-    public void Step(string name, Action<StepContext> action)
-    {
-        ExecuteStep(name, 
-            typeof(StepContext),
-            (ctx) =>
-            {
-                action((StepContext) ctx);
-                return Task.CompletedTask;
-            }).GetAwaiter().GetResult();
-    }
-}
+namespace Fuzn.TestFuzn;
 
 public sealed class StepContext<TCustomStepContext> : BaseStepContext
     where TCustomStepContext : new()
@@ -28,19 +9,26 @@ public sealed class StepContext<TCustomStepContext> : BaseStepContext
 
     public async Task Step(string name, Func<StepContext<TCustomStepContext>, Task> action)
     {
-        await ExecuteStep(name,
-            typeof(StepContext<TCustomStepContext>),
-            ctx => action((StepContext<TCustomStepContext>) ctx));
+        var step = new Step();
+        step.ContextType = typeof(StepContext<TCustomStepContext>);
+        step.Name = name;
+        step.ParentName = CurrentStep.Name;
+        step.Action = ctx => action((StepContext<TCustomStepContext>) ctx);
+        await IterationContext.ExecuteStepHandler.ExecuteStep(ExecuteStepHandler.StepType.Inner, step);
     }
+
 
     public void Step(string name, Action<StepContext<TCustomStepContext>> action)
     {
-        ExecuteStep(name, 
-            typeof(StepContext<TCustomStepContext>),
-            (ctx) =>
+        var step = new Step();
+        step.ContextType = typeof(StepContext<TCustomStepContext>);
+        step.Name = name;
+        step.ParentName = CurrentStep.Name;
+        step.Action = (ctx) =>
             {
                 action((StepContext<TCustomStepContext>) ctx);
                 return Task.CompletedTask;
-            }).GetAwaiter().GetResult();
+            };
+        IterationContext.ExecuteStepHandler.ExecuteStep(ExecuteStepHandler.StepType.Inner, step).GetAwaiter().GetResult();
     }
 }

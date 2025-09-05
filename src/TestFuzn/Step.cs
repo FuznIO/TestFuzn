@@ -34,5 +34,5 @@ public class Step<TStepContext>
 {
     public string Name { get; set; }
     internal string ParentName { get; set; }
-    public Func<BaseStepContext, Task> Action { get; set; }
+    public Func<TStepContext, Task> Action { get; set; }
 }

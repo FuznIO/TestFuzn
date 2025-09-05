@@ -19,9 +19,9 @@ public abstract class BaseFeatureTest : IFeatureTest
         }
     }
 
-    public ScenarioBuilder<StepContext> Scenario([CallerMemberName] string scenarioName = null)
+    public ScenarioBuilder<StepContext<EmptyCustomStepContext>> Scenario([CallerMemberName] string scenarioName = null)
     {
-        var scenario = new ScenarioBuilder<StepContext>(new MsTestAdapter(TestContext), this, scenarioName);
+        var scenario = new ScenarioBuilder<StepContext<EmptyCustomStepContext>>(new MsTestAdapter(TestContext), this, scenarioName);
         return scenario;
     }
 

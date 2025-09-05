@@ -2,8 +2,8 @@
 
 public static class SharedStepsExtensionMethods
 {
-    public static ScenarioBuilder<StepContext> SharedStepOnOnlyOnStepContextType(
-        this ScenarioBuilder<StepContext> scenario)
+    public static ScenarioBuilder<StepContext<EmptyCustomStepContext>> SharedStepOnOnlyOnStepContextType(
+        this ScenarioBuilder<StepContext<EmptyCustomStepContext>> scenario)
     {
         scenario.Step("SharedStepOnOnlyStepContextType", (context) =>
         {
