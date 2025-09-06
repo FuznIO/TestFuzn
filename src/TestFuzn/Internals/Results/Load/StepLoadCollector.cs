@@ -8,11 +8,11 @@ internal class StepLoadCollector
     private readonly object _lock = new object();
     private int _maxDistinctErrorCount = 10;
     private string _name;
-    private string _parentName;
     private StatsCollector _ok = new();
     private StatsCollector _failed = new();
     private int _skippedCount;
     private Dictionary<string, ErrorEntry> _errors = new();
+    private Dictionary<string, StepLoadCollector> _steps;
 
     public StepLoadCollector(string name)
     {
@@ -36,6 +36,20 @@ internal class StepLoadCollector
             {
                 _skippedCount++;
             }
+
+            if (result.StepResults != null && result.StepResults.Count > 0)
+            {
+                foreach (var innerResult in result.StepResults ?? [])
+                {
+                    var innerStep = new StepLoadCollector(innerResult.Name);
+                    if (_steps == null)
+                        _steps = new Dictionary<string, StepLoadCollector>();
+                    if (!_steps.ContainsKey(innerResult.Name))
+                        _steps.Add(innerResult.Name, innerStep);
+
+                    innerStep.Record(innerResult, startTime, endTime);
+                }
+            }
         }
     }
 
@@ -46,6 +60,11 @@ internal class StepLoadCollector
         result.Ok = _ok.GetCurrentResult();
         result.Failed = _failed.GetCurrentResult();
         result.SkippedCount = _skippedCount;
+        result.Steps = new List<StepLoadResult>();
+        foreach (var step in _steps ?? [])
+        {
+            result.Steps.Add(step.Value.GetCurrentResult());
+        }
 
         if (_errors.Count > 0)
         {

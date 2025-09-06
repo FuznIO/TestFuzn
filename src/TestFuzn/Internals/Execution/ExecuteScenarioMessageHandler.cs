@@ -59,8 +59,6 @@ internal class ExecuteScenarioMessageHandler
 
         try
         {
-            var totalSteps = scenario.Steps.Count;
-
             foreach (var step in scenario.Steps)
             {
                 await executeStepHandler.ExecuteStep(ExecuteStepHandler.StepType.Outer, step);
