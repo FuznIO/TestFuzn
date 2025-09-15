@@ -9,7 +9,6 @@ internal class SharedExecutionState
 {
     public List<Scenario> Scenarios { get; set; } = new();
     public IFeatureTest IFeatureTestClassInstance { get; set; }
-    public string FeatureName { get; set; }
     public TestType TestType { get; set; }
     public TestRunState TestRunState { get; } = new();
     public ScenarioExecutionState ExecutionState { get; } = new();
@@ -22,7 +21,6 @@ internal class SharedExecutionState
         TestRunState.StartTime = DateTime.UtcNow;
         TestRunState.ExecutionStatus = ExecutionStatus.Running;
         IFeatureTestClassInstance = featureTest;
-        FeatureName = featureTest.FeatureName;
         Scenarios.AddRange(scenarios);
 
         if (scenarios.First().SimulationsAction == null)
@@ -116,4 +114,11 @@ internal class SharedExecutionState
             ResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Measurement);
         }
     }
+}
+
+public class FeatureInfo
+{
+    public string Name { get; set; }
+    public string Id { get; set; }
+    public Dictionary<string, string> Metadata { get; set; }    
 }

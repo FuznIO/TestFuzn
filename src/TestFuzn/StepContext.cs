@@ -14,9 +14,8 @@ public sealed class StepContext<TCustomStepContext> : BaseStepContext
         step.Name = name;
         step.ParentName = CurrentStep.Name;
         step.Action = ctx => action((StepContext<TCustomStepContext>) ctx);
-        await IterationContext.ExecuteStepHandler.ExecuteStep(ExecuteStepHandler.StepType.Inner, step);
+        await IterationContext.ExecuteStepHandler.ExecuteStep(step);
     }
-
 
     public void Step(string name, Action<StepContext<TCustomStepContext>> action)
     {
@@ -29,6 +28,6 @@ public sealed class StepContext<TCustomStepContext> : BaseStepContext
                 action((StepContext<TCustomStepContext>) ctx);
                 return Task.CompletedTask;
             };
-        IterationContext.ExecuteStepHandler.ExecuteStep(ExecuteStepHandler.StepType.Inner, step).GetAwaiter().GetResult();
+        IterationContext.ExecuteStepHandler.ExecuteStep(step).GetAwaiter().GetResult();
     }
 }

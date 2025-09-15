@@ -6,30 +6,39 @@ namespace Fuzn.TestFuzn.Tests;
 public class SyntaxTests : BaseFeatureTest
 {
     public override string FeatureName => "TestFusion Syntax";
+    public override string FeatureId => "FeatureId-1";
 
-    public override Task InitScenarioTest(Context context)
+    public override Task InitTestMethod(Context context)
     {
         return Task.CompletedTask;
     }
 
-    public override Task CleanupScenarioTest(Context context)
+    public override Task CleanupTestMethod(Context context)
     {
         return Task.CompletedTask;
     }
 
     [Ignore]
     [ScenarioTest]
-    public async Task DefaultContext_Feature()
+    public async Task DefaultContext()
     {
+        // Definition of test types:
+        // Feature Test = A test runs once with one set of input data, or run multiple times with different input data.
+        // Load Test = A test runs multiple times with the same input data, simulating load on the system.
         await Scenario("Default Context Showcase")
-            .Init((context) =>
+            .Id("ID-1234") // Optional id for the scenario.
+            .Metadata("key1", "value1") // Optional metdata for scenario, multiple are supported.
+            // Init is the first method that will be run.
+            .InitScenario((context) =>
             {
-                // Initialization code goes here.
+            })
+            .InitScenario(async (context) =>
+            {
                 // This will be executed before any steps.
             })
-            .Init(async (context) =>
-            {
-            })
+            // InputData will run before steps. Only one of the InputData* methods should be used.
+            // For feature test: Defines the number of iterations the test will be run.
+            // For load test: Load().Simulations() defines the number of iterations the test will run, input data provides test data for each iteration.
             .InputData("user1", "user2", "user3")
             .InputDataFromList((context) =>
             {
@@ -43,91 +52,6 @@ public class SyntaxTests : BaseFeatureTest
             })
             .InputDataFromList(async (context) =>
             {
-                // Override with context-object.
-                var inputData = new List<object>();
-                // Some async code goes here, read from database / api etc.
-                return await Task.FromResult(inputData);
-            })
-            .Step("Step 1 - Sync with context", context =>
-            {
-                // Get current input data.
-                var user = context.InputData<string>();
-                // Set data in context which is shared between steps.
-                context.SetSharedData("item1", "value1"); 
-                // Get data.
-                var value1 = context.GetSharedData<string>("item1");
-
-                context.Logger.LogInformation($"User: {user}"); // Log information.
-
-                // Define sub-steps.
-                context.Step("Sub step 1.1", subcontext1 =>
-                { 
-                    context.Step("Sub step 1.1.1", subcontext2 =>
-                    {
-                    });
-                });
-
-                // Some code goes here.
-            })
-            .Step("Step 2 - Async with context", async (context) =>
-            {
-                // Some code goes here.
-                // Attach file to the current step.
-                await context.CurrentStep.Attach("file1.txt", "Some content");
-                await context.CurrentStep.Attach($"screenshot.png", new byte[0]);
-                await context.CurrentStep.Attach($"screenshot.png", new MemoryStream());
-
-                await Task.CompletedTask;
-            })
-            .Step("Step 3 - Shared step", SharedStepAction)
-            .Step(SharedStep())
-            .CleanupAfterEachIteration((context) =>
-            {
-            })
-            .CleanupAfterEachIteration(async (context) =>
-            {
-            })
-            .CleanupAfterScenario((context) =>
-            {
-            })
-            .CleanupAfterScenario(async (context) =>
-            {
-            })
-            .Run();
-    }
-
-    [Ignore]
-    [ScenarioTest]
-    public async Task DefaultContext_Load()
-    {
-        // Definition of test types:
-        // Feature Test = A test runs once with one set of input data, or run multiple times with different input data.
-        // Load Test = A test runs multiple times with the same input data, simulating load on the system.
-        await Scenario("Default Context Showcase")
-            // Init is the first method that will be run.
-            .Init((context) =>
-            {
-            })
-            .Init(async (context) =>
-            {
-            })
-            // InputData will run before steps. Only one of the InputData* methods should be used.
-            // For feature test: Defines the number of iterations the test will be run.
-            // For load test: Load().Simulations() defines the number of iterations the test will run, input data provides test data for each iteration.
-            .InputData("user1", "user2", "user3")
-            .InputDataFromList((context) =>
-            {
-                var dataTable = new List<object>()
-                {
-                    "user1",
-                    "user2",
-                    "user3"
-                };
-                return dataTable;
-            })
-            .InputDataFromList(async (context) =>
-            {
-                // Override with context-object.
                 var inputData = new List<object>();
                 // Some async code goes here, read from database / api etc.
                 return await Task.FromResult(inputData);
@@ -144,33 +68,47 @@ public class SyntaxTests : BaseFeatureTest
             // Steps are executed in order. If one steps fails within an execution, the rest of the steps will be skipped (=not executed).
             .Step("Step 1 - Sync with context", context =>
             {
-                // Get input data for the row row.
-                var user = context.InputData<string>();
-
-                // Set data in context which is shared between steps.
-                context.SetSharedData("item1", "value1"); 
-                // Get data.
-                var value1 = context.GetSharedData<string>("item1");
-
-                context.Logger.LogInformation($"User: {user}"); // Log information.
-
                 // Some code goes here.
-
-                context.Step("Step 1.1", (inlineContext) =>
-                {
-                    // Some code goes here.
-                });
             })
             .Step("Step 2 - Async with context", async (context) =>
             {
                 // Some code goes here.
                 await Task.CompletedTask;
+            })
+            .SharedStep() // Extension method for shared steps.
+            .Step("Step 3 - Shared step using action", SharedStepAction)
+            .Step("Step 4 - Shared step type regular method", context => SharedMethod("value"))
+            .Step("Step 5 - All functionality", async context => 
+            {
+                // Get input data for the row row.
+                var user = context.InputData<string>();
 
-                await context.Step("Step 2.1", async (inlineContext) =>
-                {
-                    // Some code goes here.
-                    await Task.CompletedTask;
+                // SharedData - data shared between steps within the same iteration.
+                context.SetSharedData("item1", "value1"); 
+                var value1 = context.GetSharedData<string>("item1");
+
+                // Log information to log file.
+                context.Logger.LogInformation($"User: {user}");
+
+                // Some code goes here.
+                // Support for sub-steps, sync/async.
+                context.Step("Sub step 1.1", subcontext1 =>
+                { 
+                    context.Step("Sub step 1.1.1", subcontext2 =>
+                    {
+                    });
                 });
+
+                context.CurrentStep.Id = "StepId-1234"; // Optional id for the step.
+                context.CurrentStep.Metadata("stepKey1", "stepValue1"); // Optional metadata for step, multiple are supported.
+                // Comments: Feature: Outputted to console and reports. Load load tests: Outputted to log file
+                context.CurrentStep.Comment("Opening"); 
+                context.CurrentStep.Comment("Closing");
+
+                // Attach file to the current step.
+                await context.CurrentStep.Attach("file1.txt", "Some content");
+                await context.CurrentStep.Attach($"screenshot.png", new byte[0]);
+                await context.CurrentStep.Attach($"screenshot.png", new MemoryStream());
             })
             // Warmup simulations run before .Load().Simulations(). 
             // For these simulations no stats will be recorded, AssertWhileRunning, AssertWhenDone and sinks will not be called.
@@ -216,35 +154,21 @@ public class SyntaxTests : BaseFeatureTest
                 Assert.IsTrue(stats.Ok.ResponseTimeStandardDeviation < TimeSpan.FromSeconds(0.5));
                 Assert.IsTrue(stats.Ok.ResponseTimeMean > TimeSpan.FromSeconds(0.5));
                 Assert.IsTrue(stats.Ok.ResponseTimeMean < TimeSpan.FromSeconds(0.8));
+
+                Assert.IsTrue(3 == stats.GetStep("Sub step 1.1").Ok.RequestCount);
             })
             .Load().IncludeScenario(Scenario("Scenario2").Step("Step1", (context) => { }))
-            .CleanupAfterEachIteration((context) =>
+            .CleanupIteration((context) =>
             {
             })
-            .CleanupAfterEachIteration(async (context) =>
+            .CleanupIteration(async (context) =>
             {
             })
-            .CleanupAfterScenario((context) =>
+            .CleanupScenario((context) =>
             {
             })
-            .CleanupAfterScenario(async (context) =>
+            .CleanupScenario(async (context) =>
             {
-            })
-            .Run();
-    }
-
-    [Ignore]
-    [ScenarioTest]
-    public async Task CustomContext_Load()
-    {
-        await Scenario<CustomContext>("Syntax Showcase with custom context")
-            .Step("Step 1 - Set property on context", context =>
-            {
-                context.Custom.CustomProperty = "value1"; // Set data in context which is shared between steps.
-            })
-            .Step("Step 2 - Read property from context", context =>
-            {
-                Assert.AreEqual("value1", context.Custom.CustomProperty);
             })
             .Run();
     }
@@ -265,20 +189,12 @@ public class SyntaxTests : BaseFeatureTest
             .Run();
     }
 
-
-    public Step<BaseStepContext> SharedStep()
+    public async Task SharedStepAction(StepContext<EmptyCustomStepContext> context)
     {
-        var step = new Step<BaseStepContext>();
-        step.Name = "Shared step";
-        step.Action = (context) =>
-        {
-            // Some code goes here.
-            return Task.CompletedTask;
-        };
-        return step;
+        // Some code goes here.
     }
 
-    public async Task SharedStepAction(StepContext<EmptyCustomStepContext> context)
+    public void SharedMethod(string value)
     {
         // Some code goes here.
     }
@@ -287,4 +203,19 @@ public class SyntaxTests : BaseFeatureTest
 public class CustomContext
 {
     public string CustomProperty { get; set; }
+}
+
+public static class SharedSteps
+{ 
+    public static ScenarioBuilder<T> SharedStep<T>(this ScenarioBuilder<T> builder)
+        where T: BaseStepContext
+    {
+        builder.Step("Shared step", (context) =>
+        {
+            // Some code goes here.
+            return Task.CompletedTask;
+        });
+
+        return builder;
+    }
 }

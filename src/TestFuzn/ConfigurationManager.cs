@@ -12,9 +12,9 @@ public class ConfigurationManager
     {
         var config = new TestFusionConfiguration();
         config.EnvironmentName = "dev";
-        config.TestSuiteName = GlobalState.AssemblyWithTestsName;
-        if (config.TestSuiteName == null)
-            config.TestSuiteName = Assembly.GetExecutingAssembly().GetName().Name;
+        config.TestSuite.Name = GlobalState.AssemblyWithTestsName;
+        if (config.TestSuite.Name == null)
+            config.TestSuite.Name = Assembly.GetExecutingAssembly().GetName().Name;
         GetConfigRoot().Bind("TestFuzn", config);
 
         return config;

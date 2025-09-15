@@ -5,7 +5,7 @@ public class AssertionTests : BaseFeatureTest
 {
     [ScenarioTest]
     [ExpectedException(typeof(AssertFailedException))]
-    public async Task Verify_assertions_while_running_should_fail()
+    public async Task Verify_assert_while_running_should_fail()
     {
         var stepExecutionCount = 0;
         var assertExecuted = false;
@@ -37,5 +37,79 @@ public class AssertionTests : BaseFeatureTest
             Assert.IsTrue(assertExecuted);
             Assert.IsTrue(catchExecuted);
         }
+    }
+
+    [ScenarioTest]
+    public async Task Verify_assert_sub_steps_all_ok()
+    {
+        await Scenario()
+            .Step("Step 1", (context) =>
+            {
+
+            })
+            .Step("Step 2", (context) =>
+            {
+                context.Step("Step 2.1", (subContext) =>
+                {
+                });
+                context.Step("Step 2.2", (subContext) =>
+                {
+                    //Assert.Fail();
+                });
+            })
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
+            .Load().AssertWhenDone((context, stats) =>
+            {
+                Assert.AreEqual(5, stats.RequestCount);
+                Assert.AreEqual(0, stats.Failed.RequestCount);
+                Assert.AreEqual(5, stats.Ok.RequestCount);
+
+                Assert.AreEqual(5, stats.GetStep("Step 1").Ok.RequestCount);
+                Assert.AreEqual(0, stats.GetStep("Step 1").Failed.RequestCount);
+
+                Assert.AreEqual(0, stats.GetStep("Step 2").Failed.RequestCount);
+                Assert.AreEqual(5, stats.GetStep("Step 2").Ok.RequestCount);
+                Assert.AreEqual(5, stats.GetStep("Step 2.1").Ok.RequestCount);
+                Assert.AreEqual(0, stats.GetStep("Step 2.1").Failed.RequestCount);
+                Assert.AreEqual(5, stats.GetStep("Step 2.2").Ok.RequestCount);
+                Assert.AreEqual(0, stats.GetStep("Step 2.2").Failed.RequestCount);
+            })
+            .Run();
+    }
+
+[ScenarioTest]
+    public async Task Verify_assert_sub_steps_fails()
+    {
+        await Scenario()
+            .Step("Step 1", (context) =>
+            {
+
+            })
+            .Step("Step 2", (context) =>
+            {
+                context.Step("Step 2.1", (subContext) =>
+                {
+                });
+                context.Step("Step 2.2", (subContext) =>
+                {
+                    Assert.Fail();
+                });
+            })
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
+            .Load().AssertWhenDone((context, stats) =>
+            {
+                Assert.AreEqual(5, stats.RequestCount);
+                Assert.AreEqual(5, stats.Failed.RequestCount);
+                Assert.AreEqual(0, stats.Ok.RequestCount);
+                Assert.AreEqual(5, stats.GetStep("Step 1").Ok.RequestCount);
+                Assert.AreEqual(0, stats.GetStep("Step 1").Failed.RequestCount);
+                Assert.AreEqual(5, stats.GetStep("Step 2").Failed.RequestCount);
+                Assert.AreEqual(0, stats.GetStep("Step 2").Ok.RequestCount);
+                Assert.AreEqual(5, stats.GetStep("Step 2.1").Ok.RequestCount);
+                Assert.AreEqual(0, stats.GetStep("Step 2.1").Failed.RequestCount);
+                Assert.AreEqual(0, stats.GetStep("Step 2.2").Ok.RequestCount);
+                Assert.AreEqual(5, stats.GetStep("Step 2.2").Failed.RequestCount);
+            })
+            .Run();
     }
 }

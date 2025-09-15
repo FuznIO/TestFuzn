@@ -8,13 +8,13 @@ public class InitAndCleanupTests : BaseFeatureTest
     private bool _beforeEachScenarioTestCalled = false;
     private bool _afterEachScenarioTestCalled = false;
 
-    public override Task InitScenarioTest(Context context)
+    public override Task InitTestMethod(Context context)
     {
         _beforeEachScenarioTestCalled = true;
         return Task.CompletedTask;
     }
 
-    public override Task CleanupScenarioTest(Context context)
+    public override Task CleanupTestMethod(Context context)
     {
         _afterEachScenarioTestCalled = true;
         return Task.CompletedTask;
@@ -28,17 +28,17 @@ public class InitAndCleanupTests : BaseFeatureTest
         var cleanupCalled = false;
 
         await Scenario()
-            .Init((context) =>
+            .InitScenario((context) =>
             {
                 initCalled = true;
             })
             .Step("Step 1", (context) => { })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
-            .CleanupAfterEachIteration((context) =>
+            .CleanupIteration((context) =>
             {
                 Interlocked.Add(ref cleanupIterationCalled, 1);
             })
-            .CleanupAfterScenario((context) =>
+            .CleanupScenario((context) =>
             {
                 cleanupCalled = true;
             })
@@ -59,17 +59,17 @@ public class InitAndCleanupTests : BaseFeatureTest
         var cleanupCalled = false;
 
         await Scenario()
-            .Init(async (context) =>
+            .InitScenario(async (context) =>
             {
                 initCalled = true;
             })
             .Step("Step 1", (context) => { })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
-            .CleanupAfterEachIteration(async (context) =>
+            .CleanupIteration(async (context) =>
             {
                 Interlocked.Add(ref cleanupIterationCalled, 1);
             })
-            .CleanupAfterScenario(async (context) =>
+            .CleanupScenario(async (context) =>
             {
                 cleanupCalled = true;
             })

@@ -7,8 +7,10 @@ public class LoadReportTests : BaseFeatureTest
     public async Task ShortRunning_WithErrors()
     {
         await Scenario()
+            .Id("ScenarioId-1234")
             .Step("Test", (context) =>
             {
+                context.CurrentStep.Id = "Test-StepId-1234";
             })
             .Step("This step should fail now and then", (context) =>
             {
@@ -23,8 +25,13 @@ public class LoadReportTests : BaseFeatureTest
     public async Task ShortRunning_NoErrors()
     {
         await Scenario()
+            .Id("ID-1234")
+            .Metadata("MetadataScenarioKey1", "Value1")
+            .Metadata("MetadataScenarioKey2", "Value2")
             .Step("Test Step 1", (context) =>
             {
+                context.CurrentStep.Metadata("MetadataStep1Key1", "Value1");
+                context.CurrentStep.Metadata("MetadataStep1Key2", "Value2");
             })
             .Step("Test Step 2", (context) =>
             {

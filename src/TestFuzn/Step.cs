@@ -1,12 +1,15 @@
-﻿namespace Fuzn.TestFuzn;
+﻿using Fuzn.TestFuzn.Contracts.Results.Feature;
+
+namespace Fuzn.TestFuzn;
 
 internal sealed class Step
 {
     public string Name { get; set; }
-    internal string ParentName { get; set; }
+    public string ParentName { get; set; }
     public Func<BaseStepContext, Task> Action { get; set; }
     public Type ContextType { get; set; }
-    internal List<Step> Steps { get; set; }
+    public List<Step> Steps { get; set; }
+    public List<StepComment> Comments { get; set; }
 
     public void Validate()
     {
@@ -27,12 +30,4 @@ internal sealed class Step
             }
         }
     }
-}
-
-public class Step<TStepContext>
-    where TStepContext: BaseStepContext
-{
-    public string Name { get; set; }
-    internal string ParentName { get; set; }
-    public Func<TStepContext, Task> Action { get; set; }
 }

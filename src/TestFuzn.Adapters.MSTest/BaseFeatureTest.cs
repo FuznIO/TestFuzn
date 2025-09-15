@@ -6,17 +6,19 @@ namespace Fuzn.TestFuzn;
 public abstract class BaseFeatureTest : IFeatureTest
 {
     public TestContext TestContext { get; set; }
-    public virtual string FeatureName
+    public virtual string FeatureName { get; set; }
+    public virtual string FeatureId { get; set; }
+    public virtual Dictionary<string, string> FeatureMetadata { get; set; } = new();
+
+    protected BaseFeatureTest()
     {
-        get
-        {
-            var featureName = GetType().Name.Replace('_', ' ');
-            if (featureName.EndsWith("Tests"))
-                return featureName.Substring(0, featureName.Length - 5);
-            if (featureName.EndsWith("Test"))
-                return featureName.Substring(0, featureName.Length - 4);
-            return featureName;
-        }
+        var featureName = GetType().Name.Replace('_', ' ');
+        if (featureName.EndsWith("Tests"))
+            featureName = featureName.Substring(0, featureName.Length - 5);
+        else if (featureName.EndsWith("Test"))
+            featureName = featureName.Substring(0, featureName.Length - 4);
+            
+        FeatureName = featureName;
     }
 
     public ScenarioBuilder<StepContext<EmptyCustomStepContext>> Scenario([CallerMemberName] string scenarioName = null)
@@ -32,12 +34,12 @@ public abstract class BaseFeatureTest : IFeatureTest
         return scenario;
     }
 
-    public virtual Task InitScenarioTest(Context context)
+    public virtual Task InitTestMethod(Context context)
     {
         return Task.CompletedTask;
     }
 
-    public virtual Task CleanupScenarioTest(Context context)
+    public virtual Task CleanupTestMethod(Context context)
     {
         return Task.CompletedTask;
     }

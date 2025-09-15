@@ -4,14 +4,14 @@ namespace Fuzn.TestFuzn.Tests.ContextType;
 [FeatureTest]
 public class ContextTests : BaseFeatureTest
 {
-    public override Task InitScenarioTest(TestFuzn.Context context)
+    public override Task InitTestMethod(TestFuzn.Context context)
     {
         Assert.IsTrue(!string.IsNullOrEmpty(context.Info.TestRunId));
         Assert.AreEqual("InitScenarioTest", context.CurrentStep.Name);
         return Task.CompletedTask;
     }
 
-    public override Task CleanupScenarioTest(TestFuzn.Context context)
+    public override Task CleanupTestMethod(TestFuzn.Context context)
     {
         Assert.IsTrue(!string.IsNullOrEmpty(context.Info.TestRunId));
         Assert.AreEqual("CleanupScenarioTest", context.CurrentStep.Name);
@@ -22,7 +22,7 @@ public class ContextTests : BaseFeatureTest
     public async Task VerifyContext()
     {
         await Scenario()
-            .Init(context =>
+            .InitScenario(context =>
             {
                 Assert.IsTrue(!string.IsNullOrEmpty(context.Info.TestRunId));
                 Assert.AreEqual("Init", context.CurrentStep.Name);
@@ -33,13 +33,13 @@ public class ContextTests : BaseFeatureTest
                 Assert.IsTrue(!string.IsNullOrEmpty(context.Info.CorrelationId));
                 Assert.AreEqual("Step 1", context.CurrentStep.Name);
             })
-            .CleanupAfterEachIteration(context =>
+            .CleanupIteration(context =>
             {
                 Assert.IsTrue(!string.IsNullOrEmpty(context.Info.TestRunId));
                 Assert.IsTrue(!string.IsNullOrEmpty(context.Info.CorrelationId));
                 Assert.AreEqual("CleanupAfterEachIteration", context.CurrentStep.Name);
             })
-            .CleanupAfterScenario(context =>
+            .CleanupScenario(context =>
             {
                 Assert.IsTrue(!string.IsNullOrEmpty(context.Info.TestRunId));
                 Assert.AreEqual("CleanupAfterScenario", context.CurrentStep.Name);

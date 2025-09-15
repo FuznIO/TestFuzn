@@ -7,7 +7,10 @@ public class CurrentStep
 {
     private readonly BaseStepContext _context;
     public string? Name { get; internal set; }
+    public string? Id { get; set; }
+    internal Dictionary<string, string> MetadataInternal { get; set; }
     internal string? ParentName { get; set; }
+    internal List<StepComment> Comments { get; set; }
     internal List<Attachment> Attachments { get; set; }
 
     public CurrentStep(BaseStepContext context, string name, string? parentName = null)
@@ -15,6 +18,31 @@ public class CurrentStep
         _context = context;
         Name = name;
         ParentName = parentName;
+    }
+
+    public void Metadata(string key, string value)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            throw new ArgumentNullException(nameof(key), "Metadata key cannot be null or empty.");
+        if (MetadataInternal == null)
+            MetadataInternal = new Dictionary<string, string>();
+        if (MetadataInternal.ContainsKey(key))
+            throw new ArgumentException($"Meta key '{key}' already exists in the step. Meta keys must be unique.", nameof(key));
+        MetadataInternal.Add(key, value);
+    }
+
+    public void Comment(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            throw new ArgumentNullException(nameof(message), "Comment message cannot be null or empty.");
+        if (Comments == null)
+            Comments = new List<StepComment>();
+        var comment = new StepComment
+        {
+            Message = message,
+            Created = DateTime.UtcNow
+        };
+        Comments.Add(comment);
     }
 
     public async Task Attach(string fileName, string content)

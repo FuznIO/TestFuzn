@@ -35,7 +35,7 @@ public static class TestFusionIntegration
         if (configuration == null)
         {
             configuration = new TestFusionConfiguration();
-            configuration.TestSuiteName = "Default";
+            configuration.TestSuite.Name = "Default";
         }
         GlobalState.Configuration = configuration;
 

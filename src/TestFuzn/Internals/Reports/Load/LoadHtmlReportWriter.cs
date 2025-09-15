@@ -16,7 +16,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         try
         {
             var reportName = FileNameHelper.MakeFilenameSafe(loadReportData.ScenarioResult.ScenarioName);
-            var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"TestFusion_Report_Load_{reportName}.html");
+            var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"TestFuzn_Report_Load_{reportName}.html");
 
             var htmlContent = GenerateHtmlReport(loadReportData);
 
@@ -57,6 +57,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine($"<tr><td>Test Run Id</td><td>{loadReportData.TestRunId}</td></tr>");
         b.AppendLine($"<tr><td>Feature Name</td><td>{loadReportData.FeatureName}</td></tr>");
         b.AppendLine($"<tr><td>Scenario Name</td><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
+        b.AppendLine($"<tr><td>Scenario Id</td><td>{loadReportData.ScenarioResult:id}</td></tr>");
         b.AppendLine("</tbody>");
         b.AppendLine("</table>");
         

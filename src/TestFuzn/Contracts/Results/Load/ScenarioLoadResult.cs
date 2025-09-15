@@ -3,6 +3,7 @@
 public class ScenarioLoadResult
 {
     public string ScenarioName { get; internal set; }
+    public string Id { get; internal set; }
     public DateTime InitStartTime { get; internal set; }
     public DateTime InitEndTime { get; internal set; }
     public DateTime WarmupStartTime { get; internal set; }

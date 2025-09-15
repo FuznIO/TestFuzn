@@ -3,6 +3,8 @@
 public interface IFeatureTest
 {
     public string FeatureName { get; }
-    Task InitScenarioTest(Context context);
-    Task CleanupScenarioTest(Context context);
+    public string FeatureId { get; set; }
+    public Dictionary<string, string> FeatureMetadata { get; set; }
+    Task InitTestMethod(Context context);
+    Task CleanupTestMethod(Context context);
 }

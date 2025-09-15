@@ -18,9 +18,29 @@ internal class FeatureXmlReportWriter : IFeatureReport
             {
                 writer.WriteStartDocument();
                 writer.WriteStartElement("TestRunResults");
-                writer.WriteAttributeString("version", "1.0");
 
-                writer.WriteElementString("TestSuiteName", featureReportData.TestSuiteName);
+                writer.WriteElementString("Version", "1.0");
+
+                writer.WriteStartElement("TestSuite");
+                {
+                    writer.WriteElementString("Name", featureReportData.TestSuite.Name);
+                    writer.WriteElementString("Id", featureReportData.TestSuite.Id);
+
+                    if (featureReportData.TestSuite.Metadata != null)
+                    {
+                        writer.WriteStartElement("Metadata");
+                        foreach (var metadata in featureReportData.TestSuite.Metadata)
+                        {
+                            writer.WriteStartElement("Meta");
+                            writer.WriteElementString("Key", metadata.Key);
+                            writer.WriteElementString("Value", metadata.Value);
+                            writer.WriteEndElement();
+                        }
+                        writer.WriteEndElement();
+                    }
+                }
+                writer.WriteEndElement();
+
                 writer.WriteElementString("TestRunId", featureReportData.TestRunId);
 
                 foreach (var featureResult in featureReportData.Results.FeatureResults.Values)
@@ -28,7 +48,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
                     WriteFeature(writer, featureResult);
                 }
 
-                writer.WriteEndElement();
+                writer.WriteEndElement(); // TestRunResults
                 writer.WriteEndDocument();
             }
 
@@ -36,7 +56,6 @@ internal class FeatureXmlReportWriter : IFeatureReport
         }
         catch (Exception ex)
         {
-            // Log or handle the exception as needed
             throw new InvalidOperationException("Failed to write XML report.", ex);
         }
     }
@@ -44,7 +63,24 @@ internal class FeatureXmlReportWriter : IFeatureReport
     private void WriteFeature(XmlWriter writer, FeatureResult featureResult)
     {
         writer.WriteStartElement("Feature");
-        writer.WriteAttributeString("name", featureResult.Name);
+
+        // Attribute (name) -> Elements (PascalCase)
+        writer.WriteElementString("Name", featureResult.Name);
+        if (!string.IsNullOrWhiteSpace(featureResult.Id))
+            writer.WriteElementString("Id", featureResult.Id);
+
+        if (featureResult.Metadata != null)
+        {
+            writer.WriteStartElement("Metadata");
+            foreach (var metadata in featureResult.Metadata)
+            {
+                writer.WriteStartElement("Meta");
+                writer.WriteElementString("Key", metadata.Key);
+                writer.WriteElementString("Value", metadata.Value);
+                writer.WriteEndElement();
+            }
+            writer.WriteEndElement();
+        }
 
         foreach (var scenarioResult in featureResult.ScenarioResults)
         {
@@ -57,8 +93,24 @@ internal class FeatureXmlReportWriter : IFeatureReport
     private void WriteScenario(XmlWriter writer, ScenarioFeatureResult scenarioResult)
     {
         writer.WriteStartElement("Scenario");
-        writer.WriteAttributeString("name", scenarioResult.Name);
-        writer.WriteAttributeString("status", scenarioResult.Status == ScenarioStatus.Passed ? "Passed" : "Failed");
+
+        writer.WriteElementString("Name", scenarioResult.Name);
+        writer.WriteElementString("Id", scenarioResult.Id);
+
+        if (scenarioResult.Metadata != null)
+        {
+            writer.WriteStartElement("Metadata");
+            foreach (var metadata in scenarioResult.Metadata)
+            {
+                writer.WriteStartElement("Meta");
+                writer.WriteElementString("Key", metadata.Key);
+                writer.WriteElementString("Value", metadata.Value);
+                writer.WriteEndElement();
+            }
+            writer.WriteEndElement();
+        }
+
+        writer.WriteElementString("Status", scenarioResult.Status == ScenarioStatus.Passed ? "Passed" : "Failed");
 
         if (scenarioResult.HasInputData)
         {
@@ -80,9 +132,11 @@ internal class FeatureXmlReportWriter : IFeatureReport
     private void WriteIteration(XmlWriter writer, IterationFeatureResult iterationResult)
     {
         writer.WriteStartElement("Iteration");
-        writer.WriteAttributeString("status", iterationResult.Passed ? "Passed" : "Failed");
 
-        writer.WriteElementString("InputData", iterationResult.InputData);
+        writer.WriteElementString("Status", iterationResult.Passed ? "Passed" : "Failed");
+
+        if (iterationResult.InputData is not null)
+            writer.WriteElementString("InputData", iterationResult.InputData);
 
         WriteSteps(writer, iterationResult);
 
@@ -102,9 +156,11 @@ internal class FeatureXmlReportWriter : IFeatureReport
     private static void WriteStep(XmlWriter writer, StepFeatureResult step)
     {
         writer.WriteStartElement("Step");
-        writer.WriteAttributeString("name", step.Name);
-        writer.WriteAttributeString("status", step.Status.ToString());
-        writer.WriteAttributeString("duration", step.Duration.ToString(@"hh\:mm\:ss\.fff"));
+
+        writer.WriteElementString("Name", step.Name);
+        writer.WriteElementString("Id", step.Id);
+        writer.WriteElementString("Status", step.Status.ToString());
+        writer.WriteElementString("Duration", step.Duration.ToString(@"hh\:mm\:ss\.fff"));
 
         if (step.Attachments != null && step.Attachments.Count > 0)
         {
@@ -112,11 +168,10 @@ internal class FeatureXmlReportWriter : IFeatureReport
             foreach (var attachment in step.Attachments)
             {
                 writer.WriteStartElement("Attachment");
-                writer.WriteAttributeString("name", attachment.Name);
-                writer.WriteAttributeString("path", attachment.Path);
+                writer.WriteElementString("Name", attachment.Name);
+                writer.WriteElementString("Path", attachment.Path);
                 writer.WriteEndElement();
             }
-
             writer.WriteEndElement();
         }
 

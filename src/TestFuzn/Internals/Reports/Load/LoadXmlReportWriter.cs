@@ -9,7 +9,7 @@ namespace Fuzn.TestFuzn.Internals.Reports.Load;
 internal class LoadXmlReportWriter : ILoadReport
 {
     public LoadXmlReportWriter()
-    { 
+    {
     }
 
     public async Task WriteReport(LoadReportData loadReportData)
@@ -17,14 +17,14 @@ internal class LoadXmlReportWriter : ILoadReport
         try
         {
             var reportName = FileNameHelper.MakeFilenameSafe(loadReportData.ScenarioResult.ScenarioName);
-            var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"TestFusion_Report_Load_{reportName}.xml");
+            var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"TestFuzn_Report_Load_{reportName}.xml");
 
             var stringBuilder = new StringBuilder();
             using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))
             {
                 writer.WriteStartDocument();
                 writer.WriteStartElement("LoadTestResults");
-                writer.WriteAttributeString("Version", "1.0");
+                writer.WriteElementString("Version", "1.0");
 
                 WriteScenario(writer, loadReportData.FeatureName, loadReportData.ScenarioResult);
 
@@ -38,7 +38,6 @@ internal class LoadXmlReportWriter : ILoadReport
         }
         catch (Exception ex)
         {
-            // Log or handle the exception as needed
             throw new InvalidOperationException("Failed to write XML load test report.", ex);
         }
     }
@@ -46,7 +45,8 @@ internal class LoadXmlReportWriter : ILoadReport
     private void WriteScenario(XmlWriter writer, string featureName, ScenarioLoadResult scenarioResult)
     {
         writer.WriteStartElement("Scenario");
-        writer.WriteAttributeString("Name", scenarioResult.ScenarioName);
+        writer.WriteElementString("Name", scenarioResult.ScenarioName);
+        writer.WriteElementString("Id", scenarioResult.Id);
         writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString(@"hh\:mm\:ss\.fff"));
         WriteStats(writer, scenarioResult.Ok, scenarioResult.Failed);
 
@@ -64,7 +64,8 @@ internal class LoadXmlReportWriter : ILoadReport
         {
             var stepResult = step.Value;
             writer.WriteStartElement("Step");
-            writer.WriteAttributeString("Name", stepResult.Name);
+            writer.WriteElementString("Name", stepResult.Name);
+            writer.WriteElementString("Id", stepResult.Id);
             WriteStats(writer, stepResult.Ok, stepResult.Failed);
             writer.WriteEndElement();
         }
@@ -105,18 +106,13 @@ internal class LoadXmlReportWriter : ILoadReport
         foreach (var scenarioResult in snapshots)
         {
             writer.WriteStartElement("Snapshot");
-            writer.WriteAttributeString("created", scenarioResult.Created.ToString("o"));
-
+            writer.WriteElementString("Created", scenarioResult.Created.ToString("o"));
             writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString(@"hh\:mm\:ss\.fff"));
-
             WriteStats(writer, scenarioResult.Ok, scenarioResult.Failed);
-
             WriteSteps(writer, scenarioResult);
-
             writer.WriteEndElement();
         }
 
         writer.WriteEndElement();
-
     }
 }

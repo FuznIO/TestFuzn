@@ -10,7 +10,7 @@ public class Startup : BaseStartup
     public override TestFusionConfiguration Configuration()
     {
         var configuration = new TestFusionConfiguration();
-        configuration.TestSuiteName = "SampleApp.Tests";
+        configuration.TestSuite.Name = "SampleApp.Tests";
 
         configuration.UseHttp();
         configuration.UsePlaywright();

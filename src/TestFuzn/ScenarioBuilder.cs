@@ -23,18 +23,34 @@ public class ScenarioBuilder<TStepContext>
         Scenario.ContextType = typeof(TStepContext);
     }
 
-    public ScenarioBuilder<TStepContext> Init(Action<Context> action)
+    public ScenarioBuilder<TStepContext> Id(string id)
     {
-        Scenario.Init = (context) => {
+        Scenario.Id = id;
+        return this;
+    }
+
+    public ScenarioBuilder<TStepContext> Metadata(string key, string value)
+    {
+        if (Scenario.MetadataInternal == null)
+            Scenario.MetadataInternal = new();
+        if (Scenario.MetadataInternal.ContainsKey(key))
+            throw new ArgumentException($"Meta key '{key}' already exists in the scenario. Meta keys must be unique.", nameof(key));
+        Scenario.MetadataInternal.Add(key, value);
+        return this;
+    }
+
+    public ScenarioBuilder<TStepContext> InitScenario(Action<Context> action)
+    {
+        Scenario.InitScenario = (context) => {
             action(context);
             return Task.CompletedTask;
         };
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> Init(Func<Context, Task> action)
+    public ScenarioBuilder<TStepContext> InitScenario(Func<Context, Task> action)
     {
-        Scenario.Init = (context) => {
+        Scenario.InitScenario = (context) => {
             return action(context);
         };
         return this;
@@ -109,29 +125,6 @@ public class ScenarioBuilder<TStepContext>
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> Step(Step<BaseStepContext> step)
-    {
-        if (step == null)
-            throw new ArgumentNullException(nameof(step), "Step cannot be null.");
-
-        EnsureStepNameIsUnique(step.Name);
-
-        if (step.Action == null)
-            throw new ArgumentException("Step action cannot be null.", nameof(step.Action));
-
-        var stepInternal = new Step();
-        stepInternal.ContextType = typeof(TStepContext);
-        stepInternal.Name = step.Name;
-        stepInternal.Action = context =>
-        {
-            step.Action((TStepContext) context);
-            return Task.CompletedTask;
-        };
-        Scenario.Steps.Add(stepInternal);
-
-        return this;
-    }
-
     private void EnsureStepNameIsUnique(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -146,35 +139,35 @@ public class ScenarioBuilder<TStepContext>
         return new LoadBuilder<TStepContext>(this);
     }
 
-    public ScenarioBuilder<TStepContext> CleanupAfterEachIteration(Action<TStepContext> action)
+    public ScenarioBuilder<TStepContext> CleanupIteration(Action<TStepContext> action)
     {
-        Scenario.CleanupAfterEachIterationAction = (context) => {
+        Scenario.CleanupIterationAction = (context) => {
             action((TStepContext) context);
             return Task.CompletedTask;
         };
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> CleanupAfterEachIteration(Func<TStepContext, Task> action)
+    public ScenarioBuilder<TStepContext> CleanupIteration(Func<TStepContext, Task> action)
     {
-        Scenario.CleanupAfterEachIterationAction = (context) => {
+        Scenario.CleanupIterationAction = (context) => {
             return action((TStepContext) context);
         };
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> CleanupAfterScenario(Action<Context> action)
+    public ScenarioBuilder<TStepContext> CleanupScenario(Action<Context> action)
     {
-        Scenario.CleanupAfterScenarioAction = (context) => {
+        Scenario.CleanupScenarioAction = (context) => {
             action(context);
             return Task.CompletedTask;
         };
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> CleanupAfterScenario(Func<Context, Task> action)
+    public ScenarioBuilder<TStepContext> CleanupScenario(Func<Context, Task> action)
     {
-        Scenario.CleanupAfterScenarioAction = (context) => {
+        Scenario.CleanupScenarioAction = (context) => {
             return action(context);
         };
         return this;

@@ -11,15 +11,17 @@ internal class FeatureResultManager
         return _testSuiteResult;
     }
 
-    internal void AddScenarioResults(string featureName, Dictionary<string, ScenarioFeatureResult> scenarioCollectors)
+    internal void AddScenarioResults(IFeatureTest featureTest,
+        Dictionary<string, ScenarioFeatureResult> scenarioCollectors)
     {
-        var featureResult = _testSuiteResult.FeatureResults.GetOrAdd(featureName, (key) => new FeatureResult(featureName));
+        var featureResult = _testSuiteResult.FeatureResults.GetOrAdd(featureTest.FeatureName, 
+                                (key) => new FeatureResult(featureTest.FeatureName, featureTest.FeatureId, featureTest.FeatureMetadata));
 
         foreach (var scenarioCollector in scenarioCollectors)
         {
             if (!featureResult.ScenarioResults.TryAdd(scenarioCollector.Key, scenarioCollector.Value))
             {
-                throw new Exception($"Scenario '{scenarioCollector.Key}' already exists in feature '{featureName}'.");
+                throw new Exception($"Scenario '{scenarioCollector.Key}' already exists in feature '{featureTest.FeatureName}'.");
             }
         }
     }

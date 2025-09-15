@@ -14,4 +14,4 @@ public class Context
     public ITestFrameworkAdapter TestFramework => IterationContext.TestFramework;
     public HashSet<ISerializerProvider> SerializerProvider => IterationContext.SerializerProvider;
     public CurrentStep CurrentStep { get; internal set; }
-}
+} 

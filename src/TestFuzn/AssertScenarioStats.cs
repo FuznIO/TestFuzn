@@ -4,7 +4,6 @@ namespace Fuzn.TestFuzn;
 
 public class AssertScenarioStats
 {
-    private readonly ScenarioLoadResult _scenarioResult;
     public int RequestCount { get; }
     public AssertStats Ok { get; }
     public AssertStats Failed { get; }
@@ -12,17 +11,31 @@ public class AssertScenarioStats
 
     internal AssertScenarioStats(ScenarioLoadResult scenarioResult)
     {
-        _scenarioResult = scenarioResult;
         RequestCount = scenarioResult.RequestCount;
         Ok = new AssertStats(scenarioResult.Ok);
         Failed = new AssertStats(scenarioResult.Failed);
 
         _assertStepMetrics = new();
         foreach (var step in scenarioResult.Steps)
-            _assertStepMetrics.TryAdd(step.Key, new AssertStepStats(step.Value));
+        {
+            AddStepStats(step.Key, step.Value);
+        }
     }
 
-    public AssertStepStats GetStepMetrics(string stepName)
+    private void AddStepStats(string name, StepLoadResult loadResult)
+    {
+        _assertStepMetrics.TryAdd(name, new AssertStepStats(loadResult));
+
+        if (loadResult.Steps == null || loadResult.Steps.Count == 0)
+            return;
+
+        foreach (var step in loadResult.Steps)
+        {
+            AddStepStats(step.Name, step);
+        }
+    }
+
+    public AssertStepStats GetStep(string stepName)
     {
         if (_assertStepMetrics.TryGetValue(stepName, out var metrics))
             return metrics;

@@ -9,7 +9,7 @@ internal class ExecuteStepHandler
     private readonly SharedExecutionState _sharedExecutionState;
     private readonly IterationContext _iterationContext;
     public ScenarioStatus? CurrentScenarioStatus { get; set; }
-    public StepFeatureResult? OuterStepResult { get; set; }
+    public StepFeatureResult? RootStepResult { get; set; }
 
     public ExecuteStepHandler(SharedExecutionState sharedExecutionState,
         IterationContext iterationContext,
@@ -20,7 +20,7 @@ internal class ExecuteStepHandler
         CurrentScenarioStatus = scenarioStatus;
     }
 
-    public async Task ExecuteStep(StepType stepType, Step step)
+    public async Task ExecuteStep(Step step)
     {
         step.Validate();
 
@@ -30,27 +30,7 @@ internal class ExecuteStepHandler
         var stepResult = new StepFeatureResult();
         stepResult.Name = step.Name;
 
-        if (stepType == StepType.Outer)
-            OuterStepResult = stepResult;
-        else if (stepType == StepType.Inner)
-        {
-            if (OuterStepResult.Name == step.ParentName)
-            {
-                if (OuterStepResult.StepResults == null)
-                    OuterStepResult.StepResults = new();
-                OuterStepResult.StepResults.Add(stepResult);
-            }
-            else
-            {
-                var parentStep = FindParentStep(step.ParentName, OuterStepResult.StepResults);
-                if (parentStep == null)
-                    throw new Exception(@$"Parent step '{step.ParentName}' not found.");
-
-                if (parentStep.StepResults == null)
-                    parentStep.StepResults = new();
-                parentStep.StepResults.Add(stepResult);
-            }
-        }
+        AddResultToParentStep(step, stepResult);
 
         if (CurrentScenarioStatus != null && CurrentScenarioStatus == ScenarioStatus.Failed)
         {
@@ -65,8 +45,17 @@ internal class ExecuteStepHandler
             {    
                 await step.Action(stepContext);
 
-                stepResult.Status = StepStatus.Passed;
-                CurrentScenarioStatus = ScenarioStatus.Passed;
+                if (CurrentScenarioStatus != null && CurrentScenarioStatus == ScenarioStatus.Failed)
+                {
+                    // Can happen if a child step fails.
+                    stepResult.Status = StepStatus.Failed;
+                }
+                else
+                {
+                    stepResult.Status = StepStatus.Passed;  
+                    CurrentScenarioStatus = ScenarioStatus.Passed;
+                }
+                    
             }
             catch (Exception ex)
             {
@@ -94,30 +83,33 @@ internal class ExecuteStepHandler
         stepResult.Duration = stepDuration.Elapsed;
     }
 
-    private StepFeatureResult? FindParentStep(string parentName, List<StepFeatureResult> results)
+    private void AddResultToParentStep(Step step, StepFeatureResult stepResult)
     {
-        if (results == null || results.Count == 0)
-            return null;
-
-        foreach (var result in results)
+        if (step.ParentName == null)
         {
-            if (result.Name == parentName)
-                return result;
+            RootStepResult = stepResult;
+            return;
+        }
 
-            if (result.StepResults != null && result.StepResults.Count > 0)
+        if (RootStepResult.Name == step.ParentName)
+        {
+            if (RootStepResult.StepResults == null)
+                RootStepResult.StepResults = new();
+            RootStepResult.StepResults.Add(stepResult);
+            return;
+        }
+
+        foreach (var parentResult in RootStepResult.StepResults)
+        {
+            if (parentResult.Name == step.ParentName)
             {
-                var parentStep = FindParentStep(parentName, result.StepResults);
-                if (parentStep != null)
-                    return parentStep;
+                if (parentResult.StepResults == null)
+                    parentResult.StepResults = new();
+                parentResult.StepResults.Add(stepResult);
+                return;
             }
         }
 
-        return null;
-    }
-
-    public enum StepType
-    {
-        Outer = 1,
-        Inner = 2
+        throw new Exception(@$"Parent step '{step.ParentName}' not found.");
     }
 }

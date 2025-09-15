@@ -53,7 +53,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("<body>");
 
         // Header
-        b.AppendLine($"<h1>TestFusion - Feature Test Report</h1>");
+        b.AppendLine($"<h1>TestFuzn - Feature Test Report</h1>");
 
         b.AppendLine($"<h2>Test Metadata</h2>");
         b.AppendLine("<table>");
@@ -63,7 +63,15 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("<th>Value</th>");
         b.AppendLine("</tr");
         b.AppendLine("<tr><td>Test Run ID</td><td>" + featureReportData.TestRunId + "</td></tr>");
-        b.AppendLine("<tr><td>Test Suite</td><td>" + featureReportData.TestSuiteName + "</td></tr>");
+        b.AppendLine("<tr><td>Test Suite ID</td><td>" + featureReportData.TestSuite.Name + "</td></tr>");
+        b.AppendLine("<tr><td>Test Suite ID</td><td>" + featureReportData.TestSuite.Id + "</td></tr>");
+        if (featureReportData.TestSuite.Metadata != null)
+        {
+            foreach (var metadata in featureReportData.TestSuite.Metadata)
+            {
+                b.AppendLine("<tr><td>Test Suite Metadata - " + metadata.Key + "</td><td>" + metadata.Value + "</td></tr>");
+            }
+        }
         b.AppendLine("<tr><td>Test Run - Start Time</td><td>" + featureReportData.TestRunStartTime.ToLocalTime() + "</td></tr>");
         b.AppendLine("<tr><td>Test Run - End Time</td><td>" + featureReportData.TestRunEndTime.ToLocalTime() + "</td></tr>");
         b.AppendLine("<tr><td>Test Run - Duration</td><td>" + featureReportData.TestRunDuration.ToTestFuznFormattedDuration() + "</td></tr>");
@@ -92,6 +100,8 @@ internal class FeatureHtmlReportWriter : IFeatureReport
             foreach (var scenarioResult in featureResult.Value.ScenarioResults)
             {
                 b.AppendLine($"<button class='collapsible'>Scenario: {scenarioResult.Value.Name} - <span class='{(scenarioResult.Value.Status == ScenarioStatus.Passed ? "passed" : "failed")}'>{(scenarioResult.Value.Status == ScenarioStatus.Passed ? "Passed" : "Failed")}</span></button>");
+                if (!string.IsNullOrEmpty(scenarioResult.Value.Id))
+                    b.AppendLine($"Id: {scenarioResult.Value.Id}");
                 b.AppendLine("<div class='content'>");
 
                 if (scenarioResult.Value.HasInputData)

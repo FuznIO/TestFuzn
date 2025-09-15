@@ -5,12 +5,13 @@ namespace Fuzn.TestFuzn;
 public class Scenario
 {
     public string Name { get; internal set; }
-    public Guid ScenarioId { get; internal set; } = Guid.NewGuid();
+    public string Id { get; internal set; }
+    internal Dictionary<string, string> MetadataInternal { get; set; }
 
     internal Type ContextType { get; set; }
-    internal Func<Context, Task> Init { get; set; }
-    internal Func<BaseStepContext, Task> CleanupAfterEachIterationAction { get; set; }
-    internal Func<Context, Task> CleanupAfterScenarioAction { get; set; }
+    internal Func<Context, Task> InitScenario { get; set; }
+    internal Func<BaseStepContext, Task> CleanupIterationAction { get; set; }
+    internal Func<Context, Task> CleanupScenarioAction { get; set; }
     internal InputDataInfo InputDataInfo { get; private set; } = new();
     internal List<Step> Steps { get; } = new();
     internal Func<Context, SimulationsBuilder, Task> WarmupAction;

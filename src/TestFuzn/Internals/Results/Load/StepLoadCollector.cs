@@ -39,13 +39,16 @@ internal class StepLoadCollector
 
             if (result.StepResults != null && result.StepResults.Count > 0)
             {
-                foreach (var innerResult in result.StepResults ?? [])
+                foreach (var innerResult in result.StepResults)
                 {
-                    var innerStep = new StepLoadCollector(innerResult.Name);
                     if (_steps == null)
                         _steps = new Dictionary<string, StepLoadCollector>();
-                    if (!_steps.ContainsKey(innerResult.Name))
+
+                    if (!_steps.TryGetValue(innerResult.Name, out var innerStep))
+                    {
+                        innerStep = new StepLoadCollector(innerResult.Name);
                         _steps.Add(innerResult.Name, innerStep);
+                    }
 
                     innerStep.Record(innerResult, startTime, endTime);
                 }

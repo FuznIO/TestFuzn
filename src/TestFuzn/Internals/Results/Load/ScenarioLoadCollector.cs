@@ -8,6 +8,7 @@ internal class ScenarioLoadCollector
 {
     private readonly object _lock = new object();
     private string _scenarioName;
+    private string _id;
     private DateTime _initStartTime;
     private DateTime _initEndTime;
     private DateTime _warmupStartTime;
@@ -30,10 +31,12 @@ internal class ScenarioLoadCollector
     private List<Exception>? _assertWhenDoneExceptions;
 
     public string ScenarioName { get => _scenarioName; set => _scenarioName = value; }
+    public string Id { get => _id; set => _id = value; }
 
     public ScenarioLoadCollector(Scenario scenario)
     {
         _scenarioName = scenario.Name;
+        _id = scenario.Id;
         _status = ScenarioStatus.Passed;
         foreach (var step in scenario.Steps)
         {
@@ -160,6 +163,7 @@ internal class ScenarioLoadCollector
 
             var result = new ScenarioLoadResult();
             result.ScenarioName = _scenarioName;
+            result.Id = _id;
             result.InitStartTime = _initStartTime;
             result.InitEndTime = _initEndTime;
             // Warmup phase.

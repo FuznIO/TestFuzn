@@ -4,7 +4,7 @@ namespace Fuzn.TestFuzn.Contracts.Reports;
 
 public class FeatureReportData
 {
-    public string TestSuiteName { get; internal set; }
+    public TestSuiteInfo TestSuite { get; set; }
     public string TestRunId { get; internal set; }
     public DateTime TestRunStartTime { get; internal set; }
     public DateTime TestRunEndTime { get; internal set; }

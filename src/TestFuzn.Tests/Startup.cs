@@ -10,6 +10,16 @@ public class Startup : BaseStartup
     public override TestFusionConfiguration Configuration()
     {
         var configuration = ConfigurationManager.LoadConfiguration();
+        configuration.TestSuite = new TestSuiteInfo
+        {
+            Id = "TestFuzn.Tests",
+            Name = "TestFuzion Tests",
+            Metadata = new Dictionary<string, string>
+            {
+                { "Owner", "Fuzn" },
+                { "Numeric-Id", "123" },
+            }
+        };
         configuration.EnvironmentName = "development";
         configuration.UsePlaywright();
         configuration.UseHttp();
@@ -23,5 +33,15 @@ public class Startup : BaseStartup
             pluginConfiguration.Priority = 1;
         });
         return configuration;
+    }
+
+    public override Task InitGlobal(Context context)
+    {
+        return base.InitGlobal(context);
+    }
+
+    public override Task CleanupGlobal(Context context)
+    {
+        return base.CleanupGlobal(context);
     }
 }

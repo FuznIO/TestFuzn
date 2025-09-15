@@ -11,7 +11,10 @@ internal class ReportManager
         var featureResults = featureResultsManager.GetTestSuiteResults();
 
         var data = new FeatureReportData();
-        data.TestSuiteName = GlobalState.Configuration.TestSuiteName;
+        data.TestSuite = new Contracts.Reports.TestSuiteInfo();
+        data.TestSuite.Name = GlobalState.Configuration.TestSuite.Name;
+        data.TestSuite.Id = GlobalState.Configuration.TestSuite.Id;
+        data.TestSuite.Metadata = GlobalState.Configuration.TestSuite.Metadata;
         data.TestRunId = GlobalState.TestRunId;
         data.TestRunStartTime = GlobalState.TestRunStartTime;
         data.TestRunEndTime = GlobalState.TestRunEndTime;
@@ -37,7 +40,7 @@ internal class ReportManager
         {
             var loadReportData = new LoadReportData();
             loadReportData.TestRunId = GlobalState.TestRunId;
-            loadReportData.FeatureName = sharedExecutionState.FeatureName;
+            loadReportData.FeatureName = sharedExecutionState.IFeatureTestClassInstance.FeatureName;
             loadReportData.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
             loadReportData.ScenarioResult = sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
 

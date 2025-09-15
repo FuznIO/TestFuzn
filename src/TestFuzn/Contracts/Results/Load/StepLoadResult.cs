@@ -3,6 +3,7 @@
 public class StepLoadResult
 {
     public string Name { get; internal set; }
+    public string Id { get; internal set; }
     public int RequestCount 
     { 
         get
