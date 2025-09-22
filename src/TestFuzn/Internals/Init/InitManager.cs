@@ -29,12 +29,12 @@ internal class InitManager
             _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init);
         }
 
-        await ExecuteInitBeforeScenarioTest();
+        await ExecuteInitTestMethod();
         
         var initPerScenarioTasks = new List<Task>();
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
-            initPerScenarioTasks.Add(ExecuteInitOnScenario(scenario));
+            initPerScenarioTasks.Add(ExecuteInitMethodsOnScenario(scenario));
         
         await Task.WhenAll(initPerScenarioTasks);
 
@@ -49,17 +49,17 @@ internal class InitManager
         }
     }
 
-    private async Task ExecuteInitBeforeScenarioTest()
+    private async Task ExecuteInitTestMethod()
     {
-        var context = ContextFactory.CreateContext(_testFramework, "InitScenarioTest");
+        var context = ContextFactory.CreateContext(_testFramework, "InitTestMethod");
         await _sharedExecutionState.IFeatureTestClassInstance.InitTestMethod(context);
     }
 
-    private async Task ExecuteInitOnScenario(Scenario scenario)
+    private async Task ExecuteInitMethodsOnScenario(Scenario scenario)
     {
         if (scenario.InitScenario != null)
         {
-            var context = ContextFactory.CreateContext(_testFramework, "Init");
+            var context = ContextFactory.CreateScenarioContext(_testFramework, "InitScenario");
             await scenario.InitScenario(context);
         }
 
@@ -68,7 +68,7 @@ internal class InitManager
 
         if (scenario.InputDataInfo.SourceType == InputDataSourceType.Action)
         {
-            var context = ContextFactory.CreateContext(_testFramework, "Inputs");
+            var context = ContextFactory.CreateScenarioContext(_testFramework, "Inputs");
             scenario.InputDataInfo.InputDataList = await scenario.InputDataInfo.InputDataAction(context);
         }
     }
@@ -90,12 +90,12 @@ internal class InitManager
                 if (scenario.WarmupAction != null)
                 {
                     await scenario.WarmupAction(
-                        ContextFactory.CreateContext(_testFramework, "Warmup"),
+                        ContextFactory.CreateScenarioContext(_testFramework, "Warmup"),
                         new SimulationsBuilder(scenario, isWarmup: true));
                 }
 
                 await scenario.SimulationsAction(
-                    ContextFactory.CreateContext(_testFramework, "Simulations"), 
+                    ContextFactory.CreateScenarioContext(_testFramework, "Simulations"), 
                     new SimulationsBuilder(scenario, isWarmup: false));
             }
 

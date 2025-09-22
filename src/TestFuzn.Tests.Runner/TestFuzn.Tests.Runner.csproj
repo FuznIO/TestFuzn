@@ -6,6 +6,7 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <AssemblyName>Fuzn.TestFuzn.Tests.Runner</AssemblyName>
     <RootNamespace>Fuzn.TestFuzn.Tests.Runner</RootNamespace>
+    <Authors>Fuzn</Authors>
   </PropertyGroup>
 
   <ItemGroup>

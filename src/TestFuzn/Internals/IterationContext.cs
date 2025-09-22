@@ -4,7 +4,7 @@ using Fuzn.TestFuzn.Internals.Execution;
 
 namespace Fuzn.TestFuzn.Internals;
 
-internal class IterationContext
+internal class IterationState
 {
     // Context
     public ExecutionInfo Info { get; internal set; }
@@ -18,5 +18,5 @@ internal class IterationContext
     public Dictionary<string, object> SharedData { get; set; }
     public object InputData { get; set; }
     public ExecuteStepHandler ExecuteStepHandler { get; set; }
-    public object Custom { get; set; }
+    public object Model { get; set; }
 }

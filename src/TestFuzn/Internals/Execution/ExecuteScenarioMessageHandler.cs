@@ -31,18 +31,24 @@ internal class ExecuteScenarioMessageHandler
         if (scenario.InputDataInfo.HasInputData)
             currentInputData = _inputDataFeeder.GetNextInput(scenario.Name);
 
-        var iterationContext = ContextFactory.CreateIterationContextForStepContext(_testFramework, scenario, currentInputData);
+        var iterationState = ContextFactory.CreateIterationState(_testFramework, scenario, currentInputData);
 
         var iterationResult = new IterationFeatureResult();
-        iterationResult.CorrelationId = iterationContext.Info.CorrelationId;
+        iterationResult.CorrelationId = iterationState.Info.CorrelationId;
 
         var scenarioDuration = new Stopwatch();
         scenarioDuration.Start();
 
-        var executeStepHandler = new ExecuteStepHandler(_sharedExecutionState, iterationContext, null);
+        var executeStepHandler = new ExecuteStepHandler(_sharedExecutionState, iterationState, null);
 
         try
         {
+            if (scenario.InitIterationAction != null)
+            {
+                var stepContext = ContextFactory.CreateIterationContext(iterationState, "InitIteration", null, null);
+                await scenario.InitIterationAction(stepContext);
+            }
+
             foreach (var step in scenario.Steps)
             {
                 await executeStepHandler.ExecuteStep(step);
@@ -57,7 +63,7 @@ internal class ExecuteScenarioMessageHandler
 
             if (scenario.CleanupIterationAction != null)
             {
-                var stepContext = ContextFactory.CreateStepContext(iterationContext, "CleanupIteration", null);
+                var stepContext = ContextFactory.CreateIterationContext(iterationState, "CleanupIteration", null, null);
                 await scenario.CleanupIterationAction(stepContext);
             }
         }
@@ -68,7 +74,7 @@ internal class ExecuteScenarioMessageHandler
                 iterationResult.InputData = PropertyHelper.GetStringFromProperties(currentInputData);
 
             _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].IterationResults.Add(iterationResult);
-            await CleanupContext(iterationContext);
+            await CleanupContext(iterationState);
         }
         else if (_sharedExecutionState.TestType == TestType.Load)
         {
@@ -84,14 +90,14 @@ internal class ExecuteScenarioMessageHandler
 
             var scenarioLoadResult = scenarioLoadCollector.GetCurrentResult();
 
-            await CleanupContext(iterationContext);
+            await CleanupContext(iterationState);
 
             if (scenario.AssertWhileRunningAction != null
                 && _sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Running)
             {
                 try
                 {
-                    var context = ContextFactory.CreateContext(_testFramework, "AssertWhileRunning");
+                    var context = ContextFactory.CreateScenarioContext(_testFramework, "AssertWhileRunning");
                     scenario.AssertWhileRunningAction(context, new AssertScenarioStats(scenarioLoadResult));
                 }
                 catch (Exception ex)
@@ -106,7 +112,7 @@ internal class ExecuteScenarioMessageHandler
         }
     }
 
-    private static async Task CleanupContext(IterationContext iterationContext)
+    private static async Task CleanupContext(IterationState iterationContext)
     {
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)
         {

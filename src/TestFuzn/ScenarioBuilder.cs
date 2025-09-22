@@ -1,12 +1,10 @@
 ﻿using Fuzn.TestFuzn.Internals;
 using Fuzn.TestFuzn.Contracts.Adapters;
-using System.Xml.Linq;
-using System;
 
 namespace Fuzn.TestFuzn;
 
 public class ScenarioBuilder<TStepContext>
-    where TStepContext : BaseStepContext
+    where TStepContext : IterationContext
 {
     private ITestFrameworkAdapter _testFramework;
     private readonly IFeatureTest _featureTest;
@@ -41,6 +39,9 @@ public class ScenarioBuilder<TStepContext>
 
     public ScenarioBuilder<TStepContext> InitScenario(Action<Context> action)
     {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action), "Action cannot be null.");
+
         Scenario.InitScenario = (context) => {
             action(context);
             return Task.CompletedTask;
@@ -50,6 +51,9 @@ public class ScenarioBuilder<TStepContext>
 
     public ScenarioBuilder<TStepContext> InitScenario(Func<Context, Task> action)
     {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action), "Action cannot be null.");
+
         Scenario.InitScenario = (context) => {
             return action(context);
         };
@@ -89,7 +93,28 @@ public class ScenarioBuilder<TStepContext>
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> Step(string name, Func<TStepContext, Task> action)
+    public ScenarioBuilder<TStepContext> InitIteration(Func<TStepContext, Task> action)
+    {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action), "Action cannot be null.");
+        Scenario.InitIterationAction = (context) => {
+            return action((TStepContext) context);
+        };
+        return this;
+    }
+
+    public ScenarioBuilder<TStepContext> InitIteration(Action<TStepContext> action)
+    {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action), "Action cannot be null.");
+        Scenario.InitIterationAction = (context) => {
+            action((TStepContext) context);
+            return Task.CompletedTask;
+        };
+        return this;
+    }
+
+    public ScenarioBuilder<TStepContext> Step(string name, string id, Func<TStepContext, Task> action)
     {
         EnsureStepNameIsUnique(name);
 
@@ -99,29 +124,33 @@ public class ScenarioBuilder<TStepContext>
         var step = new Step();
         step.ContextType = typeof(TStepContext);
         step.Name = name;
+        step.Id = id;
         step.Action = context => action((TStepContext) context);
         Scenario.Steps.Add(step);
 
         return this;
     }
 
-    public ScenarioBuilder<TStepContext> Step(string name, Action<TStepContext> action)
+    public ScenarioBuilder<TStepContext> Step(string name, string id, Action<TStepContext> action)
     {
-        EnsureStepNameIsUnique(name);
-
-        if (action == null)
-            throw new ArgumentNullException(nameof(action), "Action cannot be null.");
-
-        var step = new Step();
-        step.ContextType = typeof(TStepContext);
-        step.Name = name;
-        step.Action = context =>
+        Step(name, id, context =>
         {
             action((TStepContext) context);
             return Task.CompletedTask;
-        };
-        Scenario.Steps.Add(step);
+        });
 
+        return this;
+    }
+
+    public ScenarioBuilder<TStepContext> Step(string name, Func<TStepContext, Task> action)
+    {
+        Step(name, null, action);
+        return this;
+    }
+
+    public ScenarioBuilder<TStepContext> Step(string name, Action<TStepContext> action)
+    {
+        Step(name, null, action);
         return this;
     }
 

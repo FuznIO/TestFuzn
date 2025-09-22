@@ -11,12 +11,12 @@ public class AttachmentTests : BaseFeatureTest
             .Step("Step 1 with no attachment", (context) => { })
             .Step("Step 2 with single attachment", async context =>
             {
-                await context.CurrentStep.Attach($"TestAttachment1_{context.InputData<string>()}.txt", "This is a test attachment 1 content.");
+                await context.Attach($"TestAttachment1_{context.InputData<string>()}.txt", "This is a test attachment 1 content.");
             })
             .Step("Step 3 with multiple attachment", async context =>
             {
-                await context.CurrentStep.Attach($"TestAttachment2_{context.InputData<string>()}.txt", "This is a test attachment 2 content.");
-                await context.CurrentStep.Attach($"TestAttachment3_{context.InputData<string>()}.txt", "This is a test attachment 3 content.");
+                await context.Attach($"TestAttachment2_{context.InputData<string>()}.txt", "This is a test attachment 2 content.");
+                await context.Attach($"TestAttachment3_{context.InputData<string>()}.txt", "This is a test attachment 3 content.");
             })
             .Run();
     }

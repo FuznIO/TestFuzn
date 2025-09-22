@@ -11,48 +11,62 @@ internal class ContextFactory
 
         if (GlobalState.Configuration != null)
         {
-            context.IterationContext = new IterationContext();
-            PopulateSharedProperties(testFramework, context.IterationContext);
-            context.CurrentStep = new CurrentStep(null, stepName);
+            context.IterationState = new();
+            PopulateSharedProperties(testFramework, context.IterationState);
+            context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 
         return context;
     }
 
-    public static BaseStepContext CreateStepContext(IterationContext iterationContext, string stepName, string parentName)
+    public static Context CreateScenarioContext(ITestFrameworkAdapter testFramework, string stepName)
     {
-        var context = (BaseStepContext) Activator.CreateInstance(iterationContext.Scenario.ContextType);
-        if (context == null)
-            throw new InvalidOperationException($"Failed to create instance of {iterationContext.Scenario.ContextType}");
+        var context = new ScenarioContext();
 
-        context.IterationContext = iterationContext;
-        context.CurrentStep = new CurrentStep(context, stepName, parentName);
-
-        return context;
-    }
-
-    public static IterationContext CreateIterationContextForStepContext(ITestFrameworkAdapter testFramework, Scenario scenario, object currentInput)
-    {
-        var context = new IterationContext();
-        if (scenario.ContextType.IsGenericType && scenario.ContextType.GetGenericTypeDefinition() == typeof(StepContext<>))
+        if (GlobalState.Configuration != null)
         {
-            var customType = scenario.ContextType.GetGenericArguments()[0];
-            var customInstance = Activator.CreateInstance(customType);
-
-            if (customInstance == null)
-                throw new InvalidOperationException($"Failed to create instance of {customType}");
-
-            context.Custom = customInstance;
+            context.IterationState = new();
+            PopulateSharedProperties(testFramework, context.IterationState);
+            context.StepInfo = new StepInfo(null, stepName, null, null);
         }
-        PopulateSharedProperties(testFramework, context);
-        context.SharedData = new();
-        context.Scenario = scenario;
-        context.InputData = currentInput;
 
         return context;
     }
 
-    private static void PopulateSharedProperties(ITestFrameworkAdapter testFramework, IterationContext context)
+    public static IterationContext CreateIterationContext(IterationState iterationState, string stepName, string stepId, string parentName)
+    {
+        var context = (IterationContext) Activator.CreateInstance(iterationState.Scenario.ContextType);
+        if (context == null)
+            throw new InvalidOperationException($"Failed to create instance of {iterationState.Scenario.ContextType}");
+
+        context.IterationState = iterationState;
+        context.StepInfo = new StepInfo(context, stepName, stepId, parentName);
+
+        return context;
+    }
+
+    public static IterationState CreateIterationState(ITestFrameworkAdapter testFramework, Scenario scenario, object currentInput)
+    {
+        var state = new IterationState();
+        if (scenario.ContextType.IsGenericType && scenario.ContextType.GetGenericTypeDefinition() == typeof(IterationContext<>))
+        {
+            var modelType = scenario.ContextType.GetGenericArguments()[0];
+            var modelInstance = Activator.CreateInstance(modelType);
+
+            if (modelInstance == null)
+                throw new InvalidOperationException($"Failed to create instance of {modelType}");
+
+            state.Model = modelInstance;
+        }
+        PopulateSharedProperties(testFramework, state);
+        state.SharedData = new();
+        state.Scenario = scenario;
+        state.InputData = currentInput;
+
+        return state;
+    }
+
+    private static void PopulateSharedProperties(ITestFrameworkAdapter testFramework, IterationState context)
     {
         context.Info = new ExecutionInfo();
         context.Info.EnvironmentName = GlobalState.Configuration.EnvironmentName;

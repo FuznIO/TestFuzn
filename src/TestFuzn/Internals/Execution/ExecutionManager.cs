@@ -53,7 +53,7 @@ internal class ExecutionManager
             {
                 try
                 {
-                    var context = ContextFactory.CreateContext(_testFramework, "AssertWhenDoneAction");
+                    var context = ContextFactory.CreateScenarioContext(_testFramework, "AssertWhenDoneAction");
                     scenario.AssertWhenDoneAction(context, new AssertScenarioStats(scenarioResult));
                 }
                 catch (Exception e)
@@ -64,6 +64,5 @@ internal class ExecutionManager
                 }
             }
         }
-
     }
 }

@@ -9,6 +9,7 @@
     <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
     <RootNamespace>Fuzn.TestFuzn.Tests</RootNamespace>
     <AssemblyName>Fuzn.TestFuzn.Tests</AssemblyName>
+    <Authors>Fuzn</Authors>
   </PropertyGroup>
 
   <ItemGroup>

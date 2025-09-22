@@ -7,12 +7,12 @@ namespace Fuzn.TestFuzn.Internals.Execution;
 internal class ExecuteStepHandler
 {
     private readonly SharedExecutionState _sharedExecutionState;
-    private readonly IterationContext _iterationContext;
+    private readonly IterationState _iterationContext;
     public ScenarioStatus? CurrentScenarioStatus { get; set; }
     public StepFeatureResult? RootStepResult { get; set; }
 
     public ExecuteStepHandler(SharedExecutionState sharedExecutionState,
-        IterationContext iterationContext,
+        IterationState iterationContext,
         ScenarioStatus? scenarioStatus)
     {
         _sharedExecutionState = sharedExecutionState;
@@ -38,7 +38,7 @@ internal class ExecuteStepHandler
         }
         else
         {
-            var stepContext = ContextFactory.CreateStepContext(_iterationContext, step.Name, step.ParentName);
+            var stepContext = ContextFactory.CreateIterationContext(_iterationContext, step.Name, step.Id, step.ParentName);
             _iterationContext.ExecuteStepHandler = this;
 
             try
@@ -69,12 +69,12 @@ internal class ExecuteStepHandler
             }
             finally
             {
-                if (stepContext.CurrentStep != null
-                    && stepContext.CurrentStep.Attachments != null
-                    && stepContext.CurrentStep.Attachments.Count > 0)
+                if (stepContext.StepInfo != null
+                    && stepContext.StepInfo.Attachments != null
+                    && stepContext.StepInfo.Attachments.Count > 0)
                 {
                     stepResult.Attachments = new();
-                    stepResult.Attachments.AddRange(stepContext.CurrentStep.Attachments);
+                    stepResult.Attachments.AddRange(stepContext.StepInfo.Attachments);
                 }
             }
         }

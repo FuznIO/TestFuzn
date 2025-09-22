@@ -92,13 +92,13 @@ public class SerializerProviderTests : BaseFeatureTest
             .Run();
     }
 
-    private Task VerifyNewtonsoftSerializerProviderIsAdded(StepContext<EmptyCustomStepContext> stepContext)
+    private Task VerifyNewtonsoftSerializerProviderIsAdded(IterationContext<EmptyModel> stepContext)
     {
         Assert.IsTrue(stepContext.SerializerProvider.Any(a => a.GetType().FullName == "TestFusion.Plugins.Newtonsoft.Internals.NewtonsoftSerializerProvider"));
         return Task.CompletedTask;
     }
 
-    private HttpResponse CreateHttpResponse(StepContext<EmptyCustomStepContext> context, HashSet<ISerializerProvider>? serializers)
+    private HttpResponse CreateHttpResponse(IterationContext<EmptyModel> context, HashSet<ISerializerProvider>? serializers)
     {
         var type = typeof(HttpResponse);
         var propertyBindingFlags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
@@ -111,7 +111,7 @@ public class SerializerProviderTests : BaseFeatureTest
         return response;
     }
 
-    private HashSet<ISerializerProvider> SetPriorityNewtonsoftFirst(StepContext<EmptyCustomStepContext> context)
+    private HashSet<ISerializerProvider> SetPriorityNewtonsoftFirst(IterationContext<EmptyModel> context)
     {
         var newHashSet = context.SerializerProvider.ToHashSet();
         foreach (var provider in newHashSet)
@@ -127,7 +127,7 @@ public class SerializerProviderTests : BaseFeatureTest
         return newHashSet;
     }
 
-    private HashSet<ISerializerProvider> SetPrioritySystemTextJsonFirst(StepContext<EmptyCustomStepContext> context)
+    private HashSet<ISerializerProvider> SetPrioritySystemTextJsonFirst(IterationContext<EmptyModel> context)
     {
         var newHashSet = context.SerializerProvider.ToHashSet();
         foreach (var provider in newHashSet)
@@ -143,14 +143,14 @@ public class SerializerProviderTests : BaseFeatureTest
         return newHashSet;
     }
 
-    private HashSet<ISerializerProvider> RemoveSystemTextJsonSerializer(StepContext<EmptyCustomStepContext> context)
+    private HashSet<ISerializerProvider> RemoveSystemTextJsonSerializer(IterationContext<EmptyModel> context)
     {
         var newHashSet = context.SerializerProvider.ToHashSet();
         newHashSet.RemoveWhere(provider => provider.GetType().FullName == "TestFusion.SystemTextJsonSerializerProvider");
         return newHashSet;
     }
 
-    private HashSet<ISerializerProvider> RemoveNewtonsoftJsonSerializer(StepContext<EmptyCustomStepContext> context)
+    private HashSet<ISerializerProvider> RemoveNewtonsoftJsonSerializer(IterationContext<EmptyModel> context)
     {
         var newHashSet = context.SerializerProvider.ToHashSet();
         newHashSet.RemoveWhere(provider => provider.GetType().FullName == "TestFusion.Plugins.Newtonsoft.Internals.NewtonsoftSerializerProvider");

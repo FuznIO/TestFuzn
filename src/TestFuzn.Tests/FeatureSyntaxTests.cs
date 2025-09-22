@@ -66,6 +66,14 @@ public class SyntaxTests : BaseFeatureTest
             // Load test specific: Runs through the input data sequentially, then repeats the last input data for the remaining iterations.
             .InputDataBehavior(InputDataBehavior.LoopThenRepeatLast)
             // Steps are executed in order. If one steps fails within an execution, the rest of the steps will be skipped (=not executed).
+            .InitIteration((context) =>
+            {
+                // This will be executed once per iteration, before any steps.
+            })
+            .InitIteration(async (context) =>
+            {
+                // This will be execute once per iteration before any steps.
+            })
             .Step("Step 1 - Sync with context", context =>
             {
                 // Some code goes here.
@@ -78,7 +86,7 @@ public class SyntaxTests : BaseFeatureTest
             .SharedStep() // Extension method for shared steps.
             .Step("Step 3 - Shared step using action", SharedStepAction)
             .Step("Step 4 - Shared step type regular method", context => SharedMethod("value"))
-            .Step("Step 5 - All functionality", async context => 
+            .Step("Step 5 - All functionality", "ID-1234", async context => 
             {
                 // Get input data for the row row.
                 var user = context.InputData<string>();
@@ -94,21 +102,19 @@ public class SyntaxTests : BaseFeatureTest
                 // Support for sub-steps, sync/async.
                 context.Step("Sub step 1.1", subcontext1 =>
                 { 
-                    context.Step("Sub step 1.1.1", subcontext2 =>
+                    subcontext1.Step("Sub step 1.1.1", subcontext2 =>
                     {
                     });
                 });
 
-                context.CurrentStep.Id = "StepId-1234"; // Optional id for the step.
-                context.CurrentStep.Metadata("stepKey1", "stepValue1"); // Optional metadata for step, multiple are supported.
                 // Comments: Feature: Outputted to console and reports. Load load tests: Outputted to log file
-                context.CurrentStep.Comment("Opening"); 
-                context.CurrentStep.Comment("Closing");
+                context.Comment("Opening"); 
+                context.Comment("Closing");
 
                 // Attach file to the current step.
-                await context.CurrentStep.Attach("file1.txt", "Some content");
-                await context.CurrentStep.Attach($"screenshot.png", new byte[0]);
-                await context.CurrentStep.Attach($"screenshot.png", new MemoryStream());
+                await context.Attach("file1.txt", "Some content");
+                await context.Attach($"screenshot.png", new byte[0]);
+                await context.Attach($"screenshot.png", new MemoryStream());
             })
             // Warmup simulations run before .Load().Simulations(). 
             // For these simulations no stats will be recorded, AssertWhileRunning, AssertWhenDone and sinks will not be called.
@@ -180,16 +186,16 @@ public class SyntaxTests : BaseFeatureTest
         await Scenario<CustomContext>("Syntax Showcase with custom context")
             .Step("Step 1 - Set property on context", context =>
             {
-                context.Custom.CustomProperty = "value1"; // Set data in context which is shared between steps.
+                context.Model.CustomProperty = "value1"; // Set data in context which is shared between steps.
             })
             .Step("Step 2 - Read property from context", context =>
             {
-                Assert.AreEqual("value1", context.Custom.CustomProperty);
+                Assert.AreEqual("value1", context.Model.CustomProperty);
             })
             .Run();
     }
 
-    public async Task SharedStepAction(StepContext<EmptyCustomStepContext> context)
+    public async Task SharedStepAction(IterationContext<EmptyModel> context)
     {
         // Some code goes here.
     }
@@ -208,7 +214,7 @@ public class CustomContext
 public static class SharedSteps
 { 
     public static ScenarioBuilder<T> SharedStep<T>(this ScenarioBuilder<T> builder)
-        where T: BaseStepContext
+        where T: IterationContext
     {
         builder.Step("Shared step", (context) =>
         {

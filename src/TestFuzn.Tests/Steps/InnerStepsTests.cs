@@ -9,20 +9,20 @@ public class InnerStepsTests : BaseFeatureTest
         await Scenario()
             .Step("Step 1", async (context) =>
             {
-                Assert.AreEqual("Step 1", context.CurrentStep.Name);
+                Assert.AreEqual("Step 1", context.StepInfo.Name);
 
                 context.Step("Step 1.1", (subContext1) =>
                 {
-                    Assert.AreEqual("Step 1.1", subContext1.CurrentStep.Name);
+                    Assert.AreEqual("Step 1.1", subContext1.StepInfo.Name);
 
                     subContext1.Step("Step 1.1.1", (subContext2) =>
                     {
-                        Assert.AreEqual("Step 1.1.1", subContext2.CurrentStep.Name);
+                        Assert.AreEqual("Step 1.1.1", subContext2.StepInfo.Name);
                     });
 
                     subContext1.Step("Step 1.1.2", (subContext2) =>
                     {
-                        Assert.AreEqual("Step 1.1.2", subContext2.CurrentStep.Name);
+                        Assert.AreEqual("Step 1.1.2", subContext2.StepInfo.Name);
                     });
                 });
 
@@ -31,10 +31,10 @@ public class InnerStepsTests : BaseFeatureTest
             })
             .Step("Step 2", (context) =>
             {
-                Assert.AreEqual("Step 2", context.CurrentStep.Name);
+                Assert.AreEqual("Step 2", context.StepInfo.Name);
                 context.Step("Step 2.1", (subContext1) =>
                 {   
-                    Assert.AreEqual("Step 2.1", subContext1.CurrentStep.Name);
+                    Assert.AreEqual("Step 2.1", subContext1.StepInfo.Name);
                 });
             })
             .Run();
@@ -46,21 +46,21 @@ public class InnerStepsTests : BaseFeatureTest
         await Scenario()
             .Step("Step 1", async (context) =>
             {
-                Assert.AreEqual("Step 1", context.CurrentStep.Name);
+                Assert.AreEqual("Step 1", context.StepInfo.Name);
                 await context.Step("Step 1.1", async (subContext1) =>
                 {
-                    Assert.AreEqual("Step 1.1", subContext1.CurrentStep.Name);
+                    Assert.AreEqual("Step 1.1", subContext1.StepInfo.Name);
                     await Task.CompletedTask;
 
                     await subContext1.Step("Step 1.1.1", async (subContext2) =>
                     {   
-                        Assert.AreEqual("Step 1.1.1", subContext2.CurrentStep.Name);
+                        Assert.AreEqual("Step 1.1.1", subContext2.StepInfo.Name);
                         await Task.CompletedTask;
                     });
 
                     await subContext1.Step("Step 1.1.2", async (subContext2) =>
                     {   
-                        Assert.AreEqual("Step 1.1.2", subContext2.CurrentStep.Name);
+                        Assert.AreEqual("Step 1.1.2", subContext2.StepInfo.Name);
                         await Task.CompletedTask;
                     });
                 });
@@ -70,10 +70,10 @@ public class InnerStepsTests : BaseFeatureTest
             })
             .Step("Step 2", async (context) =>
             {
-                Assert.AreEqual("Step 2", context.CurrentStep.Name);
+                Assert.AreEqual("Step 2", context.StepInfo.Name);
                 await context.Step("Step 2.1", async (subContext1) =>
                 {   
-                    Assert.AreEqual("Step 2.1", subContext1.CurrentStep.Name);
+                    Assert.AreEqual("Step 2.1", subContext1.StepInfo.Name);
 
                     await Task.CompletedTask;
                 });
@@ -87,21 +87,21 @@ public class InnerStepsTests : BaseFeatureTest
         await Scenario()
             .Step("Step 1", async (context) =>
             {
-                Assert.AreEqual("Step 1", context.CurrentStep.Name);
+                Assert.AreEqual("Step 1", context.StepInfo.Name);
                 await context.Step("Step 1.1", async (subContext1) =>
                 {
-                    Assert.AreEqual("Step 1.1", subContext1.CurrentStep.Name);
+                    Assert.AreEqual("Step 1.1", subContext1.StepInfo.Name);
                     await Task.CompletedTask;
 
                     await subContext1.Step("Step 1.1.1", async (subContext2) =>
                     {
-                        Assert.AreEqual("Step 1.1.1", subContext2.CurrentStep.Name);
+                        Assert.AreEqual("Step 1.1.1", subContext2.StepInfo.Name);
                         await Task.CompletedTask;
                     });
 
                     await subContext1.Step("Step 1.1.2", async (subContext2) =>
                     {
-                        Assert.AreEqual("Step 1.1.2", subContext2.CurrentStep.Name);
+                        Assert.AreEqual("Step 1.1.2", subContext2.StepInfo.Name);
                         await Task.CompletedTask;
                     });
                 });
@@ -111,10 +111,10 @@ public class InnerStepsTests : BaseFeatureTest
             })
             .Step("Step 2", async (context) =>
             {
-                Assert.AreEqual("Step 2", context.CurrentStep.Name);
+                Assert.AreEqual("Step 2", context.StepInfo.Name);
                 await context.Step("Step 2.1", async (subContext1) =>
                 {
-                    Assert.AreEqual("Step 2.1", subContext1.CurrentStep.Name);
+                    Assert.AreEqual("Step 2.1", subContext1.StepInfo.Name);
 
                     await Task.CompletedTask;
                 });

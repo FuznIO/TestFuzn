@@ -21,16 +21,21 @@ public class InitAndCleanupTests : BaseFeatureTest
     }
 
     [ScenarioTest]
-    public async Task Verify_sync_with_context()
+    public async Task Verify_lifecycle_sync_methods_with_context()
     {
-        var initCalled = false;
+        var initScenarioCalled = false;
+        var initIterationCalled = 0;
         var cleanupIterationCalled = 0;
-        var cleanupCalled = false;
+        var cleanupScenarioCalled = false;
 
         await Scenario()
             .InitScenario((context) =>
             {
-                initCalled = true;
+                initScenarioCalled = true;
+            })
+            .InitIteration((context) =>
+            {
+                Interlocked.Add(ref initIterationCalled, 1);
             })
             .Step("Step 1", (context) => { })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
@@ -40,28 +45,34 @@ public class InitAndCleanupTests : BaseFeatureTest
             })
             .CleanupScenario((context) =>
             {
-                cleanupCalled = true;
+                cleanupScenarioCalled = true;
             })
             .Run();
 
-        Assert.IsTrue(initCalled);
+        Assert.IsTrue(initScenarioCalled);
+        Assert.AreEqual(3, initIterationCalled);
         Assert.AreEqual(3, cleanupIterationCalled);
-        Assert.IsTrue(cleanupCalled);
+        Assert.IsTrue(cleanupScenarioCalled);
         Assert.IsTrue(_beforeEachScenarioTestCalled);
         Assert.IsTrue(_afterEachScenarioTestCalled);
     }
 
     [ScenarioTest]
-    public async Task Verify_async_with_context()
+    public async Task Verify_lifecycle_async_methods_with_context()
     {
-        var initCalled = false;
+        var initScenarioCalled = false;
+        var initIterationCalled = 0;
         var cleanupIterationCalled = 0;
-        var cleanupCalled = false;
+        var cleanupScenarioCalled = false;
 
         await Scenario()
             .InitScenario(async (context) =>
             {
-                initCalled = true;
+                initScenarioCalled = true;
+            })
+            .InitIteration(async (context) =>
+            {
+                Interlocked.Add(ref initIterationCalled, 1);
             })
             .Step("Step 1", (context) => { })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
@@ -71,12 +82,13 @@ public class InitAndCleanupTests : BaseFeatureTest
             })
             .CleanupScenario(async (context) =>
             {
-                cleanupCalled = true;
+                cleanupScenarioCalled = true;
             })
             .Run();
 
-        Assert.IsTrue(initCalled);
+        Assert.IsTrue(initScenarioCalled);
+        Assert.AreEqual(3, initIterationCalled);
         Assert.AreEqual(3, cleanupIterationCalled);
-        Assert.IsTrue(cleanupCalled);
+        Assert.IsTrue(cleanupScenarioCalled);
     }
 }

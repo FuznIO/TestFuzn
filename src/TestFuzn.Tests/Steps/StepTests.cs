@@ -59,8 +59,8 @@ public class StepTests : BaseFeatureTest
             .Step("Step 1 - Async with context", async (context) =>
             {
                 Assert.IsNotNull(context);
-                Assert.IsNotNull(context.Custom);
-                context.Custom.CustomProperty = "Step1";
+                Assert.IsNotNull(context.Model);
+                context.Model.CustomProperty = "Step1";
                 step1Executed = true;
                 await Task.CompletedTask;
 
@@ -68,23 +68,23 @@ public class StepTests : BaseFeatureTest
             .Step("Step 2 - Sync with context", (context) =>
             {
                 Assert.IsNotNull(context);
-                Assert.IsNotNull(context.Custom);
-                Assert.AreEqual("Step1", context.Custom.CustomProperty);
-                context.Custom.CustomProperty = "Step2";
+                Assert.IsNotNull(context.Model);
+                Assert.AreEqual("Step1", context.Model.CustomProperty);
+                context.Model.CustomProperty = "Step2";
                 step2Executed = true;
             })
             .SharedStepOnOnlyOnCustomStepContextType()
             .Step("Step 4 - Verify that SharedStepOnOnlyOnStepContextType was executed", (context) =>
             {
-                Assert.AreEqual("Step3", context.Custom.CustomProperty);
-                context.Custom.CustomProperty = "Step4";
+                Assert.AreEqual("Step3", context.Model.CustomProperty);
+                context.Model.CustomProperty = "Step4";
                 Assert.AreEqual("true", context.GetSharedData<string>("SharedStepOnOnlyOnCustomStepContextType_Executed"));
                 step3Executed = true;
             })
             .SharedStepOnAllStepContextTypes()
             .Step("Step 6 - Verify that SharedStepOnAllStepContextTypes was executed", (context) =>
             {
-                Assert.AreEqual("Step4", context.Custom.CustomProperty);
+                Assert.AreEqual("Step4", context.Model.CustomProperty);
                 Assert.AreEqual("true", context.GetSharedData<string>("SharedStepOnAllStepContextTypes_Executed"));
                 step4Executed = true;
             })

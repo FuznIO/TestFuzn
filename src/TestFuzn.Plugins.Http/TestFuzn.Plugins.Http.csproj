@@ -8,6 +8,7 @@
     <Title>TestFuzn.Plugins.Http</Title>
     <Description>Http plugin for TestFuzn</Description>
     <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;http</PackageTags>
+    <Authors>Fuzn</Authors>
   </PropertyGroup>
 
   <ItemGroup>

@@ -8,9 +8,9 @@ public class LoadReportTests : BaseFeatureTest
     {
         await Scenario()
             .Id("ScenarioId-1234")
-            .Step("Test", (context) =>
+            .Step("Test", "Test-1234", (context) =>
             {
-                context.CurrentStep.Id = "Test-StepId-1234";
+                return Task.CompletedTask;
             })
             .Step("This step should fail now and then", (context) =>
             {
@@ -30,8 +30,6 @@ public class LoadReportTests : BaseFeatureTest
             .Metadata("MetadataScenarioKey2", "Value2")
             .Step("Test Step 1", (context) =>
             {
-                context.CurrentStep.Metadata("MetadataStep1Key1", "Value1");
-                context.CurrentStep.Metadata("MetadataStep1Key2", "Value2");
             })
             .Step("Test Step 2", (context) =>
             {

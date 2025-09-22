@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn;
 
 public class LoadBuilder<TStepContext>
-    where TStepContext : BaseStepContext
+    where TStepContext : IterationContext
 {
     private readonly ScenarioBuilder<TStepContext> _scenarioBuilder;
 
@@ -43,7 +43,7 @@ public class LoadBuilder<TStepContext>
     }
 
     public ScenarioBuilder<TStepContext> IncludeScenario<TIncludeScenarioStepContext>(ScenarioBuilder<TIncludeScenarioStepContext> scenarioBuilder)
-        where TIncludeScenarioStepContext : BaseStepContext, new()
+        where TIncludeScenarioStepContext : IterationContext, new()
     {
         if (_scenarioBuilder.IncludeScenarios == null)
             _scenarioBuilder.IncludeScenarios = new();

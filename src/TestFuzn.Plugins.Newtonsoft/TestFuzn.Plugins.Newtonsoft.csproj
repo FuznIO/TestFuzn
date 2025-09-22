@@ -8,6 +8,7 @@
     <Title>TestFuzn.Plugins.Newtonsoft</Title>
     <Description>Newtonsoft plugin for TestFuzn</Description>
     <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;newtonsoft</PackageTags>
+    <Authors>Fuzn</Authors>
   </PropertyGroup>
 
   <ItemGroup>

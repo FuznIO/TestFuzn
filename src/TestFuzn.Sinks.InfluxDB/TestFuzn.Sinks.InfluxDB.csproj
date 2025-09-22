@@ -8,6 +8,7 @@
     <Title>TestFuzn.Sinks.InfluxDB</Title>
     <Description>InfluxDB sink for TestFuzn</Description>
     <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;influxdb;influx</PackageTags>
+    <Authors>Fuzn</Authors>
   </PropertyGroup>
 
   <ItemGroup>

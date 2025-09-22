@@ -2,8 +2,8 @@
 
 public static class SharedStepsExtensionMethods
 {
-    public static ScenarioBuilder<StepContext<EmptyCustomStepContext>> SharedStepOnOnlyOnStepContextType(
-        this ScenarioBuilder<StepContext<EmptyCustomStepContext>> scenario)
+    public static ScenarioBuilder<IterationContext<EmptyModel>> SharedStepOnOnlyOnStepContextType(
+        this ScenarioBuilder<IterationContext<EmptyModel>> scenario)
     {
         scenario.Step("SharedStepOnOnlyStepContextType", (context) =>
         {
@@ -15,13 +15,13 @@ public static class SharedStepsExtensionMethods
         return scenario;
     }
 
-    public static ScenarioBuilder<StepContext<CustomStepContext>> SharedStepOnOnlyOnCustomStepContextType(
-        this ScenarioBuilder<StepContext<CustomStepContext>> scenario)
+    public static ScenarioBuilder<IterationContext<CustomStepContext>> SharedStepOnOnlyOnCustomStepContextType(
+        this ScenarioBuilder<IterationContext<CustomStepContext>> scenario)
     {
         scenario.Step("SharedStepOnOnlyOnCustomStepContextType", (context) =>
         {
-            Assert.AreEqual("Step2", context.Custom.CustomProperty);
-            context.Custom.CustomProperty = "Step3";
+            Assert.AreEqual("Step2", context.Model.CustomProperty);
+            context.Model.CustomProperty = "Step3";
             context.SetSharedData("SharedStepOnOnlyOnCustomStepContextType_Executed", "true");
             
             return Task.CompletedTask;
@@ -32,7 +32,7 @@ public static class SharedStepsExtensionMethods
 
     public static ScenarioBuilder<TStepContext> SharedStepOnAllStepContextTypes<TStepContext>(
         this ScenarioBuilder<TStepContext> scenario)
-        where TStepContext : BaseStepContext
+        where TStepContext : IterationContext
     {
         scenario.Step("SharedStepOnAllStepContextTypes", (context) =>
         {

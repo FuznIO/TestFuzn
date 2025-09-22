@@ -109,20 +109,20 @@ public class HttpRequest
 
             var cts = new CancellationTokenSource(Timeout);
 
-            _context.Logger.LogInformation($"Step {_context.CurrentStep.Name} - HTTP Request: {request.Method} {request.RequestUri} - CorrelationId: {_context.Info.CorrelationId}");
+            _context.Logger.LogInformation($"Step {_context.StepInfo.Name} - HTTP Request: {request.Method} {request.RequestUri} - CorrelationId: {_context.Info.CorrelationId}");
 
             if (request.Content != null)
             {
                 var requestBody = await request.Content.ReadAsStringAsync(cts.Token);
-                _context.Logger.LogInformation($"Step {_context.CurrentStep.Name} - Request Body: {requestBody} - CorrelationId: {_context.Info.CorrelationId}");
+                _context.Logger.LogInformation($"Step {_context.StepInfo.Name} - Request Body: {requestBody} - CorrelationId: {_context.Info.CorrelationId}");
             }
 
             response = await client.SendAsync(request, cts.Token);
             responseBody = await response.Content.ReadAsStringAsync(cts.Token);
 
-            _context.Logger.LogInformation($"Step {_context.CurrentStep.Name} - HTTP Response: {(int)response.StatusCode} {response.ReasonPhrase} - CorrelationId: {_context.Info.CorrelationId}");
+            _context.Logger.LogInformation($"Step {_context.StepInfo.Name} - HTTP Response: {(int)response.StatusCode} {response.ReasonPhrase} - CorrelationId: {_context.Info.CorrelationId}");
             if (responseBody != null)
-                _context.Logger.LogInformation($"Step {_context.CurrentStep.Name} - Response Body: {responseBody} - CorrelationId: {_context.Info.CorrelationId}");
+                _context.Logger.LogInformation($"Step {_context.StepInfo.Name} - Response Body: {responseBody} - CorrelationId: {_context.Info.CorrelationId}");
 
             responseCookies = ExtractResponseCookies(response, uri);
 
