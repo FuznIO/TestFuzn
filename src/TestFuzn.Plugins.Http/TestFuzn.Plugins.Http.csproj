@@ -4,8 +4,8 @@
     <AssemblyName>Fuzn.TestFuzn.Plugins.Http</AssemblyName>
     <RootNamespace>Fuzn.TestFuzn.Plugins.Http</RootNamespace>
     <OutputType>Library</OutputType>
-    <PackageId>TestFuzn.Plugins.Http</PackageId>
-    <Title>TestFuzn.Plugins.Http</Title>
+    <PackageId>Fuzn.TestFuzn.Plugins.Http</PackageId>
+    <Title>Fuzn.TestFuzn.Plugins.Http</Title>
     <Description>Http plugin for TestFuzn</Description>
     <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;http</PackageTags>
     <Authors>Fuzn</Authors>
@@ -18,6 +18,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>

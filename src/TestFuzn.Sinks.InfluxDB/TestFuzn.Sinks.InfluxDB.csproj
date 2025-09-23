@@ -4,8 +4,8 @@
     <AssemblyName>Fuzn.TestFuzn.Sinks.InfluxDB</AssemblyName>
     <RootNamespace>Fuzn.TestFuzn.Sinks.InfluxDB</RootNamespace>
     <OutputType>Library</OutputType>
-    <PackageId>TestFuzn.Sinks.InfluxDB</PackageId>
-    <Title>TestFuzn.Sinks.InfluxDB</Title>
+    <PackageId>Fuzn.TestFuzn.Sinks.InfluxDB</PackageId>
+    <Title>Fuzn.TestFuzn.Sinks.InfluxDB</Title>
     <Description>InfluxDB sink for TestFuzn</Description>
     <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;influxdb;influx</PackageTags>
     <Authors>Fuzn</Authors>
@@ -17,6 +17,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>

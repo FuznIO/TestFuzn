@@ -4,8 +4,8 @@
     <AssemblyName>Fuzn.TestFuzn.Plugins.Newtonsoft</AssemblyName>
     <RootNamespace>Fuzn.TestFuzn.Plugins.Newtonsoft</RootNamespace>
     <OutputType>Library</OutputType>
-    <PackageId>TestFuzn.Plugins.Newtonsoft</PackageId>
-    <Title>TestFuzn.Plugins.Newtonsoft</Title>
+    <PackageId>Fuzn.TestFuzn.Plugins.Newtonsoft</PackageId>
+    <Title>Fuzn.TestFuzn.Plugins.Newtonsoft</Title>
     <Description>Newtonsoft plugin for TestFuzn</Description>
     <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;newtonsoft</PackageTags>
     <Authors>Fuzn</Authors>
@@ -18,6 +18,10 @@
   <ItemGroup>
     <ProjectReference Include="..\TestFuzn.Plugins.Http\TestFuzn.Plugins.Http.csproj" />
     <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>
