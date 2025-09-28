@@ -21,16 +21,16 @@ public abstract class BaseFeatureTest : IFeatureTest
         FeatureName = featureName;
     }
 
-    public ScenarioBuilder<IterationContext<EmptyModel>> Scenario([CallerMemberName] string scenarioName = null)
+    public ScenarioBuilder<EmptyModel> Scenario([CallerMemberName] string scenarioName = null)
     {
-        var scenario = new ScenarioBuilder<IterationContext<EmptyModel>>(new MsTestAdapter(TestContext), this, scenarioName);
+        var scenario = new ScenarioBuilder<EmptyModel>(new MsTestAdapter(TestContext), this, scenarioName);
         return scenario;
     }
 
-    public ScenarioBuilder<IterationContext<TCustomStepContext>> Scenario<TCustomStepContext>([CallerMemberName] string scenarioName = null)
-        where TCustomStepContext : new()
+    public ScenarioBuilder<TModel> Scenario<TModel>([CallerMemberName] string scenarioName = null)
+        where TModel : new()
     {
-        var scenario = new ScenarioBuilder<IterationContext<TCustomStepContext>>(new MsTestAdapter(TestContext), this, scenarioName);
+        var scenario = new ScenarioBuilder<TModel>(new MsTestAdapter(TestContext), this, scenarioName);
         return scenario;
     }
 

@@ -55,7 +55,7 @@ public class StepTests : BaseFeatureTest
         bool step3Executed = false;
         bool step4Executed = false;
 
-        await Scenario<CustomStepContext>()
+        await Scenario<CustomModel>()
             .Step("Step 1 - Async with context", async (context) =>
             {
                 Assert.IsNotNull(context);

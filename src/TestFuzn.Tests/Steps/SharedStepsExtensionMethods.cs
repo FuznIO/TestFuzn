@@ -2,8 +2,8 @@
 
 public static class SharedStepsExtensionMethods
 {
-    public static ScenarioBuilder<IterationContext<EmptyModel>> SharedStepOnOnlyOnStepContextType(
-        this ScenarioBuilder<IterationContext<EmptyModel>> scenario)
+    public static ScenarioBuilder<EmptyModel> SharedStepOnOnlyOnStepContextType(
+        this ScenarioBuilder<EmptyModel> scenario)
     {
         scenario.Step("SharedStepOnOnlyStepContextType", (context) =>
         {
@@ -15,8 +15,8 @@ public static class SharedStepsExtensionMethods
         return scenario;
     }
 
-    public static ScenarioBuilder<IterationContext<CustomStepContext>> SharedStepOnOnlyOnCustomStepContextType(
-        this ScenarioBuilder<IterationContext<CustomStepContext>> scenario)
+    public static ScenarioBuilder<CustomModel> SharedStepOnOnlyOnCustomStepContextType(
+        this ScenarioBuilder<CustomModel> scenario)
     {
         scenario.Step("SharedStepOnOnlyOnCustomStepContextType", (context) =>
         {
@@ -30,9 +30,9 @@ public static class SharedStepsExtensionMethods
         return scenario;
     }
 
-    public static ScenarioBuilder<TStepContext> SharedStepOnAllStepContextTypes<TStepContext>(
-        this ScenarioBuilder<TStepContext> scenario)
-        where TStepContext : IterationContext
+    public static ScenarioBuilder<TModel> SharedStepOnAllStepContextTypes<TModel>(
+        this ScenarioBuilder<TModel> scenario)
+        where TModel : new()
     {
         scenario.Step("SharedStepOnAllStepContextTypes", (context) =>
         {

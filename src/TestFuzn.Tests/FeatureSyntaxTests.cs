@@ -20,6 +20,8 @@ public class SyntaxTests : BaseFeatureTest
 
     [Ignore]
     [ScenarioTest]
+    [TestCategory("Component")]
+    [TestCategory("E2E")]
     public async Task DefaultContext()
     {
         // Definition of test types:
@@ -183,7 +185,7 @@ public class SyntaxTests : BaseFeatureTest
     [ScenarioTest]
     public async Task CustomContext()
     {
-        await Scenario<CustomContext>("Syntax Showcase with custom context")
+        await Scenario<CustomModel>("Syntax Showcase with custom context")
             .Step("Step 1 - Set property on context", context =>
             {
                 context.Model.CustomProperty = "value1"; // Set data in context which is shared between steps.
@@ -206,7 +208,7 @@ public class SyntaxTests : BaseFeatureTest
     }
 }
 
-public class CustomContext
+public class CustomModel
 {
     public string CustomProperty { get; set; }
 }
@@ -214,7 +216,7 @@ public class CustomContext
 public static class SharedSteps
 { 
     public static ScenarioBuilder<T> SharedStep<T>(this ScenarioBuilder<T> builder)
-        where T: IterationContext
+        where T: new()
     {
         builder.Step("Shared step", (context) =>
         {

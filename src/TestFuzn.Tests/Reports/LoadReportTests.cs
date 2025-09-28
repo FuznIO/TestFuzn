@@ -37,7 +37,7 @@ public class LoadReportTests : BaseFeatureTest
             .Step("Test Step 3", (context) =>
             {
             })
-            .Step("Test Step 4", (context) =>
+            .Step("Test Step 4", (context) =>   
             {
             })
             .Step("Test Step 5", (context) =>

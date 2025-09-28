@@ -52,4 +52,20 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Load().Simulations((context, simulations) => simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
             .Run();
     }
+
+    [ScenarioTest]
+    [Ignore]
+    public async Task Max_Load()
+    {
+        await Scenario()
+            .Step("Call ping and expect pong", async (context) =>
+            {
+                var response = await context.CreateHttpRequest("https://localhost:44316/api/Ping").Get();
+
+                Assert.IsTrue(response.Ok);
+                Assert.IsTrue(response.BodyAs<string>() == "Pong");
+            })
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
+            .Run();
+    }
 }
