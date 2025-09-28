@@ -94,7 +94,7 @@ public class SerializerProviderTests : BaseFeatureTest
 
     private Task VerifyNewtonsoftSerializerProviderIsAdded(IterationContext<EmptyModel> stepContext)
     {
-        Assert.IsTrue(stepContext.SerializerProvider.Any(a => a.GetType().FullName == "TestFusion.Plugins.Newtonsoft.Internals.NewtonsoftSerializerProvider"));
+        Assert.IsTrue(stepContext.SerializerProvider.Any(a => a.GetType().FullName == "Fuzn.TestFuzn.Plugins.Newtonsoft.Internals.NewtonsoftSerializerProvider"));
         return Task.CompletedTask;
     }
 
@@ -119,7 +119,7 @@ public class SerializerProviderTests : BaseFeatureTest
             var backingField = provider.GetType().GetField("<Priority>k__BackingField",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             backingField!.SetValue(provider,
-                provider.GetType().FullName is "TestFusion.Plugins.Newtonsoft.Internals.NewtonsoftSerializerProvider"
+                provider.GetType().FullName is "Fuzn.TestFuzn.Plugins.Newtonsoft.Internals.NewtonsoftSerializerProvider"
                     ? 0
                     : 1);
         }
@@ -135,7 +135,7 @@ public class SerializerProviderTests : BaseFeatureTest
             var backingField = provider.GetType().GetField("<Priority>k__BackingField",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             backingField!.SetValue(provider,
-                provider.GetType().FullName is "TestFusion.Plugins.Newtonsoft.Internals.NewtonsoftSerializerProvider"
+                provider.GetType().FullName is "Fuzn.TestFuzn.Plugins.Newtonsoft.Internals.NewtonsoftSerializerProvider"
                     ? 1
                     : 0);
         }
@@ -146,14 +146,14 @@ public class SerializerProviderTests : BaseFeatureTest
     private HashSet<ISerializerProvider> RemoveSystemTextJsonSerializer(IterationContext<EmptyModel> context)
     {
         var newHashSet = context.SerializerProvider.ToHashSet();
-        newHashSet.RemoveWhere(provider => provider.GetType().FullName == "TestFusion.SystemTextJsonSerializerProvider");
+        newHashSet.RemoveWhere(provider => provider.GetType().FullName == "Fuzn.TestFuzn.SystemTextJsonSerializerProvider");
         return newHashSet;
     }
 
     private HashSet<ISerializerProvider> RemoveNewtonsoftJsonSerializer(IterationContext<EmptyModel> context)
     {
         var newHashSet = context.SerializerProvider.ToHashSet();
-        newHashSet.RemoveWhere(provider => provider.GetType().FullName == "TestFusion.Plugins.Newtonsoft.Internals.NewtonsoftSerializerProvider");
+        newHashSet.RemoveWhere(provider => provider.GetType().FullName == "Fuzn.TestFuzn.Plugins.Newtonsoft.Internals.NewtonsoftSerializerProvider");
         return newHashSet;
     }
 }

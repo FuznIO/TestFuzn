@@ -17,13 +17,25 @@ public class FeatureReportTests : BaseFeatureTest
                 context.Comment("Comment 2 Sub step 1");
                 context.Step("Sub Step 1", (subContext) =>
                 {
-                    context.Comment("Comment 1 Sub step 1");
-                    context.Comment("Comment 2 Sub step 1");
+                    subContext.Comment("Comment 1 Sub step 1");
+                    subContext.Comment("Comment 2 Sub step 1");
 
-                    context.Step("Sub Sub Step 1", (subSubContext) =>
+                    subContext.Step("Sub Sub Step 1", (subSubContext) =>
                     {
-                        context.Comment("Comment 1 Sub Sub step 1");
-                        context.Comment("Comment 2 Sub Sub step 1");
+                        subSubContext.Comment("Comment 1 Sub Sub step 1");
+                        subSubContext.Comment("Comment 2 Sub Sub step 1");
+
+                        subSubContext.Step("Sub Sub Sub Step 1", (subSubSubContext) =>
+                        {
+                            subSubSubContext.Comment("Comment 1 Sub Sub Sub step 1");
+                            subSubSubContext.Comment("Comment 2 Sub Sub Sub step 1");
+
+                            subSubSubContext.Step("Sub Sub Sub Sub Step 1", (subSubSubSubContext) =>
+                            {
+                                subSubSubSubContext.Comment("Comment 1 Sub Sub Sub Sub step 1");
+                                subSubSubSubContext.Comment("Comment 2 Sub Sub Sub Sub step 1");
+                            });
+                        });
                     });
                 });
             })

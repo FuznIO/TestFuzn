@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Contracts.Results.Feature;
 
@@ -91,25 +91,32 @@ internal class ExecuteStepHandler
             return;
         }
 
-        if (RootStepResult.Name == step.ParentName)
+        var parentResult = RootStepResult.Name == step.ParentName
+            ? RootStepResult
+            : FindParentRecursive(RootStepResult, step.ParentName);
+
+        if (parentResult == null)
+            throw new Exception($"Parent step '{step.ParentName}' not found.");
+
+        parentResult.StepResults ??= [];
+        parentResult.StepResults.Add(stepResult);
+    }
+
+    private static StepFeatureResult? FindParentRecursive(StepFeatureResult current, string parentName)
+    {
+        if (current.StepResults == null || current.StepResults.Count == 0)
+            return null;
+
+        foreach (var child in current.StepResults)
         {
-            if (RootStepResult.StepResults == null)
-                RootStepResult.StepResults = new();
-            RootStepResult.StepResults.Add(stepResult);
-            return;
+            if (child.Name == parentName)
+                return child;
+
+            var found = FindParentRecursive(child, parentName);
+            if (found != null)
+                return found;
         }
 
-        foreach (var parentResult in RootStepResult.StepResults)
-        {
-            if (parentResult.Name == step.ParentName)
-            {
-                if (parentResult.StepResults == null)
-                    parentResult.StepResults = new();
-                parentResult.StepResults.Add(stepResult);
-                return;
-            }
-        }
-
-        throw new Exception(@$"Parent step '{step.ParentName}' not found.");
+        return null;
     }
 }

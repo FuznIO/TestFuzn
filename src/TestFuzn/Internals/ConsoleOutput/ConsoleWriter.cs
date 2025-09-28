@@ -90,11 +90,25 @@ internal class ConsoleWriter
                     table.Rows.Add(new AdvancedTableRow
                     {
                         Cells =
-                    {
-                        new AdvancedTableCell($"Step {index + 1}/{iterationResult.StepResults.Count}: {stepResult.Key}", 4),
-                        new KeyValueCell($"{stepResult.Value.Status}", $"{stepResult.Value.Duration.ToTestFuznResponseTime()}", 1)
-                    }
+                        {
+                            new AdvancedTableCell($"Step {index + 1}/{iterationResult.StepResults.Count}: {stepResult.Key}", 4),
+                            new KeyValueCell($"{stepResult.Value.Status}", $"{stepResult.Value.Duration.ToTestFuznResponseTime()}", 1)
+                        }
                     });
+
+                    var subStepResults = SubStepHelper.GetSubStepResults(stepResult.Value);
+                    foreach (var sub in subStepResults)
+                    {
+                        var indent = new string(' ', sub.Level * 2 - 2);
+                        table.Rows.Add(new AdvancedTableRow
+                        {
+                            Cells =
+                            {
+                                new AdvancedTableCell($"{indent}↳ {sub.Name}", 4),
+                                new KeyValueCell($"{sub.Status}", $"{sub.Duration.ToTestFuznResponseTime()}", 1)
+                            }
+                        });
+                    }
 
                     if (iterationResult.InputData != null && index + 1 == iterationResult.StepResults.Count && iterationIndex + 1 < scenarioResult.IterationResults.Count)
                         table.Rows.Add(new AdvancedTableRow { IsDivider = true });
