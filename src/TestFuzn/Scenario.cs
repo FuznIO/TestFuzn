@@ -6,6 +6,7 @@ public class Scenario
 {
     public string Name { get; internal set; }
     public string Id { get; internal set; }
+    public List<string> TagsInternal { get; internal set; }
     internal Dictionary<string, string> MetadataInternal { get; set; }
 
     internal Type ContextType { get; set; }

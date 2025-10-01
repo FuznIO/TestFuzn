@@ -1,4 +1,6 @@
-﻿namespace Fuzn.TestFuzn;
+﻿using Fuzn.TestFuzn.Internals.State;
+
+namespace Fuzn.TestFuzn;
 
 public class LoadBuilder<TModel>
     where TModel : new()

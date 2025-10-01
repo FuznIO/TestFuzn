@@ -1,7 +1,6 @@
 ﻿using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Internals.Results.Feature;
 using Fuzn.TestFuzn.Internals.State;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Fuzn.TestFuzn.Internals.Reports;
 

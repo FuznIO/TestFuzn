@@ -19,8 +19,11 @@ internal class ScenarioTestRunner
 {
     private readonly ITestFrameworkAdapter _testFramework;
     private readonly IFeatureTest _featureTest;
+    internal Action<AssertInternalState> _assertInternalState;
 
-    public ScenarioTestRunner(ITestFrameworkAdapter testFramework, IFeatureTest featureTest)
+    public ScenarioTestRunner(ITestFrameworkAdapter testFramework, 
+        IFeatureTest featureTest,
+        Action<AssertInternalState> assertInternalState)
     {
         if (GlobalState.CustomTestRunner)
             _testFramework = new TestFuznProvider();
@@ -32,6 +35,7 @@ internal class ScenarioTestRunner
         }
 
         _featureTest = featureTest;
+        _assertInternalState = assertInternalState;
     }
 
     public async Task Run(params Scenario[] scenarios)
@@ -58,6 +62,9 @@ internal class ScenarioTestRunner
             featureResultManager.AddScenarioResults(sharedExecutionState.IFeatureTestClassInstance, sharedExecutionState.ResultState.FeatureCollectors);
             await reportManager.WriteLoadReports(sharedExecutionState);
             await consoleManager.Complete();
+
+            if (_assertInternalState != null)
+                _assertInternalState(new AssertInternalState(sharedExecutionState));
 
             if (sharedExecutionState.TestRunState.FirstException != null)
                 ExceptionDispatchInfo.Capture(sharedExecutionState.TestRunState.FirstException).Throw();

@@ -1,5 +1,6 @@
-﻿using Fuzn.TestFuzn.Internals;
-using Fuzn.TestFuzn.Contracts.Adapters;
+﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals;
+using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn;
 
@@ -10,6 +11,7 @@ public class ScenarioBuilder<TModel>
     private readonly IFeatureTest _featureTest;
     internal Scenario Scenario;
     internal List<Func<Scenario>> IncludeScenarios;
+    private Action<AssertInternalState> _assertInternalState;
 
     public ScenarioBuilder(ITestFrameworkAdapter testFramework, 
         IFeatureTest featureTest, 
@@ -24,6 +26,25 @@ public class ScenarioBuilder<TModel>
     public ScenarioBuilder<TModel> Id(string id)
     {
         Scenario.Id = id;
+        return this;
+    }
+
+    public ScenarioBuilder<TModel> Tags(params string[] tags)
+    {
+        if (tags == null || tags.Length == 0)
+            throw new ArgumentException("Tags cannot be null or empty.", nameof(tags));
+
+        if (Scenario.TagsInternal == null)
+            Scenario.TagsInternal = new();
+
+        foreach (var tag in tags)
+        {
+            if (string.IsNullOrWhiteSpace(tag))
+                throw new ArgumentException("Tag cannot be null or empty.", nameof(tags));
+            if (Scenario.TagsInternal.Contains(tag))
+                throw new ArgumentException($"Tag '{tag}' already exists in the scenario. Tags must be unique.", nameof(tags));
+            Scenario.TagsInternal.Add(tag);
+        }
         return this;
     }
 
@@ -202,6 +223,13 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    internal ScenarioBuilder<TModel> AssertInternalState(Action<AssertInternalState> action)
+    {
+        _assertInternalState = action;
+
+        return this;
+    }
+
     public async Task Run()
     {
         var scenarios = new List<Scenario>();
@@ -209,6 +237,6 @@ public class ScenarioBuilder<TModel>
         if (IncludeScenarios != null)
             scenarios.AddRange(IncludeScenarios.Select(scenario => scenario()));
 
-        await new ScenarioTestRunner(_testFramework, _featureTest).Run(scenarios.ToArray());
+        await new ScenarioTestRunner(_testFramework, _featureTest, _assertInternalState).Run(scenarios.ToArray());
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Fuzn.TestFuzn;
@@ -21,19 +22,6 @@ public abstract class BaseFeatureTest : IFeatureTest
         FeatureName = featureName;
     }
 
-    public ScenarioBuilder<EmptyModel> Scenario([CallerMemberName] string scenarioName = null)
-    {
-        var scenario = new ScenarioBuilder<EmptyModel>(new MsTestAdapter(TestContext), this, scenarioName);
-        return scenario;
-    }
-
-    public ScenarioBuilder<TModel> Scenario<TModel>([CallerMemberName] string scenarioName = null)
-        where TModel : new()
-    {
-        var scenario = new ScenarioBuilder<TModel>(new MsTestAdapter(TestContext), this, scenarioName);
-        return scenario;
-    }
-
     public virtual Task InitTestMethod(Context context)
     {
         return Task.CompletedTask;
@@ -43,4 +31,49 @@ public abstract class BaseFeatureTest : IFeatureTest
     {
         return Task.CompletedTask;
     }
+
+    public ScenarioBuilder<EmptyModel> Scenario([CallerMemberName] string scenarioName = null)
+    {
+        var scenario = new ScenarioBuilder<EmptyModel>(new MsTestAdapter(TestContext), this, scenarioName);
+        ApplyTestCategoryTags(scenario, scenarioName);
+        return scenario;
+    }
+
+    public ScenarioBuilder<TModel> Scenario<TModel>([CallerMemberName] string scenarioName = null)
+        where TModel : new()
+    {
+        var scenario = new ScenarioBuilder<TModel>(new MsTestAdapter(TestContext), this, scenarioName);
+        ApplyTestCategoryTags(scenario, scenarioName);
+        return scenario;
+    }
+
+    private void ApplyTestCategoryTags<TModel>(ScenarioBuilder<TModel> scenarioBuilder, string methodName)
+        where TModel : new()
+    {
+        if (string.IsNullOrWhiteSpace(methodName))
+            return;
+
+        // Look for the test method on this test class (public or non-public instance)
+        var method = GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (method == null)
+            return;
+
+        // MSTest allows multiple [TestCategory] attributes
+        var categoryAttributes = method.GetCustomAttributes(typeof(TestCategoryAttribute), inherit: true)
+                                       .OfType<TestCategoryAttribute>()
+                                       .ToList();
+        if (categoryAttributes.Count == 0)
+            return;
+
+        var categories = categoryAttributes
+            .SelectMany(a => a.TestCategories ?? [])
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (categories.Length > 0)
+            scenarioBuilder.Tags(categories);
+    }
+
+
 }
