@@ -64,7 +64,11 @@ internal class LoadHtmlReportWriter : ILoadReport
         foreach (var metadata in loadReportData.Feature.Metadata ?? new Dictionary<string, string>())
             b.AppendLine($"<tr><td>Feature Metadata - {metadata.Key}</td><td>{metadata.Value}</td></tr>");
         b.AppendLine($"<tr><td>Scenario Name</td><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
-        b.AppendLine($"<tr><td>Scenario Id</td><td>{loadReportData.ScenarioResult:id}</td></tr>");
+        b.AppendLine($"<tr><td>Scenario Id</td><td>{loadReportData.ScenarioResult.Id}</td></tr>");
+        foreach (var tag in loadReportData.ScenarioResult.Tags ?? new List<string>())
+            b.AppendLine($"<tr><td>Scenario Tag</td><td>{tag}</td></tr>");
+        foreach (var metadata in loadReportData.ScenarioResult.Metadata ?? new Dictionary<string, string>())
+            b.AppendLine($"<tr><td>Scenario Metadata - {metadata.Key}</td><td>{metadata.Value}</td></tr>");
         b.AppendLine("</tbody>");
         b.AppendLine("</table>");
         

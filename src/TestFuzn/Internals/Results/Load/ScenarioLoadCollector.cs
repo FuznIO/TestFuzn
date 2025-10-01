@@ -9,6 +9,7 @@ internal class ScenarioLoadCollector
     private readonly object _lock = new object();
     private string _scenarioName;
     private string _id;
+    private List<string> _tags;
     private Dictionary<string, string> _metadata;
     private DateTime _initStartTime;
     private DateTime _initEndTime;
@@ -38,6 +39,7 @@ internal class ScenarioLoadCollector
     {
         _scenarioName = scenario.Name;
         _id = scenario.Id;
+        _tags = scenario.TagsInternal;
         _metadata = scenario.MetadataInternal;
         _status = ScenarioStatus.Passed;
         foreach (var step in scenario.Steps)
@@ -166,6 +168,7 @@ internal class ScenarioLoadCollector
             var result = new ScenarioLoadResult();
             result.ScenarioName = _scenarioName;
             result.Id = _id;
+            result.Tags = _tags;
             result.Metadata = _metadata;
             result.InitStartTime = _initStartTime;
             result.InitEndTime = _initEndTime;

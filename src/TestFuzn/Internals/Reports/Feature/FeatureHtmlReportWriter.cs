@@ -49,6 +49,13 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("  });");
         b.AppendLine("});");
         b.AppendLine("</script>");
+        b.AppendLine("<style>");
+        b.AppendLine(".scenario-meta { margin:6px 0 12px 0; font-size:0.9em; }");
+        b.AppendLine(".scenario-meta table { border-collapse:collapse; }");
+        b.AppendLine(".scenario-meta th, .scenario-meta td { border:1px solid #ccc; padding:4px 8px; }");
+        b.AppendLine(".tag-badge { display:inline-block; background:#eef; color:#224; padding:2px 6px; margin:2px 4px 2px 0; border-radius:4px; font-size:0.8em; }");
+        b.AppendLine(".meta-section-title { font-weight:bold; margin-top:4px; }");
+        b.AppendLine("</style>");
         b.AppendLine("</head>");
         b.AppendLine("<body>");
 
@@ -61,9 +68,9 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("<tr>");
         b.AppendLine("<th>Property</th>");
         b.AppendLine("<th>Value</th>");
-        b.AppendLine("</tr");
+        b.AppendLine("</tr>");
         b.AppendLine("<tr><td>Test Run ID</td><td>" + featureReportData.TestRunId + "</td></tr>");
-        b.AppendLine("<tr><td>Test Suite ID</td><td>" + featureReportData.TestSuite.Name + "</td></tr>");
+        b.AppendLine("<tr><td>Test Suite Name</td><td>" + featureReportData.TestSuite.Name + "</td></tr>");
         b.AppendLine("<tr><td>Test Suite ID</td><td>" + featureReportData.TestSuite.Id + "</td></tr>");
         if (featureReportData.TestSuite.Metadata != null)
         {
@@ -83,9 +90,9 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         var totalFailedScenarios = totalScenarios - totalPassedScenarios;
 
         b.AppendLine("<tr><td>Total Features</td><td>" + totalFeatures + "</td></tr>");
-        b.AppendLine("<tr><td>Total Scenarios Tests</td><td>" + totalScenarios + "</td></tr>");
+        b.AppendLine("<tr><td>Total Scenario Tests</td><td>" + totalScenarios + "</td></tr>");
         b.AppendLine("<tr><td>Passed Scenario Tests</td><td><span class='passed'>" + totalPassedScenarios + "</span></td></tr>");
-        b.AppendLine("<tr><td>Failed Scenarios Tests</td><td><span class='failed'>" + totalFailedScenarios + "</span></td></tr>");
+        b.AppendLine("<tr><td>Failed Scenario Tests</td><td><span class='failed'>" + totalFailedScenarios + "</span></td></tr>");
 
         b.AppendLine("</tbody>");
         b.AppendLine("</table>");
@@ -99,14 +106,56 @@ internal class FeatureHtmlReportWriter : IFeatureReport
 
             foreach (var scenarioResult in featureResult.Value.ScenarioResults)
             {
-                b.AppendLine($"<button class='collapsible'>Scenario: {scenarioResult.Value.Name} - <span class='{(scenarioResult.Value.Status == ScenarioStatus.Passed ? "passed" : "failed")}'>{(scenarioResult.Value.Status == ScenarioStatus.Passed ? "Passed" : "Failed")}</span></button>");
-                if (!string.IsNullOrEmpty(scenarioResult.Value.Id))
-                    b.AppendLine($"Id: {scenarioResult.Value.Id}");
+                var sr = scenarioResult.Value;
+                b.AppendLine($"<button class='collapsible'>Scenario: {sr.Name} - <span class='{(sr.Status == ScenarioStatus.Passed ? "passed" : "failed")}'>{(sr.Status == ScenarioStatus.Passed ? "Passed" : "Failed")}</span></button>");
                 b.AppendLine("<div class='content'>");
 
-                if (scenarioResult.Value.HasInputData)
+                // Scenario level metadata & tags block
+                b.AppendLine("<div class='scenario-meta'>");
+                if (!string.IsNullOrEmpty(sr.Id))
+                    b.AppendLine("<div><span class='meta-section-title'>Id:</span> " + sr.Id + "</div>");
+
+                if (sr.Tags != null && sr.Tags.Count > 0)
                 {
-                    foreach (var iteration in scenarioResult.Value.IterationResults)
+                    b.AppendLine("<div class='meta-section-title'>Tags:</div>");
+                    b.AppendLine("<div>");
+                    foreach (var tag in sr.Tags)
+                        b.AppendLine("<span class='tag-badge'>" + tag + "</span>");
+                    b.AppendLine("</div>");
+                }
+
+                if (sr.Metadata != null && sr.Metadata.Count > 0)
+                {
+                    b.AppendLine("<div class='meta-section-title'>Metadata:</div>");
+                    b.AppendLine("<table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody>");
+                    foreach (var kv in sr.Metadata)
+                    {
+                        b.AppendLine("<tr><td>" + kv.Key + "</td><td>" + kv.Value + "</td></tr>");
+                    }
+                    b.AppendLine("</tbody></table>");
+                }
+
+                // Scenario timing (optional extra context)
+                if (sr.InitStartTime != default || sr.CleanupEndTime != default)
+                {
+                    b.AppendLine("<div class='meta-section-title'>Timing:</div>");
+                    b.AppendLine("<table><tbody>");
+                    if (sr.InitStartTime != default) b.AppendLine("<tr><td>Init Start</td><td>" + sr.InitStartTime.ToLocalTime() + "</td></tr>");
+                    if (sr.InitEndTime != default) b.AppendLine("<tr><td>Init End</td><td>" + sr.InitEndTime.ToLocalTime() + "</td></tr>");
+                    if (sr.ExecuteStartTime != default) b.AppendLine("<tr><td>Execute Start</td><td>" + sr.ExecuteStartTime.ToLocalTime() + "</td></tr>");
+                    if (sr.ExecuteEndTime != default) b.AppendLine("<tr><td>Execute End</td><td>" + sr.ExecuteEndTime.ToLocalTime() + "</td></tr>");
+                    if (sr.CleanupStartTime != default) b.AppendLine("<tr><td>Cleanup Start</td><td>" + sr.CleanupStartTime.ToLocalTime() + "</td></tr>");
+                    if (sr.CleanupEndTime != default) b.AppendLine("<tr><td>Cleanup End</td><td>" + sr.CleanupEndTime.ToLocalTime() + "</td></tr>");
+                    if (sr.StartTime() != default && sr.EndTime() != default)
+                        b.AppendLine("<tr><td>Total Duration</td><td>" + sr.TestRunTotalDuration().ToTestFuznFormattedDuration() + "</td></tr>");
+                    b.AppendLine("</tbody></table>");
+                }
+
+                b.AppendLine("</div>"); // scenario-meta
+
+                if (sr.HasInputData)
+                {
+                    foreach (var iteration in sr.IterationResults)
                     {
                         b.AppendLine($"<button class='collapsible'>Input Data: <span class='{(iteration.Passed ? "passed" : "failed")}'>{(iteration.Passed ? "Passed" : "Failed")}</span></button>");
                         b.AppendLine("<div class='content'>");
@@ -123,7 +172,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
                 }
                 else
                 {
-                    var iteration = scenarioResult.Value.IterationResults.FirstOrDefault();
+                    var iteration = sr.IterationResults.FirstOrDefault();
                     if (iteration != null)
                     {
                         b.AppendLine("<ul>");
@@ -157,8 +206,8 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         {
             b.AppendLine("<ul>");
             foreach (var comment in stepResult.Comments)
-            {   
-                b.AppendLine($"<li style='padding-left:{padding + 20}px'>Comment: {comment.Text} {comment.Created.ToString("o")}</li>"); 
+            {
+                b.AppendLine($"<li style='padding-left:{padding + 20}px'>Comment: {comment.Text} {comment.Created.ToString("o")}</li>");
             }
             b.AppendLine("</ul>");
         }

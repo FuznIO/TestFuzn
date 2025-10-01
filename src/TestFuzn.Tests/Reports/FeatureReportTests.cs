@@ -7,6 +7,7 @@ public class FeatureReportTests : BaseFeatureTest
     public async Task Feature1()
     {
         await Scenario()
+            .Tags("Tag1", "Tag2", "Tag3")
             .Id("ID-1234")
             .InputData("user1", "user2", "user")
             .Metadata("ScenarioKey1", "Value1")

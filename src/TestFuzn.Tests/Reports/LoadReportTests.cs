@@ -4,27 +4,10 @@
 public class LoadReportTests : BaseFeatureTest
 {
     [ScenarioTest]
-    public async Task ShortRunning_WithErrors()
-    {
-        await Scenario()
-            .Id("ScenarioId-1234")
-            .Step("Test", "Test-1234", (context) =>
-            {
-                return Task.CompletedTask;
-            })
-            .Step("This step should fail now and then", (context) =>
-            {
-                if (Random.Shared.NextDouble() < 0.33)
-                    Assert.Fail();
-            })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
-            .Run();
-    }
-
-    [ScenarioTest]
     public async Task ShortRunning_NoErrors()
     {
         await Scenario()
+            .Tags("Tag1", "Tag2", "Tag3")
             .Id("ID-1234")
             .Metadata("MetadataScenarioKey1", "Value1")
             .Metadata("MetadataScenarioKey2", "Value2")
@@ -46,6 +29,25 @@ public class LoadReportTests : BaseFeatureTest
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
             .Run();
     }
+
+    [ScenarioTest]
+    public async Task ShortRunning_WithErrors()
+    {
+        await Scenario()
+            .Id("ScenarioId-1234")
+            .Step("Test", "Test-1234", (context) =>
+            {
+                return Task.CompletedTask;
+            })
+            .Step("This step should fail now and then", (context) =>
+            {
+                if (Random.Shared.NextDouble() < 0.33)
+                    Assert.Fail();
+            })
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
+            .Run();
+    }
+
 
     [ScenarioTest]
     public async Task LongRunning()

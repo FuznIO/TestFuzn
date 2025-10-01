@@ -7,6 +7,7 @@ public class ScenarioFeatureResult
     public string Name { get; set; }
     public string Id { get; set; }
     public Dictionary<string, string> Metadata { get; set; }
+    public List<string> Tags { get; set; }
     public DateTime InitStartTime { get; set; }
     public DateTime InitEndTime { get; set; }
     public DateTime ExecuteStartTime { get; set; }
@@ -34,6 +35,7 @@ public class ScenarioFeatureResult
     {
         Name = scenario.Name;
         Id = scenario.Id;
+        Tags = scenario.TagsInternal;
         Metadata = scenario.MetadataInternal;
         HasInputData = scenario.InputDataInfo.HasInputData;
     }

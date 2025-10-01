@@ -96,6 +96,16 @@ internal class FeatureXmlReportWriter : IFeatureReport
         writer.WriteElementString("Name", scenarioResult.Name);
         writer.WriteElementString("Id", scenarioResult.Id);
 
+        if (scenarioResult.Tags != null && scenarioResult.Tags.Count > 0)
+        {
+            writer.WriteStartElement("Tags");
+            foreach (var tag in scenarioResult.Tags)
+            {
+                writer.WriteElementString("Tag", tag);
+            }
+            writer.WriteEndElement();
+        }
+
         if (scenarioResult.Metadata != null)
         {
             writer.WriteStartElement("Metadata");

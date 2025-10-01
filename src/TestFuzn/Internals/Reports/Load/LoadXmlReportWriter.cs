@@ -87,6 +87,30 @@ internal class LoadXmlReportWriter : ILoadReport
         writer.WriteElementString("Name", scenarioResult.ScenarioName);
         writer.WriteElementString("Id", scenarioResult.Id);
         writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString(@"hh\:mm\:ss\.fff"));
+
+        if (scenarioResult.Tags != null && scenarioResult.Tags.Count > 0)
+        {
+            writer.WriteStartElement("Tags");
+            foreach (var tag in scenarioResult.Tags)
+            {
+                writer.WriteElementString("Tag", tag);
+            }
+            writer.WriteEndElement();
+        }
+
+        if (scenarioResult.Metadata != null)
+        {
+            writer.WriteStartElement("Metadata");
+            foreach (var metadata in scenarioResult.Metadata)
+            {
+                writer.WriteStartElement("Property");
+                writer.WriteElementString("Key", metadata.Key);
+                writer.WriteElementString("Value", metadata.Value);
+                writer.WriteEndElement();
+            }
+            writer.WriteEndElement();
+        }
+
         WriteStats(writer, scenarioResult.Ok, scenarioResult.Failed);
 
         WriteSteps(writer, scenarioResult.Steps.Values.ToList());
