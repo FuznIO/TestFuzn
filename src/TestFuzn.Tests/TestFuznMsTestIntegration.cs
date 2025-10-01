@@ -1,14 +1,14 @@
 ﻿namespace Fuzn.TestFuzn.Tests;
 
 [TestClass]
-public class TestFusionMsTestIntegration
+public class TestFuznMsTestIntegration
 {
     [AssemblyInitialize]
     public static async Task Initialize(TestContext testContext)
     {
         var testFramework = new MsTestAdapter(testContext);
 
-        await TestFusionIntegration.InitGlobal(testFramework);
+        await TestFuznIntegration.InitGlobal(testFramework);
     }
 
     [AssemblyCleanup]
@@ -16,6 +16,6 @@ public class TestFusionMsTestIntegration
     {
         var testFramework = new MsTestAdapter(testContext);
 
-        await TestFusionIntegration.CleanupGlobal(testFramework);
+        await TestFuznIntegration.CleanupGlobal(testFramework);
     }
 }

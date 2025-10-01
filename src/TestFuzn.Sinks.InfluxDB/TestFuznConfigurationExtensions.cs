@@ -1,8 +1,8 @@
 ﻿namespace Fuzn.TestFuzn.Sinks.InfluxDB;
 
-public static class TestFusionConfigurationExtensions
+public static class TestFuznConfigurationExtensions
 {
-    public static void UseInfluxDb(this TestFusionConfiguration config)
+    public static void UseInfluxDb(this TestFuznConfiguration config)
     {
         var influxDbSinkConfig = new InfluxDbSinkConfiguration();
         ConfigurationManager.LoadPluginConfiguration("InfluxDB", influxDbSinkConfig);
@@ -12,7 +12,7 @@ public static class TestFusionConfigurationExtensions
         config.AddSinkPlugin(new InfluxDbSink(influxDbSinkConfig));
     }
 
-    public static void UseInfluxDB(this TestFusionConfiguration config, 
+    public static void UseInfluxDB(this TestFuznConfiguration config, 
         Action<InfluxDbSinkConfiguration> influxDbSinkConfigAction)
     {
         if (influxDbSinkConfigAction is null)

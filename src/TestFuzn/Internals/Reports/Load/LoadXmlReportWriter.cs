@@ -26,13 +26,52 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteStartElement("LoadTestResults");
                 writer.WriteElementString("Version", "1.0");
 
-                WriteScenario(writer, loadReportData.FeatureName, loadReportData.ScenarioResult);
+                writer.WriteStartElement("TestSuite");
+                {
+                    writer.WriteElementString("Name", loadReportData.TestSuite.Name);
+                    writer.WriteElementString("Id", loadReportData.TestSuite.Id);
+
+                    if (loadReportData.TestSuite.Metadata != null)
+                    {
+                        writer.WriteStartElement("Metadata");
+                        foreach (var metadata in loadReportData.TestSuite.Metadata)
+                        {
+                            writer.WriteStartElement("Property");
+                            writer.WriteElementString("Key", metadata.Key);
+                            writer.WriteElementString("Value", metadata.Value);
+                            writer.WriteEndElement();
+                        }
+                        writer.WriteEndElement();
+                    }
+                }
+                writer.WriteEndElement();
+
+                writer.WriteStartElement("Feature");
+                writer.WriteElementString("Name", loadReportData.Feature.Name);
+                writer.WriteElementString("Id", loadReportData.Feature.Id);
+                if (loadReportData.Feature.Metadata != null)
+                {
+                    writer.WriteStartElement("Metadata");
+                    foreach (var metadata in loadReportData.Feature.Metadata)
+                    {
+                        writer.WriteStartElement("Property");
+                        writer.WriteElementString("Key", metadata.Key);
+                        writer.WriteElementString("Value", metadata.Value);
+                        writer.WriteEndElement();
+                    }
+                    writer.WriteEndElement();
+                }
+                writer.WriteEndElement();
+
+                writer.WriteElementString("TestRunId", loadReportData.TestRunId);
+
+                WriteScenario(writer, loadReportData.Feature.Name, loadReportData.ScenarioResult);
 
                 writer.WriteEndElement();
                 writer.WriteEndDocument();
             }
 
-            InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.FeatureName, loadReportData.ScenarioResult.ScenarioName);
+            InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Feature.Name, loadReportData.ScenarioResult.ScenarioName);
 
             await File.WriteAllTextAsync(filePath, stringBuilder.ToString());
         }
@@ -50,26 +89,31 @@ internal class LoadXmlReportWriter : ILoadReport
         writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString(@"hh\:mm\:ss\.fff"));
         WriteStats(writer, scenarioResult.Ok, scenarioResult.Failed);
 
-        WriteSteps(writer, scenarioResult);
+        WriteSteps(writer, scenarioResult.Steps.Values.ToList());
 
         WriteSnapshots(writer, featureName, scenarioResult.ScenarioName);
 
         writer.WriteEndElement();
     }
 
-    private void WriteSteps(XmlWriter writer, ScenarioLoadResult scenarioResult)
+    private void WriteSteps(XmlWriter writer, List<StepLoadResult> steps)
     {
         writer.WriteStartElement("Steps");
-        foreach (var step in scenarioResult.Steps)
-        {
-            var stepResult = step.Value;
-            writer.WriteStartElement("Step");
-            writer.WriteElementString("Name", stepResult.Name);
-            writer.WriteElementString("Id", stepResult.Id);
-            WriteStats(writer, stepResult.Ok, stepResult.Failed);
-            writer.WriteEndElement();
-        }
+        foreach (var step in steps)
+            WriteStep(writer, step);
         writer.WriteEndElement();
+    }
+
+    private void WriteStep(XmlWriter writer, StepLoadResult stepResult)
+    {
+        writer.WriteStartElement("Step");
+        writer.WriteElementString("Name", stepResult.Name);
+        writer.WriteElementString("Id", stepResult.Id);
+        WriteStats(writer, stepResult.Ok, stepResult.Failed);
+        writer.WriteEndElement();
+
+        if (stepResult.Steps != null && stepResult.Steps.Count > 0)
+            WriteSteps(writer, stepResult.Steps);
     }
 
     public void WriteStats(XmlWriter writer, Stats statsOk, Stats statsFailed)
@@ -109,7 +153,7 @@ internal class LoadXmlReportWriter : ILoadReport
             writer.WriteElementString("Created", scenarioResult.Created.ToString("o"));
             writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString(@"hh\:mm\:ss\.fff"));
             WriteStats(writer, scenarioResult.Ok, scenarioResult.Failed);
-            WriteSteps(writer, scenarioResult);
+            WriteSteps(writer, scenarioResult.Steps.Values.ToList());
             writer.WriteEndElement();
         }
 

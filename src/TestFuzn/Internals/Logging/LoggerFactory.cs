@@ -18,7 +18,7 @@ internal static class LoggerFactory
             if (string.IsNullOrEmpty(logsPath))
             {
                 // Fallback to temp directory if output directory is not set
-                logsPath = Path.Combine(Path.GetTempPath(), "TestFusion_Logs", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
+                logsPath = Path.Combine(Path.GetTempPath(), "TestFuzn_Logs", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
                 Console.WriteLine($"WARNING: TestsOutputDirectory not set, using temporary path: {logsPath}");
             }
             string? directory = Path.GetDirectoryName(logsPath);
@@ -27,7 +27,7 @@ internal static class LoggerFactory
                 Directory.CreateDirectory(directory);
             }
             Directory.CreateDirectory(logsPath);
-            string logFilePath = Path.Combine(logsPath, "TestFusion_Log.log");
+            string logFilePath = Path.Combine(logsPath, "TestFuzn_Log.log");
 
             // Create the logger factory with both console and file providers for redundancy
             _loggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>

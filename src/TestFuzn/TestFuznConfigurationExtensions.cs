@@ -1,21 +1,21 @@
 ﻿using System.Text.Json;
 
 namespace Fuzn.TestFuzn;
-public static class TestFusionConfigurationExtensions
+public static class TestFuznConfigurationExtensions
 {
     private static readonly JsonSerializerOptions DefaultOptions = new JsonSerializerOptions
     {
         PropertyNameCaseInsensitive = true
     };
 
-    public static void UseSystemTextJsonSerializer(this TestFusionConfiguration configuration, Action<SystemTextJsonSerializerProviderOptions>? providerOptions)
+    public static void UseSystemTextJsonSerializer(this TestFuznConfiguration configuration, Action<SystemTextJsonSerializerProviderOptions>? providerOptions)
     {
         var options = new SystemTextJsonSerializerProviderOptions();
         providerOptions?.Invoke(options);
         configuration.AddSerializerProvider(new SystemTextJsonSerializerProvider(options));
     }
 
-    public static void UseSystemTextJsonSerializer(this TestFusionConfiguration configuration, int priority)
+    public static void UseSystemTextJsonSerializer(this TestFuznConfiguration configuration, int priority)
     {
         configuration.AddSerializerProvider(new SystemTextJsonSerializerProvider(new SystemTextJsonSerializerProviderOptions
         {

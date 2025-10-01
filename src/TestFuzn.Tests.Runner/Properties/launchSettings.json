@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "TestFusion.Tests.Runner": {
+    "TestFuzn.Tests.Runner": {
       "commandName": "Project"
     },
     "Container (Dockerfile)": {

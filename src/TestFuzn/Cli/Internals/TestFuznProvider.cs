@@ -6,7 +6,7 @@ using Fuzn.TestFuzn.Contracts.Results.Load;
 
 namespace Fuzn.TestFuzn.Cli.Internals;
 
-internal class TestFusionProvider : ITestFrameworkAdapter
+internal class TestFuznProvider : ITestFrameworkAdapter
 {
     public bool SupportsRealTimeConsoleOutput => true;
 

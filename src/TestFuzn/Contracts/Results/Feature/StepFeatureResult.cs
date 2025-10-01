@@ -8,6 +8,7 @@ public class StepFeatureResult
     public Exception Exception { get; internal set; }
     public TimeSpan Duration { get; internal set; }
     public List<Attachment> Attachments { get; internal set; }
+    public List<Comment> Comments { get; internal set; }
 
     public List<StepFeatureResult> StepResults { get; internal set; }
 }

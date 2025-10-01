@@ -31,7 +31,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
                         writer.WriteStartElement("Metadata");
                         foreach (var metadata in featureReportData.TestSuite.Metadata)
                         {
-                            writer.WriteStartElement("Meta");
+                            writer.WriteStartElement("Property");
                             writer.WriteElementString("Key", metadata.Key);
                             writer.WriteElementString("Value", metadata.Value);
                             writer.WriteEndElement();
@@ -64,7 +64,6 @@ internal class FeatureXmlReportWriter : IFeatureReport
     {
         writer.WriteStartElement("Feature");
 
-        // Attribute (name) -> Elements (PascalCase)
         writer.WriteElementString("Name", featureResult.Name);
         if (!string.IsNullOrWhiteSpace(featureResult.Id))
             writer.WriteElementString("Id", featureResult.Id);
@@ -74,7 +73,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
             writer.WriteStartElement("Metadata");
             foreach (var metadata in featureResult.Metadata)
             {
-                writer.WriteStartElement("Meta");
+                writer.WriteStartElement("Property");
                 writer.WriteElementString("Key", metadata.Key);
                 writer.WriteElementString("Value", metadata.Value);
                 writer.WriteEndElement();
@@ -102,7 +101,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
             writer.WriteStartElement("Metadata");
             foreach (var metadata in scenarioResult.Metadata)
             {
-                writer.WriteStartElement("Meta");
+                writer.WriteStartElement("Property");
                 writer.WriteElementString("Key", metadata.Key);
                 writer.WriteElementString("Value", metadata.Value);
                 writer.WriteEndElement();
@@ -123,7 +122,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
         {
             var iterationResult = scenarioResult.IterationResults.FirstOrDefault();
             if (iterationResult != null)
-                WriteSteps(writer, iterationResult);
+                WriteSteps(writer, iterationResult.StepResults.Values.ToList());
         }
 
         writer.WriteEndElement();
@@ -138,29 +137,41 @@ internal class FeatureXmlReportWriter : IFeatureReport
         if (iterationResult.InputData is not null)
             writer.WriteElementString("InputData", iterationResult.InputData);
 
-        WriteSteps(writer, iterationResult);
+        WriteSteps(writer, iterationResult.StepResults.Values.ToList());
 
         writer.WriteEndElement();
     }
 
-    private void WriteSteps(XmlWriter writer, IterationFeatureResult iterationResult)
+    private void WriteSteps(XmlWriter writer, List<StepFeatureResult> steps)
     {
         writer.WriteStartElement("Steps");
-        foreach (var step in iterationResult.StepResults)
+        foreach (var step in steps)
         {
-            WriteStep(writer, step.Value);
+            WriteStep(writer, step);
         }
         writer.WriteEndElement();
     }
 
-    private static void WriteStep(XmlWriter writer, StepFeatureResult step)
+    private void WriteStep(XmlWriter writer, StepFeatureResult step)
     {
         writer.WriteStartElement("Step");
-
         writer.WriteElementString("Name", step.Name);
         writer.WriteElementString("Id", step.Id);
         writer.WriteElementString("Status", step.Status.ToString());
         writer.WriteElementString("Duration", step.Duration.ToString(@"hh\:mm\:ss\.fff"));
+
+        if (step.Comments != null && step.Comments.Count > 0)
+        {
+            writer.WriteStartElement("Comments");
+            foreach (var comment in step.Comments)
+            {
+                writer.WriteStartElement("Comment");
+                writer.WriteElementString("Text", comment.Text);
+                writer.WriteElementString("Timestamp", comment.Created.ToString("o"));
+                writer.WriteEndElement();
+            }
+            writer.WriteEndElement();
+        }
 
         if (step.Attachments != null && step.Attachments.Count > 0)
         {
@@ -176,14 +187,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
         }
 
         if (step.StepResults != null && step.StepResults.Count > 0)
-        {
-            writer.WriteStartElement("Steps");
-            foreach (var subStep in step.StepResults)
-            {
-                WriteStep(writer, subStep);
-            }
-            writer.WriteEndElement();
-        }
+            WriteSteps(writer, step.StepResults);
 
         writer.WriteEndElement();
     }

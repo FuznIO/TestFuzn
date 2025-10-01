@@ -2,7 +2,7 @@
 
 public interface IStartup
 {
-    public TestFusionConfiguration Configuration();
+    public TestFuznConfiguration Configuration();
     public Task InitGlobal(Context context);
     public Task CleanupGlobal(Context context);
 }

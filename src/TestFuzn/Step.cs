@@ -10,7 +10,7 @@ internal sealed class Step
     public Func<IterationContext, Task> Action { get; set; }
     public Type ContextType { get; set; }
     public List<Step> Steps { get; set; }
-    public List<StepComment> Comments { get; set; }
+    public List<Comment> Comments { get; set; }
 
     public void Validate()
     {

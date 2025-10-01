@@ -8,9 +8,9 @@ public class ConfigurationManager
 {
     private static IConfigurationRoot _configRoot;
 
-    public static TestFusionConfiguration LoadConfiguration()
+    public static TestFuznConfiguration LoadConfiguration()
     {
-        var config = new TestFusionConfiguration();
+        var config = new TestFuznConfiguration();
         config.EnvironmentName = "dev";
         config.TestSuite.Name = GlobalState.AssemblyWithTestsName;
         if (config.TestSuite.Name == null)

@@ -5,7 +5,7 @@ internal static class GlobalState
 {
     public static bool IsInitializeGlobalExecuted { get; set; } = false;
     public static string TestsOutputDirectory { get; set; }
-    public static TestFusionConfiguration Configuration { get; set; }
+    public static TestFuznConfiguration Configuration { get; set; }
     public static bool LoadTestWasExecuted { get; set; } = false;
     public static ILogger Logger { get; set; }
     public static bool CustomTestRunner { get; set; } = false;

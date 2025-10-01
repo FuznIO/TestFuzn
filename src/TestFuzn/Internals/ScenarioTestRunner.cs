@@ -23,7 +23,7 @@ internal class ScenarioTestRunner
     public ScenarioTestRunner(ITestFrameworkAdapter testFramework, IFeatureTest featureTest)
     {
         if (GlobalState.CustomTestRunner)
-            _testFramework = new TestFusionProvider();
+            _testFramework = new TestFuznProvider();
         else
         {
             if (testFramework == null)

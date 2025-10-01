@@ -6,7 +6,7 @@ using Fuzn.TestFuzn.Internals.Reports;
 
 namespace Fuzn.TestFuzn;
 
-public static class TestFusionIntegration
+public static class TestFuznIntegration
 {
     private static IStartup _startupInstance;
 
@@ -23,7 +23,7 @@ public static class TestFusionIntegration
         if (startupType == null)
             throw new InvalidOperationException("No class implementing IStartup was found in the loaded assemblies.");
 
-        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, $"TestFusion_{GlobalState.TestRunId}");
+        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, $"TestFuzn_{GlobalState.TestRunId}");
         Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
 
         GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
@@ -34,7 +34,7 @@ public static class TestFusionIntegration
         var configuration = _startupInstance.Configuration();
         if (configuration == null)
         {
-            configuration = new TestFusionConfiguration();
+            configuration = new TestFuznConfiguration();
             configuration.TestSuite.Name = "Default";
         }
         GlobalState.Configuration = configuration;
@@ -54,7 +54,7 @@ public static class TestFusionIntegration
     public static async Task CleanupGlobal(ITestFrameworkAdapter testFramework)
     {
         if (_startupInstance == null)
-            throw new InvalidOperationException("TestFusionIntegration has not been initialized. Please call TestFusionIntegration.InitializeGlobal() before running tests.");
+            throw new InvalidOperationException("TestFuznIntegration has not been initialized. Please call TestFuznIntegration.InitGlobal() before running tests.");
 
         await _startupInstance.CleanupGlobal(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
 

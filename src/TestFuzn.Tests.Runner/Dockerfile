@@ -10,19 +10,19 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["TestFusion.Tests.Runner/TestFusion.Tests.Runner.csproj", "TestFusion.Tests.Runner/"]
-RUN dotnet restore "./TestFusion.Tests.Runner/TestFusion.Tests.Runner.csproj"
+COPY ["TestFuzn.Tests.Runner/TestFuzn.Tests.Runner.csproj", "TestFuzn.Tests.Runner/"]
+RUN dotnet restore "./TestFuzn.Tests.Runner/TestFuzn.Tests.Runner.csproj"
 COPY . .
-WORKDIR "/src/TestFusion.Tests.Runner"
-RUN dotnet build "./TestFusion.Tests.Runner.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/TestFuzn.Tests.Runner"
+RUN dotnet build "./TestFuzn.Tests.Runner.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./TestFusion.Tests.Runner.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./TestFuzn.Tests.Runner.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "TestFusion.Tests.Runner.dll"]
+ENTRYPOINT ["dotnet", "TestFuzn.Tests.Runner.dll"]

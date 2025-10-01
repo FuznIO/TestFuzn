@@ -1,7 +1,7 @@
 apiVersion: 1
 
 datasources:
-  - name: TestFusion_InfluxDB
+  - name: TestFuzn_InfluxDB
     uid: dennjp7mu34lce
     type: influxdb
     access: proxy
@@ -11,6 +11,6 @@ datasources:
     jsonData:
       version: Flux
       organization: DefaultOrg
-      defaultBucket: TestFusion
+      defaultBucket: TestFuzn
     secureJsonData:
       token: default_admin_token

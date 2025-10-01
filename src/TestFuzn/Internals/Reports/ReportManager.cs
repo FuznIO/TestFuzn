@@ -1,6 +1,7 @@
 ﻿using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Internals.Results.Feature;
 using Fuzn.TestFuzn.Internals.State;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Fuzn.TestFuzn.Internals.Reports;
 
@@ -38,14 +39,21 @@ internal class ReportManager
 
         foreach (var scenario in sharedExecutionState.Scenarios)
         {
-            var loadReportData = new LoadReportData();
-            loadReportData.TestRunId = GlobalState.TestRunId;
-            loadReportData.FeatureName = sharedExecutionState.IFeatureTestClassInstance.FeatureName;
-            loadReportData.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
-            loadReportData.ScenarioResult = sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
+            var data = new LoadReportData();
+            data.TestSuite = new Contracts.Reports.TestSuiteInfo();
+            data.TestSuite.Name = GlobalState.Configuration.TestSuite.Name;
+            data.TestSuite.Id = GlobalState.Configuration.TestSuite.Id;
+            data.TestSuite.Metadata = GlobalState.Configuration.TestSuite.Metadata;
+            data.TestRunId = GlobalState.TestRunId;
+            data.Feature = new Contracts.Reports.FeatureInfo();
+            data.Feature.Name = sharedExecutionState.IFeatureTestClassInstance.FeatureName;
+            data.Feature.Id = sharedExecutionState.IFeatureTestClassInstance.FeatureId;
+            data.Feature.Metadata = sharedExecutionState.IFeatureTestClassInstance.FeatureMetadata;
+            data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
+            data.ScenarioResult = sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
 
             foreach (var loadReport in loadReports)
-                await loadReport.WriteReport(loadReportData);
+                await loadReport.WriteReport(data);
         }
     }
 }

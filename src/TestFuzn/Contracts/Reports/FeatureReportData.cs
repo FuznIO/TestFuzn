@@ -11,5 +11,4 @@ public class FeatureReportData
     public TimeSpan TestRunDuration { get; internal set; }
     public string TestsOutputDirectory { get; internal set; }
     public TestSuiteFeatureResult Results { get; internal set; }
-    
 }

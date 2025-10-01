@@ -7,9 +7,9 @@ namespace SampleApp.Tests;
 [TestClass]
 public class Startup : BaseStartup
 {
-    public override TestFusionConfiguration Configuration()
+    public override TestFuznConfiguration Configuration()
     {
-        var configuration = new TestFusionConfiguration();
+        var configuration = new TestFuznConfiguration();
         configuration.TestSuite.Name = "SampleApp.Tests";
 
         configuration.UseHttp();

@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn.Plugins.Http;
 
-public class TestFusionHttpClientFactory : IHttpClientFactory
+public class TestFuznHttpClientFactory : IHttpClientFactory
 {
     private static readonly Dictionary<string, HttpClient> _clients = new Dictionary<string, HttpClient>();
     private static readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();

@@ -43,10 +43,10 @@ public abstract class IterationContext : Context
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentNullException(nameof(message), "Comment message cannot be null or empty.");
         if (StepInfo.Comments == null)
-            StepInfo.Comments = new List<StepComment>();
-        var comment = new StepComment
+            StepInfo.Comments = new List<Comment>();
+        var comment = new Comment
         {
-            Message = message,
+            Text = message,
             Created = DateTime.UtcNow
         };
         StepInfo.Comments.Add(comment);

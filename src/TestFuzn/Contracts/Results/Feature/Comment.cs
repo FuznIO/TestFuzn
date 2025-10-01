@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
-public class  StepComment
+public class  Comment
 {
     public DateTime Created { get; set; }
-    public string Message { get; set; }
+    public string Text { get; set; }
 }

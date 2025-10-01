@@ -69,12 +69,19 @@ internal class ExecuteStepHandler
             }
             finally
             {
-                if (stepContext.StepInfo != null
-                    && stepContext.StepInfo.Attachments != null
-                    && stepContext.StepInfo.Attachments.Count > 0)
+                if (stepContext.StepInfo != null)
                 {
-                    stepResult.Attachments = new();
-                    stepResult.Attachments.AddRange(stepContext.StepInfo.Attachments);
+                    if (stepContext.StepInfo.Comments != null && stepContext.StepInfo.Comments.Count > 0)
+                    {
+                        stepResult.Comments = new();
+                        stepResult.Comments.AddRange(stepContext.StepInfo.Comments);
+                    }
+
+                    if (stepContext.StepInfo.Attachments != null && stepContext.StepInfo.Attachments.Count > 0)
+                    {
+                        stepResult.Attachments = new();
+                        stepResult.Attachments.AddRange(stepContext.StepInfo.Attachments);
+                    }
                 }
             }
         }

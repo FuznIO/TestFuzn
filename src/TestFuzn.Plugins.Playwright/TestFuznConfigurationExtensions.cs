@@ -3,9 +3,9 @@ using Fuzn.TestFuzn.Plugins.Playwright.Internals;
 
 namespace Fuzn.TestFuzn.Plugins.Playwright;
 
-public static class TestFusionConfigurationExtensions
+public static class TestFuznConfigurationExtensions
 {
-    public static void UsePlaywright(this TestFusionConfiguration config)
+    public static void UsePlaywright(this TestFuznConfiguration config)
     {
         var browserTestingConfiguration = new PluginConfiguration();
         ConfigurationManager.LoadPluginConfiguration("Playwright", browserTestingConfiguration);
@@ -18,7 +18,7 @@ public static class TestFusionConfigurationExtensions
         config.AddContextPlugin(new PlaywrightPlugin());
     }
 
-    public static void UsePlaywright(this TestFusionConfiguration config, 
+    public static void UsePlaywright(this TestFuznConfiguration config, 
         Action<PluginConfiguration> playwrightConfigAction)
     {
         if (playwrightConfigAction is null)

@@ -14,7 +14,7 @@ internal class InMemorySnapshotCollectorSinkPlugin : ISinkPlugin
         return Task.CompletedTask;
     }
 
-    public Task WriteMetrics(string testRunId, string featureName, ScenarioLoadResult scenarioResult)
+    public Task WriteStats(string testRunId, string featureName, ScenarioLoadResult scenarioResult)
     {
         var key = GetKey(featureName, scenarioResult.ScenarioName);
 

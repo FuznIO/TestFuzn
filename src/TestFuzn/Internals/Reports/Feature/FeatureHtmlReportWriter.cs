@@ -153,6 +153,16 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         var padding = (20 * level) - 20;
         b.AppendLine($"<li style='padding-left:{padding}px'><span class='icon'>{SymbolSet.MapStepStatus(stepResult.Status)}</span>Step: {stepResult.Name} - <span class='{stepResult.Status.ToString().ToLower()}'>{stepResult.Status}</span> - Duration: {stepResult.Duration.ToTestFuznResponseTime()}</li>");
 
+        if (stepResult.Comments != null && stepResult.Comments.Count > 0)
+        {
+            b.AppendLine("<ul>");
+            foreach (var comment in stepResult.Comments)
+            {   
+                b.AppendLine($"<li style='padding-left:{padding + 20}px'>Comment: {comment.Text} {comment.Created.ToString("o")}</li>"); 
+            }
+            b.AppendLine("</ul>");
+        }
+
         if (stepResult.Attachments != null && stepResult.Attachments.Count > 0)
         {
             b.AppendLine("<ul>");

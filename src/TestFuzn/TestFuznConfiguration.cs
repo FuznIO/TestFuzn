@@ -8,7 +8,7 @@ using Fuzn.TestFuzn.Internals.Reports.Load;
 
 namespace Fuzn.TestFuzn;
 
-public class TestFusionConfiguration
+public class TestFuznConfiguration
 {
     public string EnvironmentName { get; set; } = "";
     public TestSuiteInfo TestSuite { get; set; } = new();
@@ -18,7 +18,7 @@ public class TestFusionConfiguration
     internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
     internal HashSet<ISerializerProvider> SerializerProviders { get; set; } = new(new SerializerProviderComparer());
 
-    public TestFusionConfiguration()
+    public TestFuznConfiguration()
     {
         AddFeatureReport(new FeatureXmlReportWriter());
         AddFeatureReport(new FeatureHtmlReportWriter());

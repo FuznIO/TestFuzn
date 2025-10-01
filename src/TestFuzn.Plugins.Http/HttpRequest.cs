@@ -22,7 +22,7 @@ public class HttpRequest
     public List<Cookie> Cookies { get; set; } = new();
     public Dictionary<string, string> Headers { get; private set; } = new();
     public Hooks? Hooks { get; set; } = new();
-    public string UserAgent { get; set; } = "TestFusionHttp/1.0";
+    public string UserAgent { get; set; } = "TestFuznHttp/1.0";
     public TimeSpan Timeout { get; set; } = GlobalState.Configuration.DefaultRequestTimeout;
 
     internal HttpRequest(Context context, HttpMethod method, string url, ContentTypes contentType = ContentTypes.Json)

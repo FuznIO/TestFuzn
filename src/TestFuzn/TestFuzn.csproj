@@ -7,7 +7,7 @@
     <PackageId>Fuzn.TestFuzn</PackageId>
     <Title>Fuzn.TestFuzn</Title>
     <Description>A unified testing framework for unit, end-to-end, and load testing in .NET.</Description>
-    <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFusion</PackageTags>
+    <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn</PackageTags>
     <Authors>Fuzn</Authors>
   </PropertyGroup>
 

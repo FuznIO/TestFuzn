@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Tests;
 [FeatureTest]
 public class SyntaxTests : BaseFeatureTest
 {
-    public override string FeatureName => "TestFusion Syntax";
+    public override string FeatureName => "TestFuzn Syntax";
     public override string FeatureId => "FeatureId-1";
 
     public override Task InitTestMethod(Context context)

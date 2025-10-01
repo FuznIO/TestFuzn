@@ -10,7 +10,7 @@ internal class ScenarioTestRunner
         AnsiConsole.WriteLine();
 
         var testClassInstance = Activator.CreateInstance(testInfo.Class);
-        var testFramework = new TestFusionProvider();
+        var testFramework = new TestFuznProvider();
         if (testClassInstance == null)
         {
             AnsiConsole.Write(new Markup($"[red]Could not create instance of test class '{testInfo.Class.Name}'.[/]"));
@@ -20,7 +20,7 @@ internal class ScenarioTestRunner
 
         try
         {
-            await TestFusionIntegration.InitGlobal(testFramework);
+            await TestFuznIntegration.InitGlobal(testFramework);
 
             var invocationResult = testInfo.Method.Invoke(testClassInstance, null);
 
@@ -29,7 +29,7 @@ internal class ScenarioTestRunner
         }
         finally
         {
-            await TestFusionIntegration.CleanupGlobal(testFramework);
+            await TestFuznIntegration.CleanupGlobal(testFramework);
         }
     }
 }

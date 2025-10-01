@@ -13,21 +13,21 @@ internal class DiscoverScenarioTests
             if (!type.IsClass)
                 continue;
 
-            // Check if the class has an attribute named "TestFusion.FeatureTest"
+            // Check if the class has an attribute named "FeatureTest"
             var hasFeatureTestAttribute = type
                 .GetCustomAttributes(inherit: true)
-                .Any(attr => attr.GetType().FullName == "TestFusion.FeatureTestAttribute");
+                .Any(attr => attr.GetType().FullName == "Fuzn.TestFuzn.FeatureTestAttribute");
 
             if (!hasFeatureTestAttribute)
                 continue;
 
 
-            // Find methods with the "TestFusion.ScenarioTest" attribute
+            // Find methods with the "ScenarioTest" attribute
             foreach (var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
             {
                 var hasScenarioTestAttribute = method
                     .GetCustomAttributes(inherit: false)
-                    .Any(attr => attr.GetType().FullName == "TestFusion.ScenarioTestAttribute");
+                    .Any(attr => attr.GetType().FullName == "Fuzn.TestFuzn.ScenarioTestAttribute");
 
                 if (!hasScenarioTestAttribute)
                     continue;

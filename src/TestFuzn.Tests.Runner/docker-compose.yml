@@ -14,7 +14,7 @@ services:
       DOCKER_INFLUXDB_INIT_USERNAME: admin
       DOCKER_INFLUXDB_INIT_PASSWORD: admin123
       DOCKER_INFLUXDB_INIT_ORG: DefaultOrg
-      DOCKER_INFLUXDB_INIT_BUCKET: TestFusion
+      DOCKER_INFLUXDB_INIT_BUCKET: TestFuzn
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: default_admin_token
 
   grafana:

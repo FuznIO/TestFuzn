@@ -12,7 +12,7 @@ internal class TestSelectionMenu
             .AddColumn(new TableColumn("ID").Centered())
             .AddColumn(new TableColumn("Test Name"));
 
-        AnsiConsole.Write(new Markup("[bold green]TestFusion Test Runner[/]"));
+        AnsiConsole.Write(new Markup("[bold green]TestFuzn Test Runner[/]"));
         AnsiConsole.WriteLine();
         
         var i = 0;

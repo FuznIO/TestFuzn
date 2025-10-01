@@ -5,7 +5,7 @@
 //namespace SampleApp.Tests.FeatureTests;
 
 //[TestClass]
-//public class ProductE2ETests : TestFusion.Feature.FeatureTests
+//public class ProductE2ETests : Fuzn.TestFuzn.Feature.FeatureTests
 //{
 //    public override string FeatureName => "Create/Update/Delete Product";
 

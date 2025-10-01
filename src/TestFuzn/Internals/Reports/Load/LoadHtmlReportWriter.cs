@@ -39,13 +39,13 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<head>");
         b.AppendLine("<meta charset='UTF-8'>");
         b.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        b.AppendLine("<title>TestFusion - Load Test Report</title>");
+        b.AppendLine("<title>TestFuzn - Load Test Report</title>");
         b.AppendLine("<link rel='stylesheet' href='assets/styles/testfuzn.css'>");
         b.AppendLine("</head>");
         b.AppendLine("<body>");
 
         // Header
-        b.AppendLine($"<h1>TestFusion - Load Test Report</h>");
+        b.AppendLine($"<h1>TestFuzn - Load Test Report</h>");
         b.AppendLine($"<h2>Test Metadata</h2>");
         b.AppendLine($"<h3>Test Info</h3>");
         b.AppendLine("<table>");
@@ -55,12 +55,18 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<th>Value</th>");
         b.AppendLine("</tr");
         b.AppendLine($"<tr><td>Test Run Id</td><td>{loadReportData.TestRunId}</td></tr>");
-        b.AppendLine($"<tr><td>Feature Name</td><td>{loadReportData.FeatureName}</td></tr>");
+        b.AppendLine($"<tr><td>Test Suite Name</td><td>{loadReportData.TestSuite.Name}</td></tr>");
+        b.AppendLine($"<tr><td>Test Suite Id</td><td>{loadReportData.TestSuite.Id}</td></tr>");
+        foreach (var metadata in loadReportData.TestSuite.Metadata ?? new Dictionary<string, string>())
+            b.AppendLine($"<tr><td>Test Suite Metadata - {metadata.Key}</td><td>{metadata.Value}</td></tr>");
+        b.AppendLine($"<tr><td>Feature Name</td><td>{loadReportData.Feature.Name}</td></tr>");
+        b.AppendLine($"<tr><td>Feature Id</td><td>{loadReportData.Feature.Id}</td></tr>");
+        foreach (var metadata in loadReportData.Feature.Metadata ?? new Dictionary<string, string>())
+            b.AppendLine($"<tr><td>Feature Metadata - {metadata.Key}</td><td>{metadata.Value}</td></tr>");
         b.AppendLine($"<tr><td>Scenario Name</td><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
         b.AppendLine($"<tr><td>Scenario Id</td><td>{loadReportData.ScenarioResult:id}</td></tr>");
         b.AppendLine("</tbody>");
         b.AppendLine("</table>");
-        
         
         b.AppendLine($"<h3>Phase Timings</h3>");
 
@@ -164,10 +170,10 @@ internal class LoadHtmlReportWriter : ILoadReport
 
         foreach (var step in scenario.Steps)
         {
-            RenderStepRow(step.Value, 1);
+            WriteStepRow(step.Value, 1);
         }
 
-        void RenderStepRow(StepLoadResult step, int level)
+        void WriteStepRow(StepLoadResult step, int level)
         {
             // Step rows.
             b.AppendLine("<tr>");
@@ -177,13 +183,11 @@ internal class LoadHtmlReportWriter : ILoadReport
             Cols(b, "", "Failed", step.Failed, level);
             b.AppendLine("</tr>");
 
-            if (step.Steps != null && step.Steps.Count > 0)
-            {
-                foreach (var innerStep in step.Steps)
-                {
-                    RenderStepRow(innerStep, level + 1);
-                }
-            }
+            if (step.Steps == null || step.Steps.Count == 0)
+                return;
+
+            foreach (var innerStep in step.Steps)
+                WriteStepRow(innerStep, level + 1);
         }
 
         b.AppendLine("</tbody>");
@@ -211,7 +215,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("</thead>");
         b.AppendLine("<tbody>");
 
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.FeatureName, scenario.ScenarioName);
+        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Feature.Name, scenario.ScenarioName);
 
         foreach (var snapshot in snapshots)
         {
@@ -226,14 +230,27 @@ internal class LoadHtmlReportWriter : ILoadReport
          
             foreach (var step in scenario.Steps)
             {
-                b.AppendLine("<tr>");
-                b.AppendLine($"<td></td>");
-                Cols(b, step.Value.Name, "Ok", step.Value.Ok, 1);
-                b.AppendLine("</tr>");
-                b.AppendLine("<tr>");
-                b.AppendLine($"<td></td>");
-                Cols(b, "", "Failed", step.Value.Failed, 1);
-                b.AppendLine("</tr>");
+                RenderSnapshotStep(step.Value);
+            }
+        }
+
+        void RenderSnapshotStep(StepLoadResult stepResult)
+        {
+            b.AppendLine("<tr>");
+            b.AppendLine($"<td></td>");
+            Cols(b, stepResult.Name, "Ok", stepResult.Ok, 1);
+            b.AppendLine("</tr>");
+            b.AppendLine("<tr>");
+            b.AppendLine($"<td></td>");
+            Cols(b, "", "Failed", stepResult.Failed, 1);
+            b.AppendLine("</tr>");
+
+            if (stepResult.Steps == null || stepResult.Steps.Count == 0)
+                return;
+
+            foreach (var innerStep in stepResult.Steps)
+            {
+                RenderSnapshotStep(innerStep);
             }
         }
 

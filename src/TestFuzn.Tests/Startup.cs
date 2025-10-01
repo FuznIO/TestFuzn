@@ -7,7 +7,7 @@ namespace Fuzn.TestFuzn.Tests;
 
 public class Startup : BaseStartup
 {
-    public override TestFusionConfiguration Configuration()
+    public override TestFuznConfiguration Configuration()
     {
         var configuration = ConfigurationManager.LoadConfiguration();
         configuration.TestSuite = new TestSuiteInfo

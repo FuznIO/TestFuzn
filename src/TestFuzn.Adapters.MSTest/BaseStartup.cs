@@ -2,7 +2,7 @@
 
 public class BaseStartup : IStartup
 {
-    public virtual TestFusionConfiguration Configuration()
+    public virtual TestFuznConfiguration Configuration()
     {
         return null;
     }
