@@ -13,11 +13,11 @@ public class Startup : BaseStartup
         configuration.TestSuite = new TestSuiteInfo
         {
             Id = "TestFuzn.Tests",
-            Name = "TestFuzion Tests",
+            Name = "TestFuzn Tests",
             Metadata = new Dictionary<string, string>
             {
                 { "Owner", "Fuzn" },
-                { "Numeric-Id", "123" },
+                { "OwnerID", "123" },
             }
         };
         configuration.EnvironmentName = "development";

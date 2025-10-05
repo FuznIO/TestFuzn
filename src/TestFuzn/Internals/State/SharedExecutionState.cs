@@ -22,11 +22,7 @@ internal class SharedExecutionState
         TestRunState.ExecutionStatus = ExecutionStatus.Running;
         IFeatureTestClassInstance = featureTest;
         Scenarios.AddRange(scenarios);
-
-        if (scenarios.First().SimulationsAction == null)
-            TestType = TestType.Feature;
-        else
-            TestType = TestType.Load;
+        TestType = scenarios.First().TestType;
 
         foreach (var scenario in scenarios)
         {
@@ -114,11 +110,4 @@ internal class SharedExecutionState
             ResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Measurement);
         }
     }
-}
-
-public class FeatureInfo
-{
-    public string Name { get; set; }
-    public string Id { get; set; }
-    public Dictionary<string, string> Metadata { get; set; }    
 }

@@ -34,32 +34,59 @@ public abstract class BaseFeatureTest : IFeatureTest
 
     public ScenarioBuilder<EmptyModel> Scenario([CallerMemberName] string scenarioName = null)
     {
-        var scenario = new ScenarioBuilder<EmptyModel>(new MsTestAdapter(TestContext), this, scenarioName);
-        ApplyTestCategoryTags(scenario, scenarioName);
-        return scenario;
+        return Scenario<EmptyModel>(scenarioName);
     }
 
-    public ScenarioBuilder<TModel> Scenario<TModel>([CallerMemberName] string scenarioName = null)
+    public ScenarioBuilder<TModel> Scenario<TModel>([CallerMemberName] string scenarioName = "")
         where TModel : new()
     {
+        if (string.IsNullOrEmpty(TestContext?.TestName))
+            throw new Exception("TestContext.TestName is null or empty.");
+
+        var methodInfo = GetType().GetMethod(TestContext.TestName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (methodInfo == null)
+            throw new Exception("Test method not found.");
+
+        EnsureTestMethodIsNotUsed(methodInfo);
+
         var scenario = new ScenarioBuilder<TModel>(new MsTestAdapter(TestContext), this, scenarioName);
-        ApplyTestCategoryTags(scenario, scenarioName);
+        EnsureScenarioTestAndApplyRunMode(methodInfo, scenario);
+        ApplyTestCategoryTags(methodInfo, scenario);
         return scenario;
     }
 
-    private void ApplyTestCategoryTags<TModel>(ScenarioBuilder<TModel> scenarioBuilder, string methodName)
+    private void EnsureTestMethodIsNotUsed(MethodInfo methodInfo)
+    {
+        // Check for MSTest [TestMethod] attribute
+        var hasTestMethod = methodInfo.GetCustomAttributes(inherit: true)
+            .Any(a => a.GetType() == typeof(TestMethodAttribute));
+        if (hasTestMethod)
+            throw new InvalidOperationException($"Method '{methodInfo.Name}' uses [TestMethod]. Use [ScenarioTest] instead for scenario-based tests.");
+    }
+
+    private void EnsureScenarioTestAndApplyRunMode<TModel>(MethodInfo methodInfo, ScenarioBuilder<TModel> scenario)
         where TModel : new()
     {
-        if (string.IsNullOrWhiteSpace(methodName))
-            return;
+        // Look for [ScenarioTest] attribute.
+        var scenarioTestAttr = methodInfo.GetCustomAttributes(inherit: true)
+                                     .FirstOrDefault(a => a.GetType().Name == "ScenarioTestAttribute");
+        if (scenarioTestAttr == null)
+            throw new InvalidOperationException($"Scenario method '{methodInfo.Name}' must be decorated with [ScenarioTest] attribute.");
 
-        // Look for the test method on this test class (public or non-public instance)
-        var method = GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (method == null)
-            return;
+        // Get RunMode property from the attribute.
+        var runModeProp = scenarioTestAttr.GetType().GetProperty("RunMode");
 
+        var runModeValue = (ScenarioRunMode) runModeProp.GetValue(scenarioTestAttr);
+
+        // Set it on the scenario.
+        scenario.RunMode(runModeValue);
+    }
+
+    private void ApplyTestCategoryTags<TModel>(MethodInfo methodInfo, ScenarioBuilder<TModel> scenarioBuilder)
+        where TModel : new()
+    {
         // MSTest allows multiple [TestCategory] attributes
-        var categoryAttributes = method.GetCustomAttributes(typeof(TestCategoryAttribute), inherit: true)
+        List<TestCategoryAttribute> categoryAttributes = methodInfo.GetCustomAttributes(typeof(TestCategoryAttribute), inherit: true)
                                        .OfType<TestCategoryAttribute>()
                                        .ToList();
         if (categoryAttributes.Count == 0)
@@ -74,6 +101,4 @@ public abstract class BaseFeatureTest : IFeatureTest
         if (categories.Length > 0)
             scenarioBuilder.Tags(categories);
     }
-
-
 }

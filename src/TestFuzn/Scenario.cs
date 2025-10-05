@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Internals.InputData;
+using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn;
 
@@ -6,9 +7,18 @@ public class Scenario
 {
     public string Name { get; internal set; }
     public string Id { get; internal set; }
-    public List<string> TagsInternal { get; internal set; }
+    internal TestType TestType
+    {
+        get
+        {
+            if (SimulationsAction == null)
+                return TestType.Feature;
+            return TestType.Load;
+        }
+    }
+    internal ScenarioRunMode RunModeInternal { get; set; } = ScenarioRunMode.Execute;
+    internal List<string> TagsInternal { get; set; }
     internal Dictionary<string, string> MetadataInternal { get; set; }
-
     internal Type ContextType { get; set; }
     internal Func<Context, Task> InitScenario { get; set; }
     internal Func<IterationContext, Task> InitIterationAction { get; set; }

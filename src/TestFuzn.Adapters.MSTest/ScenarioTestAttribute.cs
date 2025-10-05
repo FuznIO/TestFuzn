@@ -5,11 +5,10 @@ namespace Fuzn.TestFuzn;
 [AttributeUsage(AttributeTargets.Method)]
 public class ScenarioTestAttribute : TestMethodAttribute
 {
-    public ScenarioTestAttribute()
-    {
-    }
+    public ScenarioRunMode RunMode { get; internal set; }
 
-    public ScenarioTestAttribute(string? displayName) : base(displayName)
+    public ScenarioTestAttribute(ScenarioRunMode runMode = ScenarioRunMode.Execute)
     {
+        RunMode = runMode;
     }
 }

@@ -1,17 +1,18 @@
-﻿using System.Runtime.ExceptionServices;
-using Fuzn.TestFuzn.Internals.Execution.Producers;
-using Fuzn.TestFuzn.Internals.Logger;
-using Fuzn.TestFuzn.Internals.Init;
-using Fuzn.TestFuzn.Internals.Cleanup;
-using Fuzn.TestFuzn.Internals.Execution.Consumers;
-using Fuzn.TestFuzn.Internals.InputData;
-using Fuzn.TestFuzn.Internals.State;
-using Fuzn.TestFuzn.Cli.Internals;
-using Fuzn.TestFuzn.Internals.Results.Feature;
+﻿using Fuzn.TestFuzn.Cli.Internals;
 using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals.Cleanup;
 using Fuzn.TestFuzn.Internals.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Internals.Execution.Consumers;
+using Fuzn.TestFuzn.Internals.Execution.Producers;
+using Fuzn.TestFuzn.Internals.Init;
+using Fuzn.TestFuzn.Internals.InputData;
+using Fuzn.TestFuzn.Internals.Logger;
 using Fuzn.TestFuzn.Internals.Reports;
+using Fuzn.TestFuzn.Internals.Results.Feature;
+using Fuzn.TestFuzn.Internals.State;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Runtime.ExceptionServices;
 
 namespace Fuzn.TestFuzn.Internals;
 
@@ -40,6 +41,12 @@ internal class ScenarioTestRunner
 
     public async Task Run(params Scenario[] scenarios)
     {
+        if (scenarios.First().RunModeInternal == ScenarioRunMode.Ignore)
+        {
+            Assert.Inconclusive();
+            _testFramework.Write($"[WARNING] Scenario '{scenarios.First().Name}' is set to 'Ignore' and will not be executed. It will only be included in the report.");
+            return;
+        }
         var sharedExecutionState = new SharedExecutionState(_featureTest, scenarios);
         var consoleWriter = new ConsoleWriter(_testFramework, sharedExecutionState);
         var consoleManager = new ConsoleManager(_testFramework, sharedExecutionState, consoleWriter);

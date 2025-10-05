@@ -9,4 +9,11 @@ public class FeatureResult(string name, string id, Dictionary<string, string> me
     public Dictionary<string, string> Metadata { get; set; } = metadata;
 
     public ConcurrentDictionary<string, ScenarioFeatureResult> ScenarioResults { get; } = new();
+
+    public bool Passed()
+    {
+        if (ScenarioResults.Any(x => x.Value.Status == ScenarioStatus.Failed))
+            return false;
+        return true;
+    }
 }

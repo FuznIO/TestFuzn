@@ -1,6 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals;
-using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn;
 
@@ -22,6 +21,8 @@ public class ScenarioBuilder<TModel>
         Scenario = new Scenario(name);
         Scenario.ContextType = typeof(IterationContext<TModel>);
     }
+
+
 
     public ScenarioBuilder<TModel> Id(string id)
     {
@@ -55,6 +56,12 @@ public class ScenarioBuilder<TModel>
         if (Scenario.MetadataInternal.ContainsKey(key))
             throw new ArgumentException($"Meta key '{key}' already exists in the scenario. Meta keys must be unique.", nameof(key));
         Scenario.MetadataInternal.Add(key, value);
+        return this;
+    }
+
+    public ScenarioBuilder<TModel> RunMode(ScenarioRunMode runMode)
+    {
+        Scenario.RunModeInternal = runMode;
         return this;
     }
 

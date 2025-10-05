@@ -131,4 +131,25 @@ public class InputDataTests :  BaseFeatureTest
             Assert.IsTrue(user.Value, $"User {user.Key} was not executed");
         }
     }
+
+    [ScenarioTest]
+    public async Task Should_Fail_Feature_Verify_Scenario_Fails_When_InputData_Iteration_Fails()
+    {
+        var assertWasCalled = false;
+
+        await Scenario()
+             .InputData("Test1", "Test2")
+             .Step("Step should fail", (context) =>
+             {
+                 Assert.Fail("This step should fail");
+             })
+             .AssertInternalState((state) =>
+             {
+                 assertWasCalled = true;
+                 Assert.AreEqual(ScenarioStatus.Failed, state.SharedExecutionState.ResultState.FeatureCollectors.First().Value.Status);
+             })
+             .Run();
+
+        Assert.IsTrue(assertWasCalled);
+    }
 }

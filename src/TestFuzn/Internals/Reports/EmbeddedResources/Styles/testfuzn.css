@@ -1,20 +1,20 @@
-﻿body
-body {
+﻿body {
     font-family: Arial, sans-serif;
     margin: 20px;
+    background-color: #F9FAFB;
 }
 
-h1 {
-    color: #333;
+h1, h2, h3 {
+    color: #111827;
 }
 
 h2 {
-    color: #555;
+    
     margin-top: 40px;
 }
 
 h3 {
-    color: #555;
+    
     margin-top: 40px;
 }
 
@@ -22,16 +22,27 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    background-color: #FFF;
 }
 
 th, td {
-    border: 1px solid #ddd;
+    border: 1px solid #D0CCD0;
     padding: 8px;
     text-align: left;
+    color: #111827;
+    vertical-align: top;
 }
 
 th {
-    background-color: #f4f4f4;
+    background-color: #F3F4F6;
+    color: #4B5563;
+}
+
+.ok {
+    background-color: #D1FAE5;
+    color: #047857;
+    font-weight: bold;
+    padding: 
 }
 
 .metric-header {
@@ -48,79 +59,77 @@ th {
 
 .details-btn {
     background: #eee;
-    border: 1px solid #bbb;
+    border: 1px solid #E5E7EB;
     padding: 4px 12px;
     cursor: pointer;
     border-radius: 4px;
     font-size: 1em;
 }
-    body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-    }
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
 
-    h1, h2, h3 {
-        color: #333;
-    }
+h1, h2, h3 {
+    color: #333;
+}
 
-    li {
-        list-style-type: none;
-    }
+li {
+    list-style-type: none;
+}
 
-    .summary {
-        margin-bottom: 20px;
-    }
+.summary {
+    margin-bottom: 20px;
+}
 
-    .collapsible {
-        cursor: pointer;
-        padding: 10px;
-        border: none;
-        text-align: left;
-        outline: none;
-        background-color: #f1f1f1;
-        margin-bottom: 5px;
-        display: flex;
-        align-items: center;
-    }
+.collapsible {
+    cursor: pointer;
+    padding: 10px;
+    border: none;
+    text-align: left;
+    outline: none;
+    background-color: #f1f1f1;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
 
-    .collapsible::before {
-        content: '▼';
-        margin-right: 10px;
-        transition: transform 0.2s;
-    }
+.collapsible::before {
+    content: '▼';
+    margin-right: 10px;
+    transition: transform 0.2s;
+}
 
-    .collapsible.collapsed::before {
-        content: '▶';
-        transform: rotate(90deg);
-    }
+.collapsible.collapsed::before {
+    content: '▶';
+    transform: rotate(90deg);
+}
 
-    .content {
-        display: block;
-        padding-left: 20px;
-    }
+.content {
+    display: block;
+    padding-left: 20px;
+}
 
-    .collapsed + .content {
-        display: none;
-    }
+.collapsed + .content {
+    display: none;
+}
 
-    .passed {
-        color: green;
-    }
+.passed {
+    color: green;
+}
 
-    .failed {
-        color: red;
-    }
+.failed {
+    color: red;
+}
 
-    .skipped {
-        color: orange;
-    }
+.skipped {
+    color: orange;
+}
 
-    .icon {
-        margin-right: 5px;
-    }
+.icon {
+    margin-right: 5px;
+}
 
-    .hierarchy {
-        margin-left: 20px;
-    }
-{
+.hierarchy {
+    margin-left: 20px;
 }

@@ -54,9 +54,9 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<th>Property</th>");
         b.AppendLine("<th>Value</th>");
         b.AppendLine("</tr");
-        b.AppendLine($"<tr><td>Test Run Id</td><td>{loadReportData.TestRunId}</td></tr>");
+        b.AppendLine($"<tr><td>Test Run ID</td><td>{loadReportData.TestRunId}</td></tr>");
         b.AppendLine($"<tr><td>Test Suite Name</td><td>{loadReportData.TestSuite.Name}</td></tr>");
-        b.AppendLine($"<tr><td>Test Suite Id</td><td>{loadReportData.TestSuite.Id}</td></tr>");
+        b.AppendLine($"<tr><td>Test Suite ID</td><td>{loadReportData.TestSuite.Id}</td></tr>");
         foreach (var metadata in loadReportData.TestSuite.Metadata ?? new Dictionary<string, string>())
             b.AppendLine($"<tr><td>Test Suite Metadata - {metadata.Key}</td><td>{metadata.Value}</td></tr>");
         b.AppendLine($"<tr><td>Feature Name</td><td>{loadReportData.Feature.Name}</td></tr>");

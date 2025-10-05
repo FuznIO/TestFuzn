@@ -42,6 +42,15 @@ public abstract class IterationContext : Context
     {
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentNullException(nameof(message), "Comment message cannot be null or empty.");
+
+        var created = DateTime.UtcNow;
+
+        if (IterationState.Scenario.TestType == TestType.Load)
+        {
+            Logger.LogInformation($"Comment {created}: {message}");
+            return;
+        }
+
         if (StepInfo.Comments == null)
             StepInfo.Comments = new List<Comment>();
         var comment = new Comment
