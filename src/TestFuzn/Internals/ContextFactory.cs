@@ -19,7 +19,7 @@ internal class ContextFactory
         return context;
     }
 
-    public static Context CreateScenarioContext(ITestFrameworkAdapter testFramework, string stepName)
+    public static ScenarioContext CreateScenarioContext(ITestFrameworkAdapter testFramework, string stepName)
     {
         var context = new ScenarioContext();
 
