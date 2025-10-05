@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Contracts;
 
 namespace Fuzn.TestFuzn.Internals.Init;
 

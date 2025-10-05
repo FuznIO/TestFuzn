@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Internals.Results.Load;
 using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Contracts;
 
 namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 

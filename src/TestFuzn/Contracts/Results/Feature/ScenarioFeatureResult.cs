@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
@@ -17,7 +18,7 @@ public class ScenarioFeatureResult
     public DateTime CleanupStartTime { get; set; } 
     public DateTime CleanupEndTime { get; set; }
     public bool HasInputData { get; set; } = false;
-    public bool IsLoadTest { get; set; } = false;
+    public TestType TestType { get; set; }
     public List<IterationFeatureResult> IterationResults { get; } = new();
     public int TotalCount => IterationResults.Count;
     public int PassedCount => IterationResults.Count(x => x.Passed);
@@ -42,6 +43,7 @@ public class ScenarioFeatureResult
         Tags = scenario.TagsInternal;
         Metadata = scenario.MetadataInternal;
         HasInputData = scenario.InputDataInfo.HasInputData;
+        TestType = scenario.TestType;
     }
 
     internal void AddIterationResult(IterationFeatureResult iterationResult)

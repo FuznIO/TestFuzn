@@ -1,4 +1,5 @@
-﻿using Fuzn.TestFuzn.Contracts.Reports;
+﻿using Fuzn.TestFuzn.Contracts;
+using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Feature;
 using Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
 using System.Reflection.Emit;
@@ -48,54 +49,37 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         // Header
         b.AppendLine($"<h1>{featureReportData.TestSuite.Name} - Feature Test Report</h1>");
 
-        b.AppendLine($"<h2>Test Suite Metadata</h2>");
+        b.AppendLine($"<h2>Test Execution Info</h2>");
         b.AppendLine("<table>");
         
-        b.AppendLine("<tr><th>Name</th><td>" + featureReportData.TestSuite.Name + "</td></tr>");
-        b.AppendLine("<tr><th>ID</th><td>" + featureReportData.TestSuite.Id + "</td></tr>");
+        b.AppendLine(@"<tr><th class=""vertical"">Test Suite Name</th><td>" + featureReportData.TestSuite.Name + "</td></tr>");
+        b.AppendLine(@"<tr><th class=""vertical"">Test Suite ID</th><td>" + featureReportData.TestSuite.Id + "</td></tr>");
 
         if (featureReportData.TestSuite.Metadata != null)
         {
-            b.AppendLine("<tr><th>Metadata</th>");
-            b.AppendLine("<td><table>");
             foreach (var metadata in featureReportData.TestSuite.Metadata)
             {
-                b.AppendLine($"<tr><td>{metadata.Key}</td><td>{metadata.Value}</td></tr>");
+                b.AppendLine(@$"<tr><th class=""vertical"">Test Suite Metadata - {metadata.Key}</th><td>{metadata.Value}</td></tr>");
             }
-            b.AppendLine("</table></td></tr>");
         }
         
-        b.AppendLine("</table>");
-
-        b.AppendLine($"<h2>Test Run Info</h2>");
-        b.AppendLine("<table>");
-        b.AppendLine("<tbody>");
-        b.AppendLine($"<tr><th>Run ID</th><td>{featureReportData.TestRunId}</td></tr>");
-        b.AppendLine($"<tr><th>Start Time</th><td>{featureReportData.TestRunStartTime.ToLocalTime()}</td></tr>");
-        b.AppendLine($"<tr><th>End Time</th><td>{featureReportData.TestRunEndTime.ToLocalTime()}</td></tr>");
-        b.AppendLine($"<tr><th>Duration</th><td>{featureReportData.TestRunDuration.ToTestFuznFormattedDuration()}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Run ID</th><td>{featureReportData.TestRunId}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"" class=""vertical"">Start Time</th><td>{featureReportData.TestRunStartTime.ToLocalTime()}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">End Time</th><td>{featureReportData.TestRunEndTime.ToLocalTime()}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Duration</th><td>{featureReportData.TestRunDuration.ToTestFuznFormattedDuration()}</td></tr>");
 
         // Summary
-        var totalFeatures = featureReportData.Results.FeatureResults.Count;
-        var totalScenarios = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count);
-        var totalPassedScenarios = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Passed));
-        var totalSkippedScenarios = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Skipped));
-        var totalFailedScenarios = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Failed));
+        var featuresTotal = featureReportData.Results.FeatureResults.Count;
+        var featuresPassed = featureReportData.Results.FeatureResults.Count(x => x.Value.Passed());
+        var featuresFailed = featuresTotal - featuresPassed;
+        var scenariosTotal = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count);
+        var scenariosPassed = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Passed));
+        var scenariosSkipped = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Skipped));
+        var scenariosFailed = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Failed));
 
-        b.AppendLine("</tbody>");
-        b.AppendLine("</table>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Summary - Features</th><td>Total: 🔢 {featuresTotal} |  Passed: ✅ {featuresPassed} | Failed: ❌ {featuresFailed}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Summary - Scenarios</th><td>Total: 🔢 {scenariosTotal} | Passed: ✅ {scenariosPassed} | Failed: ❌ {scenariosFailed} | Skipped: ⚠️ {scenariosSkipped}</td></tr>");
 
-        b.AppendLine($"<h2>Test Results Summary</h2>");
-        b.AppendLine("<table>");
-        b.AppendLine("<tbody>");
-
-        b.AppendLine($"<tr><td>Total Features</td><td>{totalFeatures}</td></tr>");
-        b.AppendLine($"<tr><td>Total Scenario Tests</td><td>{totalScenarios}</td></tr>");
-        b.AppendLine($"<tr><td>Passed Scenario Tests</td><td><span class='passed'>{totalPassedScenarios}</span></td></tr>");
-        b.AppendLine($"<tr><td>Failed Scenario Tests</td><td><span class='failed'>{totalFailedScenarios}</span></td></tr>");
-        b.AppendLine($"<tr><td>Skipped Scenario Tests</td><td><span class='skipped'>{totalSkippedScenarios}</span></td></tr>");
-
-        b.AppendLine("</tbody>");
         b.AppendLine("</table>");
 
         WriteFeatureResults(featureReportData, b);
@@ -108,27 +92,35 @@ internal class FeatureHtmlReportWriter : IFeatureReport
 
     private void WriteFeatureResults(FeatureReportData featureReportData, StringBuilder b)
     {
-        b.AppendLine($"<h2>Test Results Details</h2>");
+        b.AppendLine($"<h2>Test Execution Results</h2>");
         // Features
-        b.Append("<table>");
-        b.Append("<tbody>");
+        b.Append(@"<table class=""feature-results"">");
         b.AppendLine($"<tr>");
         b.AppendLine($"<th>Details</th>");
-        b.AppendLine($"<th>Type</th>");
-        b.AppendLine($"<th>Tags</th>");
-        b.AppendLine($"<th>Duration</th>");
+        b.AppendLine(@$"<th>Type</th>");
+        b.AppendLine(@$"<th>Status</th>");
+        b.AppendLine(@$"<th>Tags</th>");
+        b.AppendLine(@$"<th>Duration</th>");
         b.AppendLine($"</tr>");
         foreach (var featureResult in featureReportData.Results.FeatureResults)
         {
             var symbol = "";
+            var statusText = "";
             if (featureResult.Value.Passed())
-                symbol += "✅";
+            {
+                symbol = "✅";
+                statusText = "✅ Passed";
+            }
             else
-                symbol += "❌";
+            {
+                symbol = "❌";
+                statusText = "❌ Failed";
+            }
 
             b.AppendLine($"<tr>");
-            b.AppendLine($"<td>{symbol} {featureResult.Value.Name} (Feature)</td>");
+            b.AppendLine($"<td>{symbol} {featureResult.Value.Name}</td>");
             b.AppendLine($"<td>Feature</td>");
+            b.AppendLine($"<td>{statusText}</td>");
             b.AppendLine($"<td></td>");
             b.AppendLine($"<td></td>");
             b.AppendLine($"</tr>");
@@ -136,7 +128,6 @@ internal class FeatureHtmlReportWriter : IFeatureReport
             WriteScenario(b, featureResult);
         }
 
-        b.Append("</tbody>");
         b.Append("</table>");
     }
 
@@ -151,101 +142,126 @@ internal class FeatureHtmlReportWriter : IFeatureReport
             switch (scenarioResult.Value.Status)
             {
                 case ScenarioStatus.Passed:
-                    symbol += "→ ✅ ";
-                    statusText = "Passed";
+                    symbol = "→ ✅ ";
+                    statusText = "✅ Passed";
                     break;
                 case ScenarioStatus.Failed:
-                    symbol += "→ ❌";
-                    statusText = "Failed";
+                    symbol = "→ ❌";
+                    statusText = "❌ Failed";
                     break;
                 case ScenarioStatus.Skipped:
-                    symbol += "→ ⚠️";
-                    statusText = "Skipped";
+                    symbol = "→ ⚠️";
+                    statusText = "⚠️ Skipped";
                     break;
             }
 
             b.AppendLine($"<tr>");
-            b.AppendLine($"<td>{symbol} {sr.Name} (Scenario)");
+            b.AppendLine($"<td>{symbol} {sr.Name}");
             WriteScenarioDetails(b, sr);
             b.AppendLine("</td>");
+            
+            var typeText = sr.TestType == TestType.Feature ? "Feature" : "Load";
+
+            b.AppendLine($"<td>Scenario - {typeText}</td>");
+            b.AppendLine($"<td>{statusText}</td>");
+            b.AppendLine("<td>");
             if (sr.Tags != null && sr.Tags.Count > 0)
             {
-                b.AppendLine("<td>");
                 foreach (var tag in sr.Tags)
                     b.AppendLine($"{tag}<br/>");
-                b.AppendLine("</td>");
+                
             }
-            else
-                b.AppendLine("<td></td>");
-            b.AppendLine($"<td>{statusText}</td>");
-            b.AppendLine($"<td>{sr.TestRunTotalDuration().ToTestFuznFormattedDuration()}</td>");
+            b.AppendLine("</td>");
+            b.AppendLine($"<td>{sr.TestRunTotalDuration().ToTestFuznResponseTime()}</td>");
             b.AppendLine($"</tr>");
         }
     }
 
     private void WriteScenarioDetails(StringBuilder b, ScenarioFeatureResult sr)
     {
-        // Scenario level metadata & tags block
-        //b.AppendLine("<div class='scenario-meta'>");
-        //if (!string.IsNullOrEmpty(sr.Id))
-        //    b.AppendLine("<div><span class='meta-section-title'>Id:</span> " + sr.Id + "</div>");
+        if (sr.Status != ScenarioStatus.Skipped
+            && sr.IterationResults.Count > 0)
+        {
+            b.AppendLine(@"<details class=""results"">");
+            b.AppendLine("<summary></summary>");
+        }
 
-        //if (sr.Tags != null && sr.Tags.Count > 0)
-        //{
-        //    b.AppendLine("<div class='meta-section-title'>Tags:</div>");
-        //    b.AppendLine("<div>");
-        //    foreach (var tag in sr.Tags)
-        //        b.AppendLine("<span class='tag-badge'>" + tag + "</span>");
-        //    b.AppendLine("</div>");
-        //}
+        //if (sr.Status != ScenarioStatus.Skipped)
+        //    WriteScenarioInfo(b, sr);
 
-        //if (sr.Metadata != null && sr.Metadata.Count > 0)
-        //{
-        //    b.AppendLine("<div class='meta-section-title'>Metadata:</div>");
-        //    b.AppendLine("<table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody>");
-        //    foreach (var kv in sr.Metadata)
-        //    {
-        //        b.AppendLine("<tr><td>" + kv.Key + "</td><td>" + kv.Value + "</td></tr>");
-        //    }
-        //    b.AppendLine("</tbody></table>");
-        //}
+        if (sr.IterationResults.Count > 0)
+            WriteStepDetails(b, sr);
 
-        //// Scenario timing (optional extra context)
-        //if (sr.InitStartTime != default || sr.CleanupEndTime != default)
-        //{
-        //    b.AppendLine("<div class='meta-section-title'>Timing:</div>");
-        //    b.AppendLine("<table><tbody>");
-        //    if (sr.InitStartTime != default)
-        //        b.AppendLine("<tr><td>Init Start</td><td>" + sr.InitStartTime.ToLocalTime() + "</td></tr>");
-        //    if (sr.InitEndTime != default)
-        //        b.AppendLine("<tr><td>Init End</td><td>" + sr.InitEndTime.ToLocalTime() + "</td></tr>");
-        //    if (sr.ExecuteStartTime != default)
-        //        b.AppendLine("<tr><td>Execute Start</td><td>" + sr.ExecuteStartTime.ToLocalTime() + "</td></tr>");
-        //    if (sr.ExecuteEndTime != default)
-        //        b.AppendLine("<tr><td>Execute End</td><td>" + sr.ExecuteEndTime.ToLocalTime() + "</td></tr>");
-        //    if (sr.CleanupStartTime != default)
-        //        b.AppendLine("<tr><td>Cleanup Start</td><td>" + sr.CleanupStartTime.ToLocalTime() + "</td></tr>");
-        //    if (sr.CleanupEndTime != default)
-        //        b.AppendLine("<tr><td>Cleanup End</td><td>" + sr.CleanupEndTime.ToLocalTime() + "</td></tr>");
-        //    if (sr.StartTime() != default && sr.EndTime() != default)
-        //        b.AppendLine("<tr><td>Total Duration</td><td>" + sr.TestRunTotalDuration().ToTestFuznFormattedDuration() + "</td></tr>");
-        //    b.AppendLine("</tbody></table>");
-        //}
+        if (sr.Status != ScenarioStatus.Skipped
+            && sr.IterationResults.Count > 0)
+            b.AppendLine("</details>");
+    }
 
-        //b.AppendLine("</div>"); // scenario-meta
-
+    private static void WriteScenarioInfo(StringBuilder b, ScenarioFeatureResult sr)
+    {
         b.AppendLine("<table>");
+        b.AppendLine($"<tr><th>ID</th><td>{sr.Id}</td></tr>");
+
+        if (sr.Metadata != null)
+        {
+            foreach (var metadata in sr.Metadata)
+                b.AppendLine(@$"<tr><th class=""vertical"">Metadata - {metadata.Key}</th><td>{metadata.Value}</td></tr>");
+        }
+
+        if (sr.InitStartTime != default)
+            b.AppendLine($@"<tr><th class=""vertical"">Init Start Time</th><td>{sr.InitStartTime.ToLocalTime()}</td></tr>");
+        if (sr.InitEndTime != default)
+            b.AppendLine($@"<tr><th class=""vertical"">Init End Time</td><td>{sr.InitEndTime.ToLocalTime()}</td></tr>");
+        if (sr.ExecuteStartTime != default)
+            b.AppendLine($@"<tr><th class=""vertical"">Execute Start Time</th><td>{sr.ExecuteStartTime.ToLocalTime()}</td></tr>");
+        if (sr.ExecuteEndTime != default)
+            b.AppendLine($@"<tr><th class=""vertical"">Execute End Time</th><td>{sr.ExecuteEndTime.ToLocalTime()}</td></tr>");
+        if (sr.CleanupStartTime != default)
+            b.AppendLine($@"<tr><th class=""vertical"">Cleanup Start Time</th><td>{sr.CleanupStartTime.ToLocalTime()}</td></tr>");
+        if (sr.CleanupEndTime != default)
+            b.AppendLine($@"<tr><th class=""vertical"">Cleanup End Time</th><td>{sr.CleanupEndTime.ToLocalTime()}</td></tr>");
+        if (sr.StartTime() != default && sr.EndTime() != default)
+            b.AppendLine($@"<tr><th class=""vertical"">Duration</th><td>{sr.TestRunTotalDuration().ToTestFuznFormattedDuration()}</td></tr>");
+
+        b.AppendLine("</table>");
+    }
+
+    private void WriteStepDetails(StringBuilder b, ScenarioFeatureResult sr)
+    {
+        b.AppendLine(@"<table style=""margin:30px;0;30px;0;"">");
+        //b.AppendLine("<tr>");
+        //b.AppendLine("<th>Input Data / Steps</th>");
+        //b.AppendLine("<th>Status</th>");
+        //b.AppendLine("<th>Duration</th>");
+        //b.AppendLine("</tr>");
+
         foreach (var iteration in sr.IterationResults)
         {
             if (sr.HasInputData)
             {
+                var symbol = "";
+                var hiddenSymbol = "";
+                var statusText = "";
+                if (iteration.Passed)
+                {
+                    symbol = "→ ✅";
+                    hiddenSymbol = @"<span style=""visibility:hidden"">→ ✅</span>";
+                    statusText = "✅ Passed";
+                }
+                else
+                {
+                    symbol = "→ ❌";
+                    hiddenSymbol = @"<span style=""visibility:hidden"">→ ❌</span>";
+                    statusText = "❌ Failed";
+                }
+
                 b.AppendLine($"<tr>");
-                b.AppendLine($"<td>Input Data: ");
+                b.AppendLine($"<th>{symbol} Input Data: ");
                 b.AppendLine($"{(string.IsNullOrEmpty(iteration.InputData) ? " " : iteration.InputData)}");
-                //b.AppendLine($"<br/>CorrelationId: {iteration.CorrelationId}");
-                b.AppendLine($"</td>");
-                b.AppendLine($"<td><span class='{(iteration.Passed ? "passed" : "failed")}'>{(iteration.Passed ? "Passed" : "Failed")}</span></td>");
-                b.AppendLine($"<td></td>");
+                b.AppendLine($"<br/>{hiddenSymbol} CorrelationId: {iteration.CorrelationId}");
+                b.AppendLine($"</th>");
+                b.AppendLine($"<th>{statusText}</th>");
+                b.AppendLine($"<th></th>");
                 b.AppendLine($"</tr>");
             }
 
@@ -256,22 +272,43 @@ internal class FeatureHtmlReportWriter : IFeatureReport
                 WriteStepResult(b, stepResult.Value, 1);
             }
         }
-
         b.AppendLine("</table>");
     }
 
     private void WriteStepResult(StringBuilder b, StepFeatureResult stepResult, int level)
     {
         var padding = ((30 * level) - 30);
-        var symbol = level == 1 ? "" : " → ";
+        //var symbol = level == 1 ? "" : " → ";
         //if (stepResult.Status == StepStatus.Passed)
         //    symbol += "✅";
         //else if (stepResult.Status == StepStatus.Failed)
         //    symbol += "❌";
-        
+
+        var symbol = "";
+        var hiddenSymbol = "";
+        var statusText = "";
+        switch (stepResult.Status)
+        {
+            case StepStatus.Passed:
+                symbol = "→ ✅";
+                hiddenSymbol = @"<span style=""visibility:hidden"">→ ✅</span>";
+                statusText = "✅ Passed";
+                break;
+            case StepStatus.Failed:
+                symbol = "→ ❌";
+                hiddenSymbol = @"<span style=""visibility:hidden"">→ ❌</span>";
+                statusText = "❌ Failed";
+                break;
+            case StepStatus.Skipped:
+                symbol = "→ ⚠️";
+                hiddenSymbol = @"<span style=""visibility:hidden"">→ ⚠️</span>";
+                statusText = "⚠️ Skipped";
+                break;
+        }
+
         b.AppendLine($"<tr>");
         if (level == 1)
-            b.AppendLine($"<td>Step: {stepResult.Name}");
+            b.AppendLine($"<td>{symbol} Step: {stepResult.Name}");
         else
             b.AppendLine($"<td style='padding-left:{padding}px'>{symbol} Step: {stepResult.Name}");
 
@@ -279,23 +316,21 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         {
             foreach (var comment in stepResult.Comments)
             {
-                b.AppendLine($"<br/>{symbol}// {comment.Text}");
+                b.AppendLine($"<br/>{hiddenSymbol} // {comment.Text}");
             }
         }
 
         if (stepResult.Attachments != null && stepResult.Attachments.Count > 0)
         {
-            b.AppendLine("<ul>");
             foreach (var attachment in stepResult.Attachments)
             {
                 var fileName = Path.GetFileName(attachment.Path);
-                b.AppendLine($"<li style='padding-left:{padding + 20}px'>Attachment: <a href=\"Attachments/{fileName}\" target=\"_blank\">{attachment.Name}</a></li>");
+                b.AppendLine($"<br/>{hiddenSymbol} Attachment: <a href=\"Attachments/{fileName}\" target=\"_blank\">{attachment.Name}</a>");
             }
-            b.AppendLine("</ul>");
         }
 
         b.AppendLine("</td>");
-        b.AppendLine($"<td><span class='{stepResult.Status.ToString().ToLower()}'>{stepResult.Status}</span></td>");
+        b.AppendLine($"<td>{statusText}</td>");
         b.AppendLine($"<td>{stepResult.Duration.ToTestFuznResponseTime()}</td>");
         b.AppendLine($"</tr>");
 

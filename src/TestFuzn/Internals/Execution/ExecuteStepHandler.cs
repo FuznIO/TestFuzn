@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Contracts;
 
 namespace Fuzn.TestFuzn.Internals.Execution;
 

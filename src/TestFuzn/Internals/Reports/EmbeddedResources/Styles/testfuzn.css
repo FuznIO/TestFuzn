@@ -4,24 +4,22 @@
     background-color: #F9FAFB;
 }
 
-h1, h2, h3 {
+h1, h2, h3, summary, detail {
     color: #111827;
 }
 
 h2 {
-    
     margin-top: 40px;
 }
 
 h3 {
-    
     margin-top: 40px;
 }
 
 table {
-    width: 100%;
+    width: 95%;
     border-collapse: collapse;
-    margin-top: 20px;
+    table-layout: auto;
     background-color: #FFF;
 }
 
@@ -38,98 +36,26 @@ th {
     color: #4B5563;
 }
 
-.ok {
-    background-color: #D1FAE5;
-    color: #047857;
-    font-weight: bold;
-    padding: 
+.feature-results th:not(:first-child),
+.feature-results td:not(:first-child) {
+    width: 1%;
+    white-space: nowrap;
 }
 
-.metric-header {
-    text-align: center;
+th.vertical
+{
+    width: 1%;
+    white-space: nowrap;
 }
 
-.ok-row {
-    background-color: #d4edda;
+details {
+    margin: 8px 50px 8px 50px;
 }
 
-.failed-row {
-    background-color: #ffcccc;
+summary::before {
+    content: "Show Details";
 }
 
-.details-btn {
-    background: #eee;
-    border: 1px solid #E5E7EB;
-    padding: 4px 12px;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 1em;
-}
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-}
-
-h1, h2, h3 {
-    color: #333;
-}
-
-li {
-    list-style-type: none;
-}
-
-.summary {
-    margin-bottom: 20px;
-}
-
-.collapsible {
-    cursor: pointer;
-    padding: 10px;
-    border: none;
-    text-align: left;
-    outline: none;
-    background-color: #f1f1f1;
-    margin-bottom: 5px;
-    display: flex;
-    align-items: center;
-}
-
-.collapsible::before {
-    content: '▼';
-    margin-right: 10px;
-    transition: transform 0.2s;
-}
-
-.collapsible.collapsed::before {
-    content: '▶';
-    transform: rotate(90deg);
-}
-
-.content {
-    display: block;
-    padding-left: 20px;
-}
-
-.collapsed + .content {
-    display: none;
-}
-
-.passed {
-    color: green;
-}
-
-.failed {
-    color: red;
-}
-
-.skipped {
-    color: orange;
-}
-
-.icon {
-    margin-right: 5px;
-}
-
-.hierarchy {
-    margin-left: 20px;
+details[open] > summary::before {
+    content: "Hide Details";
 }

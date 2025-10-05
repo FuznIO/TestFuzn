@@ -2,6 +2,7 @@
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals.Execution.Consumers;
 using Fuzn.TestFuzn.Internals.Execution.Producers;
+using Fuzn.TestFuzn.Contracts;
 
 namespace Fuzn.TestFuzn.Internals.Execution;
 
