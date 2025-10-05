@@ -11,7 +11,7 @@ internal class FeatureResultManager
         return _testSuiteResult;
     }
 
-    internal void AddScenarioResults(IFeatureTest featureTest,
+    public void AddScenarioResults(IFeatureTest featureTest,
         Dictionary<string, ScenarioFeatureResult> scenarioCollectors)
     {
         var featureResult = _testSuiteResult.FeatureResults.GetOrAdd(featureTest.FeatureName, 

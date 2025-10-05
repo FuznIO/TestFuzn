@@ -228,4 +228,9 @@ internal class TestFuznProvider : ITestFrameworkAdapter
             .Border(BoxBorder.Rounded)
             .Header(header, Justify.Center));
     }
+
+    public void SetCurrentTestAsSkipped()
+    {
+        throw new ScenarioRunModeIgnoreException();
+    }
 }

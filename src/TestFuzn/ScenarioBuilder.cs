@@ -59,9 +59,9 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
-    public ScenarioBuilder<TModel> RunMode(ScenarioRunMode runMode)
+    public ScenarioBuilder<TModel> Skip()
     {
-        Scenario.RunModeInternal = runMode;
+        Scenario.RunMode = ScenarioRunMode.Skip;
         return this;
     }
 

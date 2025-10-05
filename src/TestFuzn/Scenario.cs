@@ -16,7 +16,7 @@ public class Scenario
             return TestType.Load;
         }
     }
-    internal ScenarioRunMode RunModeInternal { get; set; } = ScenarioRunMode.Execute;
+    internal ScenarioRunMode RunMode { get; set; } = ScenarioRunMode.Execute;
     internal List<string> TagsInternal { get; set; }
     internal Dictionary<string, string> MetadataInternal { get; set; }
     internal Type ContextType { get; set; }

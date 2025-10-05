@@ -119,7 +119,9 @@ internal class FeatureXmlReportWriter : IFeatureReport
             writer.WriteEndElement();
         }
 
-        writer.WriteElementString("Status", scenarioResult.Status == ScenarioStatus.Passed ? "Passed" : "Failed");
+        var status = scenarioResult.Status.ToString();
+
+        writer.WriteElementString("Status", status);
 
         if (scenarioResult.HasInputData)
         {

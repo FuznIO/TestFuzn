@@ -79,7 +79,8 @@ public abstract class BaseFeatureTest : IFeatureTest
         var runModeValue = (ScenarioRunMode) runModeProp.GetValue(scenarioTestAttr);
 
         // Set it on the scenario.
-        scenario.RunMode(runModeValue);
+        if (runModeValue == ScenarioRunMode.Skip)
+            scenario.Skip();
     }
 
     private void ApplyTestCategoryTags<TModel>(MethodInfo methodInfo, ScenarioBuilder<TModel> scenarioBuilder)

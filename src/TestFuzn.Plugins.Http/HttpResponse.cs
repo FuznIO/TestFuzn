@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using Fuzn.TestFuzn.Contracts.Providers;
 using Fuzn.TestFuzn.Plugins.Http.Internals;
@@ -86,7 +85,7 @@ public class HttpResponse
             {
                 var obj = serializerProvider.Deserialize<T>(Body);
                 if (obj == null)
-                    throw new AssertFailedException($"Deserialized object is null.");
+                    throw new Exception($"Deserialized object is null.");
                 return obj;
             }
             catch (Exception ex)
@@ -95,7 +94,7 @@ public class HttpResponse
             }
         }
 
-        throw new AssertFailedException($"Unable to deserialize into {typeof(T)}. \nURL: {_request?.RequestUri} \nResponse body: \n{Body}\nException message: \n{exception?.Message}");
+        throw new Exception($"Unable to deserialize into {typeof(T)}. \nURL: {_request?.RequestUri} \nResponse body: \n{Body}\nException message: \n{exception?.Message}");
     }
 
     public dynamic BodyAsJson()
@@ -111,7 +110,7 @@ public class HttpResponse
         }
         catch (Exception ex)
         {
-            Assert.Fail($"The response body was not a valid JSON. \nURL: {_request.RequestUri} \nResponse body: \n{Body}");
+            throw new Exception($"The response body was not a valid JSON. \nURL: {_request.RequestUri} \nResponse body: \n{Body}");
         }
 
         return json;

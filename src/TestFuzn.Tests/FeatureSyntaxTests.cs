@@ -18,7 +18,7 @@ public class SyntaxTests : BaseFeatureTest
         return Task.CompletedTask;
     }
 
-    [ScenarioTest(ScenarioRunMode.Ignore)]
+    [ScenarioTest(ScenarioRunMode.Skip)]
     [TestCategory("Component")]
     [TestCategory("E2E")]
     public async Task DefaultContext()
@@ -180,7 +180,7 @@ public class SyntaxTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest(ScenarioRunMode.Ignore)]
+    [ScenarioTest(ScenarioRunMode.Skip)]
     public async Task CustomContext()
     {
         await Scenario<CustomModel>("Syntax Showcase with custom context")

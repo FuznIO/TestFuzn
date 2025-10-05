@@ -3,5 +3,5 @@
 public enum ScenarioRunMode
 {
     Execute = 0,
-    Ignore = 1
+    Skip = 1
 }

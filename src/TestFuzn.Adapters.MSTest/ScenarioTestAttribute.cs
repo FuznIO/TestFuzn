@@ -11,4 +11,27 @@ public class ScenarioTestAttribute : TestMethodAttribute
     {
         RunMode = runMode;
     }
+
+    public override TestResult[] Execute(ITestMethod testMethod)
+    {
+        var result = base.Execute(testMethod);
+        return result;
+
+        //var firstResult = result.First();
+
+        //if (firstResult.TestFailureException == null
+        //    || firstResult.TestFailureException.InnerException == null)
+        //    return result;
+
+        //if (firstResult.TestFailureException.InnerException.GetType() == typeof(ScenarioRunModeIgnoreException))
+        //{
+        //    firstResult.Outcome = UnitTestOutcome.Ignored;
+        //    firstResult.
+        //    firstResult.TestFailureException = null;
+
+        //    return new TestResult[] { firstResult };
+        //}
+
+        //return result;
+    }
 }

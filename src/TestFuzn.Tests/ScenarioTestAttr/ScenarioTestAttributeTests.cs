@@ -33,8 +33,8 @@ public class ScenarioTestAttributeTests : BaseFeatureTest
         Assert.IsTrue(wasRun);
     }
 
-    [ScenarioTest(ScenarioRunMode.Ignore)]
-    public async Task ScenarioTest_Ignore_ShouldOnlyAddToReportButExecute()
+    [ScenarioTest(ScenarioRunMode.Skip)]
+    public async Task ScenarioTest_Skip_ShouldOnlyAddToReportNotExecute()
     {
         var wasRun = false;
 
@@ -48,29 +48,13 @@ public class ScenarioTestAttributeTests : BaseFeatureTest
         Assert.IsTrue(wasRun);
     }
 
-    [ScenarioTest(ScenarioRunMode.Ignore)]
-    public async Task SetRunModeOnScenario_Execute()
+    [ScenarioTest(ScenarioRunMode.Skip)]
+    public async Task SetSkipOnScenario()
     {
         var wasRun = false;
 
         await Scenario()
-            .RunMode(ScenarioRunMode.Execute)
-            .Step("Step1", context =>
-            {
-                wasRun = true;
-            })
-            .Run();
-
-        Assert.IsTrue(wasRun);
-    }
-
-    [ScenarioTest(ScenarioRunMode.Ignore)]
-    public async Task SetRunModeOnScenario_Ignore()
-    {
-        var wasRun = false;
-
-        await Scenario()
-            .RunMode(ScenarioRunMode.Ignore)
+            .Skip()
             .Step("Step1", context =>
             {
                 wasRun = true;

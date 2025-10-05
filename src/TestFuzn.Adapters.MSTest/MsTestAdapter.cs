@@ -179,4 +179,9 @@ public class MsTestAdapter(TestContext testContext) : ITestFrameworkAdapter
     {
         return Regex.Replace(input, @"\[[^\]]+\]", string.Empty);
     }
+
+    public void SetCurrentTestAsSkipped()
+    {
+        Assert.Inconclusive("Scenario test skipped: marked as skipped and not executed.");
+    }
 }

@@ -18,4 +18,5 @@ public interface ITestFrameworkAdapter
     public void WriteAdvancedTable(AdvancedTable table);
     public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults);
     string TestResultsDirectory { get; }
+    void SetCurrentTestAsSkipped();
 }

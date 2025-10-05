@@ -4,6 +4,8 @@ namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
 public class ScenarioFeatureResult
 {
+    private bool _skipped = false;
+
     public string Name { get; set; }
     public string Id { get; set; }
     public Dictionary<string, string> Metadata { get; set; }
@@ -16,7 +18,6 @@ public class ScenarioFeatureResult
     public DateTime CleanupEndTime { get; set; }
     public bool HasInputData { get; set; } = false;
     public bool IsLoadTest { get; set; } = false;
-
     public List<IterationFeatureResult> IterationResults { get; } = new();
     public int TotalCount => IterationResults.Count;
     public int PassedCount => IterationResults.Count(x => x.Passed);
@@ -25,6 +26,9 @@ public class ScenarioFeatureResult
     {
         get
         {
+            if (_skipped)
+                return ScenarioStatus.Skipped;
+
             if (PassedCount == TotalCount)
                 return ScenarioStatus.Passed;
             return ScenarioStatus.Failed;
@@ -79,6 +83,11 @@ public class ScenarioFeatureResult
             default:
                 throw new ArgumentOutOfRangeException(nameof(featureTestPhase), featureTestPhase, null);
         }
+    }
+
+    internal void MarkAsSkipped()
+    {
+        _skipped = true;
     }
 
     public DateTime StartTime()

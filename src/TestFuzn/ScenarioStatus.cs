@@ -3,5 +3,6 @@
 public enum ScenarioStatus
 {
     Passed,
-    Failed
+    Failed,
+    Skipped
 }

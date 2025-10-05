@@ -79,7 +79,8 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         var totalFeatures = featureReportData.Results.FeatureResults.Count;
         var totalScenarios = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count);
         var totalPassedScenarios = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Passed));
-        var totalFailedScenarios = totalScenarios - totalPassedScenarios;
+        var totalSkippedScenarios = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Skipped));
+        var totalFailedScenarios = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Failed));
 
         b.AppendLine("</tbody>");
         b.AppendLine("</table>");
@@ -92,6 +93,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine($"<tr><td>Total Scenario Tests</td><td>{totalScenarios}</td></tr>");
         b.AppendLine($"<tr><td>Passed Scenario Tests</td><td><span class='passed'>{totalPassedScenarios}</span></td></tr>");
         b.AppendLine($"<tr><td>Failed Scenario Tests</td><td><span class='failed'>{totalFailedScenarios}</span></td></tr>");
+        b.AppendLine($"<tr><td>Skipped Scenario Tests</td><td><span class='skipped'>{totalSkippedScenarios}</span></td></tr>");
 
         b.AppendLine("</tbody>");
         b.AppendLine("</table>");
@@ -145,12 +147,22 @@ internal class FeatureHtmlReportWriter : IFeatureReport
             var sr = scenarioResult.Value;
 
             var symbol = "";
-            if (scenarioResult.Value.Status == ScenarioStatus.Passed)
-                symbol += "→ ✅ ";
-            else
-                symbol += "→ ❌";
-                //else if (stepResult.Status == StepStatus.Failed)
-                //    symbol += "❌ →";
+            var statusText = "";
+            switch (scenarioResult.Value.Status)
+            {
+                case ScenarioStatus.Passed:
+                    symbol += "→ ✅ ";
+                    statusText = "Passed";
+                    break;
+                case ScenarioStatus.Failed:
+                    symbol += "→ ❌";
+                    statusText = "Failed";
+                    break;
+                case ScenarioStatus.Skipped:
+                    symbol += "→ ⚠️";
+                    statusText = "Skipped";
+                    break;
+            }
 
             b.AppendLine($"<tr>");
             b.AppendLine($"<td>{symbol} {sr.Name} (Scenario)");
@@ -165,7 +177,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
             }
             else
                 b.AppendLine("<td></td>");
-            b.AppendLine($"<td><span class='{(sr.Status == ScenarioStatus.Passed ? "passed" : "failed")}'>{(sr.Status == ScenarioStatus.Passed ? "Passed" : "Failed")}</span></td>");
+            b.AppendLine($"<td>{statusText}</td>");
             b.AppendLine($"<td>{sr.TestRunTotalDuration().ToTestFuznFormattedDuration()}</td>");
             b.AppendLine($"</tr>");
         }

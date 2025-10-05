@@ -1,5 +1,6 @@
 ﻿using Fuzn.TestFuzn.Cli.Internals;
 using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Results.Feature;
 using Fuzn.TestFuzn.Internals.Cleanup;
 using Fuzn.TestFuzn.Internals.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.Execution;
@@ -11,7 +12,6 @@ using Fuzn.TestFuzn.Internals.Logger;
 using Fuzn.TestFuzn.Internals.Reports;
 using Fuzn.TestFuzn.Internals.Results.Feature;
 using Fuzn.TestFuzn.Internals.State;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Runtime.ExceptionServices;
 
 namespace Fuzn.TestFuzn.Internals;
@@ -41,12 +41,6 @@ internal class ScenarioTestRunner
 
     public async Task Run(params Scenario[] scenarios)
     {
-        if (scenarios.First().RunModeInternal == ScenarioRunMode.Ignore)
-        {
-            Assert.Inconclusive();
-            _testFramework.Write($"[WARNING] Scenario '{scenarios.First().Name}' is set to 'Ignore' and will not be executed. It will only be included in the report.");
-            return;
-        }
         var sharedExecutionState = new SharedExecutionState(_featureTest, scenarios);
         var consoleWriter = new ConsoleWriter(_testFramework, sharedExecutionState);
         var consoleManager = new ConsoleManager(_testFramework, sharedExecutionState, consoleWriter);
@@ -62,6 +56,12 @@ internal class ScenarioTestRunner
 
         try
         {
+            if (ShouldSkipScenarios(scenarios))
+            {
+                SkipScenarios(scenarios, featureResultManager);
+                _testFramework.SetCurrentTestAsSkipped();
+            }
+
             consoleManager.StartRealtimeConsoleOutputIfEnabled();
             await initManager.Run();
             await executionManager.Run();
@@ -85,5 +85,23 @@ internal class ScenarioTestRunner
 
             throw;
         }
+    }
+
+    private static bool ShouldSkipScenarios(Scenario[] scenarios)
+    {
+        return scenarios.Length > 0 && scenarios.First().RunMode == ScenarioRunMode.Skip;
+    }
+
+    private void SkipScenarios(Scenario[] scenarios, FeatureResultManager featureResultManager)
+    {
+        var scenarioCollectors = new Dictionary<string, ScenarioFeatureResult>();
+
+        foreach (var scenario in scenarios)
+        {
+            var scenarioCollector = new ScenarioFeatureResult(scenario);
+            scenarioCollector.MarkAsSkipped();
+            scenarioCollectors.Add(scenario.Name, scenarioCollector);
+        }
+        featureResultManager.AddScenarioResults(_featureTest, scenarioCollectors);
     }
 }
