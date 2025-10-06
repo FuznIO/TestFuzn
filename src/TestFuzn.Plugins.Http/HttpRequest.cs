@@ -77,7 +77,7 @@ public class HttpRequest
 
         if (_contentType == ContentTypes.Json && Body != null)
         {
-            var jsonContent = JsonSerializer.Serialize(Body);
+            var jsonContent = SerializerProvider.Serialize(Body);
             request.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
         }
         else if (_contentType == ContentTypes.XFormUrlEncoded && Body is Dictionary<string, string> dictBody)
