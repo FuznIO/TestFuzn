@@ -14,15 +14,15 @@ internal class PlaywrightManager
         if (_isBrowserInitialized)
             return;
 
-        if (GlobalState.Configuration.InstallPlaywright)
+        if (PlaywrightGlobalState.Configuration.InstallPlaywright)
             Microsoft.Playwright.Program.Main(new[] { "install" }); // Ensures browsers are installed
 
         _playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
-        foreach (var browserType in GlobalState.Configuration.BrowserTypesToUse)
+        foreach (var browserType in PlaywrightGlobalState.Configuration.BrowserTypesToUse)
         {
             var state = new PlaywrightState();
-            state.Browser = await _playwright[browserType].LaunchAsync(new(new BrowserTypeLaunchOptions{Args = ["--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"] }) { Headless = GlobalState.Configuration.Headless });
+            state.Browser = await _playwright[browserType].LaunchAsync(new(new BrowserTypeLaunchOptions{Args = ["--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"] }) { Headless = PlaywrightGlobalState.Configuration.Headless });
             state.BrowserContext = await state.Browser.NewContextAsync();
             _state.Add(browserType, state);
         }
@@ -33,7 +33,7 @@ internal class PlaywrightManager
     public async Task<IPage> CreatePage(string browserType = null)
     {
         if (browserType == null)
-            browserType = GlobalState.Configuration.BrowserTypesToUse.First();
+            browserType = PlaywrightGlobalState.Configuration.BrowserTypesToUse.First();
 
         if (!_isBrowserInitialized)
             throw new InvalidOperationException("PlaywrightManager not initialized. Call IniatializeGlobalResources() first.");

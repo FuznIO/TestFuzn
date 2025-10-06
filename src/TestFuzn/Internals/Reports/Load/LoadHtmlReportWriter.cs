@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 

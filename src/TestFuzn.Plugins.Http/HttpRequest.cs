@@ -4,6 +4,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Fuzn.TestFuzn.Plugins.Http.Internals;
+using Fuzn.TestFuzn.Contracts.Providers;
 
 namespace Fuzn.TestFuzn.Plugins.Http;
 
@@ -23,7 +24,8 @@ public class HttpRequest
     public Dictionary<string, string> Headers { get; private set; } = new();
     public Hooks? Hooks { get; set; } = new();
     public string UserAgent { get; set; } = "TestFuznHttp/1.0";
-    public TimeSpan Timeout { get; set; } = GlobalState.Configuration.DefaultRequestTimeout;
+    public TimeSpan Timeout { get; set; } = HttpGlobalState.Configuration.DefaultRequestTimeout;
+    internal ISerializerProvider SerializerProvider { get; set; }
 
     internal HttpRequest(Context context, HttpMethod method, string url, ContentTypes contentType = ContentTypes.Json)
     {
@@ -103,7 +105,7 @@ public class HttpRequest
 
         try
         {
-            var httpClientFactory = GlobalState.Configuration.CustomHttpClientFactory ?? _context.Internals.Plugins.GetState<IHttpClientFactory>(typeof(HttpPlugin));
+            var httpClientFactory = HttpGlobalState.Configuration.CustomHttpClientFactory ?? _context.Internals.Plugins.GetState<IHttpClientFactory>(typeof(HttpPlugin));
             var client = httpClientFactory.CreateClient("TestFuzn");
             client.BaseAddress = baseUri;
 
@@ -139,7 +141,7 @@ public class HttpRequest
         }
         finally
         {
-            if (outputRequestResponse && GlobalState.Configuration.LogFailedRequestsToTestConsole)
+            if (outputRequestResponse && HttpGlobalState.Configuration.LogFailedRequestsToTestConsole)
             {
                 if (_loggingVerbosity == TestFuzn.Plugins.Http.LoggingVerbosity.Full)
                 {
@@ -154,7 +156,7 @@ public class HttpRequest
             }
         }
 
-        return new HttpResponse(request, response, responseCookies, body: responseBody, _context.SerializerProvider);
+        return new HttpResponse(request, response, responseCookies, body: responseBody, SerializerProvider);
     }
 
     private static CookieContainer? ExtractResponseCookies(HttpResponseMessage response, Uri uri)

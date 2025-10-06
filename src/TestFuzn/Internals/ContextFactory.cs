@@ -1,5 +1,4 @@
-﻿using Fuzn.TestFuzn.Internals.State;
-using Fuzn.TestFuzn.Contracts.Adapters;
+﻿using Fuzn.TestFuzn.Contracts.Adapters;
 
 namespace Fuzn.TestFuzn.Internals;
 
@@ -76,7 +75,6 @@ internal class ContextFactory
         context.Logger = GlobalState.Logger;
         context.TestFramework = testFramework;
         context.Internals = new ContextInternals();
-        context.SerializerProvider = GlobalState.Configuration.SerializerProviders;
         
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)
         {

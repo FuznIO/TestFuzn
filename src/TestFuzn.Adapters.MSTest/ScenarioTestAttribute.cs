@@ -16,22 +16,5 @@ public class ScenarioTestAttribute : TestMethodAttribute
     {
         var result = base.Execute(testMethod);
         return result;
-
-        //var firstResult = result.First();
-
-        //if (firstResult.TestFailureException == null
-        //    || firstResult.TestFailureException.InnerException == null)
-        //    return result;
-
-        //if (firstResult.TestFailureException.InnerException.GetType() == typeof(ScenarioRunModeIgnoreException))
-        //{
-        //    firstResult.Outcome = UnitTestOutcome.Ignored;
-        //    firstResult.
-        //    firstResult.TestFailureException = null;
-
-        //    return new TestResult[] { firstResult };
-        //}
-
-        //return result;
     }
 }

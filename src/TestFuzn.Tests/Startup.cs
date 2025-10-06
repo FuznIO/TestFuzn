@@ -24,14 +24,9 @@ public class Startup : BaseStartup
         configuration.UsePlaywright();
         configuration.UseHttp();
         configuration.UseInfluxDb();
-        configuration.UseSystemTextJsonSerializer(options =>
-        {
-            options.Priority = 0;
-        });
-        configuration.UseNewtonsoftSerializer(pluginConfiguration =>
-        {
-            pluginConfiguration.Priority = 1;
-        });
+        // Only one serializer can be used, last one set wins, have these 2 lines just to show both options.
+        configuration.SerializerProvider = new NewtonsoftSerializerProvider();
+        configuration.SerializerProvider = new SystemTextJsonSerializerProvider();
         return configuration;
     }
 

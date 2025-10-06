@@ -7,14 +7,18 @@ namespace Fuzn.TestFuzn.Plugins.Http;
 
 public class HttpResponse
 {
+    private readonly List<Cookie> _cookies = new List<Cookie>();
+    private readonly HttpRequestMessage _request;
+    private readonly ISerializerProvider _serializerProvider;
+
     internal HttpResponse(HttpRequestMessage request,
         HttpResponseMessage response,
         CookieContainer? cookieContainer,
         string body,
-        HashSet<ISerializerProvider> serializerProviders)
+        ISerializerProvider serializerProvider)
     {
         _request = request;
-        _serializerProviders = serializerProviders;
+        _serializerProvider = serializerProvider;
         InnerResponse = response;
         RawResponse = response.ToString();
         Body = body;
@@ -28,10 +32,7 @@ public class HttpResponse
             }
         }
     }
-    
-    private readonly List<Cookie> _cookies = new List<Cookie>();
-    private readonly HttpRequestMessage _request;
-    private readonly HashSet<ISerializerProvider> _serializerProviders;
+
 
     public string Url { get; set; }
     public HttpResponseMessage InnerResponse { get; set; }
@@ -71,30 +72,17 @@ public class HttpResponse
         if (string.IsNullOrEmpty(Body))
             return null;
 
-        foreach (var serializerProvider in _serializerProviders.OrderBy(sp => sp.Priority))
+        try
         {
-            if (serializerProvider.IsSerializerSpecific<T>())
-                return serializerProvider.Deserialize<T>(Body);
+            var obj = _serializerProvider.Deserialize<T>(Body);
+            if (obj == null)
+                throw new Exception($"Deserialized object is null.");
+            return obj;
         }
-
-        Exception? exception = null;
-
-        foreach (var serializerProvider in _serializerProviders.OrderBy(sp => sp.Priority))
+        catch (Exception ex)
         {
-            try
-            {
-                var obj = serializerProvider.Deserialize<T>(Body);
-                if (obj == null)
-                    throw new Exception($"Deserialized object is null.");
-                return obj;
-            }
-            catch (Exception ex)
-            {
-                exception = ex;
-            }
+            throw new Exception($"Unable to deserialize into {typeof(T)}. \nURL: {_request?.RequestUri} \nResponse body: \n{Body}\nException message: \n{ex?.Message}");
         }
-
-        throw new Exception($"Unable to deserialize into {typeof(T)}. \nURL: {_request?.RequestUri} \nResponse body: \n{Body}\nException message: \n{exception?.Message}");
     }
 
     public dynamic BodyAsJson()

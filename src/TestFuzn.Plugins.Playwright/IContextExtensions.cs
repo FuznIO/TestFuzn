@@ -10,7 +10,7 @@ public static class IContextExtensions
         var playwrightManager = (PlaywrightManager) context.Internals.Plugins.GetState(typeof(PlaywrightPlugin));
 
         var page = await playwrightManager.CreatePage(browserType);
-        page.SetDefaultTimeout((float)GlobalState.Configuration.DefaultTimeout.TotalMilliseconds);
+        page.SetDefaultTimeout((float) PlaywrightGlobalState.Configuration.DefaultTimeout.TotalMilliseconds);
 
         return page;
     }

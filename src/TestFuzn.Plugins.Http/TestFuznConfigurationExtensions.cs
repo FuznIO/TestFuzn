@@ -10,8 +10,8 @@ public static class TestFuznConfigurationExtensions
         if (configureAction != null)
             configureAction(httpConfiguration);
 
-        GlobalState.Configuration = httpConfiguration;
-        GlobalState.HasBeenInitialized = true;
+        HttpGlobalState.Configuration = httpConfiguration;
+        HttpGlobalState.HasBeenInitialized = true;
 
         configuration.AddContextPlugin(new HttpPlugin());
     }

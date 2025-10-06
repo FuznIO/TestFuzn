@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
 using Fuzn.TestFuzn.Cli.Internals;
-using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Cli;
 

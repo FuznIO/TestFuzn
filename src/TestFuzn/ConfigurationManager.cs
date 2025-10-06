@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Reflection;
-using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn;
 

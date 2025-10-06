@@ -11,9 +11,8 @@ internal class IterationState
     public ContextInternals Internals { get; set; }
     public ILogger Logger { get; set; }
     public ITestFrameworkAdapter TestFramework { get; internal set; }
-    public HashSet<ISerializerProvider> SerializerProvider { get; set; }
 
-    // StepContext
+    // Scenario / StepContext
     public Scenario Scenario { get; internal set; }
     public Dictionary<string, object> SharedData { get; set; }
     public object InputData { get; set; }

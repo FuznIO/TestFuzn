@@ -1,5 +1,4 @@
-﻿using Fuzn.TestFuzn.Internals.State;
-using Fuzn.TestFuzn.Internals;
+﻿using Fuzn.TestFuzn.Internals;
 using Fuzn.TestFuzn.Internals.Results.Feature;
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals.Reports;

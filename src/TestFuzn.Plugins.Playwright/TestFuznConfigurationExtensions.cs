@@ -13,7 +13,7 @@ public static class TestFuznConfigurationExtensions
         if (browserTestingConfiguration is null)
             throw new InvalidOperationException("Playwright configuration is not set in appsettings.json");
 
-        GlobalState.Configuration = browserTestingConfiguration;
+        PlaywrightGlobalState.Configuration = browserTestingConfiguration;
 
         config.AddContextPlugin(new PlaywrightPlugin());
     }
@@ -25,7 +25,7 @@ public static class TestFuznConfigurationExtensions
             throw new ArgumentNullException(nameof(playwrightConfigAction));
 
         var browserTestingConfiguration = new PluginConfiguration();
-        GlobalState.Configuration = browserTestingConfiguration;
+        PlaywrightGlobalState.Configuration = browserTestingConfiguration;
         playwrightConfigAction(browserTestingConfiguration);
 
         config.AddContextPlugin(new PlaywrightPlugin());

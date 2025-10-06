@@ -2,7 +2,6 @@
 using Fuzn.TestFuzn.Contracts.Providers;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Sinks;
-using Fuzn.TestFuzn.Internals.Comparers;
 using Fuzn.TestFuzn.Internals.Reports.Feature;
 using Fuzn.TestFuzn.Internals.Reports.Load;
 
@@ -16,7 +15,7 @@ public class TestFuznConfiguration
     internal List<IFeatureReport> FeatureReports { get; set; } = new();
     internal List<ILoadReport> LoadReports { get; set; } = new();
     internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
-    internal HashSet<ISerializerProvider> SerializerProviders { get; set; } = new(new SerializerProviderComparer());
+    internal ISerializerProvider SerializerProvider { get; set; }
 
     public TestFuznConfiguration()
     {
@@ -27,7 +26,7 @@ public class TestFuznConfiguration
         AddLoadReport(new LoadHtmlReportWriter());
         AddLoadReport(new LoadXmlReportWriter());
 
-        AddSerializerProvider(new SystemTextJsonSerializerProvider());
+        SetSerializerProvider(new SystemTextJsonSerializerProvider());
     }
 
     public void AddContextPlugin(IContextPlugin plugin)
@@ -58,15 +57,12 @@ public class TestFuznConfiguration
         SinkPlugins.Add(plugin);
     }
 
-    public void AddSerializerProvider(ISerializerProvider serializerProvider)
+    public void SetSerializerProvider(ISerializerProvider serializerProvider)
     {
         if (serializerProvider == null)
             throw new ArgumentNullException(nameof(serializerProvider), "SerializerProvider cannot be null");
 
-        if (SerializerProviders.Contains(serializerProvider))
-            SerializerProviders.Remove(serializerProvider);
-
-        SerializerProviders.Add(serializerProvider);
+        SerializerProvider = serializerProvider;
     }
 
     public void ClearReports()

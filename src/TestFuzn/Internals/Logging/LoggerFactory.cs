@@ -1,6 +1,4 @@
-﻿using Fuzn.TestFuzn.Internals.State;
-
-namespace Fuzn.TestFuzn.Internals.Logging;
+﻿namespace Fuzn.TestFuzn.Internals.Logging;
 
 /// <summary>
 /// Factory for creating logger instances with fallback mechanisms

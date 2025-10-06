@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Plugins.Playwright.Internals;
 
-internal class GlobalState
+internal class PlaywrightGlobalState
 {
     public static PluginConfiguration Configuration { get; set; }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using Fuzn.TestFuzn.Contracts.Providers;
 using Fuzn.TestFuzn.Plugins.Http.Internals;
 
 namespace Fuzn.TestFuzn.Plugins.Http;
@@ -16,12 +17,20 @@ public class HttpRequestBuilder
     private Hooks _hooks = new();
     private LoggingVerbosity _loggingVerbosity = LoggingVerbosity.Full;
     private string _userAgent = "TestFuznHttpTesting/1.0";
-    private TimeSpan _timeout = GlobalState.Configuration.DefaultRequestTimeout;
+    private TimeSpan _timeout = HttpGlobalState.Configuration.DefaultRequestTimeout;
+    private ISerializerProvider _serializerProvider;
 
     public HttpRequestBuilder(Context context, string url)
     {
         _context = context;
         _url = url;
+        _serializerProvider = GlobalState.SerializerProvider;
+    }
+
+    public HttpRequestBuilder SerializerProvider(ISerializerProvider serializerProvider)
+    {
+        _serializerProvider = serializerProvider;
+        return this;
     }
 
     public HttpRequestBuilder ContentType(ContentTypes contentType)
@@ -124,7 +133,8 @@ public class HttpRequestBuilder
             Hooks = _hooks,
             Cookies = new List<Cookie>(_cookies),
             UserAgent = _userAgent,
-            Timeout = _timeout
+            Timeout = _timeout,
+            SerializerProvider = _serializerProvider
         };
         foreach (var header in _headers)
             request.Headers[header.Key] = header.Value;
