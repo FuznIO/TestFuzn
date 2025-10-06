@@ -165,10 +165,10 @@ internal class LoadHtmlReportWriter : ILoadReport
         // All rows.
         var scenario = loadReportData.ScenarioResult;
         b.AppendLine("<tr>");
-        Cols(b, "All steps", "Ok", scenario.Ok, 1);
+        Cols(b, "All steps", "✅ Ok", scenario.Ok, 1);
         b.AppendLine("</tr>");
         b.AppendLine("<tr>");
-        Cols(b, "", "Failed", scenario.Failed, 1);
+        Cols(b, "", "❌ Failed", scenario.Failed, 1);
         b.AppendLine("</tr>");
 
         foreach (var step in scenario.Steps)
@@ -180,10 +180,10 @@ internal class LoadHtmlReportWriter : ILoadReport
         {
             // Step rows.
             b.AppendLine("<tr>");
-            Cols(b, step.Name, "Ok", step.Ok, level);
+            Cols(b, step.Name, "✅ Ok", step.Ok, level);
             b.AppendLine("</tr>");
             b.AppendLine("<tr>");
-            Cols(b, "", "Failed", step.Failed, level);
+            Cols(b, "", "❌ Failed", step.Failed, level);
             b.AppendLine("</tr>");
 
             if (step.Steps == null || step.Steps.Count == 0)
@@ -224,11 +224,11 @@ internal class LoadHtmlReportWriter : ILoadReport
         {
             b.AppendLine("<tr class='snapshot'>");
             b.AppendLine($"<td>{snapshot.Created:yyyy-MM-dd HH:mm:ss.fff}</td>");
-            Cols(b, "All steps", "Ok", snapshot.Ok, 1);
+            Cols(b, "All steps", "✅ Ok", snapshot.Ok, 1);
             b.AppendLine("</tr>");
             b.AppendLine("<tr class='snapshot'>");
             b.AppendLine($"<td></td>");
-            Cols(b, "", "Failed", snapshot.Failed, 1);
+            Cols(b, "", "❌ Failed", snapshot.Failed, 1);
             b.AppendLine("</tr>");
          
             foreach (var step in scenario.Steps)
@@ -241,11 +241,11 @@ internal class LoadHtmlReportWriter : ILoadReport
         {
             b.AppendLine("<tr>");
             b.AppendLine($"<td></td>");
-            Cols(b, stepResult.Name, "Ok", stepResult.Ok, 1);
+            Cols(b, stepResult.Name, "✅ Ok", stepResult.Ok, 1);
             b.AppendLine("</tr>");
             b.AppendLine("<tr>");
             b.AppendLine($"<td></td>");
-            Cols(b, "", "Failed", stepResult.Failed, 1);
+            Cols(b, "", "❌ Failed", stepResult.Failed, 1);
             b.AppendLine("</tr>");
 
             if (stepResult.Steps == null || stepResult.Steps.Count == 0)
@@ -315,7 +315,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         var padding = level > 1 ? $" style='padding-left:{(level - 1) * 20}px;'" : "";
         var prefix = "";
         if (level > 1 && !string.IsNullOrEmpty(stepName))
-            prefix = "- ";
+            prefix = "→ ";
         b.AppendLine($"<td{padding}>{prefix}{stepName}</td>");
         b.AppendLine($"<td>{type}</td>");
         b.AppendLine($"<td>{stats.RequestsPerSecond}</td>");
