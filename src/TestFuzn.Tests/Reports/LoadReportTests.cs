@@ -1,8 +1,15 @@
-﻿namespace Fuzn.TestFuzn.Tests.Reports;
+﻿
+using Fuzn.TestFuzn.Contracts.Results.Load;
+
+namespace Fuzn.TestFuzn.Tests.Reports;
 
 [FeatureTest]
 public class LoadReportTests : BaseFeatureTest
 {
+    public override string FeatureId { get => "FeatureID-1"; }
+    public override string FeatureName { get => "Feature-Name-1"; }
+    public override Dictionary<string, string> FeatureMetadata { get => new Dictionary<string, string>() { { "Meta1", "Value1" } }; }
+
     [ScenarioTest]
     public async Task ShortRunning_NoErrors()
     {
@@ -31,15 +38,16 @@ public class LoadReportTests : BaseFeatureTest
     }
 
     [ScenarioTest]
-    public async Task ShortRunning_WithErrors()
+    public async Task ShortRunning_WithErrors_NoAssert()
     {
         await Scenario()
             .Id("ScenarioId-1234")
-            .Step("Test", "Test-1234", (context) =>
+            .Metadata("Scenario-Meta1", "Value1")
+            .Step("Step 1", "Test-1234", (context) =>
             {
                 return Task.CompletedTask;
             })
-            .Step("This step should fail now and then", (context) =>
+            .Step("Step 2", (context) =>
             {
                 if (Random.Shared.NextDouble() < 0.33)
                     Assert.Fail();
@@ -48,6 +56,29 @@ public class LoadReportTests : BaseFeatureTest
             .Run();
     }
 
+    [ScenarioTest]
+    public async Task ShouldFail_ShortRunning_WithErrors_WithFailingAssertWhenDone()
+    {
+        await Scenario("Short running report with errors and failing assert")
+            .Id("ScenarioId-1234")
+            .Metadata("Scenario-Meta1", "Value1")
+            .Step("Step 1", "Test-1234", (context) =>
+            {
+                return Task.CompletedTask;
+            })
+            .Step("Step 2", (context) =>
+            {
+                if (Random.Shared.NextDouble() < 0.33)
+                    Assert.Fail();
+            })
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
+            .Load().AssertWhenDone((context, result) =>
+            {
+                if (result.Failed.RequestCount > 0)
+                    Assert.Fail("There should be no failing steps"); // This will make the scenario fail.
+            })
+            .Run();
+    }
 
     [ScenarioTest]
     public async Task LongRunning()

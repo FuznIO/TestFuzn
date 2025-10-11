@@ -15,7 +15,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         {
             await IncludeEmbeddedResources(featureReportData);
 
-            var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "TestFuzn_Report_Features.html");
+            var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "Feature-Report.html");
 
             var htmlContent = GenerateHtmlReport(featureReportData);
 

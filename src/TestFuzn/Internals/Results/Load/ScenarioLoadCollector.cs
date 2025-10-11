@@ -31,6 +31,7 @@ internal class ScenarioLoadCollector
     private ScenarioLoadResult _cachedCurrentResult;
     private DateTime _lastUpdated;
     private List<Exception>? _assertWhenDoneExceptions;
+    private Scenario _scenario;
 
     public string ScenarioName { get => _scenarioName; set => _scenarioName = value; }
     public string Id { get => _id; set => _id = value; }
@@ -46,6 +47,7 @@ internal class ScenarioLoadCollector
         {
             _steps.Add(step.Name, new StepLoadCollector(step.Name, step.Id));
         }
+        _scenario = scenario;
     }
 
     internal void RecordWarmup(ScenarioStatus status)
@@ -74,13 +76,11 @@ internal class ScenarioLoadCollector
                 _requestsPerSecond = _requestCount / testRunTimeInSeconds;
 
             if (status == ScenarioStatus.Passed)
-            {
                 _ok.Record(result.ExecutionDuration, _measurementStartTime, _lastUpdated);
-            }
             else if (status == ScenarioStatus.Failed)
-            {
                 _failed.Record(result.ExecutionDuration, _measurementStartTime, _lastUpdated);
-            }
+            else
+                throw new Exception($"Invalid scenario status: {status}");
 
             foreach (var step in _steps)
             {
@@ -170,6 +170,12 @@ internal class ScenarioLoadCollector
             result.Id = _id;
             result.Tags = _tags;
             result.Metadata = _metadata;
+
+            result.Simulations = new List<string>();
+            foreach (var simulation in _scenario.SimulationsInternal)
+            {
+                result.Simulations.Add(simulation.GetDescription());
+            }
             result.InitStartTime = _initStartTime;
             result.InitEndTime = _initEndTime;
             // Warmup phase.

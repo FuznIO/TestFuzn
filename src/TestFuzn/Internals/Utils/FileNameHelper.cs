@@ -11,7 +11,7 @@ internal class FileNameHelper
         var invalidCharsPattern = $"[{Regex.Escape(new string(invalidChars))}]";
 
         // Replace invalid characters with underscore (_)
-        var safe = Regex.Replace(input, invalidCharsPattern, "_");
+        var safe = Regex.Replace(input, invalidCharsPattern, "-");
 
         // Optionally trim spaces and dots at the end
         return safe.Trim().TrimEnd('.');

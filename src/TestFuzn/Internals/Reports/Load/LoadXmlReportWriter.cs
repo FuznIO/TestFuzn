@@ -16,7 +16,7 @@ internal class LoadXmlReportWriter : ILoadReport
         try
         {
             var reportName = FileNameHelper.MakeFilenameSafe(loadReportData.ScenarioResult.ScenarioName);
-            var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"TestFuzn_Report_Load_{reportName}.xml");
+            var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"Load-Report-{reportName}.xml");
 
             var stringBuilder = new StringBuilder();
             using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))
@@ -109,6 +109,13 @@ internal class LoadXmlReportWriter : ILoadReport
             }
             writer.WriteEndElement();
         }
+
+        writer.WriteStartElement("Simulations");
+        foreach (var simulation in scenarioResult.Simulations)
+        {
+            writer.WriteElementString("Simulation", simulation);
+        }
+        writer.WriteEndElement();
 
         WriteStats(writer, scenarioResult.Ok, scenarioResult.Failed);
 
