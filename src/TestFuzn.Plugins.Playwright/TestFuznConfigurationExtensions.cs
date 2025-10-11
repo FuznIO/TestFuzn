@@ -7,13 +7,15 @@ public static class TestFuznConfigurationExtensions
 {
     public static void UsePlaywright(this TestFuznConfiguration config)
     {
-        var browserTestingConfiguration = new PluginConfiguration();
-        ConfigurationManager.LoadPluginConfiguration("Playwright", browserTestingConfiguration);
+        var playwrightConfiguration = new PluginConfiguration();
+        ConfigurationManager.LoadPluginConfiguration("Playwright", playwrightConfiguration);
 
-        if (browserTestingConfiguration is null)
+        if (playwrightConfiguration is null)
             throw new InvalidOperationException("Playwright configuration is not set in appsettings.json");
 
-        PlaywrightGlobalState.Configuration = browserTestingConfiguration;
+        ValidateConfiguration(playwrightConfiguration);
+
+        PlaywrightGlobalState.Configuration = playwrightConfiguration;
 
         config.AddContextPlugin(new PlaywrightPlugin());
     }
@@ -24,10 +26,26 @@ public static class TestFuznConfigurationExtensions
         if (playwrightConfigAction is null)
             throw new ArgumentNullException(nameof(playwrightConfigAction));
 
-        var browserTestingConfiguration = new PluginConfiguration();
-        PlaywrightGlobalState.Configuration = browserTestingConfiguration;
-        playwrightConfigAction(browserTestingConfiguration);
+        var playwrightConfiguration = new PluginConfiguration();
+        playwrightConfigAction(playwrightConfiguration);
+
+        ValidateConfiguration(playwrightConfiguration);
+
+        PlaywrightGlobalState.Configuration = playwrightConfiguration;
 
         config.AddContextPlugin(new PlaywrightPlugin());
+    }
+
+    private static void ValidateConfiguration(PluginConfiguration config)
+    {
+        if (config.BrowserTypesToUse == null || !config.BrowserTypesToUse.Any())
+            throw new InvalidOperationException("At least one browser type must be specified in the Playwright configuration.");
+
+        var validBrowserTypes = new HashSet<string> { "chromium", "firefox", "webkit" };
+        foreach (var browserType in config.BrowserTypesToUse)
+        {
+            if (!validBrowserTypes.Contains(browserType.ToLower()))
+                throw new InvalidOperationException($"Invalid browser type '{browserType}' specified in the Playwright configuration. Valid options are: chromium, firefox, webkit.");
+        }
     }
 }

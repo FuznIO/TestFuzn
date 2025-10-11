@@ -97,8 +97,25 @@ internal class StepLoadCollector
 
         var error = new ErrorEntry();
         error.Message = exception.Message;
+        error.Details = BuildExceptionDetails(exception);
         error.Count = 1;
 
         _errors.Add(key, error);
+    }
+
+    private string BuildExceptionDetails(Exception exception)
+    {
+        if (exception == null)
+            return string.Empty;
+
+        var details = new System.Text.StringBuilder();
+        details.AppendLine(exception.Message);
+        details.AppendLine(exception.StackTrace);
+        if (exception.InnerException != null)
+        {
+            details.AppendLine("Inner Exception:");
+            details.AppendLine(BuildExceptionDetails(exception.InnerException));
+        }
+        return details.ToString();
     }
 }

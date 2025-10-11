@@ -142,6 +142,20 @@ internal class LoadXmlReportWriter : ILoadReport
         WriteStats(writer, stepResult.Ok, stepResult.Failed);
         writer.WriteEndElement();
 
+        if (stepResult.Errors != null && stepResult.Errors.Count > 0)
+        {
+            writer.WriteStartElement("Errors");
+            foreach (var error in stepResult.Errors.Values)
+            {
+                writer.WriteStartElement("Error");
+                writer.WriteElementString("Message", error.Message);
+                writer.WriteElementString("Count", error.Count.ToString());
+                writer.WriteElementString("Details", error.Details);
+                writer.WriteEndElement();
+            }
+            writer.WriteEndElement();
+        }
+
         if (stepResult.Steps != null && stepResult.Steps.Count > 0)
             WriteSteps(writer, stepResult.Steps);
     }

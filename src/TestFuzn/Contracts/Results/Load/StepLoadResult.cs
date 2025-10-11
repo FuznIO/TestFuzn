@@ -19,7 +19,6 @@ public class StepLoadResult
         }
     }
     public StepStatus Status { get; internal set; }
-    public Exception Exception { get; internal set; }
     public Stats Ok { get; internal set; }
     public Stats Failed { get; internal set; }
     public int SkippedCount { get; internal set; }
