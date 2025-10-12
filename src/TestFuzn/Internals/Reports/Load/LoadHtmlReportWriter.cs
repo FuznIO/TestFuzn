@@ -149,8 +149,6 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("</tr>");
         b.AppendLine("</table>");
 
-        b.AppendLine($"<h2>Test Statistics</h2>");
-
         //var chartDataList = new List<string>();
         //int chartIndex = 0;
 
@@ -168,6 +166,65 @@ internal class LoadHtmlReportWriter : ILoadReport
         //}}");
 
         //chartIndex++;
+
+        var scenario = loadReportData.ScenarioResult;
+
+        WriteSteps(b, scenario);
+        WriteSnapshots(loadReportData, b, scenario);
+
+        //// Chart.js CDN and script
+        //b.AppendLine("<script src='assets/scripts/chart.js'></script>");
+        //b.AppendLine("<script>");
+        //b.AppendLine("const chartData = [");
+        //b.AppendLine(string.Join(",", chartDataList));
+        //b.AppendLine("];");
+        //b.AppendLine(@"
+        //chartData.forEach(data => {
+        //    const ctx = document.getElementById(data.id).getContext('2d');
+        //    new Chart(ctx, {
+        //        type: 'pie',
+        //        data: {
+        //            labels: [`OK: ${data.ok}`, `Not OK: ${data.notOk}`],
+        //            datasets: [{
+        //                data: [data.ok, data.notOk],
+        //                backgroundColor: ['#28a745', '#dc3545'],
+        //            }]
+        //        },
+        //        options: {
+        //            responsive: false,
+        //            plugins: {
+        //                title: {
+        //                    display: true,
+        //                    text: `Request Status Distribution | OK: ${data.ok} | Not OK: ${data.notOk} | Total: ${data.requestCount}`
+        //                },
+        //                legend: {
+        //                    position: 'bottom'
+        //                }
+        //            }
+        //        }
+        //    });
+        //});
+        //function toggleDetails(id) {
+        //    var rows = document.querySelectorAll('tr[id=' + id + ']');
+        //    rows.forEach(function(row) {
+        //        if (row.style.display === 'none') {
+        //            row.style.display = '';
+        //        } else {
+        //            row.style.display = 'none';
+        //        }
+        //    });
+        //}
+        //");
+        //b.AppendLine("</script>");
+        b.AppendLine("</body>");
+        b.AppendLine("</html>");
+
+        return b.ToString();
+    }
+
+    private void WriteSteps(StringBuilder b, ScenarioLoadResult scenario)
+    {
+        b.AppendLine($"<h2>Test Statistics</h2>");
 
         // Table for the scenario
         b.AppendLine("<table>");
@@ -189,7 +246,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<tbody>");
 
         // All rows.
-        var scenario = loadReportData.ScenarioResult;
+
         b.AppendLine(@$"<tr class=""summary"">");
         Cols(b, "All Steps (Summary)", true, scenario.Ok, scenario.Failed, 1);
 
@@ -222,6 +279,10 @@ internal class LoadHtmlReportWriter : ILoadReport
 
         b.AppendLine("</tbody>");
         b.AppendLine("</table>");
+    }
+
+    private void WriteSnapshots(LoadReportData loadReportData, StringBuilder b, ScenarioLoadResult scenario)
+    {
 
         // Table for snapshots
         b.AppendLine("<h2>Snapshot Timeline</h2>");
@@ -286,57 +347,8 @@ internal class LoadHtmlReportWriter : ILoadReport
 
         b.AppendLine("</tbody>");
         b.AppendLine("</table>");
-
-        //// Chart.js CDN and script
-        //b.AppendLine("<script src='assets/scripts/chart.js'></script>");
-        //b.AppendLine("<script>");
-        //b.AppendLine("const chartData = [");
-        //b.AppendLine(string.Join(",", chartDataList));
-        //b.AppendLine("];");
-        //b.AppendLine(@"
-        //chartData.forEach(data => {
-        //    const ctx = document.getElementById(data.id).getContext('2d');
-        //    new Chart(ctx, {
-        //        type: 'pie',
-        //        data: {
-        //            labels: [`OK: ${data.ok}`, `Not OK: ${data.notOk}`],
-        //            datasets: [{
-        //                data: [data.ok, data.notOk],
-        //                backgroundColor: ['#28a745', '#dc3545'],
-        //            }]
-        //        },
-        //        options: {
-        //            responsive: false,
-        //            plugins: {
-        //                title: {
-        //                    display: true,
-        //                    text: `Request Status Distribution | OK: ${data.ok} | Not OK: ${data.notOk} | Total: ${data.requestCount}`
-        //                },
-        //                legend: {
-        //                    position: 'bottom'
-        //                }
-        //            }
-        //        }
-        //    });
-        //});
-        //function toggleDetails(id) {
-        //    var rows = document.querySelectorAll('tr[id=' + id + ']');
-        //    rows.forEach(function(row) {
-        //        if (row.style.display === 'none') {
-        //            row.style.display = '';
-        //        } else {
-        //            row.style.display = 'none';
-        //        }
-        //    });
-        //}
-        //");
-        //b.AppendLine("</script>");
-        b.AppendLine("</body>");
-        b.AppendLine("</html>");
-
-        return b.ToString();
     }
-    
+
     private void Cols(StringBuilder b, string stepName, bool isOkRow, Stats okStats, Stats failedStats, int level)
     {
         Stats stats = isOkRow ? okStats : failedStats;
