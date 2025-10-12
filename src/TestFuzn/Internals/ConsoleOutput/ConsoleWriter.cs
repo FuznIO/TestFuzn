@@ -88,24 +88,29 @@ internal class ConsoleWriter
 
                 foreach (var (stepResult, index) in iterationResult.StepResults.Select((sr, i) => (sr, i)))
                 {
+                    var stepNumber = (index + 1).ToString();
+                    var stepDisplayName = $"Step {stepNumber}: {stepResult.Key}";
+                    
                     table.Rows.Add(new AdvancedTableRow
                     {
                         Cells =
                         {
-                            new AdvancedTableCell($"Step {index + 1}/{iterationResult.StepResults.Count}: {stepResult.Key}", 4),
+                            new AdvancedTableCell(stepDisplayName, 4),
                             new KeyValueCell($"{stepResult.Value.Status}", $"{stepResult.Value.Duration.ToTestFuznResponseTime()}", 1)
                         }
                     });
 
-                    var subStepResults = SubStepHelper.GetSubStepResults(stepResult.Value);
+                    var subStepResults = SubStepHelper.GetSubStepResults(stepResult.Value, [index + 1]);
                     foreach (var sub in subStepResults)
                     {
                         var indent = new string(' ', sub.Level * 2 - 2);
+                        var subStepDisplayName = $"{indent}↳ Step {sub.StepNumber}: {sub.Name}";
+                        
                         table.Rows.Add(new AdvancedTableRow
                         {
                             Cells =
                             {
-                                new AdvancedTableCell($"{indent}↳ {sub.Name}", 4),
+                                new AdvancedTableCell(subStepDisplayName, 4),
                                 new KeyValueCell($"{sub.Status}", $"{sub.Duration.ToTestFuznResponseTime()}", 1)
                             }
                         });
