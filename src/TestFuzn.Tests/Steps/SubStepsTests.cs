@@ -41,7 +41,7 @@ public class SubStepsTests : BaseFeatureTest
                 context.Step("Step 2.1", (subContext1) =>
                 {   
                     Assert.AreEqual("Step 2.1", subContext1.StepInfo.Name);
-                    context.Comment("Comment for step 2.1");
+                    subContext1.Comment("Comment for step 2.1");
                 });
             })
             .Run();

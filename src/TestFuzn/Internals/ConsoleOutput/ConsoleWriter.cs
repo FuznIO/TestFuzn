@@ -88,9 +88,11 @@ internal class ConsoleWriter
 
                 foreach (var (stepResult, index) in iterationResult.StepResults.Select((sr, i) => (sr, i)))
                 {
-                    var stepNumber = (index + 1).ToString();
+                    var stepNumber = index + 1;
                     var stepDisplayName = $"Step {stepNumber}: {stepResult.Key}";
-                    
+                    if (stepResult.Value.Comments is { Count: > 0 })
+                        stepDisplayName += $" ({string.Join(", ", stepResult.Value.Comments.Select(c => c.Text))})";
+
                     table.Rows.Add(new AdvancedTableRow
                     {
                         Cells =
@@ -100,11 +102,13 @@ internal class ConsoleWriter
                         }
                     });
 
-                    var subStepResults = SubStepHelper.GetSubStepResults(stepResult.Value, [index + 1]);
+                    var subStepResults = SubStepHelper.GetSubStepResults(stepResult.Value, [stepNumber]);
                     foreach (var sub in subStepResults)
                     {
                         var indent = new string(' ', sub.Level * 2 - 2);
                         var subStepDisplayName = $"{indent}↳ Step {sub.StepNumber}: {sub.Name}";
+                        if (sub.Comments is { Count: > 0 })
+                            subStepDisplayName += $" ({string.Join(", ", sub.Comments.Select(c => c.Text))})";
                         
                         table.Rows.Add(new AdvancedTableRow
                         {
@@ -116,7 +120,7 @@ internal class ConsoleWriter
                         });
                     }
 
-                    if (iterationResult.InputData != null && index + 1 == iterationResult.StepResults.Count && iterationIndex + 1 < scenarioResult.IterationResults.Count)
+                    if (iterationResult.InputData != null && stepNumber == iterationResult.StepResults.Count && iterationIndex + 1 < scenarioResult.IterationResults.Count)
                         table.Rows.Add(new AdvancedTableRow { IsDivider = true });
                 }
             }

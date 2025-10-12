@@ -19,7 +19,10 @@ internal class SubStepHelper
                 Level = level + 1,
                 Status = child.Status,
                 Duration = child.Duration,
-                Exception = child.Exception
+                Exception = child.Exception,
+                Comments = child.Comments,
+                Attachments = child.Attachments,
+                Id = child.Id
             };
 
             node.StepResults.AddRange(GetSubStepResults(child, [.. parentStepNumber, index + 1], node.Level));
