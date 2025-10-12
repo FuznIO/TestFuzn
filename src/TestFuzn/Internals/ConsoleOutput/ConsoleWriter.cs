@@ -401,16 +401,22 @@ internal class ConsoleWriter
 
             //Assertion
             var assertionSection = new StringBuilder();
-            if (loadResult.AssertWhenDoneExceptions != null)
-            {
-                foreach (var exception in loadResult.AssertWhenDoneExceptions)
-                {
-                    if (assertionSection.Length == 0)
-                        assertionSection.AppendLine("[red]Assert exceptions:[/]");
 
-                    assertionSection.AppendLine($"  [red]{exception.Message}[/]");
-                }
+            if (loadResult.AssertWhileRunningException != null)
+            {
+                assertionSection.AppendLine("[red]Assert exceptions:[/]");
+
+                assertionSection.AppendLine($"  [red]{loadResult.AssertWhileRunningException.Message}[/]");
             }
+
+            if (loadResult.AssertWhenDoneException != null)
+            {
+                if (assertionSection.Length == 0)
+                    assertionSection.AppendLine("[red]Assert exceptions:[/]");
+
+                assertionSection.AppendLine($"  [red]{loadResult.AssertWhenDoneException.Message}[/]");
+            }
+
             if (assertionSection.Length > 0)
             {
                 _testFramework.Write(Environment.NewLine);

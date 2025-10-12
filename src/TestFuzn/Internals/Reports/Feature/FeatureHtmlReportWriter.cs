@@ -45,6 +45,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("</style>");
         b.AppendLine("</head>");
         b.AppendLine("<body>");
+        b.AppendLine(@"<div class=""page-container"">");
 
         // Header
         b.AppendLine($"<h1>{featureReportData.TestSuite.Name} - Feature Test Report</h1>");
@@ -84,6 +85,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
 
         WriteFeatureResults(featureReportData, b);
 
+        b.AppendLine("</div>");
         b.AppendLine("</body>");
         b.AppendLine("</html>");
 
@@ -99,8 +101,8 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine($"<th>Details</th>");
         b.AppendLine(@$"<th>Type</th>");
         b.AppendLine(@$"<th>Status</th>");
-        b.AppendLine(@$"<th>Tags</th>");
         b.AppendLine(@$"<th>Duration</th>");
+        b.AppendLine(@$"<th>Tags</th>");
         b.AppendLine($"</tr>");
         foreach (var featureResult in featureReportData.Results.FeatureResults)
         {
@@ -164,6 +166,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
 
             b.AppendLine($"<td>Scenario - {typeText}</td>");
             b.AppendLine($"<td>{statusText}</td>");
+            b.AppendLine($"<td>{sr.TestRunTotalDuration().ToTestFuznResponseTime()}</td>");
             b.AppendLine("<td>");
             if (sr.Tags != null && sr.Tags.Count > 0)
             {
@@ -172,7 +175,6 @@ internal class FeatureHtmlReportWriter : IFeatureReport
                 
             }
             b.AppendLine("</td>");
-            b.AppendLine($"<td>{sr.TestRunTotalDuration().ToTestFuznResponseTime()}</td>");
             b.AppendLine($"</tr>");
         }
     }

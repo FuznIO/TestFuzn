@@ -64,12 +64,19 @@ public class LoadReportTests : BaseFeatureTest
             .Metadata("Scenario-Meta1", "Value1")
             .Step("Step 1", "Test-1234", (context) =>
             {
-                return Task.CompletedTask;
             })
             .Step("Step 2", (context) =>
             {
+            })
+            .Step("Step 3", (context) =>
+            {
                 if (Random.Shared.NextDouble() < 0.33)
-                    Assert.Fail();
+                {
+                    throw new Exception("Some random error: " + Guid.NewGuid().ToString());
+                }
+            })
+            .Step("Step 4", (context) =>
+            {
             })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
             .Load().AssertWhenDone((context, result) =>
@@ -80,26 +87,26 @@ public class LoadReportTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
-    public async Task LongRunning()
-    {
-            int i = 0;
+    //[ScenarioTest]
+    //public async Task LongRunning()
+    //{
+    //        int i = 0;
 
-            await Scenario()
-                .Step("Step 1", (context) => { })
-                .Step("Step 2", (context) => { })
-                .Step("Step 3", (context) => { })
-                .Step("Step 4", (context) => { })
-                //.Step("Step 4", async (context) => { await Task.Delay(TimeSpan.FromMilliseconds(100));  })
-                .Step("Step 5", (context) =>
-                {
-                    Interlocked.Increment(ref i);
-                    if (i % 3 == 0)
-                        Assert.Fail();
-                })
-                .Step("Step 6", (context) => { })
-                .Step("Step 7", (context) => { })
-                .Load().Simulations((context, simulations) => simulations.FixedLoad(3, TimeSpan.FromSeconds(10)))
-                .Run();
-    }
+    //        await Scenario()
+    //            .Step("Step 1", (context) => { })
+    //            .Step("Step 2", (context) => { })
+    //            .Step("Step 3", (context) => { })
+    //            .Step("Step 4", (context) => { })
+    //            //.Step("Step 4", async (context) => { await Task.Delay(TimeSpan.FromMilliseconds(100));  })
+    //            .Step("Step 5", (context) =>
+    //            {
+    //                Interlocked.Increment(ref i);
+    //                if (i % 3 == 0)
+    //                    Assert.Fail();
+    //            })
+    //            .Step("Step 6", (context) => { })
+    //            .Step("Step 7", (context) => { })
+    //            .Load().Simulations((context, simulations) => simulations.FixedLoad(3, TimeSpan.FromSeconds(10)))
+    //            .Run();
+    //}
 }

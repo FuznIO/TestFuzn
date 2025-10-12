@@ -105,6 +105,7 @@ internal class ExecuteScenarioMessageHandler
                 {
                     _sharedExecutionState.TestRunState.ExecutionStatus = ExecutionStatus.Stopped;
                     _sharedExecutionState.TestRunState.ExecutionStoppedReason = ex;
+                    scenarioLoadCollector.SetAssertWhileRunningException(ex);
                     scenarioLoadCollector.SetStatus(ScenarioStatus.Failed);
                 }
             }

@@ -30,7 +30,8 @@ internal class ScenarioLoadCollector
     private int _warmupRequestCountFailed = 0;
     private ScenarioLoadResult _cachedCurrentResult;
     private DateTime _lastUpdated;
-    private List<Exception>? _assertWhenDoneExceptions;
+    private Exception _assertWhileRunningException;
+    private Exception _assertWhenDoneException;
     private Scenario _scenario;
 
     public string ScenarioName { get => _scenarioName; set => _scenarioName = value; }
@@ -198,7 +199,8 @@ internal class ScenarioLoadCollector
             {
                 result.Steps.Add(step.Key, step.Value.GetCurrentResult());
             }
-            result.AssertWhenDoneExceptions = _assertWhenDoneExceptions;
+            result.AssertWhileRunningException = _assertWhileRunningException;
+            result.AssertWhenDoneException = _assertWhenDoneException;
             // Cleanup phase.
             result.CleanupStartTime = _cleanupStartTime;
             result.CleanupEndTime = _cleanupEndTime;
@@ -210,11 +212,20 @@ internal class ScenarioLoadCollector
         }
     }
 
-    internal void AssertWhenDoneException(Exception exception)
+    internal void SetAssertWhileRunningException(Exception exception)
     {
         lock (_lock)
         {
-            _assertWhenDoneExceptions ??= [exception];
+            _assertWhileRunningException = exception;
+            _lastUpdated = DateTime.UtcNow;
+        }
+    }
+
+    internal void SetAssertWhenDoneException(Exception exception)
+    {
+        lock (_lock)
+        {
+            _assertWhenDoneException = exception;
             _lastUpdated = DateTime.UtcNow;
         }
     }

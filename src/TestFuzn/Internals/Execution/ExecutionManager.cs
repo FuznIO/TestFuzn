@@ -60,7 +60,7 @@ internal class ExecutionManager
                 catch (Exception e)
                 {
                     _sharedExecutionState.TestRunState.FirstException = e;
-                    scenarioCollector.AssertWhenDoneException(e);
+                    scenarioCollector.SetAssertWhenDoneException(e);
                     scenarioCollector.SetStatus(ScenarioStatus.Failed);
                 }
             }

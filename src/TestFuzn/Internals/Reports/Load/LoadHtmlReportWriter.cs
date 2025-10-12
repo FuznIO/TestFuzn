@@ -42,43 +42,121 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<link rel='stylesheet' href='assets/styles/testfuzn.css'>");
         b.AppendLine("</head>");
         b.AppendLine("<body>");
+        b.AppendLine(@"<div class=""page-container"">");
 
         // Header
         b.AppendLine($"<h1>TestFuzn - Load Test Report</h>");
+
+        WriteTestInfo(loadReportData, scenarioResult, b);
+
+        WriteTestStatus(scenarioResult, b);
+
+        WritePhaseTimings(loadReportData, scenarioResult, b);
+
+        //var chartDataList = new List<string>();
+        //int chartIndex = 0;
+
+        //// Add a canvas for the pie chart
+        //string chartId = $"chart_{chartIndex}";
+        //b.AppendLine($"<div class='chart-container'><canvas id='{chartId}'></canvas></div>");
+
+        //// Prepare chart data for JavaScript
+        //chartDataList.Add($@"{{ 
+        //    id: '{chartId}', 
+        //    label: 'Request Status Distribution', 
+        //    ok: {loadReportData.ScenarioResult.Ok.RequestCount}, 
+        //    notOk: {loadReportData.ScenarioResult.Failed.RequestCount},
+        //    requestCount: {loadReportData.ScenarioResult.RequestCount}
+        //}}");
+
+        //chartIndex++;
+
+        WriteSteps(b, scenarioResult);
+        WriteSnapshots(loadReportData, b, scenarioResult);
+
+        //// Chart.js CDN and script
+        //b.AppendLine("<script src='assets/scripts/chart.js'></script>");
+        //b.AppendLine("<script>");
+        //b.AppendLine("const chartData = [");
+        //b.AppendLine(string.Join(",", chartDataList));
+        //b.AppendLine("];");
+        //b.AppendLine(@"
+        //chartData.forEach(data => {
+        //    const ctx = document.getElementById(data.id).getContext('2d');
+        //    new Chart(ctx, {
+        //        type: 'pie',
+        //        data: {
+        //            labels: [`OK: ${data.ok}`, `Not OK: ${data.notOk}`],
+        //            datasets: [{
+        //                data: [data.ok, data.notOk],
+        //                backgroundColor: ['#28a745', '#dc3545'],
+        //            }]
+        //        },
+        //        options: {
+        //            responsive: false,
+        //            plugins: {
+        //                title: {
+        //                    display: true,
+        //                    text: `Request Status Distribution | OK: ${data.ok} | Not OK: ${data.notOk} | Total: ${data.requestCount}`
+        //                },
+        //                legend: {
+        //                    position: 'bottom'
+        //                }
+        //            }
+        //        }
+        //    });
+        //});
+        //function toggleDetails(id) {
+        //    var rows = document.querySelectorAll('tr[id=' + id + ']');
+        //    rows.forEach(function(row) {
+        //        if (row.style.display === 'none') {
+        //            row.style.display = '';
+        //        } else {
+        //            row.style.display = 'none';
+        //        }
+        //    });
+        //}
+        //");
+        //b.AppendLine("</script>");
+        b.AppendLine(@"</div>");
+        b.AppendLine("</body>");
+        b.AppendLine("</html>");
+
+        return b.ToString();
+    }
+
+    private static void WriteTestInfo(LoadReportData loadReportData, ScenarioLoadResult scenarioResult, StringBuilder b)
+    {
         b.AppendLine($"<h2>Test Info</h2>");
         b.AppendLine("<table>");
-        b.AppendLine("<tr>");
-        b.AppendLine("<th>Property</th>");
-        b.AppendLine("<th>Value</th>");
-        b.AppendLine("</tr");
-        b.AppendLine($"<tr><td>Test Run ID</td><td>{loadReportData.TestRunId}</td></tr>");
-        b.AppendLine($"<tr><td>Test Suite Name</td><td>{loadReportData.TestSuite.Name}</td></tr>");
-        b.AppendLine($"<tr><td>Test Suite ID</td><td>{loadReportData.TestSuite.Id}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Test Run ID</td><td>{loadReportData.TestRunId}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Test Suite Name</td><td>{loadReportData.TestSuite.Name}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Test Suite ID</td><td>{loadReportData.TestSuite.Id}</th></tr>");
 
         if (loadReportData.TestSuite.Metadata != null && loadReportData.TestSuite.Metadata.Count > 0)
         {
-            b.AppendLine("<tr><td>Test Suite Metadata</td><td><ul>");
+            b.AppendLine(@"<tr><th class=""vertical"">Test Suite Metadata</th><td><ul>");
             foreach (var metadata in loadReportData.TestSuite.Metadata)
-                b.AppendLine($"<li>{metadata.Key}: {metadata.Value}</li>");
+                b.AppendLine(@$"<li>{metadata.Key}: {metadata.Value}</li>");
             b.AppendLine("</ul></td></tr>");
         }
-        b.AppendLine($"<tr><td>Feature Name</td><td>{loadReportData.Feature.Name}</td></tr>");
-        b.AppendLine($"<tr><td>Feature Id</td><td>{loadReportData.Feature.Id}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Feature Name</td><td>{loadReportData.Feature.Name}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Feature Id</td><td>{loadReportData.Feature.Id}</th></tr>");
 
         if (loadReportData.Feature.Metadata != null && loadReportData.Feature.Metadata.Count > 0)
         {
-            b.AppendLine("<tr><td>Feature Metadata</td><td><ul>");
+            b.AppendLine("<tr><th class=\"vertical\">Feature Metadata</th><td><ul>");
             foreach (var metadata in loadReportData.Feature.Metadata)
                 b.AppendLine($"<li>{metadata.Key}: {metadata.Value}</li>");
             b.AppendLine("</ul></td></tr>");
         }
 
-        b.AppendLine($"<tr><td>Scenario Name</td><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
-        b.AppendLine($"<tr><td>Scenario Id</td><td>{loadReportData.ScenarioResult.Id}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Scenario Name</th><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Scenario Id</th><td>{loadReportData.ScenarioResult.Id}</td></tr>");
 
         if (loadReportData.ScenarioResult.Tags != null && loadReportData.ScenarioResult.Tags.Count > 0)
         {
-            b.AppendLine("<tr><td>Scenario Tags</td><td><ul>");
+            b.AppendLine("<tr><th class=\"vertical\">Scenario Tags</th><td><ul>");
             foreach (var tag in loadReportData.ScenarioResult.Tags)
                 b.AppendLine($"<li>{tag}</li>");
             b.AppendLine("</ul></td></tr>");
@@ -86,21 +164,51 @@ internal class LoadHtmlReportWriter : ILoadReport
 
         if (loadReportData.ScenarioResult.Metadata != null && loadReportData.ScenarioResult.Metadata.Count > 0)
         {
-            b.AppendLine("<tr><td>Scenario Metadata</td><td><ul>");
+            b.AppendLine(@"<tr><th class=""vertical"">Scenario Metadata</th><td><ul>");
             foreach (var metadata in loadReportData.ScenarioResult.Metadata)
                 b.AppendLine($"<li>{metadata.Key}: {metadata.Value}</li>");
             b.AppendLine("</ul></td></tr>");
         }
 
         b.AppendLine("<tr>");
-        b.AppendLine("<td>Simulations</td><td><ul>");
+        b.AppendLine(@"<th class=""vertical"">Simulations</th><td><ul>");
         foreach (var simulation in scenarioResult.Simulations)
             b.AppendLine($"<li>{simulation}</li>");
         b.AppendLine("</li></td></tr>");
         b.AppendLine("</table>");
+    }
 
-        b.AppendLine("</table>");
+    private static void WriteTestStatus(ScenarioLoadResult scenarioResult, StringBuilder b)
+    {
+        b.AppendLine($"<h2>Test Status</h2>");
+        if (scenarioResult.Status == ScenarioStatus.Passed)
+        {
+            b.AppendLine(@$"<div class=""status-panel passed"">");
+            b.AppendLine(@$"<div class=""title"">✅ Load test passed</div>");
+            b.AppendLine(@$"</div>");
+        }
+        else if (scenarioResult.Status == ScenarioStatus.Failed)
+        {
+            var exception = "";
+            if (scenarioResult.AssertWhileRunningException != null)
+                exception = $@"<span style=""font-weight:bold"">AssertWhileRunning failed:</span> {scenarioResult.AssertWhileRunningException.Message.ToString()}";
+            else if (scenarioResult.AssertWhenDoneException != null)
+                exception = $@"<span style=""font-weight:bold"">AssertWhenDone failed:</span> {scenarioResult.AssertWhenDoneException.Message.ToString()}";
 
+            b.AppendLine(@$"<div class=""status-panel failed"">");
+            b.AppendLine(@$"<div class=""title"">❌ Load test failed</div>");
+            if (exception != "")
+            {
+                b.AppendLine($@"<div class=""details"">{exception}</div>");
+            }
+            b.AppendLine("</div>");
+        }
+        else
+            throw new InvalidOperationException($"Scenario status not supported: {scenarioResult.Status}");
+    }
+
+    private static void WritePhaseTimings(LoadReportData loadReportData, ScenarioLoadResult scenarioResult, StringBuilder b)
+    {
         b.AppendLine($"<h2>Phase Timings</h2>");
         b.AppendLine("<table>");
         b.AppendLine("<tr>");
@@ -148,78 +256,6 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine($"<td>{scenarioResult.EndTime().ToLocalTime()}</td>");
         b.AppendLine("</tr>");
         b.AppendLine("</table>");
-
-        //var chartDataList = new List<string>();
-        //int chartIndex = 0;
-
-        //// Add a canvas for the pie chart
-        //string chartId = $"chart_{chartIndex}";
-        //b.AppendLine($"<div class='chart-container'><canvas id='{chartId}'></canvas></div>");
-
-        //// Prepare chart data for JavaScript
-        //chartDataList.Add($@"{{ 
-        //    id: '{chartId}', 
-        //    label: 'Request Status Distribution', 
-        //    ok: {loadReportData.ScenarioResult.Ok.RequestCount}, 
-        //    notOk: {loadReportData.ScenarioResult.Failed.RequestCount},
-        //    requestCount: {loadReportData.ScenarioResult.RequestCount}
-        //}}");
-
-        //chartIndex++;
-
-        var scenario = loadReportData.ScenarioResult;
-
-        WriteSteps(b, scenario);
-        WriteSnapshots(loadReportData, b, scenario);
-
-        //// Chart.js CDN and script
-        //b.AppendLine("<script src='assets/scripts/chart.js'></script>");
-        //b.AppendLine("<script>");
-        //b.AppendLine("const chartData = [");
-        //b.AppendLine(string.Join(",", chartDataList));
-        //b.AppendLine("];");
-        //b.AppendLine(@"
-        //chartData.forEach(data => {
-        //    const ctx = document.getElementById(data.id).getContext('2d');
-        //    new Chart(ctx, {
-        //        type: 'pie',
-        //        data: {
-        //            labels: [`OK: ${data.ok}`, `Not OK: ${data.notOk}`],
-        //            datasets: [{
-        //                data: [data.ok, data.notOk],
-        //                backgroundColor: ['#28a745', '#dc3545'],
-        //            }]
-        //        },
-        //        options: {
-        //            responsive: false,
-        //            plugins: {
-        //                title: {
-        //                    display: true,
-        //                    text: `Request Status Distribution | OK: ${data.ok} | Not OK: ${data.notOk} | Total: ${data.requestCount}`
-        //                },
-        //                legend: {
-        //                    position: 'bottom'
-        //                }
-        //            }
-        //        }
-        //    });
-        //});
-        //function toggleDetails(id) {
-        //    var rows = document.querySelectorAll('tr[id=' + id + ']');
-        //    rows.forEach(function(row) {
-        //        if (row.style.display === 'none') {
-        //            row.style.display = '';
-        //        } else {
-        //            row.style.display = 'none';
-        //        }
-        //    });
-        //}
-        //");
-        //b.AppendLine("</script>");
-        b.AppendLine("</body>");
-        b.AppendLine("</html>");
-
-        return b.ToString();
     }
 
     private void WriteSteps(StringBuilder b, ScenarioLoadResult scenario)
@@ -269,6 +305,22 @@ internal class LoadHtmlReportWriter : ILoadReport
             b.AppendLine(@"<tr>");
             Cols(b, "", false, step.Ok, step.Failed, level);
             b.AppendLine("</tr>");
+
+            // Show errors if present
+            if (step.Errors != null && step.Errors.Count > 0)
+            {
+                b.AppendLine($@"<tr><td colspan=""12"" style=""padding-left:{level * 20}px;"" class=""errors"">
+                <span style=""font-weight:bold"">Step Errors:</span><ul>");
+                foreach (var error in step.Errors.Values)
+                {
+                    b.AppendLine("<li>");
+                    b.AppendLine(@$"<span style=""font-weight:bold"">Message:</span> {error.Message}<br/>");
+                    b.AppendLine(@$"<span style=""font-weight:bold"">Details:</span> {error.Details}<br/>");
+                    b.AppendLine(@$"<span style=""font-weight:bold"">Count:</span> {error.Count}");
+                    b.AppendLine("</li>");
+                }
+                b.AppendLine("</ul></td></tr>");
+            }
 
             if (step.Steps == null || step.Steps.Count == 0)
                 return;

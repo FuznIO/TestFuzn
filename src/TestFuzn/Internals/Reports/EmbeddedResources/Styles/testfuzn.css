@@ -80,48 +80,53 @@
     --button-secondary-text: var(--gray-800);
 }
 
-
-body {
+body 
+{
     font-family: Arial, sans-serif;
     margin: 20px;
     background-color: #F9FAFB;
 }
-
-h1, h2, h3, summary, detail {
+.page-container
+{
+    width: 95%;
+    margin: 0 auto;
+}
+h1, h2, h3, summary, detail 
+{
     color: #111827;
 }
-
 h2 {
     margin-top: 40px;
 }
-
 h3 {
     margin-top: 40px;
 }
-
-table {
-    width: 95%;
+table 
+{
+    width: 100%;
     border-collapse: collapse;
     table-layout: auto;
     background-color: #FFF;
 }
-
-th, td {
+th, td 
+{
     border: 1px solid #D0CCD0;
     padding: 8px;
     text-align: left;
     color: #111827;
     vertical-align: top;
 }
-
-th {
+th 
+{
     background-color: #F3F4F6;
     color: #4B5563;
 }
-td.ok {
+td.ok 
+{
     background-color: var(--success-bg);
 }
-td.failed {
+td.failed 
+{
     background-color: var(--danger-bg);
 }
 tr.summary
@@ -142,23 +147,19 @@ li:last-child
 {
     padding-bottom: 0;
 }
-
 .feature-results th:not(:first-child),
 .feature-results td:not(:first-child) {
     width: 1%;
     white-space: nowrap;
 }
-
 th.vertical
 {
     width: 1%;
     white-space: nowrap;
 }
-
 details {
     margin: 8px 50px 8px 50px;
 }
-
 summary::before {
     content: "Show Details";
 }
@@ -166,4 +167,39 @@ summary::before {
 details[open] > summary::before {
     content: "Hide Details";
 }
+.status-panel
+{
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--success-border);
+    background-color: var(--success-bg);
+    color: var(--success-text);
+    padding: 8px;
+    margin: 20px 0;
+}
+.status-panel.passed
+{
+    border-color: var(--success-border);
+    background-color: var(--success-bg);
+    color: var(--success-text);
+}
+.status-panel.failed
+{
+    border-color: var(--danger-border);
+    background-color: var(--danger-bg);
+    color: var(--danger-text);
+}
+.status-panel .title
+{
+    font-weight: bold;
+}
 
+.status-panel .details
+{
+    padding-top: 8px;
+}
+.errors
+{
+    background-color: var(--danger-bg);
+    color: var(--danger-text);
+}

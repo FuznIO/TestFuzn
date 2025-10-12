@@ -32,7 +32,8 @@ public class ScenarioLoadResult
     public int WarmupRequestCountOk { get; internal set; }
     public int WarmupRequestCountFailed { get; internal set; }
     public Dictionary<string, StepLoadResult> Steps { get; internal set; } = new();
-    internal List<Exception>? AssertWhenDoneExceptions { get; set; }
+    public Exception AssertWhileRunningException { get; internal set; }
+    public Exception AssertWhenDoneException { get; internal set; }
 
     public double OkPercentage
     {
