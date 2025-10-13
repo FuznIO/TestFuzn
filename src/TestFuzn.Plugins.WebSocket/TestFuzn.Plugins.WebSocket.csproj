@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Fuzn.TestFuzn.Plugins.WebSocket</AssemblyName>
+    <RootNamespace>Fuzn.TestFuzn.Plugins.WebSocket</RootNamespace>
+    <OutputType>Library</OutputType>
+    <PackageId>Fuzn.TestFuzn.Plugins.WebSocket</PackageId>
+    <Title>Fuzn.TestFuzn.Plugins.WebSocket</Title>
+    <Description>WebSocket plugin for TestFuzn</Description>
+    <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;websocket</PackageTags>
+    <Authors>Fuzn</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
+
+</Project>
