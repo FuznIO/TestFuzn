@@ -20,7 +20,7 @@ public class InfluxDbSinkTests : BaseFeatureTest
             //    Interlocked.Increment(ref stepExecutionCounter);
             //    await Task.Delay(TimeSpan.FromMilliseconds(10));
             //})
-            .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
+            .Step("Call a http endpoint and verify that response is successful and body mapping is OK", (context) =>
             {
                 //var response = await context.CreateHttpRequest("https://localhost:44316/api/Products").Get();
 

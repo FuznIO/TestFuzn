@@ -69,6 +69,7 @@ public class InitAndCleanupTests : BaseFeatureTest
             .InitScenario(async (context) =>
             {
                 initScenarioCalled = true;
+                await Task.CompletedTask;
             })
             .InitIteration(async (context) =>
             {
@@ -79,10 +80,12 @@ public class InitAndCleanupTests : BaseFeatureTest
             .CleanupIteration(async (context) =>
             {
                 Interlocked.Add(ref cleanupIterationCalled, 1);
+                await Task.CompletedTask;
             })
             .CleanupScenario(async (context) =>
             {
                 cleanupScenarioCalled = true;
+                await Task.CompletedTask;
             })
             .Run();
 

@@ -12,9 +12,9 @@ public class ScenarioTestAttribute : TestMethodAttribute
         RunMode = runMode;
     }
 
-    public override TestResult[] Execute(ITestMethod testMethod)
+    public override async Task<TestResult[]> ExecuteAsync(ITestMethod testMethod)
     {
-        var result = base.Execute(testMethod);
+        var result = await base.ExecuteAsync(testMethod);
         return result;
     }
 }

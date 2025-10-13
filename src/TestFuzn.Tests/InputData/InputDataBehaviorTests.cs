@@ -109,9 +109,9 @@ public class InputDataBehaviorTests : BaseFeatureTest
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(30))
             .Run();
 
-        Assert.IsTrue(userExecuted["user1"].Counter > 1);
-        Assert.IsTrue(userExecuted["user2"].Counter > 1);
-        Assert.IsTrue(userExecuted["user3"].Counter > 1);
+        Assert.IsGreaterThan(1, userExecuted["user1"].Counter);
+        Assert.IsGreaterThan(1, userExecuted["user2"].Counter);
+        Assert.IsGreaterThan(1, userExecuted["user3"].Counter);
     }
 
  [ScenarioTest]
@@ -145,8 +145,8 @@ public class InputDataBehaviorTests : BaseFeatureTest
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(30))
             .Run();
 
-        Assert.IsTrue(userExecuted["user1"].Counter > 1);
-        Assert.IsTrue(userExecuted["user2"].Counter > 1);
-        Assert.IsTrue(userExecuted["user3"].Counter > 1);
+        Assert.IsGreaterThan(1, userExecuted["user1"].Counter);
+        Assert.IsGreaterThan(1, userExecuted["user2"].Counter);
+        Assert.IsGreaterThan(1, userExecuted["user3"].Counter);
     }
 }

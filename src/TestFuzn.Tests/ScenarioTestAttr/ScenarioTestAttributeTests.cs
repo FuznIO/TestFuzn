@@ -6,16 +6,30 @@ public class ScenarioTestAttributeTests : BaseFeatureTest
     [TestMethod]
     public async Task ShouldFail_MS_Test_Method_Is_Not_Supported()
     {
-        var wasRun = false;
+        var catchWasRun = false;
 
-        await Scenario()
-            .Step("Step1", context =>
-            {
-                wasRun = true;
-            })
-            .Run();
+        try
+        {
+            var stepWasRun = false;
 
-        Assert.IsFalse(wasRun);
+            await Scenario()
+                .Step("Step1", context =>
+                {
+                    stepWasRun = true;
+                })
+                .Run();
+
+            Assert.IsFalse(stepWasRun);
+        }
+        catch (Exception ex)
+        {
+            Assert.Contains("uses [TestMethod]. Use [ScenarioTest] instead for scenario-based tests.", ex.Message);
+            catchWasRun = true;
+        }
+        finally
+        {
+            Assert.IsTrue(catchWasRun);
+        }
     }
 
     [ScenarioTest]

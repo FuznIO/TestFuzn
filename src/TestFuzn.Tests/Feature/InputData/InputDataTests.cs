@@ -135,21 +135,27 @@ public class InputDataTests :  BaseFeatureTest
     [ScenarioTest]
     public async Task Should_Fail_Feature_Verify_Scenario_Fails_When_InputData_Iteration_Fails()
     {
-        var assertWasCalled = false;
+        var catchWasCalled = false;
 
-        await Scenario()
-             .InputData("Test1", "Test2")
-             .Step("Step should fail", (context) =>
-             {
-                 Assert.Fail("This step should fail");
-             })
-             .AssertInternalState((state) =>
-             {
-                 assertWasCalled = true;
-                 Assert.AreEqual(ScenarioStatus.Failed, state.SharedExecutionState.ResultState.FeatureCollectors.First().Value.Status);
-             })
-             .Run();
+        try
+        {
+            await Scenario()
+                 .InputData("Test1", "Test2")
+                 .Step("Step should fail", (context) =>
+                 {
+                     Assert.Fail("This step should fail");
+                 })
+                 .AssertInternalState((state) =>
+                 {
+                     Assert.AreEqual(ScenarioStatus.Failed, state.SharedExecutionState.ResultState.FeatureCollectors.First().Value.Status);
+                 })
+                 .Run();
+        }
+        catch (AssertFailedException)
+        {
+            catchWasCalled = true;
+        }
 
-        Assert.IsTrue(assertWasCalled);
+        Assert.IsTrue(catchWasCalled);
     }
 }

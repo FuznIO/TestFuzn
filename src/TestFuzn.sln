@@ -32,6 +32,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFuzn.Plugins.Newtonsoft", "TestFuzn.Plugins.Newtonsoft\TestFuzn.Plugins.Newtonsoft.csproj", "{0AF4C479-61B1-1367-2B4C-0B5A441FCC92}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFuzn.Tests.Failing", "TestFuzn.Tests.Failing\TestFuzn.Tests.Failing.csproj", "{FC9DF74A-081E-442A-B146-4AB4BF03D85F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -78,6 +80,10 @@ Global
 		{0AF4C479-61B1-1367-2B4C-0B5A441FCC92}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0AF4C479-61B1-1367-2B4C-0B5A441FCC92}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0AF4C479-61B1-1367-2B4C-0B5A441FCC92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC9DF74A-081E-442A-B146-4AB4BF03D85F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC9DF74A-081E-442A-B146-4AB4BF03D85F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC9DF74A-081E-442A-B146-4AB4BF03D85F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC9DF74A-081E-442A-B146-4AB4BF03D85F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

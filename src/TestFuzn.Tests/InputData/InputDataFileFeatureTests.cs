@@ -75,10 +75,10 @@ public class InputDataFileFeatureTests : BaseFeatureTest
                 if (user.Username == "jdoe")
                 {
                     Assert.AreEqual("John Doe", user.Name);
-                    Assert.AreEqual(1, user.Address.Length);
+                    Assert.HasCount(1, user.Address);
                     Assert.AreEqual("Main St", user.Address[0].Street);
                     Assert.AreEqual("Oslo", user.Address[0].City);
-                    Assert.AreEqual(1, user.PhoneNumbers.Count);
+                    Assert.HasCount(1, user.PhoneNumbers);
                     Assert.AreEqual("+47", user.PhoneNumbers[0].CountyCode);
                     Assert.AreEqual("12345678", user.PhoneNumbers[0].Number);
                     Assert.AreEqual(0, user.Counter);
@@ -86,10 +86,10 @@ public class InputDataFileFeatureTests : BaseFeatureTest
                 else if (user.Username == "jsmith")
                 {
                     Assert.AreEqual("Jane Smith", user.Name);
-                    Assert.AreEqual(1, user.Address.Length);
+                    Assert.HasCount(1, user.Address);
                     Assert.AreEqual("Second St", user.Address[0].Street);
                     Assert.AreEqual("Bergen", user.Address[0].City);
-                    Assert.AreEqual(2, user.PhoneNumbers.Count);
+                    Assert.HasCount(2, user.PhoneNumbers);
                     Assert.AreEqual("+47", user.PhoneNumbers[0].CountyCode);
                     Assert.AreEqual("87654321", user.PhoneNumbers[0].Number);
                     Assert.AreEqual("+46", user.PhoneNumbers[1].CountyCode);
@@ -99,10 +99,10 @@ public class InputDataFileFeatureTests : BaseFeatureTest
                 else if (user.Username == "ajohnson")
                 {
                     Assert.AreEqual("Alice Johnson", user.Name);
-                    Assert.AreEqual(1, user.Address.Length);
+                    Assert.HasCount(1, user.Address);
                     Assert.AreEqual("Third St", user.Address[0].Street);
                     Assert.AreEqual("Trondheim", user.Address[0].City);
-                    Assert.AreEqual(1, user.PhoneNumbers.Count);
+                    Assert.HasCount(1, user.PhoneNumbers);
                     Assert.AreEqual("+45", user.PhoneNumbers[0].CountyCode);
                     Assert.AreEqual("99887766", user.PhoneNumbers[0].Number);
                     Assert.AreEqual(0, user.Counter);

@@ -107,7 +107,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         else
         {
             b.AppendLine(@$"<div class=""status-panel failed"">");
-            b.AppendLine(@$"<div class=""title"">❌ {scenariosFailed}] tests failed</div>");
+            b.AppendLine(@$"<div class=""title"">❌ {scenariosFailed} tests failed</div>");
         }
 
         b.AppendLine($@"<div class=""details"">");
