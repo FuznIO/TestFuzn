@@ -130,33 +130,33 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine($"<h2>Test Info</h2>");
         b.AppendLine("<table>");
         b.AppendLine(@$"<tr><th class=""vertical"">Test Run ID</td><td>{loadReportData.TestRunId}</th></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Test Suite Name</td><td>{loadReportData.TestSuite.Name}</th></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Test Suite ID</td><td>{loadReportData.TestSuite.Id}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Test Suite - Name</td><td>{loadReportData.TestSuite.Name}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Test Suite - ID</td><td>{loadReportData.TestSuite.Id}</th></tr>");
 
         if (loadReportData.TestSuite.Metadata != null && loadReportData.TestSuite.Metadata.Count > 0)
         {
-            b.AppendLine(@"<tr><th class=""vertical"">Test Suite Metadata</th><td><ul>");
+            b.AppendLine(@"<tr><th class=""vertical"">Test Suite - Metadata</th><td><ul>");
             foreach (var metadata in loadReportData.TestSuite.Metadata)
                 b.AppendLine(@$"<li>{metadata.Key}: {metadata.Value}</li>");
             b.AppendLine("</ul></td></tr>");
         }
-        b.AppendLine(@$"<tr><th class=""vertical"">Feature Name</td><td>{loadReportData.Feature.Name}</th></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Feature Id</td><td>{loadReportData.Feature.Id}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Feature - Name</td><td>{loadReportData.Feature.Name}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Feature - ID</td><td>{loadReportData.Feature.Id}</th></tr>");
 
         if (loadReportData.Feature.Metadata != null && loadReportData.Feature.Metadata.Count > 0)
         {
-            b.AppendLine("<tr><th class=\"vertical\">Feature Metadata</th><td><ul>");
+            b.AppendLine("<tr><th class=\"vertical\">Feature - Metadata</th><td><ul>");
             foreach (var metadata in loadReportData.Feature.Metadata)
                 b.AppendLine($"<li>{metadata.Key}: {metadata.Value}</li>");
             b.AppendLine("</ul></td></tr>");
         }
 
-        b.AppendLine(@$"<tr><th class=""vertical"">Scenario Name</th><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Scenario Id</th><td>{loadReportData.ScenarioResult.Id}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Scenario - Name</th><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Scenario - ID</th><td>{loadReportData.ScenarioResult.Id}</td></tr>");
 
         if (loadReportData.ScenarioResult.Tags != null && loadReportData.ScenarioResult.Tags.Count > 0)
         {
-            b.AppendLine("<tr><th class=\"vertical\">Scenario Tags</th><td><ul>");
+            b.AppendLine("<tr><th class=\"vertical\">Scenario - Tags</th><td><ul>");
             foreach (var tag in loadReportData.ScenarioResult.Tags)
                 b.AppendLine($"<li>{tag}</li>");
             b.AppendLine("</ul></td></tr>");
@@ -164,7 +164,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
         if (loadReportData.ScenarioResult.Metadata != null && loadReportData.ScenarioResult.Metadata.Count > 0)
         {
-            b.AppendLine(@"<tr><th class=""vertical"">Scenario Metadata</th><td><ul>");
+            b.AppendLine(@"<tr><th class=""vertical"">Scenario - Metadata</th><td><ul>");
             foreach (var metadata in loadReportData.ScenarioResult.Metadata)
                 b.AppendLine($"<li>{metadata.Key}: {metadata.Value}</li>");
             b.AppendLine("</ul></td></tr>");
@@ -220,7 +220,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         // Init
         b.AppendLine("<tr>");
         b.AppendLine($"<td>Init</td>");
-        b.AppendLine($"<td>{scenarioResult.InitTotalDuration().ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td>{scenarioResult.InitTotalDuration().ToTestFuznReadableString()}</td>");
         b.AppendLine($"<td>{scenarioResult.InitStartTime.ToLocalTime()}</td>");
         b.AppendLine($"<td>{scenarioResult.InitEndTime.ToLocalTime()}</td>");
         b.AppendLine("</tr>");
@@ -229,7 +229,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         {
             b.AppendLine("<tr>");
             b.AppendLine($"<td>Warmup</td>");
-            b.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupTotalDuration().ToTestFuznResponseTime()}</td>");
+            b.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupTotalDuration().ToTestFuznReadableString()}</td>");
             b.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupStartTime.ToLocalTime()}</td>");
             b.AppendLine($"<td>{loadReportData.ScenarioResult.WarmupEndTime.ToLocalTime()}</td>");
             b.AppendLine("</tr>");
@@ -237,21 +237,21 @@ internal class LoadHtmlReportWriter : ILoadReport
         // Execution
         b.AppendLine("<tr>");
         b.AppendLine($"<td>Execution</td>");
-        b.AppendLine($"<td>{scenarioResult.MeasurementTotalDuration().ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td>{scenarioResult.MeasurementTotalDuration().ToTestFuznReadableString()}</td>");
         b.AppendLine($"<td>{scenarioResult.MeasurementStartTime.ToLocalTime()}</td>");
         b.AppendLine($"<td>{scenarioResult.MeasurementEndTime.ToLocalTime()}</td>");
         b.AppendLine("</tr>");
         // Cleanup
         b.AppendLine("<tr>");
         b.AppendLine($"<td>Cleanup</td>");
-        b.AppendLine($"<td>{scenarioResult.CleanupTotalDuration().ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td>{scenarioResult.CleanupTotalDuration().ToTestFuznReadableString()}</td>");
         b.AppendLine($"<td>{scenarioResult.CleanupStartTime.ToLocalTime()}</td>");
         b.AppendLine($"<td>{scenarioResult.CleanupEndTime.ToLocalTime()}</td>");
         b.AppendLine("</tr>");
         // Test Run
         b.AppendLine("<tr>");
         b.AppendLine($"<td>Total Test Run</td>");
-        b.AppendLine($"<td>{scenarioResult.TestRunTotalDuration().ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td>{scenarioResult.TestRunTotalDuration().ToTestFuznReadableString()}</td>");
         b.AppendLine($"<td>{scenarioResult.StartTime().ToLocalTime()}</td>");
         b.AppendLine($"<td>{scenarioResult.EndTime().ToLocalTime()}</td>");
         b.AppendLine("</tr>");
@@ -260,7 +260,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
     private void WriteSteps(StringBuilder b, ScenarioLoadResult scenario)
     {
-        b.AppendLine($"<h2>Test Statistics</h2>");
+        b.AppendLine($"<h2>Test Results</h2>");
 
         // Table for the scenario
         b.AppendLine("<table>");
