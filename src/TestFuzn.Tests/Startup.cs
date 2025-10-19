@@ -1,6 +1,6 @@
-﻿using Fuzn.TestFuzn.Plugins.Playwright;
-using Fuzn.TestFuzn.Plugins.Http;
+﻿using Fuzn.TestFuzn.Plugins.Http;
 using Fuzn.TestFuzn.Plugins.Newtonsoft;
+using Fuzn.TestFuzn.Plugins.Playwright;
 using Fuzn.TestFuzn.Sinks.InfluxDB;
 
 namespace Fuzn.TestFuzn.Tests;
@@ -21,7 +21,28 @@ public class Startup : BaseStartup
             }
         };
         configuration.EnvironmentName = "development";
-        configuration.UsePlaywright();
+        configuration.UsePlaywright(c =>
+        {
+            c.BrowserTypesToUse = new List<string> { "chromium" };
+            c.ConfigureBrowserLaunchOptions = (browserType, launchOptions) =>
+            {
+                launchOptions.Args =
+                [
+                    "--disable-web-security",
+                    "--disable-features=IsolateOrigins,site-per-process"
+                ];
+                launchOptions.Headless = false;
+            };
+            c.ConfigureContextOptions = (browserType, contextOptions) =>
+            {
+                contextOptions.IgnoreHTTPSErrors = true;
+            };
+            c.AfterPageCreated = (browserType, page) =>
+            {
+                page.SetDefaultTimeout(10000);
+                return Task.CompletedTask;
+            };
+        });
         configuration.UseHttp();
         configuration.UseInfluxDb();
         // Only one serializer can be used, last one set wins, have these 2 lines just to show both options.
