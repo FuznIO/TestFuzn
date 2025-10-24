@@ -11,6 +11,9 @@ internal class FileLogger : ILogger
     private const int MaxRetryAttempts = 3;
     private const int RetryDelayMs = 100;
 
+    // Thread-safe scope storage using AsyncLocal
+    private static readonly AsyncLocal<LoggerScope?> _currentScope = new();
+
     /// <summary>
     /// Initializes a new instance of the FileLogger
     /// </summary>
@@ -25,9 +28,17 @@ internal class FileLogger : ILogger
     }
 
     /// <summary>
-    /// Begin a new logging scope (not implemented)
+    /// Begin a new logging scope with contextual information
     /// </summary>
-    public IDisposable BeginScope<TState>(TState state) => default!;
+    public IDisposable BeginScope<TState>(TState state)
+    {
+        if (state == null)
+            return new NoOpDisposable();
+
+        var scope = new LoggerScope(state, _currentScope.Value);
+        _currentScope.Value = scope;
+        return scope;
+    }
 
     /// <summary>
     /// Checks if logging is enabled for the specified level
@@ -51,7 +62,8 @@ internal class FileLogger : ILogger
             try
             {
                 string message = formatter(state, exception);
-                string logRecord = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{logLevel}] {_categoryName} {message}";
+                var (scenario, step) = GetScopeContext();
+                string logRecord = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{logLevel}] [{scenario}] [Step {step}] {_categoryName} {message}";
 
                 lock (_lock)
                 {
@@ -102,5 +114,96 @@ internal class FileLogger : ILogger
                 break;
             }
         }
+    }
+
+    /// <summary>
+    /// Gets scenario and step context from the current scope chain
+    /// </summary>
+    private (string scenario, string step) GetScopeContext()
+    {
+        var scope = _currentScope.Value;
+        if (scope == null)
+            return (string.Empty, string.Empty);
+
+        string? scenario = null;
+        string? step = null;
+
+        // Walk the scope chain to find scenario and step values
+        while (scope != null)
+        {
+            var scopeValues = scope.GetScopeValues();
+            
+            if (scenario == null && scopeValues.TryGetValue("scenario", out var scenarioValue))
+                scenario = scenarioValue?.ToString();
+            
+            if (step == null && scopeValues.TryGetValue("step", out var stepValue))
+                step = stepValue?.ToString();
+            
+            // If we found both, no need to continue
+            if (scenario != null && step != null)
+                break;
+            
+            scope = scope.Parent;
+        }
+
+        return (scenario ?? string.Empty, step ?? string.Empty);
+    }
+
+    /// <summary>
+    /// Represents a logging scope that can be nested
+    /// </summary>
+    private class LoggerScope : IDisposable
+    {
+        private readonly object _state;
+        private readonly LoggerScope? _parent;
+        private bool _disposed;
+
+        public LoggerScope? Parent => _parent;
+
+        public LoggerScope(object state, LoggerScope? parent)
+        {
+            _state = state;
+            _parent = parent;
+        }
+
+        /// <summary>
+        /// Gets scope values as a dictionary
+        /// </summary>
+        public Dictionary<string, object?> GetScopeValues()
+        {
+            var values = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+            if (_state == null)
+                return values;
+
+            // Handle Dictionary<string, object?> which is commonly used for structured scopes
+            if (_state is IEnumerable<KeyValuePair<string, object?>> kvps)
+            {
+                foreach (var kvp in kvps)
+                {
+                    values[kvp.Key] = kvp.Value;
+                }
+            }
+
+            return values;
+        }
+
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                // Restore parent scope
+                _currentScope.Value = _parent;
+                _disposed = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// No-op disposable for when no scope is needed
+    /// </summary>
+    private class NoOpDisposable : IDisposable
+    {
+        public void Dispose() { }
     }
 }
