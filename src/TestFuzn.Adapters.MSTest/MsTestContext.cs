@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn;
 
 public class MsTestContext : TestContext
 {
-    public override IDictionary Properties => throw new NotImplementedException();
+    public override IDictionary<string, object> Properties => throw new NotImplementedException();
 
     public override void AddResultFile(string fileName)
     {

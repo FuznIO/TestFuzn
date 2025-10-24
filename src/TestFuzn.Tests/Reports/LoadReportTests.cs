@@ -59,32 +59,44 @@ public class LoadReportTests : BaseFeatureTest
     [ScenarioTest]
     public async Task ShouldFail_ShortRunning_WithErrors_WithFailingAssertWhenDone()
     {
-        await Scenario("Short running report with errors and failing assert")
-            .Id("ScenarioId-1234")
-            .Metadata("Scenario-Meta1", "Value1")
-            .Step("Step 1", "Test-1234", (context) =>
-            {
-            })
-            .Step("Step 2", (context) =>
-            {
-            })
-            .Step("Step 3", (context) =>
-            {
-                if (Random.Shared.NextDouble() < 0.33)
+        bool catchWasRun = false;
+
+        try
+        {
+            await Scenario("Short running report with errors and failing assert")
+                .Id("ScenarioId-1234")
+                .Metadata("Scenario-Meta1", "Value1")
+                .Step("Step 1", "Test-1234", (context) =>
                 {
-                    throw new Exception("Some random error: " + Guid.NewGuid().ToString());
-                }
-            })
-            .Step("Step 4", (context) =>
-            {
-            })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
-            .Load().AssertWhenDone((context, result) =>
-            {
-                if (result.Failed.RequestCount > 0)
-                    Assert.Fail("There should be no failing steps"); // This will make the scenario fail.
-            })
-            .Run();
+                })
+                .Step("Step 2", (context) =>
+                {
+                })
+                .Step("Step 3", (context) =>
+                {
+                    if (Random.Shared.NextDouble() < 0.33)
+                    {
+                        throw new Exception("Some random error: " + Guid.NewGuid().ToString());
+                    }
+                })
+                .Step("Step 4", (context) =>
+                {
+                })
+                .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
+                .Load().AssertWhenDone((context, result) =>
+                {
+                    if (result.Failed.RequestCount > 0)
+                        Assert.Fail("There should be no failing steps"); // This will make the scenario fail.
+                })
+                .Run();
+        }
+        catch (AssertFailedException ex)
+        {
+            catchWasRun = true;
+            Assert.Contains("There should be no failing steps", ex.Message);
+        }
+
+        Assert.IsTrue(catchWasRun);
     }
 
     //[ScenarioTest]

@@ -22,8 +22,24 @@ internal class PlaywrightManager
         foreach (var browserType in PlaywrightGlobalState.Configuration.BrowserTypesToUse)
         {
             var state = new PlaywrightState();
-            state.Browser = await _playwright[browserType].LaunchAsync(new(new BrowserTypeLaunchOptions{Args = ["--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"] }) { Headless = PlaywrightGlobalState.Configuration.Headless });
-            state.BrowserContext = await state.Browser.NewContextAsync();
+
+            if (PlaywrightGlobalState.Configuration.ConfigureBrowserLaunchOptions == null)
+                throw new InvalidOperationException("ConfigureBrowserLaunchOptions must be set in Playwright configuration.");
+
+            var launchOptions = new BrowserTypeLaunchOptions();
+            PlaywrightGlobalState.Configuration.ConfigureBrowserLaunchOptions(browserType, launchOptions);
+            state.Browser = await _playwright[browserType].LaunchAsync(launchOptions);
+
+            
+            if (PlaywrightGlobalState.Configuration.ConfigureContextOptions != null)
+            {
+                var options = new BrowserNewContextOptions();
+                PlaywrightGlobalState.Configuration.ConfigureContextOptions(browserType, options);
+                state.BrowserContext = await state.Browser.NewContextAsync(options);
+            }
+            
+            else
+                state.BrowserContext = await state.Browser.NewContextAsync();
             _state.Add(browserType, state);
         }
 
@@ -45,8 +61,12 @@ internal class PlaywrightManager
             throw new KeyNotFoundException($"The browser type '{browserType}' is not available in the current Playwright state.");
 
         var browserContext = _state[browserType].BrowserContext;
+
         var page = await browserContext.NewPageAsync();
+        if (PlaywrightGlobalState.Configuration.AfterPageCreated != null)
+            await PlaywrightGlobalState.Configuration.AfterPageCreated(browserType, page);
         _pages.Add(page);
+
         return page;
     }
 

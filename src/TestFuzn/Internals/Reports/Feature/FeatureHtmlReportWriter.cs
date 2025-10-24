@@ -2,6 +2,7 @@
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Feature;
 using Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
+using System;
 using System.Reflection.Emit;
 using System.Text;
 
@@ -50,38 +51,9 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         // Header
         b.AppendLine($"<h1>{featureReportData.TestSuite.Name} - Feature Test Report</h1>");
 
-        b.AppendLine($"<h2>Test Execution Info</h2>");
-        b.AppendLine("<table>");
-        
-        b.AppendLine(@"<tr><th class=""vertical"">Test Suite Name</th><td>" + featureReportData.TestSuite.Name + "</td></tr>");
-        b.AppendLine(@"<tr><th class=""vertical"">Test Suite ID</th><td>" + featureReportData.TestSuite.Id + "</td></tr>");
+        WriteTestInfo(featureReportData, b);
 
-        if (featureReportData.TestSuite.Metadata != null)
-        {
-            foreach (var metadata in featureReportData.TestSuite.Metadata)
-            {
-                b.AppendLine(@$"<tr><th class=""vertical"">Test Suite Metadata - {metadata.Key}</th><td>{metadata.Value}</td></tr>");
-            }
-        }
-        
-        b.AppendLine(@$"<tr><th class=""vertical"">Run ID</th><td>{featureReportData.TestRunId}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"" class=""vertical"">Start Time</th><td>{featureReportData.TestRunStartTime.ToLocalTime()}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">End Time</th><td>{featureReportData.TestRunEndTime.ToLocalTime()}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Duration</th><td>{featureReportData.TestRunDuration.ToTestFuznFormattedDuration()}</td></tr>");
-
-        // Summary
-        var featuresTotal = featureReportData.Results.FeatureResults.Count;
-        var featuresPassed = featureReportData.Results.FeatureResults.Count(x => x.Value.Passed());
-        var featuresFailed = featuresTotal - featuresPassed;
-        var scenariosTotal = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count);
-        var scenariosPassed = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Passed));
-        var scenariosSkipped = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Skipped));
-        var scenariosFailed = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Failed));
-
-        b.AppendLine(@$"<tr><th class=""vertical"">Summary - Features</th><td>Total: 🔢 {featuresTotal} |  Passed: ✅ {featuresPassed} | Failed: ❌ {featuresFailed}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Summary - Scenarios</th><td>Total: 🔢 {scenariosTotal} | Passed: ✅ {scenariosPassed} | Failed: ❌ {scenariosFailed} | Skipped: ⚠️ {scenariosSkipped}</td></tr>");
-
-        b.AppendLine("</table>");
+        WriteStatus(featureReportData, b);
 
         WriteFeatureResults(featureReportData, b);
 
@@ -92,9 +64,79 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         return b.ToString();
     }
 
+    private static void WriteTestInfo(FeatureReportData featureReportData, StringBuilder b)
+    {
+        b.AppendLine($"<h2>Test Info</h2>");
+        b.AppendLine("<table>");
+        b.AppendLine(@"<tr><th class=""vertical"">Test Suite - Name</th><td>" + featureReportData.TestSuite.Name + "</td></tr>");
+        b.AppendLine(@"<tr><th class=""vertical"">Test Suite - ID</th><td>" + featureReportData.TestSuite.Id + "</td></tr>");
+
+        if (featureReportData.TestSuite.Metadata != null)
+        {
+            b.AppendLine(@$"<tr><th class=""vertical"">Test Suite - Metadata</th><td><ul>");
+            foreach (var metadata in featureReportData.TestSuite.Metadata)
+            {
+                b.AppendLine(@$"<li>{metadata.Key}: {metadata.Value}</li>");
+            }
+            b.AppendLine(@$"</tr>");
+        }
+
+        b.AppendLine(@$"<tr><th class=""vertical"">Run ID</th><td>{featureReportData.TestRunId}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Start Time</th><td>{featureReportData.TestRunStartTime.ToLocalTime()}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">End Time</th><td>{featureReportData.TestRunEndTime.ToLocalTime()}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Duration</th><td>{featureReportData.TestRunDuration.ToTestFuznReadableString()}</td></tr>");
+        b.AppendLine("</table>");
+    }
+
+    private static void WriteStatus(FeatureReportData featureReportData, StringBuilder b)
+    {
+        var featuresTotal = featureReportData.Results.FeatureResults.Count;
+        var featuresPassed = featureReportData.Results.FeatureResults.Count(x => x.Value.Passed());
+        var featuresFailed = featuresTotal - featuresPassed;
+        var scenariosTotal = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count);
+        var scenariosPassed = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Passed));
+        var scenariosSkipped = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Skipped));
+        var scenariosFailed = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Failed));
+
+        b.AppendLine($"<h2>Test Status</h2>");
+        if (featuresFailed == 0)
+        {
+            b.AppendLine(@$"<div class=""status-panel passed"">");
+            b.AppendLine(@$"<div class=""title"">✅ All tests passed</div>");
+        }
+        else
+        {
+            b.AppendLine(@$"<div class=""status-panel failed"">");
+            b.AppendLine(@$"<div class=""title"">❌ {scenariosFailed} tests failed</div>");
+        }
+
+        b.AppendLine($@"<div class=""details"">");
+
+        
+        b.AppendLine("</div>");
+        b.AppendLine("</div>");
+
+        b.AppendLine("<table>");
+        b.AppendLine("<tr>");
+        b.AppendLine(@"<th class=""vertical"" style=""width:1%;white-space:nowrap"">Features Tested</th>");
+        b.AppendLine(@$"<td style=""width:1%;white-space:nowrap"">🔢 Total: {featuresTotal}</td>");
+        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">✅ Passed: {featuresPassed}</td>");
+        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">❌ Failed: {featuresFailed}</td>");
+        b.AppendLine($"<td>⚠️ Skipped: N/A</td>");
+        b.AppendLine("</tr>");
+        b.AppendLine("<tr>");
+        b.AppendLine(@"<th class=""vertical"" style=""width:1%;white-space:nowrap"">Scenario Tests</th>");
+        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">🔢 Total: {scenariosTotal}</td>");
+        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">✅ Passed: {scenariosPassed}</td>");
+        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">❌ Failed: {scenariosFailed}</td>");
+        b.AppendLine($"<td>⚠️ Skipped: {scenariosSkipped}</td>");
+        b.AppendLine("</tr>");
+        b.AppendLine("</table>");
+    }
+
     private void WriteFeatureResults(FeatureReportData featureReportData, StringBuilder b)
     {
-        b.AppendLine($"<h2>Test Execution Results</h2>");
+        b.AppendLine($"<h2>Test Results</h2>");
         // Features
         b.Append(@"<table class=""feature-results"">");
         b.AppendLine($"<tr>");
@@ -197,35 +239,6 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         if (sr.Status != ScenarioStatus.Skipped
             && sr.IterationResults.Count > 0)
             b.AppendLine("</details>");
-    }
-
-    private static void WriteScenarioInfo(StringBuilder b, ScenarioFeatureResult sr)
-    {
-        b.AppendLine("<table>");
-        b.AppendLine($"<tr><th>ID</th><td>{sr.Id}</td></tr>");
-
-        if (sr.Metadata != null)
-        {
-            foreach (var metadata in sr.Metadata)
-                b.AppendLine(@$"<tr><th class=""vertical"">Metadata - {metadata.Key}</th><td>{metadata.Value}</td></tr>");
-        }
-
-        if (sr.InitStartTime != default)
-            b.AppendLine($@"<tr><th class=""vertical"">Init Start Time</th><td>{sr.InitStartTime.ToLocalTime()}</td></tr>");
-        if (sr.InitEndTime != default)
-            b.AppendLine($@"<tr><th class=""vertical"">Init End Time</td><td>{sr.InitEndTime.ToLocalTime()}</td></tr>");
-        if (sr.ExecuteStartTime != default)
-            b.AppendLine($@"<tr><th class=""vertical"">Execute Start Time</th><td>{sr.ExecuteStartTime.ToLocalTime()}</td></tr>");
-        if (sr.ExecuteEndTime != default)
-            b.AppendLine($@"<tr><th class=""vertical"">Execute End Time</th><td>{sr.ExecuteEndTime.ToLocalTime()}</td></tr>");
-        if (sr.CleanupStartTime != default)
-            b.AppendLine($@"<tr><th class=""vertical"">Cleanup Start Time</th><td>{sr.CleanupStartTime.ToLocalTime()}</td></tr>");
-        if (sr.CleanupEndTime != default)
-            b.AppendLine($@"<tr><th class=""vertical"">Cleanup End Time</th><td>{sr.CleanupEndTime.ToLocalTime()}</td></tr>");
-        if (sr.StartTime() != default && sr.EndTime() != default)
-            b.AppendLine($@"<tr><th class=""vertical"">Duration</th><td>{sr.TestRunTotalDuration().ToTestFuznFormattedDuration()}</td></tr>");
-
-        b.AppendLine("</table>");
     }
 
     private void WriteStepDetails(StringBuilder b, ScenarioFeatureResult sr)

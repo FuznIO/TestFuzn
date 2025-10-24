@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Plugins.Playwright;
-using Fuzn.TestFuzn.Internals.Results.Load;
 
 namespace Fuzn.TestFuzn.Tests.Playwright;
 
@@ -24,7 +23,7 @@ public class PlaywrightTests : BaseFeatureTest
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(10))
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.IsTrue(stats.Ok.RequestCount == 10);
+                Assert.AreEqual(10, stats.Ok.RequestCount);
             })
             .Run();
     }

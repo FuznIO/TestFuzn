@@ -1,6 +1,6 @@
-﻿using Fuzn.TestFuzn.Plugins.Playwright;
-using Fuzn.TestFuzn.Plugins.Http;
+﻿using Fuzn.TestFuzn.Plugins.Http;
 using Fuzn.TestFuzn.Plugins.Newtonsoft;
+using Fuzn.TestFuzn.Plugins.Playwright;
 using Fuzn.TestFuzn.Plugins.WebSocket;
 using Fuzn.TestFuzn.Sinks.InfluxDB;
 
@@ -22,7 +22,28 @@ public class Startup : BaseStartup
             }
         };
         configuration.EnvironmentName = "development";
-        configuration.UsePlaywright();
+        configuration.UsePlaywright(c =>
+        {
+            c.BrowserTypesToUse = new List<string> { "chromium" };
+            c.ConfigureBrowserLaunchOptions = (browserType, launchOptions) =>
+            {
+                launchOptions.Args =
+                [
+                    "--disable-web-security",
+                    "--disable-features=IsolateOrigins,site-per-process"
+                ];
+                launchOptions.Headless = false;
+            };
+            c.ConfigureContextOptions = (browserType, contextOptions) =>
+            {
+                contextOptions.IgnoreHTTPSErrors = true;
+            };
+            c.AfterPageCreated = (browserType, page) =>
+            {
+                page.SetDefaultTimeout(10000);
+                return Task.CompletedTask;
+            };
+        });
         configuration.UseHttp();
         configuration.UseWebSocket(config =>
         {

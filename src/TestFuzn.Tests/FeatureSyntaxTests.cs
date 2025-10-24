@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+
+using Microsoft.Extensions.Logging;
 
 namespace Fuzn.TestFuzn.Tests;
 

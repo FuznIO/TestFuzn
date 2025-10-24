@@ -4,11 +4,10 @@
 public class AssertionTests : BaseFeatureTest
 {
     [ScenarioTest]
-    [ExpectedException(typeof(AssertFailedException))]
     public async Task Verify_assert_while_running_should_fail()
     {
         var stepExecutionCount = 0;
-        var assertExecuted = false;
+        var assertWhileRunningExecuted = false;
         var catchExecuted = false;
 
         try
@@ -22,7 +21,7 @@ public class AssertionTests : BaseFeatureTest
                 .Load().Simulations((context, simulations) => simulations.FixedLoad(1, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5)))
                 .Load().AssertWhileRunning((context, stats) =>
                 {
-                    assertExecuted = true;
+                    assertWhileRunningExecuted = true;
                     Assert.AreEqual(0, stats.Failed.RequestCount);
                 })
                 .Run();
@@ -34,7 +33,7 @@ public class AssertionTests : BaseFeatureTest
         finally
         {
             // Expected failure due to assertion in AssertWhileRunning
-            Assert.IsTrue(assertExecuted);
+            Assert.IsTrue(assertWhileRunningExecuted);
             Assert.IsTrue(catchExecuted);
         }
     }
