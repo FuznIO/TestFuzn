@@ -4,6 +4,14 @@ using SampleApp.WebApp.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Prevent connection rate limits (Kestrel)
+builder.WebHost.ConfigureKestrel(o =>
+{
+    o.Limits.MaxConcurrentConnections = null;
+    o.Limits.MaxConcurrentUpgradedConnections = null; // WebSockets
+    o.Limits.MaxRequestBodySize = null;
+});
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -40,36 +48,22 @@ app.UseHttpsRedirection();
 // Enable WebSockets
 app.UseWebSockets(new WebSocketOptions
 {
-    KeepAliveInterval = TimeSpan.FromSeconds(30)
+    KeepAliveInterval = TimeSpan.FromSeconds(30),
+    ReceiveBufferSize = 4 * 1024 // tune as needed
 });
 
-// WebSocket endpoints
-app.Map("/ws", async context =>
-{
-    if (context.WebSockets.IsWebSocketRequest)
-    {
-        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-        var handler = context.RequestServices.GetRequiredService<WebSocketHandler>();
-        await handler.HandleWebSocketConnection(context, webSocket);
-    }
-    else
-    {
-        context.Response.StatusCode = 400;
-    }
-});
-
+// Generic echo endpoint (already present but ensure it stays minimal)
 app.Map("/ws/echo", async context =>
 {
-    if (context.WebSockets.IsWebSocketRequest)
-    {
-        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-        var handler = context.RequestServices.GetRequiredService<WebSocketHandler>();
-        await handler.HandleWebSocketConnection(context, webSocket);
-    }
-    else
+    if (!context.WebSockets.IsWebSocketRequest)
     {
         context.Response.StatusCode = 400;
+        return;
     }
+
+    var socket = await context.WebSockets.AcceptWebSocketAsync();
+    var handler = context.RequestServices.GetRequiredService<WebSocketHandler>();
+    await handler.HandleWebSocketConnection(context, socket);
 });
 
 app.UseAuthorization();

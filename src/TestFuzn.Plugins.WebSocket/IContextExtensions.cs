@@ -27,13 +27,8 @@ public static class IContextExtensions
         if (!WebSocketGlobalState.HasBeenInitialized)
             throw new InvalidOperationException("TestFuzn WebSocket plugin has not been initialized. Please call configuration.UseWebSocket() in the Startup.");
 
-        if (string.IsNullOrWhiteSpace(url))
-            throw new ArgumentException("URL cannot be null or empty.", nameof(url));
+        var webSocketManager = context.Internals.Plugins.GetState<WebSocketManager>(typeof(WebSocketPlugin));
 
-        if (!url.StartsWith("ws://", StringComparison.OrdinalIgnoreCase) &&
-            !url.StartsWith("wss://", StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException("URL must start with ws:// or wss://", nameof(url));
-
-        return new WebSocketConnectionBuilder(context, url);
+        return new WebSocketConnectionBuilder(context, url, webSocketManager);
     }
 }

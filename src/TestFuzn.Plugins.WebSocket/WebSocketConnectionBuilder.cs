@@ -2,26 +2,23 @@
 
 namespace Fuzn.TestFuzn.Plugins.WebSocket;
 
-/// <summary>
-/// Fluent builder for configuring and establishing WebSocket connections.
-/// </summary>
 public class WebSocketConnectionBuilder
 {
     private readonly Context _context;
     private readonly string _url;
+    private readonly WebSocketManager _manager;
     private readonly Dictionary<string, string> _headers = new();
     private Hooks _hooks = new();
     private LoggingVerbosity _loggingVerbosity = LoggingVerbosity.Full;
     private TimeSpan _connectionTimeout = WebSocketGlobalState.Configuration.DefaultConnectionTimeout;
     private TimeSpan _keepAliveInterval = WebSocketGlobalState.Configuration.DefaultKeepAliveInterval;
-    private string? _subProtocol;
-    private int? _receiveBufferSizeOverride;
-    private int? _maxBufferedMessagesOverride;
+    private string _subProtocol;
 
-    internal WebSocketConnectionBuilder(Context context, string url)
+    internal WebSocketConnectionBuilder(Context context, string url, WebSocketManager manager)
     {
         _context = context;
         _url = url;
+        _manager = manager;
     }
 
     /// <summary>
@@ -125,41 +122,12 @@ public class WebSocketConnectionBuilder
     }
 
     /// <summary>
-    /// Overrides the default receive buffer size (bytes) for this connection only.
-    /// </summary>
-    /// <param name="size">Buffer size in bytes (minimum 128).</param>
-    public WebSocketConnectionBuilder ReceiveBufferSize(int size)
-    {
-        if (size < 128)
-            throw new ArgumentOutOfRangeException(nameof(size), "Receive buffer size must be at least 128 bytes.");
-        _receiveBufferSizeOverride = size;
-        return this;
-    }
-
-    /// <summary>
-    /// Overrides the maximum number of buffered text messages for this connection.
-    /// Use 0 for unlimited buffering (not recommended for large / load tests).
-    /// </summary>
-    /// <param name="maxMessages">Max messages (>=0).</param>
-    public WebSocketConnectionBuilder MaxBufferedMessages(int maxMessages)
-    {
-        if (maxMessages < 0)
-            throw new ArgumentOutOfRangeException(nameof(maxMessages), "Max buffered messages must be >= 0.");
-        _maxBufferedMessagesOverride = maxMessages;
-        return this;
-    }
-
-    /// <summary>
     /// Builds a WebSocket connection instance without establishing the connection.
     /// </summary>
     /// <returns>A configured WebSocket connection instance.</returns>
     public WebSocketConnection Build()
     {
-        var connection = new WebSocketConnection(
-            _context,
-            _url,
-            _receiveBufferSizeOverride,
-            _maxBufferedMessagesOverride)
+        var connection = new WebSocketConnection(_context, _url)
         {
             Hooks = _hooks,
             ConnectionTimeout = _connectionTimeout,
@@ -171,6 +139,9 @@ public class WebSocketConnectionBuilder
             connection.Headers[header.Key] = header.Value;
             
         connection.SetLoggingVerbosity(_loggingVerbosity);
+        
+        // Track the connection in the manager for automatic cleanup
+        _manager.TrackConnection(connection);
         
         return connection;
     }

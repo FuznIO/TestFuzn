@@ -8,7 +8,7 @@ internal class WebSocketPlugin : IContextPlugin
     {
     }
         
-    public bool RequireState => false;
+    public bool RequireState => true;
     
     public Task InitGlobal()
     {
@@ -22,11 +22,16 @@ internal class WebSocketPlugin : IContextPlugin
 
     public object InitContext()
     {
-        return null;
+        var webSocketManager = new WebSocketManager();
+        return webSocketManager;
     }
 
-    public Task CleanupContext(object state)
+    public async Task CleanupContext(object state)
     {
-        return Task.CompletedTask;
+        var webSocketManager = state as WebSocketManager;
+        if (webSocketManager != null)
+        {
+            await webSocketManager.CleanupContext();
+        }
     }
 }
