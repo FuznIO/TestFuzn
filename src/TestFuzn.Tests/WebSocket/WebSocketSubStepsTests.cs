@@ -192,13 +192,10 @@ public class WebSocketSubStepsTests : BaseFeatureTest
                     var hooks = subContext.GetSharedData<List<string>>("HooksCalled");
 
                     var connection = await subContext.CreateWebSocketConnection(WebSocketServerUrl)
-                        .Hooks(new Hooks
-                        {
-                            PreConnect = (_) => hooks.Add("PreConnect"),
-                            PostConnect = (_) => hooks.Add("PostConnect"),
-                            OnMessageReceived = (_, msg) => hooks.Add($"OnMessage: {msg}"),
-                            OnDisconnect = (_) => hooks.Add("OnDisconnect")
-                        })
+                        .OnPreConnect((_) => hooks.Add("PreConnect"))
+                        .OnPostConnect((_) => hooks.Add("PostConnect"))
+                        .OnMessageReceived((_, msg) => hooks.Add($"OnMessage: {msg}"))
+                        .OnDisconnect((_) => hooks.Add("OnDisconnect"))
                         .Connect();
 
                     subContext.SetSharedData("Connection", connection);

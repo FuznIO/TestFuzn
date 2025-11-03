@@ -31,9 +31,24 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
     public Dictionary<string, string> Headers { get; private set; } = new();
 
     /// <summary>
-    /// Gets or sets the lifecycle hooks for this connection.
+    /// Gets or sets the hook called immediately before connecting to the WebSocket server.
     /// </summary>
-    public Hooks? Hooks { get; set; } = new();
+    public Action<WebSocketConnection>? OnPreConnect { get; set; }
+
+    /// <summary>
+    /// Gets or sets the hook called immediately after successfully connecting to the WebSocket server.
+    /// </summary>
+    public Action<WebSocketConnection>? OnPostConnect { get; set; }
+
+    /// <summary>
+    /// Gets or sets the hook called whenever a message is received from the WebSocket server.
+    /// </summary>
+    public Action<WebSocketConnection, string>? OnMessageReceived { get; set; }
+
+    /// <summary>
+    /// Gets or sets the hook called when the WebSocket connection is closed.
+    /// </summary>
+    public Action<WebSocketConnection>? OnDisconnect { get; set; }
 
     /// <summary>
     /// Gets or sets the connection timeout.
@@ -128,7 +143,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
             if (!string.IsNullOrEmpty(SubProtocol))
                 _webSocket.Options.AddSubProtocol(SubProtocol);
 
-            Hooks?.PreConnect?.Invoke(this);
+            OnPreConnect?.Invoke(this);
 
             if (_verbosity >= LoggingVerbosity.Minimal)
                 _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Connecting: {_url} - CorrelationId: {_context.Info.CorrelationId}");
@@ -140,7 +155,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
             if (_verbosity >= LoggingVerbosity.Minimal)
                 _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Connected: {_url} - State: {_webSocket.State} - CorrelationId: {_context.Info.CorrelationId}");
 
-            Hooks?.PostConnect?.Invoke(this);
+            OnPostConnect?.Invoke(this);
 
             _receiveCts = new CancellationTokenSource();
             _receiveTask = ReceiveLoop(_receiveCts.Token);
@@ -346,7 +361,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
                 }
             }
 
-            Hooks?.OnDisconnect?.Invoke(this);
+            OnDisconnect?.Invoke(this);
 
             if (_verbosity >= LoggingVerbosity.Minimal)
                 _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Closed: {_url} - CorrelationId: {_context.Info.CorrelationId}");
@@ -397,7 +412,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
                             _receivedMessages.Add(message);
                         }
 
-                        Hooks?.OnMessageReceived?.Invoke(this, message);
+                        OnMessageReceived?.Invoke(this, message);
                     }
                 }
                 else if (result.MessageType == WebSocketMessageType.Binary)

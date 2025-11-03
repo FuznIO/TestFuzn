@@ -8,11 +8,14 @@ public class WebSocketConnectionBuilder
     private readonly string _url;
     private readonly WebSocketManager _manager;
     private readonly Dictionary<string, string> _headers = new();
-    private Hooks _hooks = new();
+    private Action<WebSocketConnection>? _onPreConnect;
+    private Action<WebSocketConnection>? _onPostConnect;
+    private Action<WebSocketConnection, string>? _onMessageReceived;
+    private Action<WebSocketConnection>? _onDisconnect;
     private LoggingVerbosity _loggingVerbosity = LoggingVerbosity.Full;
     private TimeSpan _connectionTimeout = WebSocketGlobalState.Configuration.DefaultConnectionTimeout;
     private TimeSpan _keepAliveInterval = WebSocketGlobalState.Configuration.DefaultKeepAliveInterval;
-    private string _subProtocol;
+    private string? _subProtocol;
 
     internal WebSocketConnectionBuilder(Context context, string url, WebSocketManager manager)
     {
@@ -57,13 +60,46 @@ public class WebSocketConnectionBuilder
     }
 
     /// <summary>
-    /// Configures lifecycle hooks for the WebSocket connection.
+    /// Sets the hook called immediately before connecting to the WebSocket server.
     /// </summary>
-    /// <param name="hooks">The hooks to register.</param>
+    /// <param name="hook">The hook action.</param>
     /// <returns>The builder instance for method chaining.</returns>
-    public WebSocketConnectionBuilder Hooks(Hooks hooks)
+    public WebSocketConnectionBuilder OnPreConnect(Action<WebSocketConnection> hook)
     {
-        _hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
+        _onPreConnect = hook ?? throw new ArgumentNullException(nameof(hook));
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the hook called immediately after successfully connecting to the WebSocket server.
+    /// </summary>
+    /// <param name="hook">The hook action.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    public WebSocketConnectionBuilder OnPostConnect(Action<WebSocketConnection> hook)
+    {
+        _onPostConnect = hook ?? throw new ArgumentNullException(nameof(hook));
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the hook called whenever a message is received from the WebSocket server.
+    /// </summary>
+    /// <param name="hook">The hook action.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    public WebSocketConnectionBuilder OnMessageReceived(Action<WebSocketConnection, string> hook)
+    {
+        _onMessageReceived = hook ?? throw new ArgumentNullException(nameof(hook));
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the hook called when the WebSocket connection is closed.
+    /// </summary>
+    /// <param name="hook">The hook action.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    public WebSocketConnectionBuilder OnDisconnect(Action<WebSocketConnection> hook)
+    {
+        _onDisconnect = hook ?? throw new ArgumentNullException(nameof(hook));
         return this;
     }
 
@@ -129,7 +165,10 @@ public class WebSocketConnectionBuilder
     {
         var connection = new WebSocketConnection(_context, _url)
         {
-            Hooks = _hooks,
+            OnPreConnect = _onPreConnect,
+            OnPostConnect = _onPostConnect,
+            OnMessageReceived = _onMessageReceived,
+            OnDisconnect = _onDisconnect,
             ConnectionTimeout = _connectionTimeout,
             KeepAliveInterval = _keepAliveInterval,
             SubProtocol = _subProtocol

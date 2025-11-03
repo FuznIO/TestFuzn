@@ -18,10 +18,7 @@ public class WebSocketHooksTests : BaseFeatureTest
                 bool preConnectCalled = false;
 
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Hooks(new Hooks
-                    {
-                        PreConnect = (conn) => preConnectCalled = true
-                    })
+                    .OnPreConnect((conn) => preConnectCalled = true)
                     .Connect();
 
                 Assert.IsTrue(preConnectCalled, "PreConnect hook should have been called");
@@ -40,10 +37,7 @@ public class WebSocketHooksTests : BaseFeatureTest
                 bool postConnectCalled = false;
 
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Hooks(new Hooks
-                    {
-                        PostConnect = (conn) => postConnectCalled = true
-                    })
+                    .OnPostConnect((conn) => postConnectCalled = true)
                     .Connect();
 
                 Assert.IsTrue(postConnectCalled, "PostConnect hook should have been called");
@@ -63,13 +57,10 @@ public class WebSocketHooksTests : BaseFeatureTest
                 string receivedMessageFromHook = null;
 
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Hooks(new Hooks
+                    .OnMessageReceived((conn, msg) =>
                     {
-                        OnMessageReceived = (conn, msg) =>
-                        {
-                            messageReceivedHookCalled = true;
-                            receivedMessageFromHook = msg;
-                        }
+                        messageReceivedHookCalled = true;
+                        receivedMessageFromHook = msg;
                     })
                     .Connect();
 
@@ -96,10 +87,7 @@ public class WebSocketHooksTests : BaseFeatureTest
                 bool disconnectCalled = false;
 
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Hooks(new Hooks
-                    {
-                        OnDisconnect = (conn) => disconnectCalled = true
-                    })
+                    .OnDisconnect((conn) => disconnectCalled = true)
                     .Connect();
 
                 await connection.Close();
@@ -118,13 +106,10 @@ public class WebSocketHooksTests : BaseFeatureTest
                 var hooksCalled = new List<string>();
 
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Hooks(new Hooks
-                    {
-                        PreConnect = (conn) => hooksCalled.Add("PreConnect"),
-                        PostConnect = (conn) => hooksCalled.Add("PostConnect"),
-                        OnMessageReceived = (conn, msg) => hooksCalled.Add("OnMessageReceived"),
-                        OnDisconnect = (conn) => hooksCalled.Add("OnDisconnect")
-                    })
+                    .OnPreConnect((conn) => hooksCalled.Add("PreConnect"))
+                    .OnPostConnect((conn) => hooksCalled.Add("PostConnect"))
+                    .OnMessageReceived((conn, msg) => hooksCalled.Add("OnMessageReceived"))
+                    .OnDisconnect((conn) => hooksCalled.Add("OnDisconnect"))
                     .Connect();
 
                 await connection.SendText("Test");
@@ -151,11 +136,8 @@ public class WebSocketHooksTests : BaseFeatureTest
                 bool isConnectedInDisconnect = true;
 
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Hooks(new Hooks
-                    {
-                        PostConnect = (conn) => isConnectedInPostConnect = conn.IsConnected,
-                        OnDisconnect = (conn) => isConnectedInDisconnect = conn.IsConnected
-                    })
+                    .OnPostConnect((conn) => isConnectedInPostConnect = conn.IsConnected)
+                    .OnDisconnect((conn) => isConnectedInDisconnect = conn.IsConnected)
                     .Connect();
 
                 await connection.Close();
@@ -173,14 +155,11 @@ public class WebSocketHooksTests : BaseFeatureTest
             .Step("Use hooks to track connection lifecycle in context", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Hooks(new Hooks
-                    {
-                        PreConnect = (conn) => context.SetSharedData("PreConnectTime", DateTime.UtcNow),
-                        PostConnect = (conn) => context.SetSharedData("PostConnectTime", DateTime.UtcNow),
-                        OnMessageReceived = (conn, msg) => context.SetSharedData("MessageCount", 
-                            context.GetSharedData<int>("MessageCount") + 1),
-                        OnDisconnect = (conn) => context.SetSharedData("DisconnectTime", DateTime.UtcNow)
-                    })
+                    .OnPreConnect((conn) => context.SetSharedData("PreConnectTime", DateTime.UtcNow))
+                    .OnPostConnect((conn) => context.SetSharedData("PostConnectTime", DateTime.UtcNow))
+                    .OnMessageReceived((conn, msg) => context.SetSharedData("MessageCount", 
+                        context.GetSharedData<int>("MessageCount") + 1))
+                    .OnDisconnect((conn) => context.SetSharedData("DisconnectTime", DateTime.UtcNow))
                     .Connect();
 
                 context.SetSharedData("MessageCount", 0);
