@@ -1,11 +1,11 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
-using Fuzn.TestFuzn.Internals.InputData;
-using Fuzn.TestFuzn.Internals.State;
+﻿using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Results.Feature;
 using Fuzn.TestFuzn.Contracts.Results.Load;
-using Fuzn.TestFuzn.Contracts;
+using Fuzn.TestFuzn.Internals.InputData;
+using Fuzn.TestFuzn.Internals.State;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Fuzn.TestFuzn.Internals.Execution;
 
@@ -50,8 +50,14 @@ internal class ExecuteScenarioMessageHandler
                 await scenario.InitIterationAction(stepContext);
             }
 
-            foreach (var step in scenario.Steps)
+            foreach (var (step, index) in scenario.Steps.Select((s,i)=> (s,i)))
             {
+                using var loggingScope = GlobalState.Logger.BeginScope(new Dictionary<string, object?>
+                {
+                    ["scenario"] = scenario.Name,
+                    ["step"] = index + 1
+                });
+                
                 await executeStepHandler.ExecuteStep(step);
                 iterationResult.StepResults.Add(executeStepHandler.RootStepResult.Name, executeStepHandler.RootStepResult);
             }

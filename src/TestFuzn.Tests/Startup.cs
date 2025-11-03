@@ -1,6 +1,7 @@
 ﻿using Fuzn.TestFuzn.Plugins.Http;
 using Fuzn.TestFuzn.Plugins.Newtonsoft;
 using Fuzn.TestFuzn.Plugins.Playwright;
+using Fuzn.TestFuzn.Plugins.WebSocket;
 using Fuzn.TestFuzn.Sinks.InfluxDB;
 
 namespace Fuzn.TestFuzn.Tests;
@@ -44,6 +45,12 @@ public class Startup : BaseStartup
             };
         });
         configuration.UseHttp();
+        configuration.UseWebSocket(config =>
+        {
+            config.DefaultConnectionTimeout = TimeSpan.FromSeconds(10);
+            config.DefaultKeepAliveInterval = TimeSpan.FromSeconds(30);
+            config.LogFailedConnectionsToTestConsole = true;
+        });
         configuration.UseInfluxDb();
         // Only one serializer can be used, last one set wins, have these 2 lines just to show both options.
         configuration.SerializerProvider = new NewtonsoftSerializerProvider();
