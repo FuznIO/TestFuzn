@@ -53,7 +53,7 @@ app.UseWebSockets(new WebSocketOptions
 });
 
 // Generic echo endpoint (already present but ensure it stays minimal)
-app.Map("/ws/echo", async context =>
+app.Map("/ws", async context =>
 {
     if (!context.WebSockets.IsWebSocketRequest)
     {

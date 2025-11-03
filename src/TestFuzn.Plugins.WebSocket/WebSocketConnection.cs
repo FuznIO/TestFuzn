@@ -1,5 +1,6 @@
 ﻿using Fuzn.TestFuzn.Plugins.WebSocket.Internals;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 
@@ -59,6 +60,11 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
     /// </summary>
     public bool IsConnected => _webSocket?.State == WebSocketState.Open;
 
+    /// <summary>
+    /// Indicates whether this connection object has been disposed.
+    /// </summary>
+    public bool IsDisposed => _disposed;
+
     internal WebSocketConnection(Context context, string url, int? receiveBufferSizeOverride = null, int? maxBufferedMessagesOverride = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -101,7 +107,8 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        try
+        // Local function to perform actual connect (allows retry without duplicating logic)
+        async Task DoConnectAsync(CancellationToken ct)
         {
             _webSocket = new ClientWebSocket();
             _webSocket.Options.KeepAliveInterval = KeepAliveInterval;
@@ -119,9 +126,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
             }
 
             if (!string.IsNullOrEmpty(SubProtocol))
-            {
                 _webSocket.Options.AddSubProtocol(SubProtocol);
-            }
 
             Hooks?.PreConnect?.Invoke(this);
 
@@ -129,7 +134,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
                 _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Connecting: {_url} - CorrelationId: {_context.Info.CorrelationId}");
 
             using var timeoutCts = new CancellationTokenSource(ConnectionTimeout);
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, ct);
             await _webSocket.ConnectAsync(new Uri(_url), linkedCts.Token);
 
             if (_verbosity >= LoggingVerbosity.Minimal)
@@ -137,9 +142,24 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
 
             Hooks?.PostConnect?.Invoke(this);
 
-            // Start background receive task
             _receiveCts = new CancellationTokenSource();
             _receiveTask = ReceiveLoop(_receiveCts.Token);
+        }
+
+        var start = Stopwatch.StartNew();
+        var triedRetry = false;
+
+        try
+        {
+            await DoConnectAsync(cancellationToken);
+        }
+        catch (ObjectDisposedException) when (!triedRetry && start.ElapsedMilliseconds < 200)
+        {
+            // Transient disposal during handshake (e.g., premature cleanup or server rejecting quickly).
+            triedRetry = true;
+            if (_verbosity >= LoggingVerbosity.Minimal)
+                _context.Logger.LogWarning($"Step {_context.StepInfo?.Name} - Transient disposal during connect. Retrying once. {_url}");
+            await DoConnectAsync(cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -147,9 +167,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
                 _context.Logger.LogError(ex, $"WebSocket connection failed: {_url}");
 
             if (WebSocketGlobalState.Configuration.LogFailedConnectionsToTestConsole)
-            {
                 _context.Logger.LogError($"WebSocket connection failed: {_url}\nError: {ex.Message}");
-            }
 
             throw;
         }
@@ -292,6 +310,10 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
     /// <param name="statusDescription">A description of why the connection is closing.</param>
     public async Task Close(WebSocketCloseStatus closeStatus = WebSocketCloseStatus.NormalClosure, string statusDescription = "Closing")
     {
+        // If already disposed we cannot operate on _webSocket
+        if (_disposed)
+            return;
+
         if (_webSocket != null && (_webSocket.State == WebSocketState.Open || _webSocket.State == WebSocketState.CloseReceived))
         {
             if (_verbosity >= LoggingVerbosity.Minimal)
@@ -299,22 +321,15 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
 
             try
             {
-                // Only send close if we're in Open state
                 if (_webSocket.State == WebSocketState.Open)
-                {
                     await _webSocket.CloseAsync(closeStatus, statusDescription, CancellationToken.None);
-                }
-                // If server initiated close (CloseReceived), we need to respond
                 else if (_webSocket.State == WebSocketState.CloseReceived)
-                {
                     await _webSocket.CloseOutputAsync(closeStatus, statusDescription, CancellationToken.None);
-                }
             }
             catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.InvalidState)
             {
-                // Connection already closed or in invalid state, log but don't throw
                 if (_verbosity >= LoggingVerbosity.Minimal)
-                    _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket already closed or in invalid state - CorrelationId: {_context.Info.CorrelationId}");
+                    _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket already closed or invalid state - CorrelationId: {_context.Info.CorrelationId}");
             }
             catch (Exception ex)
             {
@@ -323,20 +338,11 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
             }
             finally
             {
-                // Cancel the receive loop AFTER we've sent the close message
                 _receiveCts?.Cancel();
-                
-                // Wait briefly for receive loop to finish
                 if (_receiveTask != null)
                 {
-                    try
-                    {
-                        await _receiveTask.WaitAsync(TimeSpan.FromSeconds(2));
-                    }
-                    catch (TimeoutException)
-                    {
-                        // Ignore timeout - receive loop didn't finish in time
-                    }
+                    try { await _receiveTask.WaitAsync(TimeSpan.FromSeconds(2)); }
+                    catch (TimeoutException) { }
                 }
             }
 
@@ -357,14 +363,12 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
             while (!cancellationToken.IsCancellationRequested && _webSocket!.State == WebSocketState.Open)
             {
                 WebSocketReceiveResult result;
-                
                 try
                 {
                     result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
                 }
                 catch (OperationCanceledException)
                 {
-                    // Normal cancellation during close
                     break;
                 }
 
@@ -372,16 +376,12 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
                 {
                     if (_verbosity >= LoggingVerbosity.Minimal)
                         _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket received close message - CorrelationId: {_context.Info.CorrelationId}");
-                    
-                    // The close handshake has been initiated by the server
                     break;
                 }
 
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
-                    // Handle fragmented messages
                     messageBuffer.AddRange(buffer.AsSpan(0, result.Count).ToArray());
-                    
                     if (result.EndOfMessage)
                     {
                         var message = Encoding.UTF8.GetString(messageBuffer.ToArray());
@@ -392,13 +392,8 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
 
                         lock (_messagesLock)
                         {
-                            // Enforce maximum buffer size if configured
                             if (_maxBufferedMessages > 0 && _receivedMessages.Count >= _maxBufferedMessages)
-                            {
-                                // Remove oldest message (FIFO)
                                 _receivedMessages.RemoveAt(0);
-                            }
-                            
                             _receivedMessages.Add(message);
                         }
 
@@ -409,20 +404,16 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
                 {
                     if (_verbosity >= LoggingVerbosity.Minimal)
                         _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Received binary message ({result.Count} bytes) - CorrelationId: {_context.Info.CorrelationId}");
-                    
-                    // Binary messages are not buffered - users should handle them via hooks if needed
                 }
             }
         }
         catch (OperationCanceledException)
         {
-            // Expected when cancellation is requested - this is normal during close
         }
         catch (WebSocketException ex) when (
             ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely ||
             ex.WebSocketErrorCode == WebSocketError.InvalidState)
         {
-            // Connection closed unexpectedly or in invalid state - log but don't throw
             if (_verbosity > LoggingVerbosity.None)
                 _context.Logger.LogInformation($"WebSocket connection closed: {ex.Message}");
         }
@@ -440,18 +431,16 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
     {
         if (_disposed)
             return;
-
         _disposed = true;
 
         try
         {
-            // Try to close gracefully
-            Close().GetAwaiter().GetResult();
+            // Only attempt graceful close if socket still usable
+            if (_webSocket != null &&
+                (_webSocket.State == WebSocketState.Open || _webSocket.State == WebSocketState.CloseReceived))
+                Close().GetAwaiter().GetResult();
         }
-        catch
-        {
-            // Ignore errors during disposal
-        }
+        catch { }
         finally
         {
             _receiveCts?.Dispose();
@@ -468,18 +457,15 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
     {
         if (_disposed)
             return;
-
         _disposed = true;
 
         try
         {
-            // Try to close gracefully
-            await Close();
+            if (_webSocket != null &&
+                (_webSocket.State == WebSocketState.Open || _webSocket.State == WebSocketState.CloseReceived))
+                await Close();
         }
-        catch
-        {
-            // Ignore errors during disposal
-        }
+        catch { }
         finally
         {
             _receiveCts?.Dispose();

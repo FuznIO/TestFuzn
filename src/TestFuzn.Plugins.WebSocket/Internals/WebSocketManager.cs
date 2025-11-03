@@ -1,4 +1,5 @@
 ﻿using System.Net.WebSockets;
+using Microsoft.Extensions.Logging;
 
 namespace Fuzn.TestFuzn.Plugins.WebSocket.Internals;
 
@@ -18,33 +19,31 @@ internal class WebSocketManager
     public async ValueTask CleanupContext()
     {
         List<WebSocketConnection> connectionsToCleanup;
-        
         lock (_connectionsLock)
-        {
             connectionsToCleanup = new List<WebSocketConnection>(_connections);
-        }
 
         foreach (var connection in connectionsToCleanup)
         {
             try
             {
-                // Only close if the connection is still open
-                if (connection.State == WebSocketState.Open)
+                // Skip already disposed connections
+                if (connection.IsDisposed)
+                    continue;
+
+                // Close only if fully open or in close-received state
+                if (connection.State == WebSocketState.Open || connection.State == WebSocketState.CloseReceived)
                     await connection.Close(WebSocketCloseStatus.NormalClosure, "Test scenario completed - auto cleanup");
-                
-                // Dispose the connection to release resources
+
+                // Dispose (will skip Close again if not open)
                 await connection.DisposeAsync();
             }
-            catch (Exception)
+            catch
             {
-                // Swallow exceptions during cleanup - connection may already be closed/disposed
-                // The test framework logger might not be available here
+                // Swallow during cleanup
             }
         }
 
         lock (_connectionsLock)
-        {
             _connections.Clear();
-        }
     }
 }
