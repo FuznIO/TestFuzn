@@ -76,7 +76,7 @@ public class HttpRequestBuilder
     public HttpRequestBuilder Headers(IDictionary<string,string> headers)
     {
         foreach (var header in headers)
-            _headers.Add(header.Key, header.Value);
+            _headers[header.Key] = header.Value;
         return this;
     }
 
@@ -136,8 +136,11 @@ public class HttpRequestBuilder
             Timeout = _timeout,
             SerializerProvider = _serializerProvider
         };
+
+        request.Headers.Add(HttpGlobalState.Configuration.CorrelationIdHeaderName, _context.Info.CorrelationId);
         foreach (var header in _headers)
             request.Headers[header.Key] = header.Value;
+
         request.LoggingVerbosity(_loggingVerbosity);
         return request;
     }
