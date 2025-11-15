@@ -1,0 +1,205 @@
+﻿:root {
+    /* ────────────────
+     Neutral / Gray
+  ──────────────── */
+    --gray-50: #FAFAFA;
+    --gray-100: #F9FAFB;
+    --gray-200: #F3F4F6;
+    --gray-300: #E5E7EB;
+    --gray-400: #D1D5DB;
+    --gray-500: #9CA3AF;
+    --gray-600: #6B7280;
+    --gray-700: #4B5563;
+    --gray-800: #374151;
+    --gray-900: #111827;
+    /* ────────────────
+     Blue (Primary)
+  ──────────────── */
+    --blue-50: #EFF6FF;
+    --blue-100: #DBEAFE;
+    --blue-200: #BFDBFE;
+    --blue-300: #93C5FD;
+    --blue-400: #60A5FA;
+    --blue-500: #3B82F6; /* primary */
+    --blue-600: #2563EB;
+    --blue-700: #1D4ED8;
+    --blue-800: #1E40AF;
+    --blue-900: #1E3A8A;
+    /* ────────────────
+     Green (Accent)
+  ──────────────── */
+    --green-50: #ECFDF5;
+    --green-100: #D1FAE5;
+    --green-200: #A7F3D0;
+    --green-300: #6EE7B7;
+    --green-400: #34D399;
+    --green-500: #10B981; /* secondary accent */
+    --green-600: #059669;
+    --green-700: #047857;
+    --green-800: #065F46;
+    --green-900: #064E3B;
+    /* ────────────────
+     Semantic Colors
+  ──────────────── */
+    --success-bg: #ECFDF5;
+    --success-bg-hover: #D1FAE5;
+    --success-text: #047857;
+    --success-border: #A7F3D0;
+    --warning-bg: #FFFBEB;
+    --warning-bg-hover: #FEF3C7;
+    --warning-text: #92400E;
+    --warning-border: #FDE68A;
+    --danger-bg: #FEF2F2;
+    --danger-bg-hover: #FEE2E2;
+    --danger-text: #991B1B;
+    --danger-border: #FCA5A5;
+    --info-bg: #EFF6FF;
+    --info-bg-hover: #DBEAFE;
+    --info-text: #1E40AF;
+    --info-border: #BFDBFE;
+    /* ────────────────
+     UI Usage Colors
+  ──────────────── */
+    --body-bg: var(--gray-100);
+    --body-text: var(--gray-800);
+    --headline-text: var(--gray-900);
+    --table-bg: #FFFFFF;
+    --table-text: var(--gray-800);
+    --table-text-secondary: var(--gray-600);
+    --table-header-bg: var(--gray-200);
+    --table-header-text: var(--gray-700);
+    --table-border: var(--gray-200);
+    --table-header-border: var(--gray-300);
+    --link-color: var(--blue-600);
+    --link-hover: var(--blue-700);
+    --button-primary-bg: var(--blue-500);
+    --button-primary-hover: var(--blue-600);
+    --button-primary-text: #FFFFFF;
+    --button-secondary-bg: var(--gray-200);
+    --button-secondary-hover: var(--gray-300);
+    --button-secondary-text: var(--gray-800);
+}
+
+body 
+{
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #F9FAFB;
+}
+.page-container
+{
+    width: 95%;
+    margin: 0 auto;
+}
+h1, h2, h3, summary, detail 
+{
+    color: #111827;
+}
+h2 {
+    margin-top: 40px;
+}
+h3 {
+    margin-top: 40px;
+}
+table 
+{
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    background-color: #FFF;
+}
+th, td 
+{
+    border: 1px solid #D0CCD0;
+    padding: 8px;
+    text-align: left;
+    color: #111827;
+    vertical-align: top;
+}
+th 
+{
+    background-color: #F3F4F6;
+    color: #4B5563;
+}
+td.ok 
+{
+    background-color: var(--success-bg);
+}
+td.failed 
+{
+    background-color: var(--danger-bg);
+}
+tr.summary
+{
+    font-weight: bold;
+}
+
+ul, li {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+li 
+{
+    padding-bottom: 8px;
+}
+li:last-child
+{
+    padding-bottom: 0;
+}
+.feature-results th:not(:first-child),
+.feature-results td:not(:first-child) {
+    width: 1%;
+    white-space: nowrap;
+}
+th.vertical
+{
+    width: 1%;
+    white-space: nowrap;
+}
+details {
+    margin: 8px 50px 8px 50px;
+}
+summary::before {
+    content: "Show Details";
+}
+
+details[open] > summary::before {
+    content: "Hide Details";
+}
+.status-panel
+{
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--success-border);
+    background-color: var(--success-bg);
+    color: var(--success-text);
+    padding: 8px;
+    margin: 20px 0;
+}
+.status-panel.passed
+{
+    border-color: var(--success-border);
+    background-color: var(--success-bg);
+    color: var(--success-text);
+}
+.status-panel.failed
+{
+    border-color: var(--danger-border);
+    background-color: var(--danger-bg);
+    color: var(--danger-text);
+}
+.status-panel .title
+{
+    font-weight: bold;
+}
+
+.status-panel .details
+{
+    padding-top: 8px;
+}
+.errors
+{
+    background-color: var(--danger-bg);
+    color: var(--danger-text);
+}

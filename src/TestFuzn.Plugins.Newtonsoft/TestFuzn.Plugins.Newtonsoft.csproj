@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Fuzn.TestFuzn.Plugins.Newtonsoft</AssemblyName>
+    <RootNamespace>Fuzn.TestFuzn.Plugins.Newtonsoft</RootNamespace>
+    <OutputType>Library</OutputType>
+    <PackageId>Fuzn.TestFuzn.Plugins.Newtonsoft</PackageId>
+    <Title>Fuzn.TestFuzn.Plugins.Newtonsoft</Title>
+    <Description>Newtonsoft plugin for TestFuzn</Description>
+    <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;newtonsoft</PackageTags>
+    <Authors>Fuzn</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestFuzn.Plugins.Http\TestFuzn.Plugins.Http.csproj" />
+    <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

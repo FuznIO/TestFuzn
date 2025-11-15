@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Fuzn.TestFuzn.Plugins.Playwright</AssemblyName>
+    <RootNamespace>Fuzn.TestFuzn.Plugins.Playwright</RootNamespace>
+    <OutputType>Library</OutputType>
+    <PackageId>Fuzn.TestFuzn.Plugins.Playwright</PackageId>
+    <Title>Fuzn.TestFuzn.Plugins.Playwright</Title>
+    <Description>Playwright plugin for TestFuzn</Description>
+    <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;playwright;ui-testing;browser-testing</PackageTags>
+    <Authors>Fuzn</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Playwright.TestAdapter" Version="1.55.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

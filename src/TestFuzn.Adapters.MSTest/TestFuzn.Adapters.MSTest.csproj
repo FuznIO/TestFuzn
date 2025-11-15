@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Fuzn.TestFuzn.Adapters.MSTest</AssemblyName>
+    <RootNamespace>Fuzn.TestFuzn</RootNamespace>
+    <OutputType>Library</OutputType>
+    <PackageId>Fuzn.TestFuzn.Adapters.MSTest</PackageId>
+    <Title>Fuzn.TestFuzn.Adapters.MSTest</Title>
+    <Description>MSTest plugin for TestFuzn</Description>
+    <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;mstest</PackageTags>
+    <Authors>Fuzn</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MSTest.TestFramework" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

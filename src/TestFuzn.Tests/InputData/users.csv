@@ -1,0 +1,4 @@
+UserId,Name,Username,Street,City,ZipCode,Age,Income,IsActive
+b1a7e8a1-1c2d-4e3f-8a7b-1a2b3c4d5e6f,John Doe,jdoe,Main St,Oslo,0010,30,55000.50,true
+c2b8f9b2-2d3e-5f4a-9b8c-2b3c4d5e6f7a,Jane Smith,jsmith,Second St,Bergen,5003,28,62000.00,false
+d3c9g0c3-3e4f-6g5b-0c9d-3c4d5e6f7a8b,Alice Johnson,ajohnson,Third St,Trondheim,7011,35,71000.75,true

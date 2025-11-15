@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+  - name: TestFuzn_InfluxDB
+    uid: dennjp7mu34lce
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    basicAuth: false
+    isDefault: true
+    jsonData:
+      version: Flux
+      organization: DefaultOrg
+      defaultBucket: TestFuzn
+    secureJsonData:
+      token: default_admin_token

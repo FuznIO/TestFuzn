@@ -1,13 +1,18 @@
-name: Build and (Optionally) Publish NuGet Package
+name: Build and Publish NuGet Packages
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
   workflow_dispatch:
 
+env:
+  NUGET_SOURCE: "https://api.nuget.org/v3/index.json"
+
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -15,7 +20,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'  # Adjust as needed
+        dotnet-version: '8.0.x'
 
     - name: Install xmllint
       run: sudo apt-get update && sudo apt-get install -y libxml2-utils
@@ -23,8 +28,12 @@ jobs:
     - name: Extract version from Directory.Build.props
       id: get-version
       run: |
+        if [ ! -f src/Directory.Build.props ]; then
+          echo "❌ src/Directory.Build.props not found!"
+          exit 1
+        fi
         VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/Version)" src/Directory.Build.props)
-        echo "Version found: $VERSION"
+        echo "📦 Version found: $VERSION"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Restore dependencies
@@ -35,37 +44,18 @@ jobs:
 
     - name: Pack
       run: |
-        dotnet pack src/TestFusion/TestFusion.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFusion.BrowserTesting/TestFusion.BrowserTesting.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFusion.HttpTesting/TestFusion.HttpTesting.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFusion.MsTestAdapter/TestFusion.MsTestAdapter.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFusion.Sink.InfluxDB/TestFusion.Sink.InfluxDB.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFusion.Tests.Runner/TestFusion.Tests.Runner.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn/TestFuzn.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn.Plugins.Playwright/TestFuzn.Plugins.Playwright.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn.Plugins.Http/TestFuzn.Plugins.Http.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn.Plugins.Newtonsoft/TestFuzn.Plugins.Newtonsoft.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn.Adapters.MSTest/TestFuzn.Adapters.MSTest.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn.Sinks.InfluxDB/TestFuzn.Sinks.InfluxDB.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
 
-    - name: Publish to NuGet
+    - name: Push to NuGet
       run: |
-        dotnet nuget push src/TestFusion/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFusion.BrowserTesting/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFusion.HttpTesting/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFusion.MsTestAdapter/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFusion.Sink.InfluxDB/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFusion.Tests.Runner/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-
-    #
-    # 👇 Choose ONE of the publishing strategies below
-    #
-
-    # ---- Real NuGet push (enabled) ----
-    - name: Publish to NuGet
-      run: dotnet nuget push **/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-
-    # ---- Test push to local directory (won't publish anywhere) ----
-    # - name: Simulate push (save to output folder only)
-    #   run: |
-    #     mkdir -p output-nupkg
-    #     find . -name '*.nupkg' -exec cp {} output-nupkg/ \;
-    #     echo "Simulated push to ./output-nupkg"
-
-    # ---- OPTIONAL: Push to GitHub Packages (if configured) ----
-    # - name: Publish to GitHub Packages
-    #   run: dotnet nuget push **/*.nupkg --skip-duplicate --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --api-key ${{ secrets.GITHUB_TOKEN }}
+        dotnet nuget push src/TestFuzn/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFuzn.Plugins.Playwright/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFuzn.Plugins.Http/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFuzn.Plugins.Newtonsoft/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFuzn.Adapters.MSTest/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFuzn.Sinks.InfluxDB/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}

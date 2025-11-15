@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <AssemblyName>Fuzn.TestFuzn.Tests.Runner</AssemblyName>
+    <RootNamespace>Fuzn.TestFuzn.Tests.Runner</RootNamespace>
+    <Authors>Fuzn</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestFuzn.Tests\TestFuzn.Tests.csproj" />
+  </ItemGroup>
+
+</Project>
