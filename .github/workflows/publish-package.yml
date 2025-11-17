@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   release:
     types: [published]
-  workflow_dispatch:
 
 env:
   NUGET_SOURCE: "https://api.nuget.org/v3/index.json"
