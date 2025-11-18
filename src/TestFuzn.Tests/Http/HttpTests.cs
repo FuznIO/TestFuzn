@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Plugins.Http;
-using Fuzn.TestFuzn.Plugins.Newtonsoft;
 
 namespace Fuzn.TestFuzn.Tests.Http;
 

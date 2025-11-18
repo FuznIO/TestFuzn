@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Plugins.Http;
-using Fuzn.TestFuzn.Plugins.Newtonsoft;
 using Fuzn.TestFuzn.Plugins.Playwright;
 using Fuzn.TestFuzn.Plugins.WebSocket;
 using Fuzn.TestFuzn.Sinks.InfluxDB;

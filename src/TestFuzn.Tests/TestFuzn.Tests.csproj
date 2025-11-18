@@ -19,7 +19,6 @@
   <ItemGroup>
     <ProjectReference Include="..\TestFuzn.Adapters.MSTest\TestFuzn.Adapters.MSTest.csproj" />
     <ProjectReference Include="..\TestFuzn.Plugins.Http\TestFuzn.Plugins.Http.csproj" />
-    <ProjectReference Include="..\TestFuzn.Plugins.Newtonsoft\TestFuzn.Plugins.Newtonsoft.csproj" />
     <ProjectReference Include="..\TestFuzn.Plugins.Playwright\TestFuzn.Plugins.Playwright.csproj" />
     <ProjectReference Include="..\TestFuzn.Plugins.WebSocket\TestFuzn.Plugins.WebSocket.csproj" />
     <ProjectReference Include="..\TestFuzn.Sinks.InfluxDB\TestFuzn.Sinks.InfluxDB.csproj" />

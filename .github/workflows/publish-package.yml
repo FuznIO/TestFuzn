@@ -46,7 +46,6 @@ jobs:
         dotnet pack src/TestFuzn/TestFuzn.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
         dotnet pack src/TestFuzn.Plugins.Playwright/TestFuzn.Plugins.Playwright.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
         dotnet pack src/TestFuzn.Plugins.Http/TestFuzn.Plugins.Http.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFuzn.Plugins.Newtonsoft/TestFuzn.Plugins.Newtonsoft.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
         dotnet pack src/TestFuzn.Adapters.MSTest/TestFuzn.Adapters.MSTest.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
         dotnet pack src/TestFuzn.Sinks.InfluxDB/TestFuzn.Sinks.InfluxDB.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
 
@@ -55,6 +54,5 @@ jobs:
         dotnet nuget push src/TestFuzn/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFuzn.Plugins.Playwright/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFuzn.Plugins.Http/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFuzn.Plugins.Newtonsoft/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFuzn.Adapters.MSTest/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFuzn.Sinks.InfluxDB/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}

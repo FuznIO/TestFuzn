@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Fuzn.TestFuzn.Contracts.Providers;
 
-namespace Fuzn.TestFuzn.Plugins.Newtonsoft;
+namespace Fuzn.TestFuzn.Tests;
 
 public class NewtonsoftSerializerProvider : ISerializerProvider
 {
