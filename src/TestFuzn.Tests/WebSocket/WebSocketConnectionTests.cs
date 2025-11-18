@@ -9,7 +9,7 @@ public class WebSocketConnectionTests : BaseFeatureTest
     public override string FeatureName => "WebSocket Connection";
 
     // Use local SampleApp WebSocket server
-    private const string WebSocketServerUrl = "ws://localhost:5131/ws";
+    private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
     [ScenarioTest]
     public async Task Connect_And_Disconnect_Successfully()

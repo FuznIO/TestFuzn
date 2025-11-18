@@ -8,7 +8,7 @@ public class WebSocketCleanupTests : BaseFeatureTest
 {
     public override string FeatureName => "WebSocket Auto Cleanup";
 
-    private static readonly string EchoServerUrl = "ws://localhost:5131/ws";
+    private static readonly string EchoServerUrl = "wss://localhost:44316/ws";
 
     [ScenarioTest]
     public async Task Connection_Is_Auto_Closed_When_Test_Completes_Without_Explicit_Close()
@@ -127,7 +127,7 @@ public class WebSocketCleanupTests : BaseFeatureTest
         await Scenario()
             .Step("Parent step with sub-steps creating connections", async (context) =>
             {
-                context.Step("Sub-step 1: Create first connection", async (subContext) =>
+                await context.Step("Sub-step 1: Create first connection", async (subContext) =>
                 {
                     var connection1 = await subContext.CreateWebSocketConnection(EchoServerUrl)
                         .Connect();
@@ -135,7 +135,7 @@ public class WebSocketCleanupTests : BaseFeatureTest
                     // Not closing
                 });
 
-                context.Step("Sub-step 2: Create second connection", async (subContext) =>
+                await context.Step("Sub-step 2: Create second connection", async (subContext) =>
                 {
                     var connection2 = await subContext.CreateWebSocketConnection(EchoServerUrl)
                         .Connect();
@@ -143,7 +143,7 @@ public class WebSocketCleanupTests : BaseFeatureTest
                     // Not closing
                 });
 
-                context.Step("Sub-step 3: Create and close third connection", async (subContext) =>
+                await context.Step("Sub-step 3: Create and close third connection", async (subContext) =>
                 {
                     var connection3 = await subContext.CreateWebSocketConnection(EchoServerUrl)
                         .Connect();

@@ -7,7 +7,7 @@ public class WebSocketMessagingTests : BaseFeatureTest
 {
     public override string FeatureName => "WebSocket Messaging";
 
-    private const string WebSocketServerUrl = "ws://localhost:5131/ws";
+    private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
     [ScenarioTest]
     public async Task Send_And_Receive_Text_Message()

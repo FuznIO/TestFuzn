@@ -7,7 +7,7 @@ public class WebSocketSubStepsTests : BaseFeatureTest
 {
     public override string FeatureName => "WebSocket with Sub-Steps";
 
-    private const string WebSocketServerUrl = "ws://localhost:5131/ws";
+    private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
     [ScenarioTest]
     public async Task WebSocket_With_Nested_Steps()

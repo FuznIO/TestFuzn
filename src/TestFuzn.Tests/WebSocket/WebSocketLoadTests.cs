@@ -7,7 +7,7 @@ public class WebSocketLoadTests : BaseFeatureTest
 {
     public override string FeatureName => "WebSocket Load Testing";
 
-    private const string WebSocketServerUrl = "ws://localhost:5131/ws";
+    private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
     [ScenarioTest]
     public async Task Concurrent_Connections_OneTime_Load()
