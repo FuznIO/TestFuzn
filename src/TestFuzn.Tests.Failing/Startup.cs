@@ -14,7 +14,6 @@ public class Startup : BaseStartup
             Id = "TestFuzn.Tests.Failing",
             Name = "TestFuzn Tests Failing",
         };
-        configuration.EnvironmentName = "development";
         configuration.UsePlaywright();
         configuration.UseHttp();
         configuration.UseInfluxDb();

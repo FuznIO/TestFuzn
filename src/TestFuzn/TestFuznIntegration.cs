@@ -29,6 +29,8 @@ public static class TestFuznIntegration
         GlobalState.Logger.LogInformation("Logging initialized");
 
         _startupInstance = Activator.CreateInstance(startupType) as IStartup;
+        if (_startupInstance == null)
+            throw new InvalidOperationException($"Failed to create an instance of {startupType.FullName}.");
 
         var configuration = _startupInstance.Configuration();
         if (configuration == null)

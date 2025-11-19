@@ -10,7 +10,6 @@ public class ConfigurationManager
     public static TestFuznConfiguration LoadConfiguration()
     {
         var config = new TestFuznConfiguration();
-        config.EnvironmentName = "dev";
         config.TestSuite.Name = GlobalState.AssemblyWithTestsName;
         if (config.TestSuite.Name == null)
             config.TestSuite.Name = Assembly.GetExecutingAssembly().GetName().Name;
@@ -39,11 +38,17 @@ public class ConfigurationManager
 
         string machineName = GlobalState.NodeName;
 
-        _configRoot = new ConfigurationBuilder()
+        var builder = new ConfigurationBuilder()
                             .SetBasePath(Directory.GetCurrentDirectory())
-                            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                            .AddJsonFile($"appsettings.{machineName}.json", optional: true, reloadOnChange: false)
-                            .Build();
+                            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
+
+        if (!string.IsNullOrEmpty(GlobalState.EnvironmentName))
+            builder.AddJsonFile($"appsettings.{GlobalState.EnvironmentName}.json", optional: true, reloadOnChange: false);
+
+        if (!string.IsNullOrEmpty(GlobalState.NodeName))
+            builder.AddJsonFile($"appsettings.{GlobalState.NodeName}.json", optional: true, reloadOnChange: false);
+
+        _configRoot = builder.Build();
 
         return _configRoot;
     }

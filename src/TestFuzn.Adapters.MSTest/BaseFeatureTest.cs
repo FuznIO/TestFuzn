@@ -52,8 +52,10 @@ public abstract class BaseFeatureTest : IFeatureTest
         var scenario = new ScenarioBuilder<TModel>(new MsTestAdapter(TestContext), this, scenarioName);
         EnsureScenarioTestAndApplyRunMode(methodInfo, scenario);
         ApplyTestCategoryTags(methodInfo, scenario);
+        ApplyEnvironments(methodInfo, scenario);
         return scenario;
     }
+
 
     private void EnsureTestMethodIsNotUsed(MethodInfo methodInfo)
     {
@@ -69,7 +71,7 @@ public abstract class BaseFeatureTest : IFeatureTest
     {
         // Look for [ScenarioTest] attribute.
         var scenarioTestAttr = methodInfo.GetCustomAttributes(inherit: true)
-                                     .FirstOrDefault(a => a.GetType().Name == "ScenarioTestAttribute");
+                                     .FirstOrDefault(a => a.GetType() == typeof(ScenarioTestAttribute));
         if (scenarioTestAttr == null)
             throw new InvalidOperationException($"Scenario method '{methodInfo.Name}' must be decorated with [ScenarioTest] attribute.");
 
@@ -101,5 +103,21 @@ public abstract class BaseFeatureTest : IFeatureTest
 
         if (categories.Length > 0)
             scenarioBuilder.Tags(categories);
+    }
+
+    private void ApplyEnvironments<TModel>(MethodInfo methodInfo, ScenarioBuilder<TModel> scenario) where TModel : new()
+    {
+        // Look for [Environments] attribute.
+        var environmentsAttr = methodInfo.GetCustomAttributes(inherit: true)
+                                     .FirstOrDefault(a => a.GetType() == typeof(EnvironmentsAttribute));
+        if (environmentsAttr == null)
+            return;
+
+        // Get RunMode property from the attribute.
+        var environmentsProp = environmentsAttr.GetType().GetProperty("Environments");
+
+        var environments = (string[]) environmentsProp.GetValue(environmentsAttr);
+
+        scenario.Environments(environments);
     }
 }

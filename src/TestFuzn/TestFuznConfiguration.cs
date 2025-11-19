@@ -9,7 +9,6 @@ namespace Fuzn.TestFuzn;
 
 public class TestFuznConfiguration
 {
-    public string EnvironmentName { get; set; } = "";
     public TestSuiteInfo TestSuite { get; set; } = new();
     internal List<IContextPlugin> ContextPlugins { get; set; } = new();
     internal List<IFeatureReport> FeatureReports { get; set; } = new();

@@ -17,6 +17,7 @@ public class Scenario
         }
     }
     internal ScenarioRunMode RunMode { get; set; } = ScenarioRunMode.Execute;
+    internal List<string> Environments { get; set; }
     internal List<string> TagsInternal { get; set; }
     internal Dictionary<string, string> MetadataInternal { get; set; }
     internal Type ContextType { get; set; }

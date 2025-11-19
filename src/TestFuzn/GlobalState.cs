@@ -17,7 +17,7 @@ public static class GlobalState
     internal static TimeSpan SinkWriteFrequency { get; set; } = TimeSpan.FromSeconds(3);
     internal static string NodeName { get; set; } = Environment.MachineName;
     public static ISerializerProvider SerializerProvider => Configuration.SerializerProvider;
-
+    public static string EnvironmentName { get; set; }
 
     internal static void Init()
     {
@@ -25,5 +25,7 @@ public static class GlobalState
         DateTimeOffset test = DateTimeOffset.UtcNow;
 
         TestRunId = $"{DateTime.Now:yyyy-MM-dd_HH-mm}__{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+    
+        EnvironmentName = Environment.GetEnvironmentVariable("TESTFUZN_ENVIRONMENT") ?? "";
     }
 }

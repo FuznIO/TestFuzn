@@ -56,6 +56,8 @@ internal class ScenarioTestRunner
 
         try
         {
+            SetScenariosToSkipIfEnvironmentMismatch(scenarios);
+
             if (ShouldSkipScenarios(scenarios))
             {
                 SkipScenarios(scenarios, featureResultManager);
@@ -84,6 +86,30 @@ internal class ScenarioTestRunner
             }
 
             throw;
+        }
+    }
+
+    private void SetScenariosToSkipIfEnvironmentMismatch(Scenario[] scenarios)
+    {
+        var currentEnvironmentName = GlobalState.EnvironmentName;
+
+        foreach (var scenario in scenarios)
+        {
+            if (scenario.Environments == null || scenario.Environments.Count == 0)
+            {
+                if (!string.IsNullOrEmpty(currentEnvironmentName))
+                    scenario.RunMode = ScenarioRunMode.Skip;
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(currentEnvironmentName))
+                    scenario.RunMode = ScenarioRunMode.Skip;
+                else
+                {
+                    if (!scenario.Environments.Contains(currentEnvironmentName, StringComparer.OrdinalIgnoreCase))
+                        scenario.RunMode = ScenarioRunMode.Skip;
+                }
+            }
         }
     }
 

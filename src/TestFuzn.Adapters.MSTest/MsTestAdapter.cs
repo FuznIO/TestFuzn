@@ -182,6 +182,6 @@ public class MsTestAdapter(TestContext testContext) : ITestFrameworkAdapter
 
     public void SetCurrentTestAsSkipped()
     {
-        Assert.Inconclusive("Scenario test skipped: marked as skipped and not executed.");
+        Assert.Inconclusive("Scenario test skipped.");
     }
 }

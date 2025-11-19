@@ -20,7 +20,6 @@ public class Startup : BaseStartup
                 { "OwnerID", "123" },
             }
         };
-        configuration.EnvironmentName = "development";
         configuration.UsePlaywright(c =>
         {
             c.BrowserTypesToUse = new List<string> { "chromium" };

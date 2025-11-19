@@ -22,11 +22,20 @@ public class ScenarioBuilder<TModel>
         Scenario.ContextType = typeof(IterationContext<TModel>);
     }
 
-
-
     public ScenarioBuilder<TModel> Id(string id)
     {
         Scenario.Id = id;
+        return this;
+    }
+
+    public ScenarioBuilder<TModel> Environments(params string[] environments)
+    {
+        if (environments == null || environments.Length == 0)
+            throw new ArgumentException("Environments cannot be null or empty.", nameof(environments));
+
+        if (Scenario.Environments == null)
+            Scenario.Environments = new();
+        Scenario.Environments.AddRange(environments);
         return this;
     }
 
