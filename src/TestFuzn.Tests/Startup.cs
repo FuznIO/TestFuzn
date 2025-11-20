@@ -9,7 +9,7 @@ public class Startup : BaseStartup
 {
     public override TestFuznConfiguration Configuration()
     {
-        var configuration = ConfigurationManager.LoadConfiguration();
+        var configuration = new TestFuznConfiguration();
         configuration.TestSuite = new TestSuiteInfo
         {
             Id = "TestFuzn.Tests",

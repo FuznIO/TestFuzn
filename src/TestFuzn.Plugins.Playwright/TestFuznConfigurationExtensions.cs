@@ -5,21 +5,6 @@ namespace Fuzn.TestFuzn.Plugins.Playwright;
 
 public static class TestFuznConfigurationExtensions
 {
-    public static void UsePlaywright(this TestFuznConfiguration config)
-    {
-        var playwrightConfiguration = new PluginConfiguration();
-        ConfigurationManager.LoadPluginConfiguration("Playwright", playwrightConfiguration);
-
-        if (playwrightConfiguration is null)
-            throw new InvalidOperationException("Playwright configuration is not set in appsettings.json");
-
-        ValidateConfiguration(playwrightConfiguration);
-
-        PlaywrightGlobalState.Configuration = playwrightConfiguration;
-
-        config.AddContextPlugin(new PlaywrightPlugin());
-    }
-
     public static void UsePlaywright(this TestFuznConfiguration config, 
         Action<PluginConfiguration> playwrightConfigAction)
     {

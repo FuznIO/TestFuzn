@@ -1,7 +1,8 @@
-﻿using Fuzn.TestFuzn.Internals;
-using Fuzn.TestFuzn.Internals.Results.Feature;
-using Fuzn.TestFuzn.Contracts.Adapters;
+﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals;
 using Fuzn.TestFuzn.Internals.Reports;
+using Fuzn.TestFuzn.Internals.Results.Feature;
+using System.Reflection;
 
 namespace Fuzn.TestFuzn;
 
@@ -36,8 +37,13 @@ public static class TestFuznIntegration
         if (configuration == null)
         {
             configuration = new TestFuznConfiguration();
-            configuration.TestSuite.Name = "Default";
         }
+        if (configuration.TestSuite == null)
+            configuration.TestSuite = new();
+
+        if (string.IsNullOrEmpty(configuration.TestSuite.Name))
+            configuration.TestSuite.Name = Assembly.GetExecutingAssembly().GetName().Name;
+
         GlobalState.Configuration = configuration;
 
         var context = ContextFactory.CreateContext(testFramework, "InitGlobal");

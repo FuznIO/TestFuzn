@@ -4,8 +4,7 @@ public static class TestFuznConfigurationExtensions
 {
     public static void UseInfluxDb(this TestFuznConfiguration config)
     {
-        var influxDbSinkConfig = new InfluxDbSinkConfiguration();
-        ConfigurationManager.LoadPluginConfiguration("InfluxDB", influxDbSinkConfig);
+        var influxDbSinkConfig = ConfigurationManager.GetSection<InfluxDbSinkConfiguration>("InfluxDB");
         if (influxDbSinkConfig is null)
             throw new InvalidOperationException("InfluxDb configuration is not set in appsettings.json");
 
