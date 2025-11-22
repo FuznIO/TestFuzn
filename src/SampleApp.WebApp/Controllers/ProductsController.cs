@@ -4,7 +4,7 @@ using SampleApp.WebApp.Models;
 namespace SampleApp.WebApp.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/Products")]
 public class ProductsController : ControllerBase
 {
     private readonly ProductService _productService;
@@ -17,33 +17,30 @@ public class ProductsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<Product>>> Get()
     {
-        var products = await _productService.GetAllProductsAsync();
+        var products = await _productService.GetAllProducts();
         return Ok(products);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<Product>> Get(Guid id)
     {
-        var product = await _productService.GetByIdAsync(id);
+        var product = _productService.GetById(id);
         if (product == null)
             return NotFound();
         return Ok(product);
     }
 
     [HttpPost]
-    public async Task<ActionResult<Product>> Add(Product product)
+    public async Task<ActionResult> Add(Product product)
     {
-        var created = await _productService.AddProductAsync(product);
-        return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
+        _productService.AddProduct(product);
+        return Ok();
     }
 
-    [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, Product product)
+    [HttpPut]
+    public async Task<IActionResult> Update(Product product)
     {
-        if (id != product.Id)
-            return BadRequest("ID mismatch");
-
-        var success = await _productService.UpdateProductAsync(product);
+        var success = _productService.UpdateProduct(product);
         if (!success)
             return NotFound();
 
@@ -53,7 +50,7 @@ public class ProductsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var success = await _productService.RemoveProductAsync(id);
+        var success = await _productService.RemoveProduct(id);
         if (!success)
             return NotFound();
 

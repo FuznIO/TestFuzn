@@ -1,5 +1,4 @@
-﻿using Fuzn.TestFuzn.Plugins.Playwright;
-using Fuzn.TestFuzn.Plugins.Http;
+﻿using Fuzn.TestFuzn.Plugins.Http;
 using Fuzn.TestFuzn.Sinks.InfluxDB;
 
 namespace Fuzn.TestFuzn.Tests;

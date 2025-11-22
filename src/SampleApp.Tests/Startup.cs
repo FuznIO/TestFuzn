@@ -10,8 +10,6 @@ public class Startup : BaseStartup
     public override TestFuznConfiguration Configuration()
     {
         var configuration = new TestFuznConfiguration();
-        configuration.TestSuite.Name = "SampleApp.Tests";
-
         configuration.UseHttp();
         configuration.UsePlaywright(c =>
         {

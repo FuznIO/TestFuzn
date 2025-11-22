@@ -15,7 +15,7 @@ public class HttpRequestBuilder
     private readonly Dictionary<string, string> _headers = new();
     private Authentication _auth = new();
     private Hooks _hooks = new();
-    private LoggingVerbosity _loggingVerbosity = LoggingVerbosity.Full;
+    private LoggingVerbosity _loggingVerbosity = Http.LoggingVerbosity.Full;
     private string _userAgent = "TestFuznHttpTesting/1.0";
     private TimeSpan _timeout = HttpGlobalState.Configuration.DefaultRequestTimeout;
     private ISerializerProvider _serializerProvider;
@@ -80,7 +80,7 @@ public class HttpRequestBuilder
         return this;
     }
 
-    public HttpRequestBuilder Bearer(string token)
+    public HttpRequestBuilder AuthBearer(string token)
     {
         if (!string.IsNullOrEmpty(_auth.Basic))
             throw new InvalidOperationException("Cannot set both Bearer and Basic authentication.");
@@ -90,7 +90,7 @@ public class HttpRequestBuilder
         return this;
     }
 
-    public HttpRequestBuilder Basic(string username, string password)
+    public HttpRequestBuilder AuthBasic(string username, string password)
     {
         if (!string.IsNullOrEmpty(_auth.BearerToken))
             throw new InvalidOperationException("Cannot set both Bearer and Basic authentication.");
@@ -105,7 +105,7 @@ public class HttpRequestBuilder
         return this;
     }
 
-    public HttpRequestBuilder Verbosity(LoggingVerbosity verbosity)
+    public HttpRequestBuilder LoggingVerbosity(LoggingVerbosity verbosity)
     {
         _loggingVerbosity = verbosity;
         return this;

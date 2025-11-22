@@ -1,51 +1,44 @@
-﻿using Microsoft.EntityFrameworkCore;
-using SampleApp.WebApp.Data;
-using SampleApp.WebApp.Models;
+﻿using SampleApp.WebApp.Models;
+using System.Collections.Concurrent;
 
 public class ProductService
 {
-    private readonly ProductDbContext _db;
+    private static ConcurrentDictionary<Guid, Product> _products = new();
 
-    public ProductService(ProductDbContext db)
+    public async Task<List<Product>> GetAllProducts()
     {
-        _db = db;
+        return _products.Values.ToList();
     }
 
-    public async Task<List<Product>> GetAllProductsAsync()
+    public Product? GetById(Guid id)
     {
-        return await _db.Products.AsNoTracking().ToListAsync();
-    }
+        _products.TryGetValue(id, out var product);
 
-    public async Task<Product?> GetByIdAsync(Guid id)
-    {
-        return await _db.Products.FindAsync(id);
-    }
-
-    public async Task<Product> AddProductAsync(Product product)
-    {
-        product.Id = Guid.NewGuid();
-        _db.Products.Add(product);
-        await _db.SaveChangesAsync();
         return product;
     }
 
-    public async Task<bool> UpdateProductAsync(Product product)
+    public void AddProduct(Product product)
     {
-        var exists = await _db.Products.AnyAsync(p => p.Id == product.Id);
-        if (!exists) return false;
-
-        _db.Products.Update(product);
-        await _db.SaveChangesAsync();
-        return true;
+        _products.AddOrUpdate(product.Id, product, (key, oldValue) => product);
     }
 
-    public async Task<bool> RemoveProductAsync(Guid id)
+    public bool UpdateProduct(Product product)
     {
-        var product = await _db.Products.FindAsync(id);
-        if (product == null) return false;
+        if (_products.ContainsKey(product.Id))
+        {
+            _products[product.Id] = product;
+            return true;
+        }
 
-        _db.Products.Remove(product);
-        await _db.SaveChangesAsync();
+        return false;
+    }
+
+    public async Task<bool> RemoveProduct(Guid id)
+    {
+        _products.TryRemove(id, out var removedProduct);
+        if (removedProduct == null) 
+            return false;
+
         return true;
     }
 }

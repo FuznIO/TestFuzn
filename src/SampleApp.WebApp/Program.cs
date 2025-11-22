@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using SampleApp.WebApp.Data;
-using SampleApp.WebApp.WebSockets;
+﻿using SampleApp.WebApp.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,22 +17,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// EF Core + SQLite
-builder.Services.AddDbContext<ProductDbContext>(options =>
-    options.UseSqlite("Data Source=App_Data/products.db"));
-
 // App Services
 builder.Services.AddTransient<ProductService>();
 builder.Services.AddSingleton<WebSocketHandler>();
 
 var app = builder.Build();
-
-// Auto-create DB
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ProductDbContext>();
-    db.Database.EnsureCreated();
-}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
