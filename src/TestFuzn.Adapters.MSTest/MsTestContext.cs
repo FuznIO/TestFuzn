@@ -1,7 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections;
-
-namespace Fuzn.TestFuzn;
+﻿namespace Fuzn.TestFuzn;
 
 public class MsTestContext : TestContext
 {

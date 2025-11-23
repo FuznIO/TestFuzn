@@ -56,7 +56,6 @@ public abstract class BaseFeatureTest : IFeatureTest
         return scenario;
     }
 
-
     private void EnsureTestMethodIsNotUsed(MethodInfo methodInfo)
     {
         // Check for MSTest [TestMethod] attribute

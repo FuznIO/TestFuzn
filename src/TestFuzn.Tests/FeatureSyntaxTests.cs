@@ -21,8 +21,9 @@ public class SyntaxTests : BaseFeatureTest
     }
 
     [ScenarioTest(ScenarioRunMode.Skip)]
-    [TestCategory("Component")]
-    [TestCategory("E2E")]
+    [TestCategory("Category1")]
+    [TestCategory("Category2")]
+    [Environments("test")]
     public async Task DefaultContext()
     {
         // Definition of test types:

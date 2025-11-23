@@ -1,4 +1,5 @@
-﻿using SampleApp.WebApp.WebSockets;
+﻿using SampleApp.WebApp.Models;
+using SampleApp.WebApp.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,24 @@ builder.Services.AddTransient<ProductService>();
 builder.Services.AddSingleton<WebSocketHandler>();
 
 var app = builder.Build();
+
+// Seed initial products (only if empty to avoid duplicates on hot reload, etc.)
+var productService = app.Services.GetRequiredService<ProductService>();
+var existing = await productService.GetAllProducts();
+if (existing.Count == 0)
+{
+    var initialProducts = new[]
+    {
+        new Product { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), Name = "Alpha",   Price = 10.99m },
+        new Product { Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), Name = "Bravo",   Price = 15.50m },
+        new Product { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"), Name = "Charlie", Price = 8.25m },
+        new Product { Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), Name = "Delta",   Price = 22.10m },
+        new Product { Id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), Name = "Echo",    Price = 5.75m }
+    };
+
+    foreach (var p in initialProducts)
+        productService.AddProduct(p);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

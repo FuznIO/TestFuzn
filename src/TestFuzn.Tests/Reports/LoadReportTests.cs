@@ -11,10 +11,12 @@ public class LoadReportTests : BaseFeatureTest
     public override Dictionary<string, string> FeatureMetadata { get => new Dictionary<string, string>() { { "Meta1", "Value1" } }; }
 
     [ScenarioTest]
+    [TestCategory("Category1")]
+    [TestCategory("Category2")]
+    [TestCategory("Category3")]
     public async Task ShortRunning_NoErrors()
     {
         await Scenario()
-            .Tags("Tag1", "Tag2", "Tag3")
             .Id("ID-1234")
             .Metadata("MetadataScenarioKey1", "Value1")
             .Metadata("MetadataScenarioKey2", "Value2")

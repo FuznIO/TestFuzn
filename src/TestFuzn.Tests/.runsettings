@@ -3,6 +3,8 @@
   <RunConfiguration>
     <EnvironmentVariables>
 		<TESTFUZN_ENVIRONMENT></TESTFUZN_ENVIRONMENT>
+		<TESTFUZN_TAGS_FILTER_INCLUDE></TESTFUZN_TAGS_FILTER_INCLUDE>
+		<TESTFUZN_TAGS_FILTER_EXCLUDE></TESTFUZN_TAGS_FILTER_EXCLUDE>
     </EnvironmentVariables>
   </RunConfiguration>
 </RunSettings>

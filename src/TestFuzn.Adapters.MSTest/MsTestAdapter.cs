@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Results.Load;
