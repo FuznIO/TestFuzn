@@ -134,7 +134,7 @@ public class HttpRequest
         catch (Exception ex)
         {
             if (_loggingVerbosity > TestFuzn.Plugins.Http.LoggingVerbosity.None)
-                _context.Logger.LogError(ex, null);
+                _context.Logger.LogError(ex, $"Step {_context.StepInfo.Name} - HTTP Request failed - CorrelationId: {_context.Info.CorrelationId}");
 
             outputRequestResponse = true;
             throw;
@@ -145,12 +145,12 @@ public class HttpRequest
             {
                 if (_loggingVerbosity == TestFuzn.Plugins.Http.LoggingVerbosity.Full)
                 {
-                    _context.Logger.LogError("Request returned an error:\n" + request.ToString());
+                    _context.Logger.LogError($"Step {_context.StepInfo.Name} - Request returned an error:\n{request} - CorrelationId: {_context.Info.CorrelationId}");
                     Console.WriteLine("Request returned an error:\n" + request.ToString());
                     if (response != null)
                     {
-                        _context.Logger.LogError("\nResponse:\n " + response.ToString());
-                        _context.Logger.LogError("\nResponse.Body:\n " + responseBody);
+                        _context.Logger.LogError($"Step {_context.StepInfo.Name} - Response:\n{response} - CorrelationId: {_context.Info.CorrelationId}");
+                        _context.Logger.LogError($"Step {_context.StepInfo.Name} - Response.Body:\n{responseBody} - CorrelationId: {_context.Info.CorrelationId}");
                     }
                 }
             }
