@@ -15,17 +15,9 @@ public static class GlobalState
     internal static DateTime TestRunStartTime { get; set; }
     internal static DateTime TestRunEndTime { get; set; }
     internal static TimeSpan SinkWriteFrequency { get; set; } = TimeSpan.FromSeconds(3);
-    internal static string NodeName { get; set; } = Environment.MachineName;
+    internal static string NodeName { get; set; }
     public static ISerializerProvider SerializerProvider => Configuration.SerializerProvider;
     public static string EnvironmentName { get; set; }
-
-    internal static void Init()
-    {
-        TestRunStartTime = DateTime.UtcNow;
-        DateTimeOffset test = DateTimeOffset.UtcNow;
-
-        TestRunId = $"{DateTime.Now:yyyy-MM-dd_HH-mm}__{Guid.NewGuid().ToString("N").Substring(0, 6)}";
-    
-        EnvironmentName = Environment.GetEnvironmentVariable("TESTFUZN_ENVIRONMENT") ?? "";
-    }
+    public static List<string> TagsFilterInclude { get; set; } = new();
+    public static List<string> TagsFilterExclude { get; set; } = new();
 }

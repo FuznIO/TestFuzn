@@ -12,7 +12,28 @@ public static class TestFuznIntegration
 
     public static async Task InitGlobal(ITestFrameworkAdapter testFramework)
     {
-        GlobalState.Init();
+        GlobalState.TestRunStartTime = DateTime.UtcNow;
+        GlobalState.TestRunId = $"{DateTime.Now:yyyy-MM-dd_HH-mm}__{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+        GlobalState.EnvironmentName = Environment.GetEnvironmentVariable("TESTFUZN_ENVIRONMENT") ?? "";
+
+        var tagsInclude = Environment.GetEnvironmentVariable("TESTFUZN_TAGS_FILTER_INCLUDE");
+        if (!string.IsNullOrEmpty(tagsInclude))
+        {
+            GlobalState.TagsFilterInclude.AddRange(tagsInclude.Split(',').Select(t => t.Trim()));
+        }
+
+        var tagsExclude = Environment.GetEnvironmentVariable("TESTFUZN_TAGS_FILTER_EXCLUDE");
+        if (!string.IsNullOrEmpty(tagsExclude))
+        {
+            GlobalState.TagsFilterExclude.AddRange(tagsExclude.Split(',').Select(t => t.Trim()));
+        }
+
+        GlobalState.EnvironmentName = Environment.GetEnvironmentVariable("TESTFUZN_ENVIRONMENT") ?? "";
+        GlobalState.NodeName = Environment.MachineName;
+        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, $"TestFuzn_{GlobalState.TestRunId}");
+        Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
+        GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
+        GlobalState.Logger.LogInformation("Logging initialized");
 
         // Scan all loaded assemblies for a type that implements IStartup
         var startupType = AppDomain.CurrentDomain
@@ -22,12 +43,6 @@ public static class TestFuznIntegration
 
         if (startupType == null)
             throw new InvalidOperationException("No class implementing IStartup was found in the loaded assemblies.");
-
-        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, $"TestFuzn_{GlobalState.TestRunId}");
-        Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
-
-        GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
-        GlobalState.Logger.LogInformation("Logging initialized");
 
         _startupInstance = Activator.CreateInstance(startupType) as IStartup;
         if (_startupInstance == null)

@@ -28,7 +28,7 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
-    public ScenarioBuilder<TModel> Environments(params string[] environments)
+    internal ScenarioBuilder<TModel> Environments(params string[] environments)
     {
         if (environments == null || environments.Length == 0)
             throw new ArgumentException("Environments cannot be null or empty.", nameof(environments));
@@ -39,7 +39,7 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
-    public ScenarioBuilder<TModel> Tags(params string[] tags)
+    internal ScenarioBuilder<TModel> Tags(params string[] tags)
     {
         if (tags == null || tags.Length == 0)
             throw new ArgumentException("Tags cannot be null or empty.", nameof(tags));

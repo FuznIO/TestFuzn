@@ -48,11 +48,12 @@ public class SubStepsTests : BaseFeatureTest
     }
 
     [ScenarioTest]
+    [TestCategory("Category1")]
+    [TestCategory("Category2")]
     public async Task SubSteps_Async()
     {
         await Scenario()
             .Tags("CategoryA", "CategoryB")
-            .InputData("Testdata1", "Testdata2")
             .Step("Step 1", async (context) =>
             {
                 Assert.AreEqual("Step 1", context.StepInfo.Name);
@@ -96,10 +97,10 @@ public class SubStepsTests : BaseFeatureTest
     }
 
     [ScenarioTest]
+    [TestCategory("Category1")]
     public async Task SubSteps_Async_Load()
     {
         await Scenario()
-            .Tags("CategoryA")
             .Step("Step 1", async (context) =>
             {
                 Assert.AreEqual("Step 1", context.StepInfo.Name);
