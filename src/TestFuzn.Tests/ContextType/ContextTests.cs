@@ -2,16 +2,16 @@
 namespace Fuzn.TestFuzn.Tests.ContextType;
 
 [FeatureTest]
-public class ContextTests : BaseFeatureTest
+public class ContextTests : BaseFeatureTest, ITestMethodInit, ITestMethodCleanup
 {
-    public override Task InitTestMethod(TestFuzn.Context context)
+    public Task InitTestMethod(Context context)
     {
         Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
         Assert.AreEqual("InitTestMethod", context.StepInfo.Name);
         return Task.CompletedTask;
     }
 
-    public override Task CleanupTestMethod(TestFuzn.Context context)
+    public Task CleanupTestMethod(Context context)
     {
         Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
         Assert.AreEqual("CleanupTestMethod", context.StepInfo.Name);

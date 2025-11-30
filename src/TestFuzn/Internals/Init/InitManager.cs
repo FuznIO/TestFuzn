@@ -52,8 +52,11 @@ internal class InitManager
 
     private async Task ExecuteInitTestMethod()
     {
-        var context = ContextFactory.CreateContext(_testFramework, "InitTestMethod");
-        await _sharedExecutionState.IFeatureTestClassInstance.InitTestMethod(context);
+        if (_sharedExecutionState.IFeatureTestClassInstance is ITestMethodInit init)
+        {
+            var context = ContextFactory.CreateContext(_testFramework, "InitTestMethod");
+            await init.InitTestMethod(context);
+        }
     }
 
     private async Task ExecuteInitMethodsOnScenario(Scenario scenario)

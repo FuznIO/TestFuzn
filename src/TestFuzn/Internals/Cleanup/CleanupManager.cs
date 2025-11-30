@@ -50,7 +50,10 @@ internal class CleanupManager
 
     private async Task ExecuteCleanupTestMethod()
     {
-        Context context = ContextFactory.CreateContext(_testFramework, "CleanupTestMethod");
-        await _sharedExecutionState.IFeatureTestClassInstance.CleanupTestMethod(context);
+        if (_sharedExecutionState.IFeatureTestClassInstance is ITestMethodCleanup cleanup)
+        {
+            Context context = ContextFactory.CreateContext(_testFramework, "CleanupTestMethod");
+            await cleanup.CleanupTestMethod(context);
+        }
     }
 }

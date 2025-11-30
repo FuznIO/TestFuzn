@@ -2,19 +2,19 @@
 namespace Fuzn.TestFuzn.Tests.InitCleanup;
 
 [FeatureTest]
-public class InitAndCleanupTests : BaseFeatureTest
+public class InitAndCleanupTests : BaseFeatureTest, ITestMethodInit, ITestMethod
 {
     public override string FeatureName => "Feature-Init-Cleanup";
     private bool _beforeEachScenarioTestCalled = false;
     private bool _afterEachScenarioTestCalled = false;
 
-    public override Task InitTestMethod(Context context)
+    public Task InitTestMethod(Context context)
     {
         _beforeEachScenarioTestCalled = true;
         return Task.CompletedTask;
     }
 
-    public override Task CleanupTestMethod(Context context)
+    public Task CleanupTestMethod(Context context)
     {
         _afterEachScenarioTestCalled = true;
         return Task.CompletedTask;

@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Fuzn.TestFuzn;
@@ -20,16 +19,6 @@ public abstract class BaseFeatureTest : IFeatureTest
             featureName = featureName.Substring(0, featureName.Length - 4);
             
         FeatureName = featureName;
-    }
-
-    public virtual Task InitTestMethod(Context context)
-    {
-        return Task.CompletedTask;
-    }
-
-    public virtual Task CleanupTestMethod(Context context)
-    {
-        return Task.CompletedTask;
     }
 
     public ScenarioBuilder<EmptyModel> Scenario([CallerMemberName] string scenarioName = null)
@@ -68,7 +57,7 @@ public abstract class BaseFeatureTest : IFeatureTest
     private void EnsureScenarioTestAndApplyRunMode<TModel>(MethodInfo methodInfo, ScenarioBuilder<TModel> scenario)
         where TModel : new()
     {
-        // Look for [ScenarioTest] attribute.
+        // Check for [ScenarioTest] attribute.
         var scenarioTestAttr = methodInfo.GetCustomAttributes(inherit: true)
                                      .FirstOrDefault(a => a.GetType() == typeof(ScenarioTestAttribute));
         if (scenarioTestAttr == null)
@@ -106,7 +95,7 @@ public abstract class BaseFeatureTest : IFeatureTest
 
     private void ApplyEnvironments<TModel>(MethodInfo methodInfo, ScenarioBuilder<TModel> scenario) where TModel : new()
     {
-        // Look for [Environments] attribute.
+        // Check for [Environments] attribute.
         var environmentsAttr = methodInfo.GetCustomAttributes(inherit: true)
                                      .FirstOrDefault(a => a.GetType() == typeof(EnvironmentsAttribute));
         if (environmentsAttr == null)
