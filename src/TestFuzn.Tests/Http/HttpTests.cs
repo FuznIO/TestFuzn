@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Plugins.Http;
+using System.Security.Cryptography;
 
 namespace Fuzn.TestFuzn.Tests.Http;
 
@@ -45,7 +46,8 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
                 var newtonsoftSerializer = new NewtonsoftSerializerProvider();
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products").SerializerProvider(newtonsoftSerializer).Get();
+                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                                        .SerializerProvider(newtonsoftSerializer).Get();
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
@@ -98,6 +100,39 @@ public class GetProductsE2ETests : BaseFeatureTest
                 Assert.IsTrue(response.BodyAs<string>() == "Pong");
             })
             .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
+            .Run();
+    }
+
+    [ScenarioTest]
+    public async Task Verify_Raw_JsonString()
+    {
+        await Scenario()
+            .Step("Step 1", async (context) =>
+            {
+                var productId = Guid.NewGuid();
+                var name = $"ProductName_{Guid.NewGuid()}";
+                var price = RandomNumberGenerator.GetInt32(10, 2000);
+
+                var postResponse = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                    .Body($@"
+                        {{
+                            ""id"": ""{productId}"",
+                            ""name"": ""{name}"",
+                            ""price"": {price}
+                        }}")
+                    .Post();
+
+                Assert.IsTrue(postResponse.Ok);
+
+                var getResponse = await context.CreateHttpRequest($"https://localhost:44316/api/Products/{productId}")
+                    .Get();
+
+                Assert.IsTrue(getResponse.Ok);
+                var product = getResponse.BodyAsJson();
+                Assert.AreEqual(productId.ToString(), product.id.ToString());
+                Assert.AreEqual(name, product.name);
+                Assert.AreEqual(price, product.price);
+            })
             .Run();
     }
 }

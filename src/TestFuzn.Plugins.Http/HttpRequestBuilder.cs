@@ -123,7 +123,7 @@ public class HttpRequestBuilder
         return this;
     }
 
-    public HttpRequest Build(HttpMethod method)
+    internal HttpRequest Build(HttpMethod method)
     {
         var request = new HttpRequest(_context, method, _url, _contentType)
         {
