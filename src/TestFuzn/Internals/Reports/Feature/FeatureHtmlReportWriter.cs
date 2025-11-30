@@ -82,6 +82,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         }
 
         b.AppendLine(@$"<tr><th class=""vertical"">Run ID</th><td>{featureReportData.TestRunId}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Environment Name</th><td>{GlobalState.EnvironmentName}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Start Time</th><td>{featureReportData.TestRunStartTime.ToLocalTime()}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">End Time</th><td>{featureReportData.TestRunEndTime.ToLocalTime()}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Duration</th><td>{featureReportData.TestRunDuration.ToTestFuznReadableString()}</td></tr>");
@@ -91,8 +92,9 @@ internal class FeatureHtmlReportWriter : IFeatureReport
     private static void WriteStatus(FeatureReportData featureReportData, StringBuilder b)
     {
         var featuresTotal = featureReportData.Results.FeatureResults.Count;
-        var featuresPassed = featureReportData.Results.FeatureResults.Count(x => x.Value.Passed());
-        var featuresFailed = featuresTotal - featuresPassed;
+        var featuresPassed = featureReportData.Results.FeatureResults.Count(x => x.Value.Status == ScenarioStatus.Passed);
+        var featuresFailed = featureReportData.Results.FeatureResults.Count(x => x.Value.Status == ScenarioStatus.Failed);
+        var featuresSkipped = featureReportData.Results.FeatureResults.Count(x => x.Value.Status == ScenarioStatus.Skipped);
         var scenariosTotal = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count);
         var scenariosPassed = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Passed));
         var scenariosSkipped = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Skipped));
@@ -111,7 +113,6 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         }
 
         b.AppendLine($@"<div class=""details"">");
-
         
         b.AppendLine("</div>");
         b.AppendLine("</div>");
@@ -122,7 +123,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine(@$"<td style=""width:1%;white-space:nowrap"">🔢 Total: {featuresTotal}</td>");
         b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">✅ Passed: {featuresPassed}</td>");
         b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">❌ Failed: {featuresFailed}</td>");
-        b.AppendLine($"<td>⚠️ Skipped: N/A</td>");
+        b.AppendLine($"<td>⚠️ Skipped: {featuresSkipped}</td>");
         b.AppendLine("</tr>");
         b.AppendLine("<tr>");
         b.AppendLine(@"<th class=""vertical"" style=""width:1%;white-space:nowrap"">Scenario Tests</th>");
@@ -150,15 +151,21 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         {
             var symbol = "";
             var statusText = "";
-            if (featureResult.Value.Passed())
+
+            switch (featureResult.Value.Status)
             {
-                symbol = "✅";
-                statusText = "✅ Passed";
-            }
-            else
-            {
-                symbol = "❌";
-                statusText = "❌ Failed";
+                case ScenarioStatus.Passed: 
+                    symbol = "✅";
+                    statusText = "✅ Passed";
+                    break;
+                case ScenarioStatus.Failed:
+                     symbol = "❌";
+                    statusText = "❌ Failed";
+                    break;
+                case ScenarioStatus.Skipped:
+                    symbol = "⚠️";
+                    statusText = "⚠️ Skipped";
+                    break;
             }
 
             b.AppendLine($"<tr>");

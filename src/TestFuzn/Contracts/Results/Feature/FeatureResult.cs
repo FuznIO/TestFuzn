@@ -10,10 +10,17 @@ public class FeatureResult(string name, string id, Dictionary<string, string> me
 
     public ConcurrentDictionary<string, ScenarioFeatureResult> ScenarioResults { get; } = new();
 
-    public bool Passed()
+    public ScenarioStatus Status
     {
-        if (ScenarioResults.Any(x => x.Value.Status == ScenarioStatus.Failed))
-            return false;
-        return true;
+        get
+          {
+            if (ScenarioResults.Values.Any(x => x.Status == ScenarioStatus.Failed))
+                return ScenarioStatus.Failed;
+
+            if (ScenarioResults.Values.All(s => s.Status == ScenarioStatus.Skipped))
+                return ScenarioStatus.Skipped;
+
+            return ScenarioStatus.Passed;
+        }
     }
 }

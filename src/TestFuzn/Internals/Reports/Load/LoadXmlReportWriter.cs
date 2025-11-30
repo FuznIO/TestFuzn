@@ -63,6 +63,7 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteEndElement();
 
                 writer.WriteElementString("TestRunId", loadReportData.TestRunId);
+                writer.WriteElementString("EnvironmentName", GlobalState.EnvironmentName);
 
                 WriteScenario(writer, loadReportData.Feature.Name, loadReportData.ScenarioResult);
 

@@ -42,6 +42,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
                 writer.WriteEndElement();
 
                 writer.WriteElementString("TestRunId", featureReportData.TestRunId);
+                writer.WriteElementString("EnvironmentName", GlobalState.EnvironmentName);
 
                 foreach (var featureResult in featureReportData.Results.FeatureResults.Values)
                 {
