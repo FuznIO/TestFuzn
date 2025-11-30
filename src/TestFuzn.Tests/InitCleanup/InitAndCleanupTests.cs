@@ -2,7 +2,7 @@
 namespace Fuzn.TestFuzn.Tests.InitCleanup;
 
 [FeatureTest]
-public class InitAndCleanupTests : BaseFeatureTest, ITestMethodInit, ITestMethod
+public class InitAndCleanupTests : BaseFeatureTest, ITestMethodInit, ITestMethodCleanup
 {
     public override string FeatureName => "Feature-Init-Cleanup";
     private bool _beforeEachScenarioTestCalled = false;
