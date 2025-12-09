@@ -28,7 +28,7 @@ internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter
 
     public void WriteAdvancedTable(AdvancedTable table)
     {
-        AnsiConsole.MarkupLine("[red]not implemented[/]");
+        AnsiConsole.MarkupLine("[red]FeatureTest does not support Standalone runner[/]");
     }
 
     public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults)
