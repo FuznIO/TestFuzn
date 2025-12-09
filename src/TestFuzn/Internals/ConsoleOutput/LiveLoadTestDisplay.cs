@@ -5,8 +5,7 @@ namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 
 internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, CancellationToken stoppingToken)
 {
-    private Dictionary<string, LiveMetrics> _stats = stats;
-    //private List<Table> _stepTables = new();
+    private readonly Dictionary<string, LiveMetrics> _stats = stats;
     public bool KeepRunning { get; set; } = true;
 
     public Task Show()
@@ -45,11 +44,6 @@ internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, Cancel
                 
                 return Task.CompletedTask;
             });
-    }
-
-    public void UpdateStats(Dictionary<string, LiveMetrics> updatedStats)
-    {
-        _stats = updatedStats;
     }
 
     private Table BuildMetaDataTable()
