@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Results.Load;
 
-public class Stats
+internal class Stats
 {
     public int RequestCount { get; internal set; }
     public int RequestsPerSecond { get; internal set; }

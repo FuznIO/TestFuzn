@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Results.Load;
 
-public class ErrorEntry
+internal class ErrorEntry
 {
     public string Message;
     public string Details;

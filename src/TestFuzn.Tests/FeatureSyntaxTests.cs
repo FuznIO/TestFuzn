@@ -5,17 +5,17 @@ using Microsoft.Extensions.Logging;
 namespace Fuzn.TestFuzn.Tests;
 
 [FeatureTest]
-public class SyntaxTests : BaseFeatureTest, ITestMethodInit, ITestMethodCleanup
+public class SyntaxTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupScenarioTestMethod
 {
     public override string FeatureName => "TestFuzn Syntax";
     public override string FeatureId => "FeatureId-1";
 
-    public Task InitTestMethod(Context context)
+    public Task InitScenarioTestMethod(Context context)
     {
         return Task.CompletedTask;
     }
 
-    public Task CleanupTestMethod(Context context)
+    public Task CleanupScenarioTestMethod(Context context)
     {
         return Task.CompletedTask;
     }

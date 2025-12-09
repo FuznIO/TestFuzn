@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Results.Load;
 
-public class ScenarioLoadResult
+internal class ScenarioLoadResult
 {
     public string ScenarioName { get; internal set; }
     public string Id { get; internal set; }

@@ -35,21 +35,21 @@ public class TestFuznConfiguration
         ContextPlugins.Add(plugin);
     }
 
-    public void AddFeatureReport(IFeatureReport report)
+    internal void AddFeatureReport(IFeatureReport report)
     {
         if (report == null)
             throw new ArgumentNullException(nameof(report), "Feature report cannot be null");
         FeatureReports.Add(report);
     }
 
-    public void AddLoadReport(ILoadReport report)
+    internal void AddLoadReport(ILoadReport report)
     {
         if (report == null)
             throw new ArgumentNullException(nameof(report), "Load report cannot be null");
         LoadReports.Add(report);
     }
 
-    public void AddSinkPlugin(ISinkPlugin plugin)
+    internal void AddSinkPlugin(ISinkPlugin plugin)
     {
         if (plugin == null)
             throw new ArgumentNullException(nameof(plugin), "Sink plugin cannot be null");
@@ -64,7 +64,7 @@ public class TestFuznConfiguration
         SerializerProvider = serializerProvider;
     }
 
-    public void ClearReports()
+    internal void ClearReports()
     {
         FeatureReports.Clear();
         LoadReports.Clear();

@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
-public class TestSuiteFeatureResult
+internal class TestSuiteFeatureResult
 {
     public ConcurrentDictionary<string, FeatureResult> FeatureResults { get; } = new();
 }

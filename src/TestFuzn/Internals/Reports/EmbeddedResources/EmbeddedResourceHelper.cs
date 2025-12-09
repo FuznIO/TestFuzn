@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
 
-public static class EmbeddedResourceHelper
+internal static class EmbeddedResourceHelper
 {
     /// <summary>
     /// Extracts an embedded resource from the executing assembly and writes it to the given output path.

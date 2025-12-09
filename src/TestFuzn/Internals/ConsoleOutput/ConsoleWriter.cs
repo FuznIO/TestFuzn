@@ -2,9 +2,9 @@
 using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.Results.Load;
 using Fuzn.TestFuzn.Internals.State;
-using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Contracts;
+using Fuzn.TestFuzn.Contracts.Adapters;
 
 namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 

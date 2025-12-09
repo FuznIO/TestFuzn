@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Results.Load;
 
-public class StepLoadResult
+internal class StepLoadResult
 {
     public string Name { get; internal set; }
     public string Id { get; internal set; }

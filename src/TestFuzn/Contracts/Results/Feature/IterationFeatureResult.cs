@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
-public class IterationFeatureResult
+internal class IterationFeatureResult
 {
     public string? InputData { get; internal set; }
     public string CorrelationId { get; internal set; }

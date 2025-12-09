@@ -1,10 +1,12 @@
 ﻿using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Contracts.Results.Load;
+using System.Reflection;
 
 namespace Fuzn.TestFuzn.Contracts.Adapters;
 
-public interface ITestFrameworkAdapter
+internal interface ITestFrameworkAdapter
 {
+    Task ExecuteTestMethod(IFeatureTest featureTest, MethodInfo methodInfo);
     bool SupportsRealTimeConsoleOutput { get; }
     ConsoleColor ForegroundColor { get; set; }
     ConsoleColor BackgroundColor { get; set; }

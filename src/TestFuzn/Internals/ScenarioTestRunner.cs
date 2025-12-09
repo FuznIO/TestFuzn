@@ -1,5 +1,4 @@
-﻿using Fuzn.TestFuzn.Cli.Internals;
-using Fuzn.TestFuzn.Contracts.Adapters;
+﻿using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Results.Feature;
 using Fuzn.TestFuzn.Internals.Cleanup;
 using Fuzn.TestFuzn.Internals.ConsoleOutput;
@@ -26,14 +25,9 @@ internal class ScenarioTestRunner
         IFeatureTest featureTest,
         Action<AssertInternalState> assertInternalState)
     {
-        if (GlobalState.CustomTestRunner)
-            _testFramework = new TestFuznProvider();
-        else
-        {
-            if (testFramework == null)
+        if (testFramework == null)
                 throw new ArgumentNullException(nameof(testFramework));
             _testFramework = testFramework;
-        }
 
         _featureTest = featureTest;
         _assertInternalState = assertInternalState;

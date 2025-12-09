@@ -1,6 +1,6 @@
 ﻿using Fuzn.TestFuzn.Internals.State;
-using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Contracts.Adapters;
 
 namespace Fuzn.TestFuzn.Internals.Cleanup;
 
@@ -50,10 +50,10 @@ internal class CleanupManager
 
     private async Task ExecuteCleanupTestMethod()
     {
-        if (_sharedExecutionState.IFeatureTestClassInstance is ITestMethodCleanup cleanup)
+        if (_sharedExecutionState.IFeatureTestClassInstance is ICleanupScenarioTestMethod cleanup)
         {
-            Context context = ContextFactory.CreateContext(_testFramework, "CleanupTestMethod");
-            await cleanup.CleanupTestMethod(context);
+            Context context = ContextFactory.CreateContext(_testFramework, "CleanupScenarioTestMethod");
+            await cleanup.CleanupScenarioTestMethod(context);
         }
     }
 }

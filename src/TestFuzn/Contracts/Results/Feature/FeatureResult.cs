@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
-public class FeatureResult(string name, string id, Dictionary<string, string> metadata)
+internal class FeatureResult(string name, string id, Dictionary<string, string> metadata)
 {
     public string Name { get; set; } = name;
     public string Id { get; set; } = id;
@@ -13,7 +13,7 @@ public class FeatureResult(string name, string id, Dictionary<string, string> me
     public ScenarioStatus Status
     {
         get
-          {
+        {
             if (ScenarioResults.Values.Any(x => x.Status == ScenarioStatus.Failed))
                 return ScenarioStatus.Failed;
 

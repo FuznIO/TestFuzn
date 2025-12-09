@@ -1,6 +1,6 @@
 ﻿using Spectre.Console;
 
-namespace Fuzn.TestFuzn.Cli.Internals;
+namespace Fuzn.TestFuzn.StandaloneRunner;
 
 internal class TestSelectionMenu
 {

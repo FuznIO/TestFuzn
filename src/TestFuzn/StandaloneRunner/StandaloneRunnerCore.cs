@@ -1,30 +1,31 @@
-﻿using System.Reflection;
+﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals;
+using System.Reflection;
 using System.Text;
-using Fuzn.TestFuzn.Cli.Internals;
 
-namespace Fuzn.TestFuzn.Cli;
+namespace Fuzn.TestFuzn.StandaloneRunner;
 
-public class CliTestRunner
+internal class StandaloneRunnerCore
 {
-    public async Task Run(Assembly assembly, string[] args)
+    public async Task Run(Assembly assembly, 
+        string[] args, Func<ITestFrameworkAdapter> testFrameworkInstanceCreator)
     {
+        var parsedArgs = ArgumentsParser.Parse(args);
+
         Console.OutputEncoding = Encoding.UTF8;
-        GlobalState.CustomTestRunner = true;
         GlobalState.AssemblyWithTestsName = assembly.GetName().Name;
 
         var scenarioTests = new DiscoverScenarioTests().GetScenarioTests(assembly);
 
-        var scenarioTestName = "";
+        var scenarioTestName = ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(parsedArgs, "test-name", "TESTFUZN_TEST_NAME");
 
-        if (args.Length == 0)
+        if (string.IsNullOrEmpty(scenarioTestName))
         {
             scenarioTestName = new TestSelectionMenu().DisplayAndSelectTest(scenarioTests);
 
             if (scenarioTestName == null)
                 return;
         }
-        else
-            scenarioTestName = args[0];
 
         var testInfo = scenarioTests.SingleOrDefault(t => t.Name == scenarioTestName);
         if (testInfo == null)
@@ -33,6 +34,6 @@ public class CliTestRunner
             return;
         }
 
-        await new ScenarioTestRunner().RunTest(testInfo);
+        await new ScenarioTestRunner().RunScenarioTest(args, testFrameworkInstanceCreator(), testInfo);
     }
 }

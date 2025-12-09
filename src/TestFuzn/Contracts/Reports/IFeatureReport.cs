@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Reports;
 
-public interface IFeatureReport
+internal interface IFeatureReport
 {
     Task WriteReport(FeatureReportData featureReportData);
 }

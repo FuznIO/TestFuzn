@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Reports;
 
-public class FeatureInfo
+internal class FeatureInfo
 {
     public string Name { get; internal set; }
     public string Id { get; internal set; }

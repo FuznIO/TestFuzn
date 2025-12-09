@@ -9,7 +9,6 @@ public static class GlobalState
     internal static TestFuznConfiguration Configuration { get; set; }
     internal static bool LoadTestWasExecuted { get; set; } = false;
     internal static ILogger Logger { get; set; }
-    internal static bool CustomTestRunner { get; set; } = false;
     internal static string AssemblyWithTestsName { get; set; }
     internal static string TestRunId { get; set; }
     internal static DateTime TestRunStartTime { get; set; }

@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts;
+using Fuzn.TestFuzn.Internals;
 using Fuzn.TestFuzn.Internals.InputData;
 
 namespace Fuzn.TestFuzn;

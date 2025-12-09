@@ -12,7 +12,7 @@ public class ScenarioBuilder<TModel>
     internal List<Func<Scenario>> IncludeScenarios;
     private Action<AssertInternalState> _assertInternalState;
 
-    public ScenarioBuilder(ITestFrameworkAdapter testFramework, 
+    internal ScenarioBuilder(ITestFrameworkAdapter testFramework, 
         IFeatureTest featureTest, 
         string name)
     {

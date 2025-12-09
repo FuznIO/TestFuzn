@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn.Contracts.Sinks;
 
-public interface ISinkPlugin
+internal interface ISinkPlugin
 {
     Task InitGlobal();
     Task WriteStats(string testRunId, string featureName, ScenarioLoadResult scenarioResult);

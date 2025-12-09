@@ -1,11 +1,12 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Reflection;
+using System.Text.RegularExpressions;
 using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 
 namespace Fuzn.TestFuzn;
 
-public class MsTestAdapter(TestContext testContext) : ITestFrameworkAdapter
+internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdapter
 {
     private readonly TestContext _testContext = testContext;
 
@@ -26,6 +27,11 @@ public class MsTestAdapter(TestContext testContext) : ITestFrameworkAdapter
     {
         get;
         set;
+    }
+
+    public Task ExecuteTestMethod(IFeatureTest featureTest, MethodInfo methodInfo)
+    {
+        throw new NotImplementedException();
     }
 
     public CursorPosition GetCursorPosition()

@@ -1,26 +1,26 @@
 ﻿namespace Fuzn.TestFuzn.ConsoleOutput;
 
-public class AdvancedTable
+internal class AdvancedTable
 {
     public int ColumnCount { get; set; }
     public List<int> ColumnWidths { get; set; } = new();
     public List<AdvancedTableRow> Rows { get; set; } = new();
 }
 
-public class AdvancedTableRow
+internal class AdvancedTableRow
 {
     public List<IAdvancedTableCell> Cells { get; set; } = new();
     public bool IsDivider { get; set; } = false;
 }
 
-public interface IAdvancedTableCell
+internal interface IAdvancedTableCell
 {
     int ColSpan { get; }
     int GetContentWidth();
     string Render(int width);
 }
 
-public class AdvancedTableCell : IAdvancedTableCell
+internal class AdvancedTableCell : IAdvancedTableCell
 {
     public string Text { get; set; }
     public int ColSpan { get; set; } = 1;
@@ -55,7 +55,7 @@ public class AdvancedTableCell : IAdvancedTableCell
     }
 }
 
-public class KeyValueCell : IAdvancedTableCell
+internal class KeyValueCell : IAdvancedTableCell
 {
     public string Key { get; set; }
     public string Value { get; set; }
@@ -80,7 +80,7 @@ public class KeyValueCell : IAdvancedTableCell
     }
 }
 
-public enum TextAlignment
+internal enum TextAlignment
 {
     Left,
     Center,

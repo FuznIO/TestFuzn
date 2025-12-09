@@ -1,12 +1,14 @@
 ﻿using Spectre.Console;
 using System.Text;
 using Fuzn.TestFuzn.ConsoleOutput;
-using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Results.Load;
+using System.Reflection;
+using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.StandaloneRunner;
 
-namespace Fuzn.TestFuzn.Cli.Internals;
+namespace Fuzn.TestFuzn.StandaloneRunner;
 
-internal class TestFuznProvider : ITestFrameworkAdapter
+internal abstract class BaseTestFuznAdapter : ITestFrameworkAdapter
 {
     public bool SupportsRealTimeConsoleOutput => true;
 
@@ -22,6 +24,8 @@ internal class TestFuznProvider : ITestFrameworkAdapter
     }
 
     public int WindowWidth => Console.WindowWidth;
+
+    public abstract Task ExecuteTestMethod(IFeatureTest featureTest, MethodInfo methodInfo);
 
     public void WriteAdvancedTable(AdvancedTable table)
     {

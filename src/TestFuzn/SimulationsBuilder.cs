@@ -1,4 +1,5 @@
-﻿using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
+﻿using Fuzn.TestFuzn.Internals;
+using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 
 namespace Fuzn.TestFuzn;
 

@@ -1,8 +1,8 @@
 ﻿using Fuzn.TestFuzn.Internals.State;
-using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals.Execution.Consumers;
 using Fuzn.TestFuzn.Internals.Execution.Producers;
 using Fuzn.TestFuzn.Contracts;
+using Fuzn.TestFuzn.Contracts.Adapters;
 
 namespace Fuzn.TestFuzn.Internals.Execution;
 

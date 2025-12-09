@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
-public class StepFeatureResult
+internal class StepFeatureResult
 {
     public string Name { get; internal set; }
     public string Id { get; internal set; }

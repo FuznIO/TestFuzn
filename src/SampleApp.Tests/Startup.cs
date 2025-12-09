@@ -5,9 +5,21 @@ using Fuzn.TestFuzn.Plugins.Playwright;
 namespace SampleApp.Tests;
 
 [TestClass]
-public class Startup : BaseStartup
+public class Startup : IStartup
 {
-    public override TestFuznConfiguration Configuration()
+    [AssemblyInitialize]
+    public static async Task Initialize(TestContext testContext)
+    {
+        await TestFuznIntegration.Init(testContext);
+    }
+
+    [AssemblyCleanup]
+    public static async Task Cleanup(TestContext testContext)
+    {
+        await TestFuznIntegration.Cleanup(testContext);
+    }
+
+    public TestFuznConfiguration Configuration()
     {
         var configuration = new TestFuznConfiguration();
         configuration.UseHttp();
@@ -35,5 +47,15 @@ public class Startup : BaseStartup
         });
 
         return configuration;
+    }
+
+    public Task InitGlobal(Context context)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task CleanupGlobal(Context context)
+    {
+        return Task.CompletedTask;
     }
 }

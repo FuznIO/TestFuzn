@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn.Contracts.Reports;
 
-public class FeatureReportData
+internal class FeatureReportData
 {
     public TestSuiteInfo TestSuite { get; set; }
     public string TestRunId { get; internal set; }

@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Adapters;
 
-public class CursorPosition
+internal class CursorPosition
 {
     public int Left { get; set; }
     public int Top { get; set; }

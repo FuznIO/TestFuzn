@@ -4,9 +4,9 @@ using InfluxDB.Client.Writes;
 using Fuzn.TestFuzn.Contracts.Sinks;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 
-namespace Fuzn.TestFuzn.Sinks.InfluxDB;
+namespace Fuzn.TestFuzn.Sinks.InfluxDB.Internals;
 
-public class InfluxDbSink : ISinkPlugin
+internal class InfluxDbSink : ISinkPlugin
 {
     private InfluxDBClient _client;
     private InfluxDbSinkConfiguration _config;

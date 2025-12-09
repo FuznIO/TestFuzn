@@ -3,9 +3,22 @@ using Fuzn.TestFuzn.Sinks.InfluxDB;
 
 namespace Fuzn.TestFuzn.Tests;
 
-public class Startup : BaseStartup
+[TestClass]
+public class Startup : IStartup
 {
-    public override TestFuznConfiguration Configuration()
+    [AssemblyInitialize]
+    public static async Task Initialize(TestContext testContext)
+    {
+        await TestFuznIntegration.Init(testContext);
+    }
+
+    [AssemblyCleanup]
+    public static async Task Cleanup(TestContext testContext)
+    {
+        await TestFuznIntegration.Cleanup(testContext);
+    }
+
+    public TestFuznConfiguration Configuration()
     {
         var configuration = new TestFuznConfiguration();
         configuration.TestSuite = new TestSuiteInfo
@@ -21,13 +34,13 @@ public class Startup : BaseStartup
         return configuration;
     }
 
-    public override Task InitGlobal(Context context)
+    public Task InitGlobal(Context context)
     {
-        return base.InitGlobal(context);
+        return Task.CompletedTask;
     }
 
-    public override Task CleanupGlobal(Context context)
+    public Task CleanupGlobal(Context context)
     {
-        return base.CleanupGlobal(context);
+        return Task.CompletedTask;
     }
 }

@@ -2,19 +2,19 @@
 namespace Fuzn.TestFuzn.Tests.ContextType;
 
 [FeatureTest]
-public class ContextTests : BaseFeatureTest, ITestMethodInit, ITestMethodCleanup
+public class ContextTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupScenarioTestMethod
 {
-    public Task InitTestMethod(Context context)
+    public Task InitScenarioTestMethod(Context context)
     {
         Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
-        Assert.AreEqual("InitTestMethod", context.StepInfo.Name);
+        Assert.AreEqual("InitScenarioTestMethod", context.StepInfo.Name);
         return Task.CompletedTask;
     }
 
-    public Task CleanupTestMethod(Context context)
+    public Task CleanupScenarioTestMethod(Context context)
     {
         Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
-        Assert.AreEqual("CleanupTestMethod", context.StepInfo.Name);
+        Assert.AreEqual("CleanupScenarioTestMethod", context.StepInfo.Name);
         return Task.CompletedTask;
     }
 

@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn.Contracts.Reports;
 
-public class LoadReportData
+internal class LoadReportData
 {
     public TestSuiteInfo TestSuite { get; set; }
     public string TestRunId { get; internal set; }

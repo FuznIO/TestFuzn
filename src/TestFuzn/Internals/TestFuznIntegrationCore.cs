@@ -1,34 +1,33 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Internals;
 using Fuzn.TestFuzn.Internals.Reports;
 using Fuzn.TestFuzn.Internals.Results.Feature;
 using System.Reflection;
 
-namespace Fuzn.TestFuzn;
+namespace Fuzn.TestFuzn.Internals;
 
-public static class TestFuznIntegration
+internal static class TestFuznIntegrationCore
 {
     private static IStartup _startupInstance;
 
-    public static async Task InitGlobal(ITestFrameworkAdapter testFramework)
+    public static async Task InitGlobal(ITestFrameworkAdapter testFramework, Dictionary<string, string> args = null)
     {
         GlobalState.TestRunStartTime = DateTime.UtcNow;
         GlobalState.TestRunId = $"{DateTime.Now:yyyy-MM-dd_HH-mm}__{Guid.NewGuid().ToString("N").Substring(0, 6)}";
-        GlobalState.EnvironmentName = Environment.GetEnvironmentVariable("TESTFUZN_ENVIRONMENT") ?? "";
 
-        var tagsInclude = Environment.GetEnvironmentVariable("TESTFUZN_TAGS_FILTER_INCLUDE");
+        GlobalState.EnvironmentName = ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(args, "environment", "TESTFUZN_ENVIRONMENT");
+
+        var tagsInclude = ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(args, "tags-filter-include", "TESTFUZN_TAGS_FILTER_INCLUDE");
         if (!string.IsNullOrEmpty(tagsInclude))
         {
             GlobalState.TagsFilterInclude.AddRange(tagsInclude.Split(',').Select(t => t.Trim()));
         }
 
-        var tagsExclude = Environment.GetEnvironmentVariable("TESTFUZN_TAGS_FILTER_EXCLUDE");
+        var tagsExclude = ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(args, "tags-filter-exclude", "TESTFUZN_TAGS_FILTER_EXCLUDE");
         if (!string.IsNullOrEmpty(tagsExclude))
         {
             GlobalState.TagsFilterExclude.AddRange(tagsExclude.Split(',').Select(t => t.Trim()));
         }
 
-        GlobalState.EnvironmentName = Environment.GetEnvironmentVariable("TESTFUZN_ENVIRONMENT") ?? "";
         GlobalState.NodeName = Environment.MachineName;
         GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, $"TestFuzn_{GlobalState.TestRunId}");
         Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
@@ -61,8 +60,11 @@ public static class TestFuznIntegration
 
         GlobalState.Configuration = configuration;
 
-        var context = ContextFactory.CreateContext(testFramework, "InitGlobal");
-        await _startupInstance.InitGlobal(context);
+        if (_startupInstance is IInitGlobal initGlobalInstance)
+        {
+            var context = ContextFactory.CreateContext(testFramework, "InitGlobal");
+            await initGlobalInstance.InitGlobal(context);
+        }
 
         foreach (var plugin in GlobalState.Configuration.SinkPlugins)
             await plugin.InitGlobal();
@@ -78,7 +80,10 @@ public static class TestFuznIntegration
         if (_startupInstance == null)
             throw new InvalidOperationException("TestFuznIntegration has not been initialized. Please call TestFuznIntegration.InitGlobal() before running tests.");
 
-        await _startupInstance.CleanupGlobal(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
+        if (_startupInstance is ICleanupGlobal cleanupGlobalInstance)
+        {
+            await cleanupGlobalInstance.CleanupGlobal(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
+        }
 
         GlobalState.TestRunEndTime = DateTime.UtcNow;
 

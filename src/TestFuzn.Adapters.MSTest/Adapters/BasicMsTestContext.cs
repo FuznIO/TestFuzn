@@ -1,8 +1,17 @@
-﻿namespace Fuzn.TestFuzn;
+﻿namespace Fuzn.TestFuzn.Adapters;
 
-public class MsTestContext : TestContext
+internal class BasicMsTestContext : TestContext
 {
+    private string _testName;
+
+    public BasicMsTestContext(string testName)
+    {
+        _testName = testName;
+    }
+
     public override IDictionary<string, object> Properties => throw new NotImplementedException();
+
+    public override string TestName => _testName;
 
     public override void AddResultFile(string fileName)
     {

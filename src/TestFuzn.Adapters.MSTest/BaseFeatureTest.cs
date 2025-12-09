@@ -5,6 +5,30 @@ namespace Fuzn.TestFuzn;
 
 public abstract class BaseFeatureTest : IFeatureTest
 {
+    public MethodInfo TestMethodInfo
+    {
+        get
+        {
+            if (field == null)
+            {
+                if (string.IsNullOrEmpty(TestContext.TestName))
+                    throw new Exception("TestContext.TestName is null or empty.");
+
+                var methodInfo = GetType().GetMethod(TestContext.TestName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (methodInfo == null)
+                    throw new Exception("Test method not found.");
+
+                field = methodInfo;
+            }
+
+            return field;
+        }
+        set
+        {
+            field = value;
+        }
+    }
+
     public TestContext TestContext { get; set; }
     public virtual string FeatureName { get; set; }
     public virtual string FeatureId { get; set; }
@@ -29,28 +53,22 @@ public abstract class BaseFeatureTest : IFeatureTest
     public ScenarioBuilder<TModel> Scenario<TModel>([CallerMemberName] string scenarioName = "")
         where TModel : new()
     {
-        if (string.IsNullOrEmpty(TestContext?.TestName))
-            throw new Exception("TestContext.TestName is null or empty.");
+        var testMethod = TestMethodInfo;
+        EnsureMsTestTestMethodAttributeIsNotUsed(testMethod);
 
-        var methodInfo = GetType().GetMethod(TestContext.TestName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (methodInfo == null)
-            throw new Exception("Test method not found.");
-
-        EnsureTestMethodIsNotUsed(methodInfo);
-
-        var scenario = new ScenarioBuilder<TModel>(new MsTestAdapter(TestContext), this, scenarioName);
-        EnsureScenarioTestAndApplyRunMode(methodInfo, scenario);
-        ApplyTestCategoryTags(methodInfo, scenario);
-        ApplyEnvironments(methodInfo, scenario);
+        var scenario = new ScenarioBuilder<TModel>(new MsTestRunnerAdapter(TestContext), this, scenarioName);
+        EnsureScenarioTestAndApplyRunMode(testMethod, scenario);
+        ApplyTestCategoryTags(testMethod, scenario);
+        ApplyEnvironments(testMethod, scenario);
         return scenario;
     }
 
-    private void EnsureTestMethodIsNotUsed(MethodInfo methodInfo)
+    private void EnsureMsTestTestMethodAttributeIsNotUsed(MethodInfo methodInfo)
     {
         // Check for MSTest [TestMethod] attribute
-        var hasTestMethod = methodInfo.GetCustomAttributes(inherit: true)
+        var hasMsTestMethodAttribute = methodInfo.GetCustomAttributes(inherit: true)
             .Any(a => a.GetType() == typeof(TestMethodAttribute));
-        if (hasTestMethod)
+        if (hasMsTestMethodAttribute)
             throw new InvalidOperationException($"Method '{methodInfo.Name}' uses [TestMethod]. Use [ScenarioTest] instead for scenario-based tests.");
     }
 

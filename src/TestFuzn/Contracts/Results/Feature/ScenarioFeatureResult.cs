@@ -3,7 +3,7 @@ using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
-public class ScenarioFeatureResult
+internal class ScenarioFeatureResult
 {
     private bool _skipped = false;
 

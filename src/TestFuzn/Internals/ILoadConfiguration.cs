@@ -1,6 +1,6 @@
-﻿namespace Fuzn.TestFuzn;
+﻿namespace Fuzn.TestFuzn.Internals;
 
-public interface ILoadConfiguration
+internal interface ILoadConfiguration
 {
     public bool IsWarmup { get; set; }
     public string GetDescription();

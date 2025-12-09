@@ -1,9 +1,9 @@
 ﻿using Fuzn.TestFuzn.Internals.InputData;
 using Fuzn.TestFuzn.Internals.State;
-using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Contracts;
+using Fuzn.TestFuzn.Contracts.Adapters;
 
 namespace Fuzn.TestFuzn.Internals.Init;
 
@@ -52,10 +52,10 @@ internal class InitManager
 
     private async Task ExecuteInitTestMethod()
     {
-        if (_sharedExecutionState.IFeatureTestClassInstance is ITestMethodInit init)
+        if (_sharedExecutionState.IFeatureTestClassInstance is IInitScenarioTestMethod init)
         {
-            var context = ContextFactory.CreateContext(_testFramework, "InitTestMethod");
-            await init.InitTestMethod(context);
+            var context = ContextFactory.CreateContext(_testFramework, "InitScenarioTestMethod");
+            await init.InitScenarioTestMethod(context);
         }
     }
 

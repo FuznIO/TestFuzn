@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Reports;
 
-public interface ILoadReport
+internal interface ILoadReport
 {
     Task WriteReport(LoadReportData loadReportData);
 }
