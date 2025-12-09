@@ -4,6 +4,7 @@ namespace Fuzn.TestFuzn;
 
 public interface IFeatureTest
 {
+    object TestFramework { get; set; }
     public MethodInfo TestMethodInfo { get; set; }
     public string FeatureName { get; }
     public string FeatureId { get; set; }

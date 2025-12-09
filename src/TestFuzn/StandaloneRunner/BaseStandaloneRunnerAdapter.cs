@@ -4,11 +4,10 @@ using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using System.Reflection;
 using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.StandaloneRunner;
 
 namespace Fuzn.TestFuzn.StandaloneRunner;
 
-internal abstract class BaseTestFuznAdapter : ITestFrameworkAdapter
+internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter
 {
     public bool SupportsRealTimeConsoleOutput => true;
 

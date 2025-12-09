@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Fuzn.TestFuzn.Adapters;
 
-internal class StandaloneRunnerAdapter : BaseTestFuznAdapter
+internal class StandaloneRunnerAdapter : BaseStandaloneRunnerAdapter
 {
     public override async Task ExecuteTestMethod(IFeatureTest featureTest, MethodInfo methodInfo)
     {

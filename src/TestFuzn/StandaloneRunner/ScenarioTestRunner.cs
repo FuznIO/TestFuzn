@@ -27,7 +27,7 @@ internal class ScenarioTestRunner
         try
         {
             await TestFuznIntegrationCore.InitGlobal(testFramework);
-
+            featureTestClassInstance.TestFramework = testFramework;
             featureTestClassInstance.TestMethodInfo = testInfo.Method;
 
             var invocationResult = testFramework.ExecuteTestMethod(featureTestClassInstance, testInfo.Method);

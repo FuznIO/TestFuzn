@@ -12,11 +12,14 @@ public class ScenarioBuilder<TModel>
     internal List<Func<Scenario>> IncludeScenarios;
     private Action<AssertInternalState> _assertInternalState;
 
-    internal ScenarioBuilder(ITestFrameworkAdapter testFramework, 
+    internal ScenarioBuilder(object testFramework, 
         IFeatureTest featureTest, 
         string name)
     {
-        _testFramework = testFramework;
+        if (testFramework is not ITestFrameworkAdapter adapter)
+            throw new ArgumentException("Invalid test framework adapter, must implement ITestFrameworkAdapter.", nameof(testFramework));
+
+        _testFramework = adapter;
         _featureTest = featureTest;
         Scenario = new Scenario(name);
         Scenario.ContextType = typeof(IterationContext<TModel>);

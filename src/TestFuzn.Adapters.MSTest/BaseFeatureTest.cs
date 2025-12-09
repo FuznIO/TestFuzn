@@ -5,6 +5,21 @@ namespace Fuzn.TestFuzn;
 
 public abstract class BaseFeatureTest : IFeatureTest
 {
+    public object TestFramework
+    {
+        get
+        {
+            if (field == null)
+                field = new MsTestRunnerAdapter(TestContext);
+
+            return field;
+        }
+        set
+        {
+            field = value;
+        }
+    }
+
     public MethodInfo TestMethodInfo
     {
         get
@@ -56,7 +71,7 @@ public abstract class BaseFeatureTest : IFeatureTest
         var testMethod = TestMethodInfo;
         EnsureMsTestTestMethodAttributeIsNotUsed(testMethod);
 
-        var scenario = new ScenarioBuilder<TModel>(new MsTestRunnerAdapter(TestContext), this, scenarioName);
+        var scenario = new ScenarioBuilder<TModel>(TestFramework, this, scenarioName);
         EnsureScenarioTestAndApplyRunMode(testMethod, scenario);
         ApplyTestCategoryTags(testMethod, scenario);
         ApplyEnvironments(testMethod, scenario);
