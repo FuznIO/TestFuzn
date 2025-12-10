@@ -9,8 +9,8 @@ public class EnvironmentTests : BaseFeatureTest
         await Scenario()
             .Step("Step 1", context => 
             {
-                Assert.AreEqual("ValuesSectionValue1Root", ConfigurationManager.GetValue<string>("Value1"));
-                Assert.AreEqual("CustomSectionValue1Root", ConfigurationManager.GetSection<CustomConfigSection>("CustomSection").Value1);
+                Assert.AreEqual("ValuesSectionValue1Root", ConfigurationManager.GetRequiredValue<string>("Value1"));
+                Assert.AreEqual("CustomSectionValue1Root", ConfigurationManager.GetRequiredSection<CustomConfigSection>("CustomSection").Value1);
                 Assert.IsEmpty(GlobalState.EnvironmentName);
             })
             .Run();
@@ -23,8 +23,8 @@ public class EnvironmentTests : BaseFeatureTest
         await Scenario()
             .Step("Step 1", context => 
             {
-                Assert.AreEqual("ValuesSectionValue1Test", ConfigurationManager.GetValue<string>("Value1"));
-                Assert.AreEqual("CustomSectionValue1Test", ConfigurationManager.GetSection<CustomConfigSection>("CustomSection").Value1);
+                Assert.AreEqual("ValuesSectionValue1Test", ConfigurationManager.GetRequiredValue<string>("Value1"));
+                Assert.AreEqual("CustomSectionValue1Test", ConfigurationManager.GetRequiredSection<CustomConfigSection>("CustomSection").Value1);
                 Assert.AreEqual("test", context.Info.EnvironmentName);
             })
             .Run();

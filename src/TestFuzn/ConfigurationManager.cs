@@ -7,7 +7,27 @@ public class ConfigurationManager
     private static IConfigurationRoot _configRoot;
     private static readonly object _locker = new();
 
-    public static T GetSection<T>(string sectionName) 
+    /// <summary>
+    /// Returns true if the configuration section TestFuzn:{sectionName} exists. Otherwise, false.
+    /// </summary>
+    public static bool HasSection(string sectionName)
+    {
+        try
+        {
+            var section = GetConfigRoot().GetSection("TestFuzn").GetSection(sectionName);
+
+            return section.Exists();
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Returns the configuration section from TestFuzn:{sectionName} as the specified type. Throws an exception if not found.
+    /// </summary>
+    public static T GetRequiredSection<T>(string sectionName) 
         where T : new()
     {
         try
@@ -30,7 +50,26 @@ public class ConfigurationManager
         }
     }
 
-    public static T GetValue<T>(string key, T defaultValue = default!)
+    /// <summary>
+    /// Returns true if the value exists in TestFuzn:Values:{key}. Otherwise, false.
+    /// </summary>
+    public static bool HasValue(string key)
+    {
+        try
+        {
+            var section = GetConfigRoot().GetSection($"TestFuzn:Values:{key}");
+            return section.Exists();
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Returns the value from TestFuzn:Values:{key} as the specified type. Throws an exception if not found or cannot be converted.
+    /// </summary>    
+    public static T GetRequiredValue<T>(string key)
     {
         var section = GetConfigRoot().GetSection($"TestFuzn:Values:{key}");
         if (!section.Exists())
