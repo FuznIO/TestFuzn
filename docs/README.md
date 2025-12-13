@@ -25,6 +25,15 @@
   - [Assertions](#assertions)
   - [Statistics](#statistics)
   - [Including Scenarios](#including-scenarios)
+- [HTTP Testing](#http-testing)
+  - [Basic HTTP Requests](#basic-http-requests)
+  - [Request Methods](#request-methods)
+  - [JSON Serialization](#json-serialization)
+  - [HTTP Load Testing](#http-load-testing)
+- [Web UI Testing with Playwright](#web-ui-testing-with-playwright)
+  - [Basic Browser Testing](#basic-browser-testing)
+  - [Browser Interactions](#browser-interactions)
+  - [UI Load Testing](#ui-load-testing)
 - [API Reference](#api-reference)
 - [Examples](#examples)
 
@@ -52,6 +61,18 @@ Install TestFuzn via NuGet:
 
 ```bash
 dotnet add package TestFuzn
+```
+
+For HTTP testing support:
+
+```bash
+dotnet add package TestFuzn.Plugins.Http
+```
+
+For Playwright/browser testing support:
+
+```bash
+dotnet add package TestFuzn.Plugins.Playwright
 ```
 
 ---
@@ -721,6 +742,461 @@ Compose load tests from multiple scenarios:
 
 ---
 
+## HTTP Testing
+
+TestFuzn provides a fluent HTTP client plugin for testing REST APIs and HTTP endpoints. Test any HTTP-based system regardless of the technology stack.
+
+### Basic HTTP Requests
+
+Use `CreateHttpRequest()` to make HTTP calls:
+
+```csharp
+using Fuzn.TestFuzn.Plugins.Http;
+
+[FeatureTest]
+public class ApiTests : BaseFeatureTest
+{
+    public override string FeatureName => "API Tests";
+    public override string FeatureId => "API-001";
+
+    [ScenarioTest]
+    public async Task GetProducts()
+    {
+        await Scenario("Get Products from API")
+            .Step("Call API and verify response", async context =>
+            {
+                var response = await context.CreateHttpRequest("https://api.example.com/products")
+                    .Get();
+                
+                Assert.IsTrue(response.Ok);
+                var products = response.BodyAs<List<Product>>();
+                Assert.IsTrue(products.Count > 0);
+            })
+            .Run();
+    }
+}
+```
+
+### Request Methods
+
+#### GET Request
+
+```csharp
+.Step("GET request", async context =>
+{
+    var response = await context.CreateHttpRequest("https://api.example.com/users/123")
+        .Get();
+    
+    Assert.IsTrue(response.Ok);
+    var user = response.BodyAs<User>();
+    Assert.IsNotNull(user.Email);
+})
+```
+
+#### POST Request with Object
+
+```csharp
+.Step("POST request with object", async context =>
+{
+    var newProduct = new Product 
+    { 
+        Name = "Test Product", 
+        Price = 99.99m 
+    };
+    
+    var response = await context.CreateHttpRequest("https://api.example.com/products")
+        .Body(newProduct)
+        .Post();
+    
+    Assert.IsTrue(response.Ok);
+    var created = response.BodyAs<Product>();
+    Assert.IsNotNull(created.Id);
+})
+```
+
+#### POST Request with JSON String
+
+```csharp
+.Step("POST with raw JSON", async context =>
+{
+    var response = await context.CreateHttpRequest("https://api.example.com/orders")
+        .Body(@"{
+            ""customerId"": ""12345"",
+            ""items"": [
+                { ""productId"": ""A1"", ""quantity"": 2 }
+            ]
+        }")
+        .Post();
+    
+    Assert.IsTrue(response.Ok);
+})
+```
+
+#### PUT Request
+
+```csharp
+.Step("PUT request", async context =>
+{
+    var updatedUser = new User { Id = 123, Name = "Updated Name" };
+    
+    var response = await context.CreateHttpRequest("https://api.example.com/users/123")
+        .Body(updatedUser)
+        .Put();
+    
+    Assert.IsTrue(response.Ok);
+})
+```
+
+#### DELETE Request
+
+```csharp
+.Step("DELETE request", async context =>
+{
+    var response = await context.CreateHttpRequest("https://api.example.com/users/123")
+        .Delete();
+    
+    Assert.IsTrue(response.Ok);
+})
+```
+
+### JSON Serialization
+
+TestFuzn supports both System.Text.Json and Newtonsoft.Json:
+
+#### Using System.Text.Json (Default)
+
+```csharp
+.Step("Use System.Text.Json", async context =>
+{
+    var serializer = new SystemTextJsonSerializerProvider();
+    
+    var response = await context.CreateHttpRequest("https://api.example.com/products")
+        .SerializerProvider(serializer)
+        .Get();
+    
+    var products = response.BodyAs<List<Product>>();
+})
+```
+
+#### Using Newtonsoft.Json
+
+```csharp
+.Step("Use Newtonsoft.Json", async context =>
+{
+    var serializer = new NewtonsoftSerializerProvider();
+    
+    var response = await context.CreateHttpRequest("https://api.example.com/products")
+        .SerializerProvider(serializer)
+        .Get();
+    
+    var products = response.BodyAs<List<Product>>();
+})
+```
+
+#### Working with Dynamic JSON
+
+```csharp
+.Step("Parse JSON dynamically", async context =>
+{
+    var response = await context.CreateHttpRequest("https://api.example.com/config")
+        .Get();
+    
+    var json = response.BodyAsJson();
+    Assert.AreEqual("production", json.environment);
+    Assert.AreEqual(true, json.features.newUI);
+})
+```
+
+### HTTP Load Testing
+
+Combine HTTP requests with load testing:
+
+```csharp
+[ScenarioTest]
+public async Task ApiLoadTest()
+{
+    await Scenario("API Endpoint Load Test")
+        .Step("Call API endpoint", async context =>
+        {
+            var response = await context.CreateHttpRequest("https://api.example.com/health")
+                .Get();
+            
+            Assert.IsTrue(response.Ok);
+            Assert.AreEqual("healthy", response.BodyAs<string>());
+        })
+        .Load().Simulations((context, simulations) =>
+        {
+            simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1));
+        })
+        .Load().AssertWhenDone((context, stats) =>
+        {
+            Assert.IsTrue(stats.Ok.ResponseTimeMean < TimeSpan.FromSeconds(1));
+            Assert.IsTrue(stats.Ok.RequestCount >= 3000); // 50 RPS * 60 seconds
+        })
+        .Run();
+}
+```
+
+### Advanced HTTP Scenarios
+
+#### CRUD Operations Test
+
+```csharp
+[ScenarioTest]
+public async Task CompleteProductCRUD()
+{
+    await Scenario("Product CRUD Operations")
+        .Step("Create product", async context =>
+        {
+            var product = new Product { Name = "Test Product", Price = 49.99m };
+            var response = await context.CreateHttpRequest("https://api.example.com/products")
+                .Body(product)
+                .Post();
+            
+            Assert.IsTrue(response.Ok);
+            var created = response.BodyAs<Product>();
+            context.SetSharedData("productId", created.Id);
+        })
+        .Step("Read product", async context =>
+        {
+            var productId = context.GetSharedData<string>("productId");
+            var response = await context.CreateHttpRequest($"https://api.example.com/products/{productId}")
+                .Get();
+            
+            Assert.IsTrue(response.Ok);
+            var product = response.BodyAs<Product>();
+            Assert.AreEqual("Test Product", product.Name);
+        })
+        .Step("Update product", async context =>
+        {
+            var productId = context.GetSharedData<string>("productId");
+            var updated = new Product { Id = productId, Name = "Updated Product", Price = 59.99m };
+            
+            var response = await context.CreateHttpRequest($"https://api.example.com/products/{productId}")
+                .Body(updated)
+                .Put();
+            
+            Assert.IsTrue(response.Ok);
+        })
+        .Step("Delete product", async context =>
+        {
+            var productId = context.GetSharedData<string>("productId");
+            var response = await context.CreateHttpRequest($"https://api.example.com/products/{productId}")
+                .Delete();
+            
+            Assert.IsTrue(response.Ok);
+        })
+        .Run();
+}
+```
+
+---
+
+## Web UI Testing with Playwright
+
+TestFuzn integrates seamlessly with Microsoft Playwright for browser automation and UI testing. Test any web application regardless of its technology stack.
+
+### Basic Browser Testing
+
+Create browser-based tests using the `CreateBrowserPage()` extension method:
+
+```csharp
+using Fuzn.TestFuzn.Plugins.Playwright;
+
+[FeatureTest]
+public class WebUITests : BaseFeatureTest
+{
+    public override string FeatureName => "Web UI Tests";
+    public override string FeatureId => "UI-001";
+
+    [ScenarioTest]
+    public async Task VerifyHomePage()
+    {
+        await Scenario("Verify Home Page Loads")
+            .Step("Navigate and verify title", async context =>
+            {
+                var page = await context.CreateBrowserPage();
+                await page.GotoAsync("https://example.com");
+                
+                var title = await page.TitleAsync();
+                Assert.AreEqual("Example Domain", title);
+            })
+            .Run();
+    }
+}
+```
+
+### Browser Interactions
+
+Playwright provides full browser automation capabilities:
+
+```csharp
+[ScenarioTest]
+public async Task LoginFlow()
+{
+    await Scenario("User Login")
+        .Step("Navigate to login page", async context =>
+        {
+            var page = await context.CreateBrowserPage();
+            await page.GotoAsync("https://myapp.com/login");
+            
+            context.SetSharedData("page", page);
+        })
+        .Step("Enter credentials", async context =>
+        {
+            var page = context.GetSharedData<IPage>("page");
+            
+            await page.FillAsync("#username", "testuser");
+            await page.FillAsync("#password", "password123");
+            
+            context.Comment("Credentials entered");
+        })
+        .Step("Submit and verify", async context =>
+        {
+            var page = context.GetSharedData<IPage>("page");
+            
+            await page.ClickAsync("button[type='submit']");
+            await page.WaitForURLAsync("**/dashboard");
+            
+            var welcomeText = await page.TextContentAsync(".welcome-message");
+            Assert.IsTrue(welcomeText.Contains("Welcome"));
+            
+            // Take screenshot for evidence
+            var screenshot = await page.ScreenshotAsync();
+            await context.Attach("dashboard.png", screenshot);
+        })
+        .Run();
+}
+```
+
+### Advanced Browser Testing
+
+#### Multi-Step User Journey
+
+```csharp
+[ScenarioTest]
+public async Task CompleteCheckoutJourney()
+{
+    await Scenario("E-commerce Checkout")
+        .Step("Browse products", async context =>
+        {
+            var page = await context.CreateBrowserPage();
+            await page.GotoAsync("https://shop.example.com");
+            
+            await page.ClickAsync(".product-card:first-child");
+            await page.ClickAsync("button.add-to-cart");
+            
+            context.SetSharedData("page", page);
+        })
+        .Step("View cart", async context =>
+        {
+            var page = context.GetSharedData<IPage>("page");
+            
+            await page.ClickAsync(".cart-icon");
+            var itemCount = await page.TextContentAsync(".cart-count");
+            Assert.AreEqual("1", itemCount);
+        })
+        .Step("Proceed to checkout", async context =>
+        {
+            var page = context.GetSharedData<IPage>("page");
+            
+            await page.ClickAsync("button.checkout");
+            await page.FillAsync("#email", "customer@example.com");
+            await page.FillAsync("#address", "123 Main St");
+            await page.SelectOptionAsync("#country", "US");
+        })
+        .Step("Complete payment", async context =>
+        {
+            var page = context.GetSharedData<IPage>("page");
+            
+            await page.FillAsync("#cardNumber", "4111111111111111");
+            await page.FillAsync("#cardExpiry", "12/25");
+            await page.FillAsync("#cardCvc", "123");
+            
+            await page.ClickAsync("button.pay-now");
+            await page.WaitForSelectorAsync(".order-confirmation");
+            
+            var confirmationText = await page.TextContentAsync(".confirmation-message");
+            Assert.IsTrue(confirmationText.Contains("Thank you"));
+        })
+        .Run();
+}
+```
+
+#### Testing with Different Browsers
+
+```csharp
+[ScenarioTest]
+public async Task CrossBrowserTesting()
+{
+    await Scenario("Cross-Browser Compatibility")
+        .InputData("chromium", "firefox", "webkit")
+        .Step("Test in different browsers", async context =>
+        {
+            var browserType = context.InputData<string>();
+            
+            var page = await context.CreateBrowserPage(browserType);
+            await page.GotoAsync("https://myapp.com");
+            
+            var isVisible = await page.IsVisibleAsync(".main-content");
+            Assert.IsTrue(isVisible, $"Content not visible in {browserType}");
+            
+            context.Logger.LogInformation("Test passed in {Browser}", browserType);
+        })
+        .Run();
+}
+```
+
+### UI Load Testing
+
+Combine Playwright with load testing to simulate multiple concurrent users:
+
+```csharp
+[ScenarioTest]
+public async Task UILoadTest()
+{
+    await Scenario("UI Load Test")
+        .Step("Simulate user interaction", async context =>
+        {
+            var page = await context.CreateBrowserPage();
+            
+            await page.GotoAsync("https://myapp.com");
+            await page.ClickAsync("a.login");
+            await page.FillAsync("#username", $"user{Random.Shared.Next(1000)}");
+            await page.FillAsync("#password", "password");
+            await page.ClickAsync("button[type='submit']");
+            
+            await page.WaitForSelectorAsync(".dashboard");
+        })
+        .Load().Warmup((context, simulations) =>
+        {
+            simulations.FixedConcurrentLoad(2, TimeSpan.FromSeconds(5));
+        })
+        .Load().Simulations((context, simulations) =>
+        {
+            simulations.OneTimeLoad(10);
+        })
+        .Load().AssertWhenDone((context, stats) =>
+        {
+            Assert.AreEqual(10, stats.Ok.RequestCount);
+            Assert.IsTrue(stats.Ok.ResponseTimeMean < TimeSpan.FromSeconds(5));
+        })
+        .Run();
+}
+```
+
+### Best Practices for Playwright Tests
+
+1. **Reuse browser pages** - Store page instances in shared data for multi-step scenarios
+2. **Use meaningful selectors** - Prefer data-testid or semantic selectors over CSS classes
+3. **Wait for elements** - Always wait for elements before interacting
+4. **Capture screenshots** - Attach screenshots on failures for debugging
+5. **Clean up resources** - Browser pages are automatically disposed after each iteration
+6. **Handle timeouts** - Configure appropriate timeouts for slow-loading pages
+7. **Use headless mode** - Run in headless mode for CI/CD pipelines (default)
+
+---
+
 ## API Reference
 
 ### ScenarioBuilder<T> Methods
@@ -753,6 +1229,8 @@ Compose load tests from multiple scenarios:
 | `Step(string, Action)` | Create sub-step |
 | `Comment(string)` | Add comment to execution |
 | `Attach(string, string/byte[]/Stream)` | Attach file to step |
+| `CreateHttpRequest(string)` | Create HTTP request builder |
+| `CreateBrowserPage(string)` | Create Playwright browser page |
 
 ### Load Testing Methods
 
@@ -763,6 +1241,25 @@ Compose load tests from multiple scenarios:
 | `AssertWhileRunning(Action)` | Add runtime assertions |
 | `AssertWhenDone(Action)` | Add post-execution assertions |
 | `IncludeScenario(ScenarioBuilder)` | Include another scenario |
+
+### HTTP Request Methods
+
+| Method | Description |
+|--------|-------------|
+| `Get()` | Execute GET request |
+| `Post()` | Execute POST request |
+| `Put()` | Execute PUT request |
+| `Delete()` | Execute DELETE request |
+| `Body(object/string)` | Set request body |
+| `SerializerProvider(ISerializer)` | Set JSON serializer |
+
+### HTTP Response Methods
+
+| Member | Description |
+|--------|-------------|
+| `Ok` | Boolean indicating success (2xx status) |
+| `BodyAs<T>()` | Deserialize response to type T |
+| `BodyAsJson()` | Parse response as dynamic JSON |
 
 ### Simulation Types
 
@@ -1050,6 +1547,96 @@ public async Task MixedLoadTest()
 }
 ```
 
+### Example 7: HTTP API Testing
+
+```csharp
+using Fuzn.TestFuzn.Plugins.Http;
+
+[FeatureTest]
+public class ProductApiTests : BaseFeatureTest
+{
+    public override string FeatureName => "Product API";
+    public override string FeatureId => "PROD-API-001";
+
+    [ScenarioTest]
+    public async Task GetProductsList()
+    {
+        await Scenario("Get Products List")
+            .Step("Call products endpoint", async context =>
+            {
+                var response = await context.CreateHttpRequest("https://api.example.com/products")
+                    .Get();
+                
+                Assert.IsTrue(response.Ok);
+                var products = response.BodyAs<List<Product>>();
+                Assert.IsTrue(products.Count > 0);
+            })
+            .Run();
+    }
+
+    [ScenarioTest]
+    public async Task CreateAndVerifyProduct()
+    {
+        await Scenario("Create and Verify Product")
+            .Step("Create new product", async context =>
+            {
+                var newProduct = new Product
+                {
+                    Id = Guid.NewGuid(),
+                    Name = $"Product_{Guid.NewGuid()}",
+                    Price = 99.99m
+                };
+
+                var response = await context.CreateHttpRequest("https://api.example.com/products")
+                    .Body(newProduct)
+                    .Post();
+
+                Assert.IsTrue(response.Ok);
+                context.SetSharedData("productId", newProduct.Id);
+            })
+            .Step("Verify product exists", async context =>
+            {
+                var productId = context.GetSharedData<Guid>("productId");
+                var response = await context.CreateHttpRequest($"https://api.example.com/products/{productId}")
+                    .Get();
+
+                Assert.IsTrue(response.Ok);
+                var product = response.BodyAs<Product>();
+                Assert.AreEqual(productId, product.Id);
+            })
+            .Run();
+    }
+}
+```
+
+### Example 8: Playwright UI Testing
+
+```csharp
+using Fuzn.TestFuzn.Plugins.Playwright;
+
+[FeatureTest]
+public class WebUITests : BaseFeatureTest
+{
+    public override string FeatureName => "Web UI Tests";
+    public override string FeatureId => "UI-001";
+
+    [ScenarioTest]
+    public async Task VerifyPageTitle()
+    {
+        await Scenario("Verify Page Title")
+            .Step("Open page and check title", async context =>
+            {
+                var page = await context.CreateBrowserPage();
+                await page.GotoAsync("https://example.com");
+                
+                var title = await page.TitleAsync();
+                Assert.AreEqual("Example Domain", title);
+            })
+            .Run();
+    }
+}
+```
+
 ---
 
 ## Best Practices
@@ -1064,3 +1651,6 @@ public async Task MixedLoadTest()
 8. **Organize tests** by feature areas using test categories
 9. **Clean up resources** in cleanup hooks
 10. **Use async/await** consistently for better performance
+11. **Verify HTTP responses** using the `Ok` property before deserializing
+12. **Capture screenshots** on UI test failures for easier debugging
+13. **Use meaningful selectors** for web elements (prefer data-testid attributes)
