@@ -123,7 +123,11 @@ All test classes should:
 ### Execution Flow
 
 ```
-Test Class Init
+Global Setup (InitGlobal using IInitGlobal)
+    ↓
+Test Method Init (InitScenarioTestMethod using IInitScenarioTestMethod)
+    ↓
+Test Method Execution
     ↓
 Scenario Init (InitScenario)
     ↓
@@ -136,6 +140,10 @@ For each iteration:
     Iteration Cleanup (CleanupIteration)
     ↓
 Scenario Cleanup (CleanupScenario)
+    ↓
+Test Method Cleanup (CleanupScenarioTestMethod using ICleanupScenarioTestMethod)
+    ↓
+Global Cleanup (CleanupGlobal using ICleanupGlobal)
 ```
 
 ---
