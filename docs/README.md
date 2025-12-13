@@ -123,9 +123,9 @@ All test classes should:
 ### Execution Flow
 
 ```
-Global Setup (InitGlobal using IInitGlobal)
+Global Setup (Implement InitGlobal using IInitGlobal)
     ↓
-Test Method Init (InitScenarioTestMethod using IInitScenarioTestMethod)
+Test Method Init (Implement InitScenarioTestMethod using IInitScenarioTestMethod)
     ↓
 Test Method Execution
     ↓
@@ -141,9 +141,9 @@ For each iteration:
     ↓
 Scenario Cleanup (CleanupScenario)
     ↓
-Test Method Cleanup (CleanupScenarioTestMethod using ICleanupScenarioTestMethod)
+Test Method Cleanup (Implement CleanupScenarioTestMethod using ICleanupScenarioTestMethod)
     ↓
-Global Cleanup (CleanupGlobal using ICleanupGlobal)
+Global Cleanup (Implement CleanupGlobal using ICleanupGlobal)
 ```
 
 ---
@@ -153,7 +153,7 @@ Global Cleanup (CleanupGlobal using ICleanupGlobal)
 TestFuzn supports two types of tests:
 
 ### Feature Test
-A test that runs once with one set of input data, or runs multiple times with different input data. Ideal for functional testing and validation.
+A test that runs once with one set of input data, or runs multiple times sequentially with different input data. Ideal for functional testing and validation.
 
 ```csharp
 [ScenarioTest]
@@ -171,7 +171,7 @@ public async Task FeatureTestExample()
 ```
 
 ### Load Test
-A test that runs multiple times with the same or different input data to simulate load on the system. Perfect for performance testing and bottleneck identification.
+A test that runs multiple times in parallel with the same or different input data to simulate load on the system. Perfect for performance testing and bottleneck identification.
 
 ```csharp
 [ScenarioTest]
