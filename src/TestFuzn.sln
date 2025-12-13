@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11205.157 d18.0
+VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestFuzn", "TestFuzn\TestFuzn.csproj", "{E5B79D9D-7544-495F-BF1D-04CAFB814DBA}"
 EndProject
@@ -33,6 +33,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFuzn.Plugins.WebSocket", "TestFuzn.Plugins.WebSocket\TestFuzn.Plugins.WebSocket.csproj", "{5C083943-A947-4198-B6C1-ECFE271F3EBE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFuzn.Tests.Failing", "TestFuzn.Tests.Failing\TestFuzn.Tests.Failing.csproj", "{FC9DF74A-081E-442A-B146-4AB4BF03D85F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{B29058A8-7CF2-4CBF-A20C-EFB54B7B9914}"
+	ProjectSection(SolutionItems) = preProject
+		..\docs\README.md = ..\docs\README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
