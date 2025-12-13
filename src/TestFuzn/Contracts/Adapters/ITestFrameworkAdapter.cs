@@ -21,4 +21,5 @@ internal interface ITestFrameworkAdapter
     public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults);
     string TestResultsDirectory { get; }
     void SetCurrentTestAsSkipped();
+    void ThrowTestFuznIsNotInitializedException();
 }

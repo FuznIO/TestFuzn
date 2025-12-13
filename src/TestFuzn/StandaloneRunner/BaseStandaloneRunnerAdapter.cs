@@ -236,4 +236,9 @@ internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter
     {
         throw new ScenarioRunModeIgnoreException();
     }
+
+    public void ThrowTestFuznIsNotInitializedException()
+    {
+        throw new NotImplementedException();
+    }
 }

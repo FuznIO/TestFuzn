@@ -1,4 +1,5 @@
-﻿using Fuzn.TestFuzn.Contracts.Providers;
+﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Providers;
 
 namespace Fuzn.TestFuzn;
 
@@ -19,4 +20,13 @@ public static class GlobalState
     public static string EnvironmentName { get; set; }
     public static List<string> TagsFilterInclude { get; set; } = new();
     public static List<string> TagsFilterExclude { get; set; } = new();
+    
+    internal static void EnsureInitialized(ITestFrameworkAdapter testFramework)
+    {
+        if (testFramework == null)
+            throw new ArgumentNullException(nameof(testFramework), "Test framework adapter cannot be null.");
+
+        if (!IsInitializeGlobalExecuted)
+            testFramework.ThrowTestFuznIsNotInitializedException();
+    }
 }

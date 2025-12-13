@@ -189,4 +189,9 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
     {
         Assert.Inconclusive("Scenario test skipped.");
     }
+
+    public void ThrowTestFuznIsNotInitializedException()
+    {
+        throw new InvalidOperationException("TestFuzn is not initialized. Please ensure that TestFuznIntegration.Init() has been called from [AssemblyInitialize].");
+    }
 }

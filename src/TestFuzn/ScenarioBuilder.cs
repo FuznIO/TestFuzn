@@ -19,6 +19,8 @@ public class ScenarioBuilder<TModel>
         if (testFramework is not ITestFrameworkAdapter adapter)
             throw new ArgumentException("Invalid test framework adapter, must implement ITestFrameworkAdapter.", nameof(testFramework));
 
+        GlobalState.EnsureInitialized(adapter);
+
         _testFramework = adapter;
         _featureTest = featureTest;
         Scenario = new Scenario(name);
