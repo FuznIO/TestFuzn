@@ -121,29 +121,34 @@ All test classes should:
 4. Contain test methods decorated with `[ScenarioTest]`
 
 ### Execution Flow
-
 ```
-Global Setup (Implement InitGlobal using IInitGlobal)
+1. Startup.cs – InitGlobal() (if `IInitGlobal` is implemented)
     ↓
-Test Method Init (Implement InitScenarioTestMethod using IInitScenarioTestMethod)
+2. Test class – InitScenarioTestMethod() (if `IInitScenarioTestMethod` is implemented)
     ↓
-Test Method Execution
+3. Test method execution
     ↓
-Scenario Init (InitScenario)
+4. Scenario execution  
+   - Feature test: max one scenario  
+   - Load test: multiple scenarios, executed in parallel
     ↓
-For each iteration:
+5. Scenario – InitScenario() (if implemented)
     ↓
-    Iteration Init (InitIteration)
+6. Scenario – InputDataFromList() (if implemented)
     ↓
-    Execute Steps (in order)
+7. For each iteration:
+    ├─ InitIteration() (if implemented)
+    ├─ Execute steps (in order)
+    ├─ CleanupIteration() (if implemented)
+    └─ AssertWhileRunning() (if implemented, optimized — executed every X iterations)
     ↓
-    Iteration Cleanup (CleanupIteration)
+8. Scenario – CleanupScenario() (if implemented)
     ↓
-Scenario Cleanup (CleanupScenario)
+9. AssertWhenDone()  (load tests only, if implemented)
     ↓
-Test Method Cleanup (Implement CleanupScenarioTestMethod using ICleanupScenarioTestMethod)
+10. Test class – CleanupScenarioTestMethod() (if `ICleanupScenarioTestMethod` is implemented)
     ↓
-Global Cleanup (Implement CleanupGlobal using ICleanupGlobal)
+11. Startup.cs – CleanupGlobal() (if `ICleanupGlobal` is implemented)
 ```
 
 ---
@@ -224,7 +229,7 @@ Control test execution and categorization with attributes:
 [ScenarioTest(ScenarioRunMode.Skip)]  // Skip this test
 [TestCategory("Smoke")]               // Categorize tests
 [TestCategory("Integration")]
-[Environments("test", "staging")]     // Target specific environments
+[Environments("test", "staging")]     // Target specific environments (optional)
 public async Task AttributeExample()
 {
     // Test implementation
@@ -273,7 +278,7 @@ Steps are the building blocks of scenarios. They execute in order, and if one fa
 ```csharp
 .Step("Important Step", "STEP-001", async context =>
 {
-    // Step with explicit ID for tracking
+    // Step with explicit ID for tracking.
 })
 ```
 
@@ -432,13 +437,13 @@ public class MyTest : BaseFeatureTest, IInitScenarioTestMethod, ICleanupScenario
 {
     public Task InitScenarioTestMethod(Context context)
     {
-        // Runs before scenario execution
+        // Runs before scenario test method execution
         return Task.CompletedTask;
     }
 
     public Task CleanupScenarioTestMethod(Context context)
     {
-        // Runs after scenario execution
+        // Runs after scenario test method execution
         return Task.CompletedTask;
     }
 }
