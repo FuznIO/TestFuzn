@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Assertions;
 
-[FeatureTest]
+[TestClass]
 public class AssertionTests : BaseFeatureTest
 {
-    [ScenarioTest]
+    [Test]
     public async Task Verify_assert_while_running_should_fail()
     {
         var stepExecutionCount = 0;
@@ -38,7 +38,7 @@ public class AssertionTests : BaseFeatureTest
         }
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_assert_sub_steps_all_ok()
     {
         await Scenario()
@@ -76,7 +76,7 @@ public class AssertionTests : BaseFeatureTest
             .Run();
     }
 
-[ScenarioTest]
+[Test]
     public async Task Verify_assert_sub_steps_fails()
     {
         await Scenario()

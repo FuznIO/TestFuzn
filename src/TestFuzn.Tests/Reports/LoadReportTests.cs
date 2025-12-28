@@ -1,16 +1,16 @@
-﻿namespace Fuzn.TestFuzn.Tests.Reports;
+﻿using Fuzn.TestFuzn.Attributes;
 
-[FeatureTest]
+namespace Fuzn.TestFuzn.Tests.Reports;
+
+[TestClass]
 public class LoadReportTests : BaseFeatureTest
 {
     public override string FeatureId { get => "FeatureID-1"; }
     public override string FeatureName { get => "Feature-Name-1"; }
     public override Dictionary<string, string> FeatureMetadata { get => new Dictionary<string, string>() { { "Meta1", "Value1" } }; }
 
-    [ScenarioTest]
-    [TestCategory("Category1")]
-    [TestCategory("Category2")]
-    [TestCategory("Category3")]
+    [Test]
+    [Tags("Category1", "Category2", "Category3")]
     public async Task ShortRunning_NoErrors()
     {
         await Scenario()
@@ -36,7 +36,7 @@ public class LoadReportTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task ShortRunning_WithErrors_NoAssert()
     {
         await Scenario()
@@ -55,7 +55,7 @@ public class LoadReportTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task ShouldFail_ShortRunning_WithErrors_WithFailingAssertWhenDone()
     {
         bool catchWasRun = false;
@@ -98,8 +98,8 @@ public class LoadReportTests : BaseFeatureTest
         Assert.IsTrue(catchWasRun);
     }
 
-    [ScenarioTest]
-    [Ignore]
+    [Test]
+    [Skip]
     public async Task ZLongRunning()
     {
         int i = 0;

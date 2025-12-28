@@ -1,15 +1,16 @@
-﻿using Fuzn.TestFuzn.Plugins.WebSocket;
+﻿using Fuzn.TestFuzn.Attributes;
+using Fuzn.TestFuzn.Plugins.WebSocket;
 
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
-[FeatureTest]
+[TestClass]
 public class WebSocketLoadTests : BaseFeatureTest
 {
     public override string FeatureName => "WebSocket Load Testing";
 
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
-    [ScenarioTest]
+    [Test]
     public async Task Concurrent_Connections_OneTime_Load()
     {
         await Scenario()
@@ -32,7 +33,7 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Fixed_Load_Multiple_Messages_Per_Connection()
     {
         await Scenario()
@@ -59,7 +60,7 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Long_Running_Connection_With_Periodic_Messages()
     {
         await Scenario()
@@ -84,7 +85,7 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Load_Test_With_JSON_Messages()
     {
         await Scenario()
@@ -115,7 +116,7 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Load_Test_Verifies_No_Message_Loss()
     {
         await Scenario()
@@ -148,7 +149,7 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Load_Test_With_Shared_Data_Across_Iterations()
     {
         await Scenario()
@@ -172,8 +173,8 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
-    [Ignore] // Remove this attribute when you want to run this intensive test
+    [Test]
+    [Skip] // Remove this attribute when you want to run this intensive test
     public async Task Stress_Test_High_Concurrency()
     {
         await Scenario()
@@ -196,7 +197,7 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Load_Test_Measures_Connection_Duration()
     {
         await Scenario()

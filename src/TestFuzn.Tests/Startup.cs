@@ -62,19 +62,19 @@ public class Startup : IStartup, IInitGlobal, ICleanupGlobal
             config.DefaultKeepAliveInterval = TimeSpan.FromSeconds(30);
             config.LogFailedConnectionsToTestConsole = true;
         });
-        configuration.UseInfluxDb();
+        configuration.UseInfluxDB();
         // Only one serializer can be used, last one set wins, have these 2 lines just to show both options.
         configuration.SerializerProvider = new NewtonsoftSerializerProvider();
         configuration.SerializerProvider = new SystemTextJsonSerializerProvider();
         return configuration;
     }
 
-    public Task CleanupGlobal(Context context)
+    public Task InitGlobal(Context context)
     {
         return Task.CompletedTask;
     }
 
-    public Task InitGlobal(Context context)
+    public Task CleanupGlobal(Context context)
     {
         return Task.CompletedTask;
     }

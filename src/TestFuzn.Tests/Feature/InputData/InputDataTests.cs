@@ -1,11 +1,11 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Feature.InputData;
 
-[FeatureTest]
+[TestClass]
 public class InputDataTests :  BaseFeatureTest
 {
     public override string FeatureName => "";
 
-    [ScenarioTest]
+    [Test]
     public async Task Feature_Verify_List_based_InputData_Sync()
     {
         var userExecuted = new Dictionary<string, bool>();
@@ -35,7 +35,7 @@ public class InputDataTests :  BaseFeatureTest
         }
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Feature_Verify_List_based_InputData_Async()
     {
         var userExecuted = new Dictionary<string, bool>();
@@ -66,7 +66,7 @@ public class InputDataTests :  BaseFeatureTest
         }
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Feature_Verify_Params_based_InputData()
     {
         var userExecuted = new Dictionary<string, bool>();
@@ -88,7 +88,7 @@ public class InputDataTests :  BaseFeatureTest
         }
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Feature_Verify_String_Params_based_InputData()
     {
         var executed = new Dictionary<string, bool>();
@@ -110,7 +110,7 @@ public class InputDataTests :  BaseFeatureTest
         }
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Feature_Verify_Int_Params_based_InputData()
     {
         var executed = new Dictionary<string, bool>();
@@ -132,7 +132,7 @@ public class InputDataTests :  BaseFeatureTest
         }
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Should_Fail_Feature_Verify_Scenario_Fails_When_InputData_Iteration_Fails()
     {
         var catchWasCalled = false;

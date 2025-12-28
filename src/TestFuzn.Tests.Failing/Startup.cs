@@ -3,7 +3,7 @@ using Fuzn.TestFuzn.Sinks.InfluxDB;
 
 namespace Fuzn.TestFuzn.Tests;
 
-[TestClass]
+[Microsoft.VisualStudio.TestTools.UnitTesting.TestClass]
 public class Startup : IStartup
 {
     [AssemblyInitialize]
@@ -28,7 +28,7 @@ public class Startup : IStartup
         };
         //configuration.UsePlaywright();
         configuration.UseHttp();
-        configuration.UseInfluxDb();
+        configuration.UseInfluxDB();
         // Only one serializer can be used, last one set wins, have these 2 lines just to show both options.
         configuration.SerializerProvider = new SystemTextJsonSerializerProvider();
         return configuration;

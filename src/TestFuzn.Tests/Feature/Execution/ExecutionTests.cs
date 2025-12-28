@@ -1,11 +1,11 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Feature.Init;
 
-[FeatureTest]
+[TestClass]
 public class ExecutionTests : BaseFeatureTest
 {
     public override string FeatureName => "Feature-Execution";
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Run_Once()
     {
         var executionCount = 0;

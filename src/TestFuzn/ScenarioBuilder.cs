@@ -63,7 +63,7 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
-    public ScenarioBuilder<TModel> Metadata(string key, string value)
+    internal ScenarioBuilder<TModel> Metadata(string key, string value)
     {
         if (Scenario.MetadataInternal == null)
             Scenario.MetadataInternal = new();
@@ -73,7 +73,7 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
-    public ScenarioBuilder<TModel> Skip()
+    internal ScenarioBuilder<TModel> Skip()
     {
         Scenario.RunMode = ScenarioRunMode.Skip;
         return this;

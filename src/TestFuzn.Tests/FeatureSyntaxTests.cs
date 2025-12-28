@@ -1,10 +1,11 @@
 ﻿#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
+using Fuzn.TestFuzn.Attributes;
 using Microsoft.Extensions.Logging;
 
 namespace Fuzn.TestFuzn.Tests;
 
-[FeatureTest]
+[TestClass]
 public class SyntaxTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupScenarioTestMethod
 {
     public override string FeatureName => "TestFuzn Syntax";
@@ -20,18 +21,26 @@ public class SyntaxTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupSce
         return Task.CompletedTask;
     }
 
-    [ScenarioTest(ScenarioRunMode.Skip)]
-    [TestCategory("Category1")]
-    [TestCategory("Category2")]
-    [Environments("test")]
+    [Skip]
+    [Test(Name = "Default context syntax showcase",
+        Description = "Showcase of all syntax options with the default context.",
+        Id = "Test-Id-1234")]
+    [Metadata("key1", "value1")]
+    [Metadata("key2", "value2")]
+    [Tags("Category1", "Category2", "FooTag123")]
     public async Task DefaultContext()
     {
+        var scenario2 = Scenario("Scenario2").Step("Step1", (context) => { })
+            .Load().Simulations((context, builder) =>
+            {
+                builder.FixedLoad(5, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));
+            });
+
         // Definition of test types:
         // Feature Test = A test runs once with one set of input data, or run multiple times with different input data.
         // Load Test = A test runs multiple times with the same input data, simulating load on the system.
-        await Scenario("Default Context Showcase")
-            .Id("ID-1234") // Optional id for the scenario.
-            .Metadata("key1", "value1") // Optional metdata for scenario, multiple are supported.
+        await Scenario()
+            .Id("Scenario-Id-1234") // Optional id for the scenario.
             // Init is the first method that will be run.
             .InitScenario((context) =>
             {
@@ -167,7 +176,7 @@ public class SyntaxTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupSce
 
                 Assert.IsTrue(3 == stats.GetStep("Sub step 1.1").Ok.RequestCount);
             })
-            .Load().IncludeScenario(Scenario("Scenario2").Step("Step1", (context) => { }))
+            .Load().IncludeScenario(scenario2)
             .CleanupIteration((context) =>
             {
             })
@@ -183,7 +192,7 @@ public class SyntaxTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupSce
             .Run();
     }
 
-    [ScenarioTest(ScenarioRunMode.Skip)]
+    [Test]
     public async Task CustomContext()
     {
         await Scenario<CustomModel>("Syntax Showcase with custom context")

@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.InputData;
 
-[FeatureTest]
+[TestClass]
 public class InputDataFileFeatureTests : BaseFeatureTest
 {
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Csv_InputData()
     {
         await Scenario()
@@ -59,7 +59,7 @@ public class InputDataFileFeatureTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Json_InputData()
     {
         await Scenario()

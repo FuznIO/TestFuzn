@@ -2,12 +2,12 @@
 
 namespace Fuzn.TestFuzn.Tests.InputData;
 
-[FeatureTest]
+[TestClass]
 public class InputDataBehaviorTests : BaseFeatureTest
 {
     public override string FeatureName => "InputData-EndOfBehavior";
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Loop()
     {
         var userExecuted = new Dictionary<string, User>();
@@ -43,7 +43,7 @@ public class InputDataBehaviorTests : BaseFeatureTest
         Assert.AreEqual(2, userExecuted["user3"].Counter);
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_LoopThenRepeatLast()
     {
         var userExecuted = new Dictionary<string, User>();
@@ -78,7 +78,7 @@ public class InputDataBehaviorTests : BaseFeatureTest
         Assert.AreEqual(98, userExecuted["user3"].Counter);
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Random()
     {
         var userExecuted = new Dictionary<string, User>();
@@ -114,7 +114,7 @@ public class InputDataBehaviorTests : BaseFeatureTest
         Assert.IsGreaterThan(1, userExecuted["user3"].Counter);
     }
 
- [ScenarioTest]
+ [Test]
     public async Task Verify_LoopThenRandom()
     {
         var userExecuted = new Dictionary<string, User>();

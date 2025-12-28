@@ -2,12 +2,12 @@
 
 namespace Fuzn.TestFuzn.Tests.InputData;
 
-[FeatureTest]
+[TestClass]
 public class InputDataFileLoadTests : BaseFeatureTest
 {
     public override string FeatureName => "";
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Csv_InputData()
     {
         var dict = new ConcurrentDictionary<string, int>();
@@ -35,7 +35,7 @@ public class InputDataFileLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Json_InputData()
     {
         var dict = new ConcurrentDictionary<string, int>();

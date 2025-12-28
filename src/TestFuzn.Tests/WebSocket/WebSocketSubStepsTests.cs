@@ -2,14 +2,14 @@
 
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
-[FeatureTest]
+[TestClass]
 public class WebSocketSubStepsTests : BaseFeatureTest
 {
     public override string FeatureName => "WebSocket with Sub-Steps";
 
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
-    [ScenarioTest]
+    [Test]
     public async Task WebSocket_With_Nested_Steps()
     {
         await Scenario()
@@ -59,7 +59,7 @@ public class WebSocketSubStepsTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task WebSocket_Multiple_Scenarios_With_Nested_Steps()
     {
         await Scenario()
@@ -116,7 +116,7 @@ public class WebSocketSubStepsTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task WebSocket_Deep_Nested_Steps_With_JSON()
     {
         await Scenario()
@@ -178,7 +178,7 @@ public class WebSocketSubStepsTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task WebSocket_With_Hooks_In_SubSteps()
     {
         await Scenario()

@@ -73,7 +73,7 @@ public abstract class BaseFeatureTest : IFeatureTest
 
         var scenario = new ScenarioBuilder<TModel>(TestFramework, this, scenarioName);
         EnsureScenarioTestAndApplyRunMode(testMethod, scenario);
-        ApplyTestCategoryTags(testMethod, scenario);
+        AppleTags(testMethod, scenario);
         ApplyEnvironments(testMethod, scenario);
         return scenario;
     }
@@ -92,31 +92,40 @@ public abstract class BaseFeatureTest : IFeatureTest
     {
         // Check for [ScenarioTest] attribute.
         var scenarioTestAttr = methodInfo.GetCustomAttributes(inherit: true)
-                                     .FirstOrDefault(a => a.GetType() == typeof(ScenarioTestAttribute));
+                                     .FirstOrDefault(a => a.GetType() == typeof(TestAttribute));
         if (scenarioTestAttr == null)
             throw new InvalidOperationException($"Scenario method '{methodInfo.Name}' must be decorated with [ScenarioTest] attribute.");
 
         // Get RunMode property from the attribute.
-        var runModeProp = scenarioTestAttr.GetType().GetProperty("RunMode");
+        // TODO
+        //var runModeProp = scenarioTestAttr.GetType().GetProperty("RunMode");
 
-        var runModeValue = (ScenarioRunMode) runModeProp.GetValue(scenarioTestAttr);
+        //var runModeValue = (ScenarioRunMode) runModeProp.GetValue(scenarioTestAttr);
 
-        // Set it on the scenario.
-        if (runModeValue == ScenarioRunMode.Skip)
-            scenario.Skip();
+        //// Set it on the scenario.
+        //if (runModeValue == ScenarioRunMode.Skip)
+        //    scenario.Skip();
     }
 
-    private void ApplyTestCategoryTags<TModel>(MethodInfo methodInfo, ScenarioBuilder<TModel> scenarioBuilder)
+    private void AppleTags<TModel>(MethodInfo testMethod, ScenarioBuilder<TModel> scenarioBuilder)
         where TModel : new()
     {
-        // MSTest allows multiple [TestCategory] attributes
-        List<TestCategoryAttribute> categoryAttributes = methodInfo.GetCustomAttributes(typeof(TestCategoryAttribute), inherit: true)
-                                       .OfType<TestCategoryAttribute>()
-                                       .ToList();
-        if (categoryAttributes.Count == 0)
+        var classTagsAttributes = testMethod.DeclaringType?.GetCustomAttributes(typeof(TagsAttribute), inherit: true)
+                                               .OfType<TagsAttribute>()
+                                               .ToList();
+
+        var methodTagsAttributes = testMethod.GetCustomAttributes(typeof(TagsAttribute), inherit: true)
+                                               .OfType<TagsAttribute>()
+                                               .ToList();
+
+        var allTagsAttributes = methodTagsAttributes.Concat(classTagsAttributes).ToList();
+
+
+
+        if (allTagsAttributes.Count == 0)
             return;
 
-        var categories = categoryAttributes
+        var categories = allTagsAttributes
             .SelectMany(a => a.TestCategories ?? [])
             .Where(c => !string.IsNullOrWhiteSpace(c))
             .Distinct(StringComparer.OrdinalIgnoreCase)

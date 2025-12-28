@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Load.Warmup;
 
-[FeatureTest]
+[TestClass]
 public class WarmupTests : BaseFeatureTest
 {
-    [ScenarioTest]
+    [Test]
     public async Task Verify()
     {
         var executionCount = 0;

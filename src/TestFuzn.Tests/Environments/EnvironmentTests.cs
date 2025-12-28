@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.TargetEnvironment;
 
-[FeatureTest]
+[TestClass]
 public class EnvironmentTests : BaseFeatureTest
 {
-    [ScenarioTest]
+    [Test]
     public async Task Manual_CurrentEnvIsEmpty_ScenarioEnvIsEmpty_ScenarioShouldRun()
     {
         await Scenario()
@@ -16,7 +16,7 @@ public class EnvironmentTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     [Environments("test")]
     public async Task Manual_CurrentEnvIsTest_ScenarioEnvIsTest_ScenarioShouldRun()
     {

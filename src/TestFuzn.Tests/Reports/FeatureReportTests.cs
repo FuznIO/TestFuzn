@@ -1,12 +1,10 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Reports;
 
-[FeatureTest]
+[TestClass]
 public class FeatureReportTests : BaseFeatureTest
 {
-    [ScenarioTest]
-    [TestCategory("Category1")]
-    [TestCategory("Category2")]
-    [TestCategory("Category3")]
+    [Test]
+    [Tags("Category1", "Category2", "Category3")]
     public async Task Feature1()
     {
         await Scenario()
@@ -56,7 +54,7 @@ public class FeatureReportTests : BaseFeatureTest
             })
             .Run();
     }
-    [ScenarioTest]
+    [Test]
     public async Task Feature2()
     {
         await Scenario()

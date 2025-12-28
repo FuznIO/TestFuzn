@@ -1,10 +1,10 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Load.Environment;
 
-[FeatureTest]
+[TestClass]
 public class EnvironmentTests : BaseFeatureTest
 {
 
-    [ScenarioTest]
+    [Test]
     public async Task Test2()
     {
         var executionCount = 0;

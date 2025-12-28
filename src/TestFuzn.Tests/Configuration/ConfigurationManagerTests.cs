@@ -1,11 +1,11 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Configuration;
 
-[FeatureTest]
+[TestClass]
 public class ConfigurationManagerTests : BaseFeatureTest
 {
     public override string FeatureName => "ConfigurationManager";
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_that_ConfigurationManager_works()
     {
         await Scenario()

@@ -1,7 +1,7 @@
 ﻿
 namespace Fuzn.TestFuzn.Tests.ContextType;
 
-[FeatureTest]
+[TestClass]
 public class ContextTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupScenarioTestMethod
 {
     public Task InitScenarioTestMethod(Context context)
@@ -18,7 +18,7 @@ public class ContextTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupSc
         return Task.CompletedTask;
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task VerifyContext()
     {
         await Scenario()

@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Load.Simulations;
 
-[FeatureTest]
+[TestClass]
 public class FixedLoadTests : BaseFeatureTest
 {
-    [ScenarioTest]
+    [Test]
     public async Task Test()
     {
         var stepExecutionCounter = 0;

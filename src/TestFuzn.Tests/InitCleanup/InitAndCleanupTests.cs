@@ -1,7 +1,7 @@
 ﻿
 namespace Fuzn.TestFuzn.Tests.InitCleanup;
 
-[FeatureTest]
+[TestClass]
 public class InitAndCleanupTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupScenarioTestMethod
 {
     public override string FeatureName => "Feature-Init-Cleanup";
@@ -21,7 +21,7 @@ public class InitAndCleanupTests : BaseFeatureTest, IInitScenarioTestMethod, ICl
     }
 
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_lifecycle_sync_methods_with_context_feature()
     {
         var initScenarioCalled = false;
@@ -57,7 +57,7 @@ public class InitAndCleanupTests : BaseFeatureTest, IInitScenarioTestMethod, ICl
         Assert.IsTrue(_cleanupScenarioTestMethodCalled);
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_lifecycle_sync_methods_with_context_load()
     {
         var initScenarioCalled = false;
@@ -94,7 +94,7 @@ public class InitAndCleanupTests : BaseFeatureTest, IInitScenarioTestMethod, ICl
         Assert.IsTrue(_cleanupScenarioTestMethodCalled);
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_lifecycle_async_methods_with_context_feature()
     {
         var initScenarioCalled = false;
@@ -132,7 +132,7 @@ public class InitAndCleanupTests : BaseFeatureTest, IInitScenarioTestMethod, ICl
         Assert.IsTrue(cleanupScenarioCalled);
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_lifecycle_async_methods_with_context_load()
     {
         var initScenarioCalled = false;

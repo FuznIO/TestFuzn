@@ -3,14 +3,14 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
-[FeatureTest]
+[TestClass]
 public class WebSocketCleanupTests : BaseFeatureTest
 {
     public override string FeatureName => "WebSocket Auto Cleanup";
 
     private static readonly string EchoServerUrl = "wss://localhost:44316/ws";
 
-    [ScenarioTest]
+    [Test]
     public async Task Connection_Is_Auto_Closed_When_Test_Completes_Without_Explicit_Close()
     {
         WebSocketConnection? connection = null;
@@ -34,7 +34,7 @@ public class WebSocketCleanupTests : BaseFeatureTest
         Assert.IsNotNull(connection, "Connection should have been created");
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Multiple_Connections_Are_All_Auto_Closed()
     {
         var connections = new List<WebSocketConnection>();
@@ -60,7 +60,7 @@ public class WebSocketCleanupTests : BaseFeatureTest
         Assert.AreEqual(3, connections.Count, "All connections should have been created");
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Already_Closed_Connections_Are_Handled_Gracefully_During_Cleanup()
     {
         await Scenario()
@@ -84,7 +84,7 @@ public class WebSocketCleanupTests : BaseFeatureTest
         Assert.IsTrue(true, "Test completed successfully");
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Mixed_Open_And_Closed_Connections_Are_Cleaned_Up_Correctly()
     {
         await Scenario()
@@ -121,7 +121,7 @@ public class WebSocketCleanupTests : BaseFeatureTest
         Assert.IsTrue(true, "Test completed with mixed connection states");
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Connections_In_SubSteps_Are_Tracked_And_Cleaned_Up()
     {
         await Scenario()
@@ -158,7 +158,7 @@ public class WebSocketCleanupTests : BaseFeatureTest
         Assert.IsTrue(true, "Sub-step connections cleaned up successfully");
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Load_Test_Connections_Are_Cleaned_Up_Per_Iteration()
     {
         await Scenario()
@@ -182,7 +182,7 @@ public class WebSocketCleanupTests : BaseFeatureTest
         Assert.IsTrue(true, "Load test iterations completed with auto-cleanup");
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Connection_With_Error_During_Send_Is_Still_Cleaned_Up()
     {
         await Scenario()

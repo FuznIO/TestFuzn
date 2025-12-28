@@ -16,7 +16,7 @@ public static class GlobalState
     internal static DateTime TestRunEndTime { get; set; }
     internal static TimeSpan SinkWriteFrequency { get; set; } = TimeSpan.FromSeconds(3);
     internal static string NodeName { get; set; }
-    public static ISerializerProvider SerializerProvider => Configuration.SerializerProvider;
+    internal static ISerializerProvider SerializerProvider => Configuration.SerializerProvider;
     public static string EnvironmentName { get; set; }
     public static List<string> TagsFilterInclude { get; set; } = new();
     public static List<string> TagsFilterExclude { get; set; } = new();

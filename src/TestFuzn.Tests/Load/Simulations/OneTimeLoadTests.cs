@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Load.Simulations;
 
-[FeatureTest]
+[TestClass]
 public class OneTimeLoadTests : BaseFeatureTest
 {
-    [ScenarioTest]
+    [Test]
     public async Task Test()
     {
         var stepExecutionCount = 0;
@@ -23,7 +23,7 @@ public class OneTimeLoadTests : BaseFeatureTest
         Assert.AreEqual(50, stepExecutionCount);
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task TestFailed()
     {
         var stepExecutionCount = 0;

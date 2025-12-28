@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn;
 
-[AttributeUsage(AttributeTargets.Method)]
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
 public class EnvironmentsAttribute : Attribute
 {
     public string[] Environments { get; internal set; }

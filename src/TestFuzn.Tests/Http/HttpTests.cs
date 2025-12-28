@@ -1,14 +1,15 @@
-﻿using Fuzn.TestFuzn.Plugins.Http;
+﻿using Fuzn.TestFuzn.Attributes;
+using Fuzn.TestFuzn.Plugins.Http;
 using System.Security.Cryptography;
 
 namespace Fuzn.TestFuzn.Tests.Http;
 
-[FeatureTest]
+[TestClass]
 public class GetProductsE2ETests : BaseFeatureTest
 {
     public override string FeatureName => "Http";
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Using_SystemText_Set_During_Startup()
     {
         await Scenario()
@@ -23,7 +24,7 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Using_SystemText_Override()
     {
         await Scenario()
@@ -39,7 +40,7 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Using_Newtonsoft()
     {
         await Scenario()
@@ -56,7 +57,7 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Ping_LoadTest()
     {
         await Scenario()
@@ -71,7 +72,7 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Load()
     {
         await Scenario()
@@ -87,8 +88,8 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
-    [Ignore]
+    [Test]
+    [Skip]
     public async Task Max_Load()
     {
         await Scenario()
@@ -103,7 +104,7 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Raw_JsonString()
     {
         await Scenario()

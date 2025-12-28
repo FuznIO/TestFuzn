@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ConsoleOutput
 {
-    [FeatureTest]
+    [TestClass]
     public class ConsoleOutputTests : BaseFeatureTest
     {
-        [ScenarioTest]
+        [Test]
         public async Task FeatureTest()
         {
             await Scenario()
@@ -17,7 +17,7 @@
                 .Run();
         }
 
-        [ScenarioTest]
+        [Test]
         public async Task FeatureTestWithInputData()
         {
             await Scenario()
@@ -34,7 +34,7 @@
                 .Run();
         }
 
-        [ScenarioTest]
+        [Test]
         public async Task LoadTest()
         {
             await Scenario()
@@ -53,7 +53,7 @@
                 .Run();
         }
 
-        [ScenarioTest]
+        [Test]
         public async Task LoadTest_MutipleScenarios()
         {
             var scenario2 = Scenario("Scenario2")
@@ -77,7 +77,7 @@
                 .Run();
         }
 
-        [ScenarioTest]
+        [Test]
         public async Task LoadTest_WithError()
         {
             int i = 0;
@@ -98,7 +98,7 @@
                 .Run();
         }
 
-        [ScenarioTest]
+        [Test]
         public async Task LoadTest_LongRunning()
         {
             int i = 0;
@@ -122,7 +122,7 @@
         }
 
 
-        [ScenarioTest]
+        [Test]
         public async Task LoadTest_LongRunning2()
         {
             await Scenario()

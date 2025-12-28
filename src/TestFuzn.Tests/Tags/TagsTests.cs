@@ -1,14 +1,12 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
-[FeatureTest]
+[TestClass]
 public class TagsTests : BaseFeatureTest
 {
     public override string FeatureName => "";
 
-    [TestCategory("Category1")]
-    [TestCategory("Category2")]
-    [TestCategory("Category3")]
-    [ScenarioTest]
+    [Tags("Category1", "Category2", "Category3")]
+    [Test]
     public async Task VerifySingleTestCategoryIsTurnedIntoTag()
     {
         await Scenario()
@@ -24,10 +22,8 @@ public class TagsTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
-    [TestCategory("Category1")]
-    [TestCategory("Category2")]
-    [TestCategory("Category3")]
+    [Test]
+    [Tags("Category1", "Category2", "Category3")]
     public async Task VerifyMultipleTestCategoriesAreTurnedIntoTags()
     {
         await Scenario()

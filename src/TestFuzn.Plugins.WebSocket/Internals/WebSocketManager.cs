@@ -1,5 +1,4 @@
 ﻿using System.Net.WebSockets;
-using Microsoft.Extensions.Logging;
 
 namespace Fuzn.TestFuzn.Plugins.WebSocket.Internals;
 

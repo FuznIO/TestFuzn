@@ -3,12 +3,12 @@ using Fuzn.TestFuzn.Tests.Http;
 
 namespace Fuzn.TestFuzn.Tests.Load.Simulations;
 
-[FeatureTest]
+[TestClass]
 public class InfluxDbSinkTests : BaseFeatureTest
 {
     public override string FeatureName => "InfluxDbSink";
 
-    [ScenarioTest]
+    [Test]
     public async Task Test()
     {
         var stepExecutionCounter = 0;

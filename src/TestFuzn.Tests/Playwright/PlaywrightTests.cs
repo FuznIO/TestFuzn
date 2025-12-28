@@ -2,12 +2,12 @@
 
 namespace Fuzn.TestFuzn.Tests.Playwright;
 
-[FeatureTest]
+[TestClass]
 public class PlaywrightTests : BaseFeatureTest
 {
     public override string FeatureName => "BrowserTests";
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_that_playwright_works()
     {
         await Scenario("Test UI using BrowserPage that wraps Playwright")

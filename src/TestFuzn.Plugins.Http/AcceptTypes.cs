@@ -1,8 +1,7 @@
-﻿namespace Fuzn.TestFuzn.Plugins.Http
+﻿namespace Fuzn.TestFuzn.Plugins.Http;
+
+public enum AcceptTypes
 {
-    public enum AcceptTypes
-    {
-        Json,
-        Html
-    }
+    Json,
+    Html
 }

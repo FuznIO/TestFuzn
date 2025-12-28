@@ -2,12 +2,12 @@
 
 namespace Fuzn.TestFuzn.Tests.Http;
 
-[FeatureTest]
+[TestClass]
 public class SerializerProviderTests : BaseFeatureTest
 {
     public override string FeatureName => "Http - Serialization";
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Using_SystemText_Set_During_Startup()
     {
         await Scenario()
@@ -22,7 +22,7 @@ public class SerializerProviderTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Using_SystemText_Override()
     {
         await Scenario()
@@ -38,7 +38,7 @@ public class SerializerProviderTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Using_Newtonsoft()
     {
         await Scenario()

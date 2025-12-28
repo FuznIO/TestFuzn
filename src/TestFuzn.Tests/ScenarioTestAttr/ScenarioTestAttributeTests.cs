@@ -1,6 +1,8 @@
-﻿namespace Fuzn.TestFuzn.Tests.ScenarioTestAttr;
+﻿using Fuzn.TestFuzn.Attributes;
 
-[FeatureTest]
+namespace Fuzn.TestFuzn.Tests.ScenarioTestAttr;
+
+[TestClass]
 public class ScenarioTestAttributeTests : BaseFeatureTest
 {
     [TestMethod]
@@ -32,7 +34,7 @@ public class ScenarioTestAttributeTests : BaseFeatureTest
         }
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task ScenarioTest_DefaultConstructor_Should_Execute_Scenario()
     {
         var wasRun = false;
@@ -47,7 +49,8 @@ public class ScenarioTestAttributeTests : BaseFeatureTest
         Assert.IsTrue(wasRun);
     }
 
-    [ScenarioTest(ScenarioRunMode.Skip)]
+    [Test]
+    [Skip("Skipping this test for demonstration purposes.")]
     public async Task ScenarioTest_Skip_ShouldOnlyAddToReportNotExecute()
     {
         var wasRun = false;
@@ -62,7 +65,8 @@ public class ScenarioTestAttributeTests : BaseFeatureTest
         Assert.IsTrue(wasRun);
     }
 
-    [ScenarioTest(ScenarioRunMode.Skip)]
+    [Test]
+    [Skip("Skipping this test for demonstration purposes.")]
     public async Task SetSkipOnScenario()
     {
         var wasRun = false;

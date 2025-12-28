@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Load.Simulations;
 
-[FeatureTest]
+[TestClass]
 public class GradualLoadIncreaseTests : BaseFeatureTest
 {
-    [ScenarioTest]
+    [Test]
     public async Task GradualLoadIncreaseTestsInitialize()
     {
         var stepExecutionCounter = 0;

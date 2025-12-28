@@ -4,12 +4,12 @@ using SampleApp.WebApp.Models;
 
 namespace SampleApp.Tests;
 
-[FeatureTest]
+[TestClass]
 public class ProductLoadTests : BaseFeatureTest
 {
     public override string FeatureName => "Product catalog";
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_that_get_products_scales()
     {
         await Scenario()

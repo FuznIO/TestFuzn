@@ -1,11 +1,11 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Load.Simulations;
 
-[FeatureTest]
+[TestClass]
 public class RandomLoadPerSecondTests : BaseFeatureTest
 {
     private int _testExecutionCount = 0;
 
-    [ScenarioTest]
+    [Test]
     public async Task Test()
     {
         var stepExecutionCount = 0;
