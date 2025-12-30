@@ -1,4 +1,4 @@
-﻿namespace Fuzn.TestFuzn.Tests.Feature.InputData;
+﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Feature.InputData;
 
 [TestClass]
 public class InputDataTests :  TestBase

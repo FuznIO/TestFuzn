@@ -1,4 +1,4 @@
-﻿namespace Fuzn.TestFuzn.Tests.Load.Warmup;
+﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Warmup;
 
 [TestClass]
 public class WarmupTests : TestBase

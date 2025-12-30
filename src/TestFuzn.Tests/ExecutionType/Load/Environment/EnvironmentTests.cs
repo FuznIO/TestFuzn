@@ -1,4 +1,4 @@
-﻿namespace Fuzn.TestFuzn.Tests.Load.Environment;
+﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Environment;
 
 [TestClass]
 public class EnvironmentTests : TestBase

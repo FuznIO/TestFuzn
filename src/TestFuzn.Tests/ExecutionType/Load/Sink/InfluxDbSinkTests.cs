@@ -1,7 +1,7 @@
 ﻿using Fuzn.TestFuzn.Plugins.Http;
 using Fuzn.TestFuzn.Tests.Http;
 
-namespace Fuzn.TestFuzn.Tests.Load.Simulations;
+namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Sink;
 
 [TestClass]
 public class InfluxDbSinkTests : TestBase

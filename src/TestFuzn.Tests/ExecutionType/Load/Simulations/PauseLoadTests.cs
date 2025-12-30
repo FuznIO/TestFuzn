@@ -1,4 +1,4 @@
-﻿namespace Fuzn.TestFuzn.Tests.Load.Simulations;
+﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Simulations;
 
 [TestClass]
 public class PauseLoadTests : TestBase

@@ -1,4 +1,4 @@
-﻿namespace Fuzn.TestFuzn.Tests.Feature.Init;
+﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Feature.Execution;
 
 [TestClass]
 public class ExecutionTests : TestBase
