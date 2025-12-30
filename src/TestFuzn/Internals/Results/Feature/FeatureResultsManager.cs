@@ -14,14 +14,14 @@ internal class FeatureResultManager
     public void AddScenarioResults(IFeatureTest featureTest,
         Dictionary<string, ScenarioFeatureResult> scenarioCollectors)
     {
-        var featureResult = _testSuiteResult.FeatureResults.GetOrAdd(featureTest.Feature.Name, 
-                                (key) => new FeatureResult(featureTest.Feature.Name, featureTest.Feature.Id, featureTest.Feature.Metadata));
+        var featureResult = _testSuiteResult.FeatureResults.GetOrAdd(featureTest.Group.Name, 
+                                (key) => new FeatureResult(featureTest.Group.Name, featureTest.Group.Id, featureTest.Group.Metadata));
 
         foreach (var scenarioCollector in scenarioCollectors)
         {
             if (!featureResult.TestResults.TryAdd(scenarioCollector.Key, scenarioCollector.Value))
             {
-                throw new Exception($"Test name '{scenarioCollector.Key}' is duplicated, it already exists in feature '{featureTest.Feature.Name}'.");
+                throw new Exception($"Test name '{scenarioCollector.Key}' is duplicated, it already exists in feature '{featureTest.Group.Name}'.");
             }
         }
     }

@@ -6,14 +6,14 @@ namespace Fuzn.TestFuzn.Tests;
 [TestClass]
 public class SyntaxTests : TestBase, ISetupTest, ITeardownTest
 {
-    public override FeatureInfo Feature => new()
+    public override GroupInfo Group => new()
     {
         Name = "TestFuzn Syntax",
         Id = "FeatureId-1",
         Metadata = new()
         {
-            { "featureKey1", "featureValue1" },
-            { "featureKey2", "featureValue2" }
+            { "Key1", "Value1" },
+            { "Key2", "Value2" }
         }
     };
 
@@ -31,8 +31,8 @@ public class SyntaxTests : TestBase, ISetupTest, ITeardownTest
     [Test(Name = "Default context syntax showcase",
         Description = "Showcase of all syntax options with the default context.",
         Id = "Test-Id-1234")]
-    [Metadata("key1", "value1")]
-    [Metadata("key2", "value2")]
+    [Metadata("Key1", "Value1")]
+    [Metadata("Key2", "Value2")]
     [Tags("Category1", "Category2", "FooTag123")]
     public async Task DefaultContext()
     {

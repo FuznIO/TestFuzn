@@ -14,7 +14,7 @@ internal class Scenario
         get
         {
             if (SimulationsAction == null)
-                return TestType.Feature;
+                return TestType.Standard;
             return TestType.Load;
         }
     }

@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Tests.Playwright;
 [TestClass]
 public class PlaywrightTests : TestBase
 {
-    public override FeatureInfo Feature => new() { Name = "BrowserTests" };
+    public override GroupInfo Group => new() { Name = "BrowserTests" };
 
     [Test]
     public async Task Verify_that_playwright_works()

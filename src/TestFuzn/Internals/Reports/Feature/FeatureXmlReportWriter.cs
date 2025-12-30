@@ -11,7 +11,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
     {
         try
         {
-            var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "Feature-Report.xml");
+            var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "TestReport.xml");
 
             var stringBuilder = new StringBuilder();
             using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))

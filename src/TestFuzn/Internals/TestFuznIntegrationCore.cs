@@ -29,7 +29,7 @@ internal static class TestFuznIntegrationCore
         }
 
         GlobalState.NodeName = Environment.MachineName;
-        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, $"TestFuzn_{GlobalState.TestRunId}");
+        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, "TestFuzn", $"TestFuzn_{GlobalState.TestRunId}");
         Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
         GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
         GlobalState.Logger.LogInformation("Logging initialized");

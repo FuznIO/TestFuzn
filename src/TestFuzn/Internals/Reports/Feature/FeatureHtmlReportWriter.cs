@@ -13,7 +13,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         {
             await IncludeEmbeddedResources(featureReportData);
 
-            var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "Feature-Report.html");
+            var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "TestReport.html");
 
             var htmlContent = GenerateHtmlReport(featureReportData);
 
@@ -167,7 +167,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
 
             b.AppendLine($"<tr>");
             b.AppendLine($"<td>{symbol} {featureResult.Value.Name}</td>");
-            b.AppendLine($"<td>Feature</td>");
+            b.AppendLine($"<td>Group</td>");
             b.AppendLine($"<td>{statusText}</td>");
             b.AppendLine($"<td></td>");
             b.AppendLine($"<td></td>");

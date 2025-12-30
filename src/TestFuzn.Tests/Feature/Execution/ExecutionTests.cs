@@ -3,7 +3,7 @@
 [TestClass]
 public class ExecutionTests : TestBase
 {
-    public override FeatureInfo Feature => new() { Name = "Feature-Execution" };
+    public override GroupInfo Group => new() { Name = "Feature-Execution" };
 
     [Test]
     public async Task Verify_Run_Once()

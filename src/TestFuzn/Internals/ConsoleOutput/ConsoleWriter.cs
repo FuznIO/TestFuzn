@@ -23,7 +23,7 @@ internal class ConsoleWriter
 
     public void WriteSummary()
     {
-        if (_sharedExecutionState.TestType == TestType.Feature)
+        if (_sharedExecutionState.TestType == TestType.Standard)
             WriteSummaryFeature();
         else
             WriteSummaryLoad();

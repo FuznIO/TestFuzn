@@ -81,7 +81,7 @@ internal class InitManager
     {
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            if (_sharedExecutionState.TestType == TestType.Feature)
+            if (_sharedExecutionState.TestType == TestType.Standard)
             {
                 var totalExecutions = 1;
                 if (scenario.InputDataInfo.HasInputData)

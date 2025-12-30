@@ -75,7 +75,7 @@ internal class ExecuteScenarioMessageHandler
             }
         }
 
-        if (_sharedExecutionState.TestType == TestType.Feature)
+        if (_sharedExecutionState.TestType == TestType.Standard)
         {
             if (currentInputData != null)
                 iterationResult.InputData = PropertyHelper.GetStringFromProperties(currentInputData);
@@ -158,7 +158,7 @@ internal class ExecuteScenarioMessageHandler
                     {
                         foreach (var sinkPlugin in GlobalState.Configuration.SinkPlugins)
                         {
-                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _sharedExecutionState.IFeatureTestClassInstance.Feature.Name, scenarioLoadResult);
+                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _sharedExecutionState.IFeatureTestClassInstance.Group.Name, scenarioLoadResult);
                         }
                     }
                     _lastSinkWrite[scenario.Name] = now;

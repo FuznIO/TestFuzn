@@ -46,9 +46,9 @@ internal class ReportManager
             data.TestSuite.Metadata = GlobalState.Configuration.TestSuite.Metadata;
             data.TestRunId = GlobalState.TestRunId;
             data.Feature = new Contracts.Reports.FeatureInfo();
-            data.Feature.Name = sharedExecutionState.IFeatureTestClassInstance.Feature.Name;
-            data.Feature.Id = sharedExecutionState.IFeatureTestClassInstance.Feature.Id;
-            data.Feature.Metadata = sharedExecutionState.IFeatureTestClassInstance.Feature.Metadata;
+            data.Feature.Name = sharedExecutionState.IFeatureTestClassInstance.Group.Name;
+            data.Feature.Id = sharedExecutionState.IFeatureTestClassInstance.Group.Id;
+            data.Feature.Metadata = sharedExecutionState.IFeatureTestClassInstance.Group.Metadata;
             data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
             data.ScenarioResult = sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
 

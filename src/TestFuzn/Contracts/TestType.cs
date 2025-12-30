@@ -2,6 +2,6 @@
 
 internal enum TestType
 {
-    Feature = 1,
+    Standard = 1,
     Load = 2
 }

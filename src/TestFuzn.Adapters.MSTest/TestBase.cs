@@ -45,7 +45,7 @@ public abstract class TestBase : IFeatureTest
     }
     public FeatureTestInfo Test { get; set; }
     public TestContext TestContext { get; set; }
-    public virtual FeatureInfo Feature { get; set; }
+    public virtual GroupInfo Group { get; set; }
 
     protected TestBase()
     {
@@ -55,7 +55,7 @@ public abstract class TestBase : IFeatureTest
         else if (className.EndsWith("Test"))
             className = className.Substring(0, className.Length - 4);
         
-        Feature = new FeatureInfo() { Name = className };
+        Group = new GroupInfo() { Name = className };
     }
 
     public ScenarioBuilder<EmptyModel> Scenario([CallerMemberName] string scenarioName = null)
