@@ -1,4 +1,6 @@
-﻿using SampleApp.WebApp.Models;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using SampleApp.WebApp.Models;
+using SampleApp.WebApp.Services;
 using SampleApp.WebApp.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,14 +14,25 @@ builder.WebHost.ConfigureKestrel(o =>
 });
 
 // Add services to the container.
-
+builder.Services.AddControllersWithViews();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Authentication
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/Login";
+        options.ExpireTimeSpan = TimeSpan.FromHours(1);
+    });
+
 // App Services
 builder.Services.AddTransient<ProductService>();
+builder.Services.AddSingleton<UserService>();
 builder.Services.AddSingleton<WebSocketHandler>();
 
 var app = builder.Build();
@@ -50,6 +63,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
 
 // Enable WebSockets
 app.UseWebSockets(new WebSocketOptions
@@ -72,8 +87,12 @@ app.Map("/ws", async context =>
     await handler.HandleWebSocketConnection(context, socket);
 });
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

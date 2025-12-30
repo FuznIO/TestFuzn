@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SampleApp.WebApp.Models;
 
-namespace SampleApp.WebApp.Controllers;
+namespace SampleApp.WebApp.Controllers.Api;
 
 [ApiController]
 [Route("api/Products")]
