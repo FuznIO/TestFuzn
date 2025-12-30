@@ -3,7 +3,7 @@
 [TestClass]
 public class ConfigurationManagerTests : TestBase
 {
-    public override GroupInfo Group => new() { Name = "ConfigurationManager" };
+    public override FeatureInfo Feature => new() { Name = "ConfigurationManager" };
 
     [Test]
     public async Task Verify_that_ConfigurationManager_works()

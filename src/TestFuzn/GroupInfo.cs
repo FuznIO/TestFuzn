@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn;
 
-public class GroupInfo
+public class FeatureInfo
 {
     public string Name { get; set; }
     public string Id { get; set; }

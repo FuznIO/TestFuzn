@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Tests.InputData;
 [TestClass]
 public class InputDataFilerHelperTests : TestBase
 {
-    public override GroupInfo Group => new() { Name = "InputData-InputDataFileHelper" };
+    public override FeatureInfo Feature => new() { Name = "InputData-InputDataFileHelper" };
 
     [Test]
     public async Task Verify_Csv_InputData()

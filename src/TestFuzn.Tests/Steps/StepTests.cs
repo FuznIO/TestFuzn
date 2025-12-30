@@ -3,7 +3,7 @@
 [TestClass]
 public class StepTests : TestBase
 {
-    public override GroupInfo Group => new() { Name = "" };
+    public override FeatureInfo Feature => new() { Name = "" };
 
     [Test]
     public async Task Verify_Step_Syntax_For_Scenario_With_Default_StepContext()

@@ -6,6 +6,6 @@ public interface IFeatureTest
 {
     object TestFramework { get; set; }
     public MethodInfo TestMethodInfo { get; set; }
-    public GroupInfo Group { get; }
+    public FeatureInfo Feature { get; }
     public FeatureTestInfo Test { get; set; }
 }

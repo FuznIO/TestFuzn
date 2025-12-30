@@ -3,7 +3,7 @@
 [TestClass]
 public class LoadReportTests : TestBase
 {
-    public override GroupInfo Group => new()
+    public override FeatureInfo Feature => new()
     {
         Name = "Feature-Name-1",
         Id = "FeatureID-1",

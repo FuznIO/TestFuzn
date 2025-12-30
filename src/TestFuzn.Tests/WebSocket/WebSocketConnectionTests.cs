@@ -6,7 +6,7 @@ namespace Fuzn.TestFuzn.Tests.WebSocket;
 [TestClass]
 public class WebSocketConnectionTests : TestBase
 {
-    public override GroupInfo Group => new() { Name = "WebSocket Connection" };
+    public override FeatureInfo Feature => new() { Name = "WebSocket Connection" };
 
     // Use local SampleApp WebSocket server
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";

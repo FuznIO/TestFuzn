@@ -3,7 +3,7 @@
 [TestClass]
 public class TagsTests : TestBase
 {
-    public override GroupInfo Group => new() { Name = "" };
+    public override FeatureInfo Feature => new() { Name = "" };
 
     [Tags("Category1", "Category2", "Category3")]
     [Test]

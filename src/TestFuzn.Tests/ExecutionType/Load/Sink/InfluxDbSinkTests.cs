@@ -6,7 +6,7 @@ namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Sink;
 [TestClass]
 public class InfluxDbSinkTests : TestBase
 {
-    public override GroupInfo Group => new() { Name = "InfluxDbSink" };
+    public override FeatureInfo Feature => new() { Name = "InfluxDbSink" };
 
     [Test]
     public async Task Test()

@@ -6,7 +6,7 @@ namespace Fuzn.TestFuzn.Tests;
 [TestClass]
 public class SyntaxTests : TestBase, ISetupTest, ITeardownTest
 {
-    public override GroupInfo Group => new()
+    public override FeatureInfo Feature => new()
     {
         Name = "TestFuzn Syntax",
         Id = "FeatureId-1",

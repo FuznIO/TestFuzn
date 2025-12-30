@@ -3,7 +3,7 @@
 [TestClass]
 public class InputDataTests :  TestBase
 {
-    public override GroupInfo Group => new() { Name = "" };
+    public override FeatureInfo Feature => new() { Name = "" };
 
     [Test]
     public async Task Feature_Verify_List_based_InputData_Sync()
