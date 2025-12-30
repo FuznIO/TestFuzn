@@ -4,5 +4,5 @@ namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
 internal class TestSuiteFeatureResult
 {
-    public ConcurrentDictionary<string, FeatureResult> FeatureResults { get; } = new();
+    public ConcurrentDictionary<string, GroupResult> FeatureResults { get; } = new();
 }

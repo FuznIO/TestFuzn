@@ -46,7 +46,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
 
                 foreach (var featureResult in featureReportData.Results.FeatureResults.Values)
                 {
-                    WriteFeature(writer, featureResult);
+                    WriteGroup(writer, featureResult);
                 }
 
                 writer.WriteEndElement(); // TestRunResults
@@ -61,18 +61,18 @@ internal class FeatureXmlReportWriter : IFeatureReport
         }
     }
 
-    private void WriteFeature(XmlWriter writer, FeatureResult featureResult)
+    private void WriteGroup(XmlWriter writer, GroupResult groupResult)
     {
-        writer.WriteStartElement("Feature");
+        writer.WriteStartElement("Group");
 
-        writer.WriteElementString("Name", featureResult.Name);
-        if (!string.IsNullOrWhiteSpace(featureResult.Id))
-            writer.WriteElementString("Id", featureResult.Id);
+        writer.WriteElementString("Name", groupResult.Name);
+        if (!string.IsNullOrWhiteSpace(groupResult.Id))
+            writer.WriteElementString("Id", groupResult.Id);
 
-        if (featureResult.Metadata != null)
+        if (groupResult.Metadata != null)
         {
             writer.WriteStartElement("Metadata");
-            foreach (var metadata in featureResult.Metadata)
+            foreach (var metadata in groupResult.Metadata)
             {
                 writer.WriteStartElement("Property");
                 writer.WriteElementString("Key", metadata.Key);
@@ -82,7 +82,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
             writer.WriteEndElement();
         }
 
-        foreach (var scenarioResult in featureResult.TestResults)
+        foreach (var scenarioResult in groupResult.TestResults)
         {
             WriteScenario(writer, scenarioResult.Value);
         }

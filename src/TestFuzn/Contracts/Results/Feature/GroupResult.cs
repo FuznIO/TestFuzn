@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
-internal class FeatureResult(string name, string id, Dictionary<string, string> metadata)
+internal class GroupResult(string name, string id, Dictionary<string, string> metadata)
 {
     public string Name { get; set; } = name;
     public string Id { get; set; } = id;

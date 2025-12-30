@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Tests.Http;
 [TestClass]
 public class SerializerProviderTests : TestBase
 {
-    public override FeatureInfo Feature => new() { Name = "Http - Serialization" };
+    public override GroupInfo Group => new() { Name = "Http - Serialization" };
 
     [Test]
     public async Task Verify_Using_SystemText_Set_During_Startup()

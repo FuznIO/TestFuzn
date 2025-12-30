@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Tests.Http;
 [TestClass]
 public class GetProductsE2ETests : TestBase
 {
-    public override FeatureInfo Feature => new() { Name = "Http" };
+    public override GroupInfo Group => new() { Name = "Http" };
 
     [Test]
     public async Task Verify_Using_SystemText_Set_During_Startup()

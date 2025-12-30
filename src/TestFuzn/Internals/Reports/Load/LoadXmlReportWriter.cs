@@ -45,13 +45,13 @@ internal class LoadXmlReportWriter : ILoadReport
                 }
                 writer.WriteEndElement();
 
-                writer.WriteStartElement("Feature");
-                writer.WriteElementString("Name", loadReportData.Feature.Name);
-                writer.WriteElementString("Id", loadReportData.Feature.Id);
-                if (loadReportData.Feature.Metadata != null)
+                writer.WriteStartElement("Group");
+                writer.WriteElementString("Name", loadReportData.Group.Name);
+                writer.WriteElementString("Id", loadReportData.Group.Id);
+                if (loadReportData.Group.Metadata != null)
                 {
                     writer.WriteStartElement("Metadata");
-                    foreach (var metadata in loadReportData.Feature.Metadata)
+                    foreach (var metadata in loadReportData.Group.Metadata)
                     {
                         writer.WriteStartElement("Property");
                         writer.WriteElementString("Key", metadata.Key);
@@ -65,13 +65,13 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteElementString("TestRunId", loadReportData.TestRunId);
                 writer.WriteElementString("EnvironmentName", GlobalState.EnvironmentName);
 
-                WriteScenario(writer, loadReportData.Feature.Name, loadReportData.ScenarioResult);
+                WriteScenario(writer, loadReportData.Group.Name, loadReportData.ScenarioResult);
 
                 writer.WriteEndElement();
                 writer.WriteEndDocument();
             }
 
-            InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Feature.Name, loadReportData.ScenarioResult.ScenarioName);
+            InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Group.Name, loadReportData.ScenarioResult.ScenarioName);
 
             await File.WriteAllTextAsync(filePath, stringBuilder.ToString());
         }

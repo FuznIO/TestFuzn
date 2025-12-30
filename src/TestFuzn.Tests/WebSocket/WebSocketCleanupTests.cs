@@ -6,7 +6,7 @@ namespace Fuzn.TestFuzn.Tests.WebSocket;
 [TestClass]
 public class WebSocketCleanupTests : TestBase
 {
-    public override FeatureInfo Feature => new() { Name = "WebSocket Auto Cleanup" };
+    public override GroupInfo Group => new() { Name = "WebSocket Auto Cleanup" };
 
     private static readonly string EchoServerUrl = "wss://localhost:44316/ws";
 

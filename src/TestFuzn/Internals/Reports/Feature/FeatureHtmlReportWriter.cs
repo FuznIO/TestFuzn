@@ -179,7 +179,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.Append("</table>");
     }
 
-    private void WriteTestResults(StringBuilder b, KeyValuePair<string, FeatureResult> featureResult)
+    private void WriteTestResults(StringBuilder b, KeyValuePair<string, GroupResult> featureResult)
     {
         foreach (var testResult in featureResult.Value.TestResults.OrderBy(t => t.Value.Name))
         {

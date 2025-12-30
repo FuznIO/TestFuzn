@@ -141,13 +141,13 @@ internal class LoadHtmlReportWriter : ILoadReport
                 b.AppendLine(@$"<li>{metadata.Key}: {metadata.Value}</li>");
             b.AppendLine("</ul></td></tr>");
         }
-        b.AppendLine(@$"<tr><th class=""vertical"">Feature - Name</td><td>{loadReportData.Feature.Name}</th></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Feature - ID</td><td>{loadReportData.Feature.Id}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Feature - Name</td><td>{loadReportData.Group.Name}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Feature - ID</td><td>{loadReportData.Group.Id}</th></tr>");
 
-        if (loadReportData.Feature.Metadata != null && loadReportData.Feature.Metadata.Count > 0)
+        if (loadReportData.Group.Metadata != null && loadReportData.Group.Metadata.Count > 0)
         {
             b.AppendLine("<tr><th class=\"vertical\">Feature - Metadata</th><td><ul>");
-            foreach (var metadata in loadReportData.Feature.Metadata)
+            foreach (var metadata in loadReportData.Group.Metadata)
                 b.AppendLine($"<li>{metadata.Key}: {metadata.Value}</li>");
             b.AppendLine("</ul></td></tr>");
         }
@@ -359,7 +359,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("</thead>");
         b.AppendLine("<tbody>");
 
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Feature.Name, scenario.ScenarioName);
+        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Group.Name, scenario.ScenarioName);
 
         foreach (var snapshot in snapshots)
         {
