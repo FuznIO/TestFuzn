@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Load.Simulations;
 
 [TestClass]
-public class RandomLoadPerSecondTests : BaseFeatureTest
+public class RandomLoadPerSecondTests : TestBase
 {
     private int _testExecutionCount = 0;
 

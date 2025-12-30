@@ -3,9 +3,9 @@
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
-public class WebSocketSubStepsTests : BaseFeatureTest
+public class WebSocketSubStepsTests : TestBase
 {
-    public override string FeatureName => "WebSocket with Sub-Steps";
+    public override FeatureInfo Feature => new() { Name = "WebSocket with Sub-Steps" };
 
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 

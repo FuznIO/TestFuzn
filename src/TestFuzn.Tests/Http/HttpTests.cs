@@ -1,13 +1,11 @@
-﻿using Fuzn.TestFuzn.Attributes;
-using Fuzn.TestFuzn.Plugins.Http;
+﻿using Fuzn.TestFuzn.Plugins.Http;
 using System.Security.Cryptography;
-
 namespace Fuzn.TestFuzn.Tests.Http;
 
 [TestClass]
-public class GetProductsE2ETests : BaseFeatureTest
+public class GetProductsE2ETests : TestBase
 {
-    public override string FeatureName => "Http";
+    public override FeatureInfo Feature => new() { Name = "Http" };
 
     [Test]
     public async Task Verify_Using_SystemText_Set_During_Startup()
@@ -84,7 +82,7 @@ public class GetProductsE2ETests : BaseFeatureTest
                 var products = response.BodyAs<List<Product>>();
                 Assert.IsTrue(products.Count > 0, "Expected more than one product to be returned.");
             })
-            .Load().Simulations((context, simulations) => simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
             .Run();
     }
 
@@ -100,7 +98,7 @@ public class GetProductsE2ETests : BaseFeatureTest
                 Assert.IsTrue(response.Ok);
                 Assert.IsTrue(response.BodyAs<string>() == "Pong");
             })
-            .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
             .Run();
     }
 

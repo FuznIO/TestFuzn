@@ -4,9 +4,9 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
-public class WebSocketConnectionTests : BaseFeatureTest
+public class WebSocketConnectionTests : TestBase
 {
-    public override string FeatureName => "WebSocket Connection";
+    public override FeatureInfo Feature => new() { Name = "WebSocket Connection" };
 
     // Use local SampleApp WebSocket server
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";

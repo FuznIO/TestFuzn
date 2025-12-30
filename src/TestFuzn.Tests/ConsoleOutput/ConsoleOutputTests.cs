@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ConsoleOutput
 {
     [TestClass]
-    public class ConsoleOutputTests : BaseFeatureTest
+    public class ConsoleOutputTests : TestBase
     {
         [Test]
         public async Task FeatureTest()

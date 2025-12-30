@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
-public class StepTests : BaseFeatureTest
+public class StepTests : TestBase
 {
-    public override string FeatureName => "";
+    public override FeatureInfo Feature => new() { Name = "" };
 
     [Test]
     public async Task Verify_Step_Syntax_For_Scenario_With_Default_StepContext()

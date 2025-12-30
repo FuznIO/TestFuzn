@@ -82,7 +82,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
             writer.WriteEndElement();
         }
 
-        foreach (var scenarioResult in featureResult.ScenarioResults)
+        foreach (var scenarioResult in featureResult.TestResults)
         {
             WriteScenario(writer, scenarioResult.Value);
         }

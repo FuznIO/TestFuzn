@@ -52,19 +52,19 @@ internal class InitManager
 
     private async Task ExecuteInitTestMethod()
     {
-        if (_sharedExecutionState.IFeatureTestClassInstance is IInitScenarioTestMethod init)
+        if (_sharedExecutionState.IFeatureTestClassInstance is ISetupTest init)
         {
             var context = ContextFactory.CreateContext(_testFramework, "InitScenarioTestMethod");
-            await init.InitScenarioTestMethod(context);
+            await init.SetupTest(context);
         }
     }
 
     private async Task ExecuteInitMethodsOnScenario(Scenario scenario)
     {
-        if (scenario.InitScenario != null)
+        if (scenario.BeforeScenario != null)
         {
             var context = ContextFactory.CreateScenarioContext(_testFramework, "InitScenario");
-            await scenario.InitScenario(context);
+            await scenario.BeforeScenario(context);
         }
 
         if (!scenario.InputDataInfo.HasInputData)

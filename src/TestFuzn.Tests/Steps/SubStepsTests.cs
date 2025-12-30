@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
-public class SubStepsTests : BaseFeatureTest
+public class SubStepsTests : TestBase
 {
     [Test]
     public async Task SubSteps_Sync()

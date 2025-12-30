@@ -4,9 +4,9 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
-public class WebSocketCleanupTests : BaseFeatureTest
+public class WebSocketCleanupTests : TestBase
 {
-    public override string FeatureName => "WebSocket Auto Cleanup";
+    public override FeatureInfo Feature => new() { Name = "WebSocket Auto Cleanup" };
 
     private static readonly string EchoServerUrl = "wss://localhost:44316/ws";
 

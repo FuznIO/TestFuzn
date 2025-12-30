@@ -4,10 +4,11 @@ using Fuzn.TestFuzn.Internals.InputData;
 
 namespace Fuzn.TestFuzn;
 
-public class Scenario
+internal class Scenario
 {
     public string Name { get; internal set; }
     public string Id { get; internal set; }
+    public string Description { get; internal set; }
     internal TestType TestType
     {
         get
@@ -17,15 +18,14 @@ public class Scenario
             return TestType.Load;
         }
     }
-    internal ScenarioRunMode RunMode { get; set; } = ScenarioRunMode.Execute;
     internal List<string> Environments { get; set; }
     internal List<string> TagsInternal { get; set; }
     internal Dictionary<string, string> MetadataInternal { get; set; }
     internal Type ContextType { get; set; }
-    internal Func<ScenarioContext, Task> InitScenario { get; set; }
-    internal Func<IterationContext, Task> InitIterationAction { get; set; }
-    internal Func<IterationContext, Task> CleanupIterationAction { get; set; }
-    internal Func<ScenarioContext, Task> CleanupScenarioAction { get; set; }
+    internal Func<ScenarioContext, Task> BeforeScenario { get; set; }
+    internal Func<IterationContext, Task> BeforeIterationAction { get; set; }
+    internal Func<IterationContext, Task> AfterIterationAction { get; set; }
+    internal Func<ScenarioContext, Task> AfterScenarioAction { get; set; }
     internal InputDataInfo InputDataInfo { get; private set; } = new();
     internal List<Step> Steps { get; } = new();
     internal Func<ScenarioContext, SimulationsBuilder, Task> WarmupAction;

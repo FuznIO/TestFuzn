@@ -60,10 +60,10 @@ internal static class TestFuznIntegrationCore
 
         GlobalState.Configuration = configuration;
 
-        if (_startupInstance is IInitGlobal initGlobalInstance)
+        if (_startupInstance is ISetupRun initGlobalInstance)
         {
             var context = ContextFactory.CreateContext(testFramework, "InitGlobal");
-            await initGlobalInstance.InitGlobal(context);
+            await initGlobalInstance.BeforeRun(context);
         }
 
         foreach (var plugin in GlobalState.Configuration.SinkPlugins)
@@ -80,9 +80,9 @@ internal static class TestFuznIntegrationCore
         if (_startupInstance == null)
             throw new InvalidOperationException("TestFuznIntegration has not been initialized. Please call TestFuznIntegration.InitGlobal() before running tests.");
 
-        if (_startupInstance is ICleanupGlobal cleanupGlobalInstance)
+        if (_startupInstance is ITeardownRun cleanupGlobalInstance)
         {
-            await cleanupGlobalInstance.CleanupGlobal(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
+            await cleanupGlobalInstance.TeardownRun(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
         }
 
         GlobalState.TestRunEndTime = DateTime.UtcNow;

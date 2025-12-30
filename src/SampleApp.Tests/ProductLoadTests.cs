@@ -5,9 +5,9 @@ using SampleApp.WebApp.Models;
 namespace SampleApp.Tests;
 
 [TestClass]
-public class ProductLoadTests : BaseFeatureTest
+public class ProductLoadTests : TestBase
 {
-    public override string FeatureName => "Product catalog";
+    public override FeatureInfo Feature => new() { Name = "Product catalog" };
 
     [Test]
     public async Task Verify_that_get_products_scales()

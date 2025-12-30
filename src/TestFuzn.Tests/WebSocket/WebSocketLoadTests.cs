@@ -1,12 +1,11 @@
-﻿using Fuzn.TestFuzn.Attributes;
-using Fuzn.TestFuzn.Plugins.WebSocket;
+﻿using Fuzn.TestFuzn.Plugins.WebSocket;
 
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
-public class WebSocketLoadTests : BaseFeatureTest
+public class WebSocketLoadTests : TestBase
 {
-    public override string FeatureName => "WebSocket Load Testing";
+    public override FeatureInfo Feature => new() { Name = "WebSocket Load Testing" };
 
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
@@ -193,7 +192,7 @@ public class WebSocketLoadTests : BaseFeatureTest
                 await connection.Close();
             })
             .Load()
-            .Simulations((context, simulations) => simulations.FixedLoad(100, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
+            .Simulations((context, simulations) => simulations.FixedLoad(100, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
             .Run();
     }
 

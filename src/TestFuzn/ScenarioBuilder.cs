@@ -73,30 +73,24 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
-    internal ScenarioBuilder<TModel> Skip()
-    {
-        Scenario.RunMode = ScenarioRunMode.Skip;
-        return this;
-    }
-
-    public ScenarioBuilder<TModel> InitScenario(Action<Context> action)
+    public ScenarioBuilder<TModel> SetupScenario(Action<Context> action)
     {
         if (action == null)
             throw new ArgumentNullException(nameof(action), "Action cannot be null.");
 
-        Scenario.InitScenario = (context) => {
+        Scenario.BeforeScenario = (context) => {
             action(context);
             return Task.CompletedTask;
         };
         return this;
     }
 
-    public ScenarioBuilder<TModel> InitScenario(Func<Context, Task> action)
+    public ScenarioBuilder<TModel> SetupScenario(Func<Context, Task> action)
     {
         if (action == null)
             throw new ArgumentNullException(nameof(action), "Action cannot be null.");
 
-        Scenario.InitScenario = (context) => {
+        Scenario.BeforeScenario = (context) => {
             return action(context);
         };
         return this;
@@ -135,21 +129,21 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
-    public ScenarioBuilder<TModel> InitIteration(Func<IterationContext<TModel>, Task> action)
+    public ScenarioBuilder<TModel> SetupIteration(Func<IterationContext<TModel>, Task> action)
     {
         if (action == null)
             throw new ArgumentNullException(nameof(action), "Action cannot be null.");
-        Scenario.InitIterationAction = (context) => {
+        Scenario.BeforeIterationAction = (context) => {
             return action((IterationContext<TModel>) context);
         };
         return this;
     }
 
-    public ScenarioBuilder<TModel> InitIteration(Action<IterationContext<TModel>> action)
+    public ScenarioBuilder<TModel> SetupIteration(Action<IterationContext<TModel>> action)
     {
         if (action == null)
             throw new ArgumentNullException(nameof(action), "Action cannot be null.");
-        Scenario.InitIterationAction = (context) => {
+        Scenario.BeforeIterationAction = (context) => {
             action((IterationContext<TModel>) context);
             return Task.CompletedTask;
         };
@@ -210,35 +204,35 @@ public class ScenarioBuilder<TModel>
         return new LoadBuilder<TModel>(this);
     }
 
-    public ScenarioBuilder<TModel> CleanupIteration(Action<IterationContext<TModel>> action)
+    public ScenarioBuilder<TModel> TeardownIteration(Action<IterationContext<TModel>> action)
     {
-        Scenario.CleanupIterationAction = (context) => {
+        Scenario.AfterIterationAction = (context) => {
             action((IterationContext<TModel>) context);
             return Task.CompletedTask;
         };
         return this;
     }
 
-    public ScenarioBuilder<TModel> CleanupIteration(Func<IterationContext<TModel>, Task> action)
+    public ScenarioBuilder<TModel> TeardownIteration(Func<IterationContext<TModel>, Task> action)
     {
-        Scenario.CleanupIterationAction = (context) => {
+        Scenario.AfterIterationAction = (context) => {
             return action((IterationContext<TModel>) context);
         };
         return this;
     }
 
-    public ScenarioBuilder<TModel> CleanupScenario(Action<Context> action)
+    public ScenarioBuilder<TModel> TeardownScenario(Action<Context> action)
     {
-        Scenario.CleanupScenarioAction = (context) => {
+        Scenario.AfterScenarioAction = (context) => {
             action(context);
             return Task.CompletedTask;
         };
         return this;
     }
 
-    public ScenarioBuilder<TModel> CleanupScenario(Func<Context, Task> action)
+    public ScenarioBuilder<TModel> TeardownScenario(Func<Context, Task> action)
     {
-        Scenario.CleanupScenarioAction = (context) => {
+        Scenario.AfterScenarioAction = (context) => {
             return action(context);
         };
         return this;
@@ -258,6 +252,25 @@ public class ScenarioBuilder<TModel>
         if (IncludeScenarios != null)
             scenarios.AddRange(IncludeScenarios.Select(scenario => scenario()));
 
+        InheritValuesFromTest(scenarios);
+
         await new ScenarioTestRunner(_testFramework, _featureTest, _assertInternalState).Run(scenarios.ToArray());
+    }
+
+    private void InheritValuesFromTest(List<Scenario> scenarios)
+    {
+        var firstScenario = scenarios.First();
+        firstScenario.Name = _featureTest.Test.Name;
+        firstScenario.Id = _featureTest.Test.Id;
+        firstScenario.Description = _featureTest.Test.Description;
+
+        foreach (var scenario in scenarios)
+        {
+            if (string.IsNullOrEmpty(scenario.Name))
+                throw new Exception("Scenario name cannot be null or empty.");
+
+            scenario.MetadataInternal = _featureTest.Test.Metadata;
+            scenario.TagsInternal = _featureTest.Test.Tags;
+        }
     }
 }

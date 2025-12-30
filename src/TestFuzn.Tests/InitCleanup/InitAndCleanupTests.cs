@@ -1,20 +1,19 @@
-﻿
-namespace Fuzn.TestFuzn.Tests.InitCleanup;
+﻿namespace Fuzn.TestFuzn.Tests.InitCleanup;
 
 [TestClass]
-public class InitAndCleanupTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupScenarioTestMethod
+public class InitAndCleanupTests : TestBase, ISetupTest, ITeardownTest
 {
-    public override string FeatureName => "Feature-Init-Cleanup";
+    public override FeatureInfo Feature => new() { Name = "Feature-Init-Cleanup" };
     private bool _initScenarioTestMethodCalled = false;
     private bool _cleanupScenarioTestMethodCalled = false;
 
-    public Task InitScenarioTestMethod(Context context)
+    public Task SetupTest(Context context)
     {
         _initScenarioTestMethodCalled = true;
         return Task.CompletedTask;
     }
 
-    public Task CleanupScenarioTestMethod(Context context)
+    public Task TeardownTest(Context context)
     {
         _cleanupScenarioTestMethodCalled = true;
         return Task.CompletedTask;
@@ -30,20 +29,20 @@ public class InitAndCleanupTests : BaseFeatureTest, IInitScenarioTestMethod, ICl
         var cleanupScenarioCalled = false;
 
         await Scenario()
-            .InitScenario((context) =>
+            .SetupScenario((context) =>
             {
                 initScenarioCalled = true;
             })
-            .InitIteration((context) =>
+            .SetupIteration((context) =>
             {
                 initIterationCalled = true;
             })
             .Step("Step 1", (context) => { })
-            .CleanupIteration((context) =>
+            .TeardownIteration((context) =>
             {
                 cleanupIterationCalled = true;
             })
-            .CleanupScenario((context) =>
+            .TeardownScenario((context) =>
             {
                 cleanupScenarioCalled = true;
             })
@@ -66,21 +65,21 @@ public class InitAndCleanupTests : BaseFeatureTest, IInitScenarioTestMethod, ICl
         var cleanupScenarioCalled = false;
 
         await Scenario()
-            .InitScenario((context) =>
+            .SetupScenario((context) =>
             {
                 initScenarioCalled = true;
             })
-            .InitIteration((context) =>
+            .SetupIteration((context) =>
             {
                 Interlocked.Add(ref initIterationCalled, 1);
             })
             .Step("Step 1", (context) => { })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
-            .CleanupIteration((context) =>
+            .TeardownIteration((context) =>
             {
                 Interlocked.Add(ref cleanupIterationCalled, 1);
             })
-            .CleanupScenario((context) =>
+            .TeardownScenario((context) =>
             {
                 cleanupScenarioCalled = true;
             })
@@ -103,23 +102,23 @@ public class InitAndCleanupTests : BaseFeatureTest, IInitScenarioTestMethod, ICl
         var cleanupScenarioCalled = false;
 
         await Scenario()
-            .InitScenario(async (context) =>
+            .SetupScenario(async (context) =>
             {
                 initScenarioCalled = true;
                 await Task.CompletedTask;
             })
-            .InitIteration(async (context) =>
+            .SetupIteration(async (context) =>
             {
                 initIterationCalled = true;
             })
             .Step("Step 1", (context) => { })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
-            .CleanupIteration(async (context) =>
+            .TeardownIteration(async (context) =>
             {
                 cleanupIterationCalled = true;
                 await Task.CompletedTask;
             })
-            .CleanupScenario(async (context) =>
+            .TeardownScenario(async (context) =>
             {
                 cleanupScenarioCalled = true;
                 await Task.CompletedTask;
@@ -141,23 +140,23 @@ public class InitAndCleanupTests : BaseFeatureTest, IInitScenarioTestMethod, ICl
         var cleanupScenarioCalled = false;
 
         await Scenario()
-            .InitScenario(async (context) =>
+            .SetupScenario(async (context) =>
             {
                 initScenarioCalled = true;
                 await Task.CompletedTask;
             })
-            .InitIteration(async (context) =>
+            .SetupIteration(async (context) =>
             {
                 Interlocked.Add(ref initIterationCalled, 1);
             })
             .Step("Step 1", (context) => { })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
-            .CleanupIteration(async (context) =>
+            .TeardownIteration(async (context) =>
             {
                 Interlocked.Add(ref cleanupIterationCalled, 1);
                 await Task.CompletedTask;
             })
-            .CleanupScenario(async (context) =>
+            .TeardownScenario(async (context) =>
             {
                 cleanupScenarioCalled = true;
                 await Task.CompletedTask;

@@ -3,9 +3,9 @@
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
-public class WebSocketMessagingTests : BaseFeatureTest
+public class WebSocketMessagingTests : TestBase
 {
-    public override string FeatureName => "WebSocket Messaging";
+    public override FeatureInfo Feature => new() { Name = "WebSocket Messaging" };
 
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 

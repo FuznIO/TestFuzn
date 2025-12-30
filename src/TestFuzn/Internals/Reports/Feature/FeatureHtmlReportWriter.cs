@@ -1,9 +1,6 @@
-﻿using Fuzn.TestFuzn.Contracts;
-using Fuzn.TestFuzn.Contracts.Reports;
+﻿using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Feature;
 using Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
-using System;
-using System.Reflection.Emit;
 using System.Text;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Feature;
@@ -82,7 +79,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         }
 
         b.AppendLine(@$"<tr><th class=""vertical"">Run ID</th><td>{featureReportData.TestRunId}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Environment Name</th><td>{GlobalState.EnvironmentName}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Environment Name</th><td>{(string.IsNullOrEmpty(GlobalState.EnvironmentName) ? "-" : GlobalState.EnvironmentName)}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Start Time</th><td>{featureReportData.TestRunStartTime.ToLocalTime()}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">End Time</th><td>{featureReportData.TestRunEndTime.ToLocalTime()}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Duration</th><td>{featureReportData.TestRunDuration.ToTestFuznReadableString()}</td></tr>");
@@ -95,10 +92,10 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         var featuresPassed = featureReportData.Results.FeatureResults.Count(x => x.Value.Status == ScenarioStatus.Passed);
         var featuresFailed = featureReportData.Results.FeatureResults.Count(x => x.Value.Status == ScenarioStatus.Failed);
         var featuresSkipped = featureReportData.Results.FeatureResults.Count(x => x.Value.Status == ScenarioStatus.Skipped);
-        var scenariosTotal = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count);
-        var scenariosPassed = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Passed));
-        var scenariosSkipped = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Skipped));
-        var scenariosFailed = featureReportData.Results.FeatureResults.Sum(f => f.Value.ScenarioResults.Count(s => s.Value.Status == ScenarioStatus.Failed));
+        var scenariosTotal = featureReportData.Results.FeatureResults.Sum(f => f.Value.TestResults.Count);
+        var scenariosPassed = featureReportData.Results.FeatureResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == ScenarioStatus.Passed));
+        var scenariosSkipped = featureReportData.Results.FeatureResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == ScenarioStatus.Skipped));
+        var scenariosFailed = featureReportData.Results.FeatureResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == ScenarioStatus.Failed));
 
         b.AppendLine($"<h2>Test Status</h2>");
         if (featuresFailed == 0)
@@ -126,7 +123,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine($"<td>⚠️ Skipped: {featuresSkipped}</td>");
         b.AppendLine("</tr>");
         b.AppendLine("<tr>");
-        b.AppendLine(@"<th class=""vertical"" style=""width:1%;white-space:nowrap"">Scenario Tests</th>");
+        b.AppendLine(@"<th class=""vertical"" style=""width:1%;white-space:nowrap"">Tests</th>");
         b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">🔢 Total: {scenariosTotal}</td>");
         b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">✅ Passed: {scenariosPassed}</td>");
         b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">❌ Failed: {scenariosFailed}</td>");
@@ -147,7 +144,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine(@$"<th>Duration</th>");
         b.AppendLine(@$"<th>Tags</th>");
         b.AppendLine($"</tr>");
-        foreach (var featureResult in featureReportData.Results.FeatureResults)
+        foreach (var featureResult in featureReportData.Results.FeatureResults.OrderBy(f => f.Value.Name))
         {
             var symbol = "";
             var statusText = "";
@@ -176,21 +173,21 @@ internal class FeatureHtmlReportWriter : IFeatureReport
             b.AppendLine($"<td></td>");
             b.AppendLine($"</tr>");
 
-            WriteScenario(b, featureResult);
+            WriteTestResults(b, featureResult);
         }
 
         b.Append("</table>");
     }
 
-    private void WriteScenario(StringBuilder b, KeyValuePair<string, FeatureResult> featureResult)
+    private void WriteTestResults(StringBuilder b, KeyValuePair<string, FeatureResult> featureResult)
     {
-        foreach (var scenarioResult in featureResult.Value.ScenarioResults)
+        foreach (var testResult in featureResult.Value.TestResults.OrderBy(t => t.Value.Name))
         {
-            var sr = scenarioResult.Value;
+            var sr = testResult.Value;
 
             var symbol = "";
             var statusText = "";
-            switch (scenarioResult.Value.Status)
+            switch (testResult.Value.Status)
             {
                 case ScenarioStatus.Passed:
                     symbol = "→ ✅ ";
@@ -210,12 +207,9 @@ internal class FeatureHtmlReportWriter : IFeatureReport
             b.AppendLine($"<td>{symbol} {sr.Name}");
             WriteScenarioDetails(b, sr);
             b.AppendLine("</td>");
-            
-            var typeText = sr.TestType == TestType.Feature ? "Feature" : "Load";
-
-            b.AppendLine($"<td>Scenario - {typeText}</td>");
+            b.AppendLine($"<td>Test</td>");
             b.AppendLine($"<td>{statusText}</td>");
-            b.AppendLine($"<td>{sr.TestRunTotalDuration().ToTestFuznResponseTime()}</td>");
+            b.AppendLine($"<td>{sr.TestRunTotalDuration().ToTestFuznReadableString()}</td>");
             b.AppendLine("<td>");
             if (sr.Tags != null && sr.Tags.Count > 0)
             {

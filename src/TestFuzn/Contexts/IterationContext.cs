@@ -37,7 +37,6 @@ public abstract class IterationContext : Context
         IterationState.SharedData[key] = value;
     }
 
-
     public void Comment(string message)
     {
         if (string.IsNullOrWhiteSpace(message))

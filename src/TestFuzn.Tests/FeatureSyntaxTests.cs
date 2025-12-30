@@ -1,22 +1,28 @@
 ﻿#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-
-using Fuzn.TestFuzn.Attributes;
 using Microsoft.Extensions.Logging;
 
 namespace Fuzn.TestFuzn.Tests;
 
 [TestClass]
-public class SyntaxTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupScenarioTestMethod
+public class SyntaxTests : TestBase, ISetupTest, ITeardownTest
 {
-    public override string FeatureName => "TestFuzn Syntax";
-    public override string FeatureId => "FeatureId-1";
+    public override FeatureInfo Feature => new()
+    {
+        Name = "TestFuzn Syntax",
+        Id = "FeatureId-1",
+        Metadata = new()
+        {
+            { "featureKey1", "featureValue1" },
+            { "featureKey2", "featureValue2" }
+        }
+    };
 
-    public Task InitScenarioTestMethod(Context context)
+    public Task SetupTest(Context context)
     {
         return Task.CompletedTask;
     }
 
-    public Task CleanupScenarioTestMethod(Context context)
+    public Task TeardownTest(Context context)
     {
         return Task.CompletedTask;
     }
@@ -42,10 +48,10 @@ public class SyntaxTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupSce
         await Scenario()
             .Id("Scenario-Id-1234") // Optional id for the scenario.
             // Init is the first method that will be run.
-            .InitScenario((context) =>
+            .SetupScenario((context) =>
             {
             })
-            .InitScenario(async (context) =>
+            .SetupScenario(async (context) =>
             {
                 // This will be executed before any steps.
             })
@@ -79,11 +85,11 @@ public class SyntaxTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupSce
             // Load test specific: Runs through the input data sequentially, then repeats the last input data for the remaining iterations.
             .InputDataBehavior(InputDataBehavior.LoopThenRepeatLast)
             // Steps are executed in order. If one steps fails within an execution, the rest of the steps will be skipped (=not executed).
-            .InitIteration((context) =>
+            .SetupIteration((context) =>
             {
                 // This will be executed once per iteration, before any steps.
             })
-            .InitIteration(async (context) =>
+            .SetupIteration(async (context) =>
             {
                 // This will be execute once per iteration before any steps.
             })
@@ -96,7 +102,7 @@ public class SyntaxTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupSce
                 // Some code goes here.
                 await Task.CompletedTask;
             })
-            .SharedStep() // Extension method for shared steps.
+            .SharedStepExtension() // Extension method for shared steps.
             .Step("Step 3 - Shared step using action", SharedStepAction)
             .Step("Step 4 - Shared step type regular method", context => SharedMethod("value"))
             .Step("Step 5 - All functionality", "ID-1234", async context => 
@@ -177,16 +183,16 @@ public class SyntaxTests : BaseFeatureTest, IInitScenarioTestMethod, ICleanupSce
                 Assert.IsTrue(3 == stats.GetStep("Sub step 1.1").Ok.RequestCount);
             })
             .Load().IncludeScenario(scenario2)
-            .CleanupIteration((context) =>
+            .TeardownIteration((context) =>
             {
             })
-            .CleanupIteration(async (context) =>
+            .TeardownIteration(async (context) =>
             {
             })
-            .CleanupScenario((context) =>
+            .TeardownScenario((context) =>
             {
             })
-            .CleanupScenario(async (context) =>
+            .TeardownScenario(async (context) =>
             {
             })
             .Run();
@@ -225,7 +231,7 @@ public class CustomModel
 
 public static class SharedSteps
 { 
-    public static ScenarioBuilder<T> SharedStep<T>(this ScenarioBuilder<T> builder)
+    public static ScenarioBuilder<T> SharedStepExtension<T>(this ScenarioBuilder<T> builder)
         where T: new()
     {
         builder.Step("Shared step", (context) =>

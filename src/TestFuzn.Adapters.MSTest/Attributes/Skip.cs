@@ -1,4 +1,4 @@
-﻿namespace Fuzn.TestFuzn.Attributes;
+﻿namespace Fuzn.TestFuzn;
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
 public class SkipAttribute : Attribute

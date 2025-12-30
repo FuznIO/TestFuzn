@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Reports;
 
 [TestClass]
-public class FeatureReportTests : BaseFeatureTest
+public class FeatureReportTests : TestBase
 {
     [Test]
     [Tags("Category1", "Category2", "Category3")]

@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
-public class CommentTests : BaseFeatureTest
+public class CommentTests : TestBase
 {
     [Test]
     public async Task FeatureTest_Comment_Should_Be_Written_ToConsoleAndReports()

@@ -8,16 +8,16 @@ internal class FeatureResult(string name, string id, Dictionary<string, string> 
     public string Id { get; set; } = id;
     public Dictionary<string, string> Metadata { get; set; } = metadata;
 
-    public ConcurrentDictionary<string, ScenarioFeatureResult> ScenarioResults { get; } = new();
+    public ConcurrentDictionary<string, ScenarioFeatureResult> TestResults { get; } = new();
 
     public ScenarioStatus Status
     {
         get
         {
-            if (ScenarioResults.Values.Any(x => x.Status == ScenarioStatus.Failed))
+            if (TestResults.Values.Any(x => x.Status == ScenarioStatus.Failed))
                 return ScenarioStatus.Failed;
 
-            if (ScenarioResults.Values.All(s => s.Status == ScenarioStatus.Skipped))
+            if (TestResults.Values.All(s => s.Status == ScenarioStatus.Skipped))
                 return ScenarioStatus.Skipped;
 
             return ScenarioStatus.Passed;

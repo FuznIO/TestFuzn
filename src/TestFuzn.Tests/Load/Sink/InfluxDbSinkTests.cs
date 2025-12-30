@@ -4,9 +4,9 @@ using Fuzn.TestFuzn.Tests.Http;
 namespace Fuzn.TestFuzn.Tests.Load.Simulations;
 
 [TestClass]
-public class InfluxDbSinkTests : BaseFeatureTest
+public class InfluxDbSinkTests : TestBase
 {
-    public override string FeatureName => "InfluxDbSink";
+    public override FeatureInfo Feature => new() { Name = "InfluxDbSink" };
 
     [Test]
     public async Task Test()

@@ -44,10 +44,10 @@ internal class ExecuteScenarioMessageHandler
 
         try
         {
-            if (scenario.InitIterationAction != null)
+            if (scenario.BeforeIterationAction != null)
             {
                 var stepContext = ContextFactory.CreateIterationContext(iterationState, "InitIteration", null, null);
-                await scenario.InitIterationAction(stepContext);
+                await scenario.BeforeIterationAction(stepContext);
             }
 
             foreach (var (step, index) in scenario.Steps.Select((s,i)=> (s,i)))
@@ -68,10 +68,10 @@ internal class ExecuteScenarioMessageHandler
 
             iterationResult.ExecutionDuration = scenarioDuration.Elapsed;
 
-            if (scenario.CleanupIterationAction != null)
+            if (scenario.AfterIterationAction != null)
             {
                 var stepContext = ContextFactory.CreateIterationContext(iterationState, "CleanupIteration", null, null);
-                await scenario.CleanupIterationAction(stepContext);
+                await scenario.AfterIterationAction(stepContext);
             }
         }
 
@@ -158,7 +158,7 @@ internal class ExecuteScenarioMessageHandler
                     {
                         foreach (var sinkPlugin in GlobalState.Configuration.SinkPlugins)
                         {
-                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _sharedExecutionState.IFeatureTestClassInstance.FeatureName, scenarioLoadResult);
+                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _sharedExecutionState.IFeatureTestClassInstance.Feature.Name, scenarioLoadResult);
                         }
                     }
                     _lastSinkWrite[scenario.Name] = now;

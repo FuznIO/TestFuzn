@@ -1,9 +1,7 @@
-﻿using Fuzn.TestFuzn.Attributes;
-
-namespace Fuzn.TestFuzn.Tests.ScenarioTestAttr;
+﻿namespace Fuzn.TestFuzn.Tests.ScenarioTestAttr;
 
 [TestClass]
-public class ScenarioTestAttributeTests : BaseFeatureTest
+public class ScenarioTestAttributeTests : TestBase
 {
     [TestMethod]
     public async Task ShouldFail_MS_Test_Method_Is_Not_Supported()
@@ -63,22 +61,5 @@ public class ScenarioTestAttributeTests : BaseFeatureTest
             .Run();
 
         Assert.IsTrue(wasRun);
-    }
-
-    [Test]
-    [Skip("Skipping this test for demonstration purposes.")]
-    public async Task SetSkipOnScenario()
-    {
-        var wasRun = false;
-
-        await Scenario()
-            .Skip()
-            .Step("Step1", context =>
-            {
-                wasRun = true;
-            })
-            .Run();
-
-        Assert.IsFalse(wasRun);
     }
 }

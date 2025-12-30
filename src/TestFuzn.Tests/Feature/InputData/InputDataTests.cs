@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Feature.InputData;
 
 [TestClass]
-public class InputDataTests :  BaseFeatureTest
+public class InputDataTests :  TestBase
 {
-    public override string FeatureName => "";
+    public override FeatureInfo Feature => new() { Name = "" };
 
     [Test]
     public async Task Feature_Verify_List_based_InputData_Sync()

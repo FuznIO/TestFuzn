@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Contracts.Results.Feature;
 using Fuzn.TestFuzn.Internals.Cleanup;
 using Fuzn.TestFuzn.Internals.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.Execution;
@@ -50,14 +49,6 @@ internal class ScenarioTestRunner
 
         try
         {
-            SetScenariosToSkipIfEnvironmentMismatch(scenarios);
-
-            if (ShouldSkipScenarios(scenarios))
-            {
-                SkipScenarios(scenarios, featureResultManager);
-                _testFramework.SetCurrentTestAsSkipped();
-            }
-
             consoleManager.StartRealtimeConsoleOutputIfEnabled();
             await initManager.Run();
             await executionManager.Run();
@@ -81,47 +72,5 @@ internal class ScenarioTestRunner
 
             throw;
         }
-    }
-
-    private void SetScenariosToSkipIfEnvironmentMismatch(Scenario[] scenarios)
-    {
-        var currentEnvironmentName = GlobalState.EnvironmentName;
-
-        foreach (var scenario in scenarios)
-        {
-            if (scenario.Environments == null || scenario.Environments.Count == 0)
-            {
-                if (!string.IsNullOrEmpty(currentEnvironmentName))
-                    scenario.RunMode = ScenarioRunMode.Skip;
-            }
-            else
-            {
-                if (string.IsNullOrEmpty(currentEnvironmentName))
-                    scenario.RunMode = ScenarioRunMode.Skip;
-                else
-                {
-                    if (!scenario.Environments.Contains(currentEnvironmentName, StringComparer.OrdinalIgnoreCase))
-                        scenario.RunMode = ScenarioRunMode.Skip;
-                }
-            }
-        }
-    }
-
-    private static bool ShouldSkipScenarios(Scenario[] scenarios)
-    {
-        return scenarios.Length > 0 && scenarios.First().RunMode == ScenarioRunMode.Skip;
-    }
-
-    private void SkipScenarios(Scenario[] scenarios, FeatureResultManager featureResultManager)
-    {
-        var scenarioCollectors = new Dictionary<string, ScenarioFeatureResult>();
-
-        foreach (var scenario in scenarios)
-        {
-            var scenarioCollector = new ScenarioFeatureResult(scenario);
-            scenarioCollector.MarkAsSkipped();
-            scenarioCollectors.Add(scenario.Name, scenarioCollector);
-        }
-        featureResultManager.AddScenarioResults(_featureTest, scenarioCollectors);
     }
 }

@@ -8,7 +8,7 @@ public class SimulationsBuilder
     private readonly Scenario _scenario;
     private readonly bool _isWarmup;
 
-    public SimulationsBuilder(Scenario scenario, bool isWarmup)
+    internal SimulationsBuilder(Scenario scenario, bool isWarmup)
     {
         _scenario = scenario;
         _isWarmup = isWarmup;

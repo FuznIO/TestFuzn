@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
-public class TagsTests : BaseFeatureTest
+public class TagsTests : TestBase
 {
-    public override string FeatureName => "";
+    public override FeatureInfo Feature => new() { Name = "" };
 
     [Tags("Category1", "Category2", "Category3")]
     [Test]

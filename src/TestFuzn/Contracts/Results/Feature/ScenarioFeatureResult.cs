@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Internals.Execution;
-using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 

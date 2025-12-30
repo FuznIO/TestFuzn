@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Load.Simulations;
 
 [TestClass]
-public class FixedConcurrentLoadTests : BaseFeatureTest
+public class FixedConcurrentLoadTests : TestBase
 {
     [Test]
     public async Task Test()

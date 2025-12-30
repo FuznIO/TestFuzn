@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.TargetEnvironment;
 
 [TestClass]
-public class EnvironmentTests : BaseFeatureTest
+public class EnvironmentTests : TestBase
 {
     [Test]
     public async Task Manual_CurrentEnvIsEmpty_ScenarioEnvIsEmpty_ScenarioShouldRun()

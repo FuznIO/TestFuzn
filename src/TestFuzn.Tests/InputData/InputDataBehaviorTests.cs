@@ -3,9 +3,9 @@
 namespace Fuzn.TestFuzn.Tests.InputData;
 
 [TestClass]
-public class InputDataBehaviorTests : BaseFeatureTest
+public class InputDataBehaviorTests : TestBase
 {
-    public override string FeatureName => "InputData-EndOfBehavior";
+    public override FeatureInfo Feature => new() { Name = "InputData-EndOfBehavior" };
 
     [Test]
     public async Task Verify_Loop()

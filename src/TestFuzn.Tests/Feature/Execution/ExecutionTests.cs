@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Feature.Init;
 
 [TestClass]
-public class ExecutionTests : BaseFeatureTest
+public class ExecutionTests : TestBase
 {
-    public override string FeatureName => "Feature-Execution";
+    public override FeatureInfo Feature => new() { Name = "Feature-Execution" };
 
     [Test]
     public async Task Verify_Run_Once()

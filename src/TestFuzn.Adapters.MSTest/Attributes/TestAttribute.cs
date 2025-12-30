@@ -1,4 +1,4 @@
-﻿using Fuzn.TestFuzn.Attributes;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Fuzn.TestFuzn;
@@ -9,8 +9,9 @@ public class TestAttribute : TestMethodAttribute
     public string? Name { get; set; }
     public string? Id { get; set; }
     public string? Description { get; set; }
+
     public TestAttribute([CallerFilePath] string callerFilePath = "", 
-        [CallerLineNumber] int callerLineNumber = -1)
+        [CallerLineNumber] int callerLineNumber = -1) : base(callerFilePath, callerLineNumber)
     {
     }
 
@@ -19,137 +20,133 @@ public class TestAttribute : TestMethodAttribute
         if (string.IsNullOrEmpty(testMethod.TestMethodName))
             throw new Exception("testMethod.TestMethodName is null or empty.");
 
-        try
-        {
-            HandleScenarioIgnore(testMethod);
-        }
-        catch (Exception ex)
-        {
-            return
-            [
-                new TestResult
-                {
-                    Outcome = UnitTestOutcome.Ignored,
-                    TestFailureException = ex
-                }
-            ];
-        }
+        var skipBasedOnSkipAttributeResult = ShouldSkipBasedOnSkipAttribute(testMethod);
+        if (skipBasedOnSkipAttributeResult.Skip)
+            return skipBasedOnSkipAttributeResult.Results;
 
-        try
-        {
-            EnsureTestCategoryAttributeIsNotUsed(testMethod);
-            EnsureDataRowAndDataSourceAttributesAreNotUsed(testMethod);
-            EnsureScenarioTestMatchesTagFilters(testMethod);
-        }
-        catch (Exception ex)
-        {
-            return
-            [
-                new TestResult
-                {
-                    Outcome = UnitTestOutcome.Inconclusive,
-                    TestFailureException = ex
-                }
-            ];
-        }
+        var skipBasedOnTagsResult = ShouldSkipBasedOnTags(testMethod);
+        if (skipBasedOnTagsResult.Skip)
+            return skipBasedOnTagsResult.Results;
+
+        var skipBasedOnEnvironmentResult = ShouldSkipBasedOnEnvironment(testMethod);
+        if (skipBasedOnEnvironmentResult.Skip)
+            return skipBasedOnEnvironmentResult.Results;
 
         var result = await base.ExecuteAsync(testMethod);
         return result;
     }
 
-    private static void HandleScenarioIgnore(ITestMethod testMethod)
+    public FeatureTestInfo GetTestInfo(MethodInfo testMethod)
     {
-        var ignoreAttributes = testMethod.MethodInfo.GetCustomAttributes(typeof(SkipAttribute), inherit: true)
+        var tags = GetTags(testMethod);
+        var metadata = GetMetadata(testMethod);
+        
+        return new FeatureTestInfo
+        {
+            Name = Name ?? testMethod.Name.Replace("_", ""),
+            Description = Description,
+            Id = Id,
+            Tags = tags,
+            Metadata = metadata
+        };
+    }
+
+    private static List<string>? GetTags(MethodInfo testMethod)
+    {
+        var tagsAttributes = testMethod.GetCustomAttributes(typeof(TagsAttribute), inherit: true)
+                                               .OfType<TagsAttribute>()
+                                               .ToList();
+
+        return tagsAttributes.Any() 
+            ? tagsAttributes.SelectMany(t => t.Tags ?? []).ToList() 
+            : null;
+    }
+
+    private static Dictionary<string, string>? GetMetadata(MethodInfo testMethod)
+    {
+        var metadataAttributes = testMethod.GetCustomAttributes(typeof(MetadataAttribute), inherit: true)
+                                                      .OfType<MetadataAttribute>()
+                                                      .ToList();
+
+        return metadataAttributes.Any()
+            ? metadataAttributes.ToDictionary(m => m.Key, m => m.Value)
+            : null;
+    }
+
+    private static (bool Skip, TestResult[] Results) ShouldSkipBasedOnSkipAttribute(ITestMethod testMethod)
+    {
+        var skipAttributes = testMethod.MethodInfo.GetCustomAttributes(typeof(SkipAttribute), inherit: true)
             .OfType<SkipAttribute>()
             .ToList();
 
-        if (ignoreAttributes.Any())
-        {
-            var reason = ignoreAttributes.First().Reason;
-            throw new Exception($"Scenario is ignored. Reason: {reason}");
-        }
+        if (!skipAttributes.Any())
+            return (false, null);
+
+
+        return (true, 
+            [new() { Outcome = UnitTestOutcome.Ignored, TestFailureException = new Exception($"Test is skipped. Reason: {skipAttributes.First().Reason}") }]);
     }
 
-    private static void EnsureDataRowAndDataSourceAttributesAreNotUsed(ITestMethod testMethod)
+    private static (bool Skip, TestResult[] Results) ShouldSkipBasedOnTags(ITestMethod testMethod)
     {
-        var dataRowAttributes = testMethod.MethodInfo.GetCustomAttributes(typeof(DataRowAttribute), inherit: true)
-                                           .OfType<DataRowAttribute>()
-                                           .ToList();
-        if (dataRowAttributes.Any())
-        {
-            throw new Exception("MSTest DataRowAttribute is not supported. Please use TestFuzn's DataDrivenTestAttribute instead.");
-        }
-        var dataSourceAttributes = testMethod.MethodInfo.GetCustomAttributes(typeof(DataSourceAttribute), inherit: true)
-                                           .OfType<DataSourceAttribute>()
-                                           .ToList();
-        if (dataSourceAttributes.Any())
-        {
-            throw new Exception("MSTest DataSourceAttribute is not supported. Please use TestFuzn's DataDrivenTestAttribute instead.");
-        }
-    }
-
-    private static void EnsureTestCategoryAttributeIsNotUsed(ITestMethod testMethod)
-    {
-        var classCategoryAttributes = testMethod.MethodInfo.DeclaringType?.GetCustomAttributes(typeof(TestCategoryAttribute), inherit: true)
-                                               .OfType<TestCategoryAttribute>()
-                                               .ToList();
-
-        if (classCategoryAttributes.Any())
-            throw new Exception($"MSTest TestCategoryAttribute is not supported. Please use {typeof(TagsAttribute)} instead.");
-
-        var methodCategoryAttributes = testMethod.MethodInfo.GetCustomAttributes(typeof(TestCategoryAttribute), inherit: true)
-                                               .OfType<TestCategoryAttribute>()
-                                               .ToList();
-
-        if (methodCategoryAttributes.Any())
-            throw new Exception($"MSTest TestCategoryAttribute is not supported. Please use {typeof(TagsAttribute)} instead.");
-    }
-
-    private static void EnsureScenarioTestMatchesTagFilters(ITestMethod testMethod)
-    {
-        var classTagsAttributes = testMethod.MethodInfo.DeclaringType?.GetCustomAttributes(typeof(TagsAttribute), inherit: true)
+        var tagsAttributes = testMethod.MethodInfo.GetCustomAttributes(typeof(TagsAttribute), inherit: true)
                                                .OfType<TagsAttribute>()
                                                .ToList();
 
-        var methodTagsAttributes = testMethod.MethodInfo.GetCustomAttributes(typeof(TagsAttribute), inherit: true)
-                                               .OfType<TagsAttribute>()
-                                               .ToList();
+        List<string> tags = null;
+        if (tagsAttributes.Any())
+            tags = tagsAttributes.SelectMany(t => t.Tags ?? []).ToList();
 
-        var allTagsAttributes = methodTagsAttributes.Concat(classTagsAttributes).ToList();
-
-        if (allTagsAttributes.Count > 0)
+        if (GlobalState.TagsFilterInclude.Count == 0
+            && GlobalState.TagsFilterExclude.Count == 0)
         {
-            var tags = allTagsAttributes
-                .SelectMany(a => a.Tags ?? [])
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            return (false, null);
+        }
 
-            if (tags.Count > 0)
+        if (!tags.Any())
+            return (true, [new() { Outcome = UnitTestOutcome.Inconclusive, TestFailureException = new Exception($"Test skipped due to tags mismatch.") }]);
+
+        if (GlobalState.TagsFilterInclude.Count > 0)
+        {
+            if (!tags.Any(t => GlobalState.TagsFilterInclude.Contains(t, StringComparer.OrdinalIgnoreCase)))
             {
-                if (GlobalState.TagsFilterInclude.Count > 0)
-                {
-                    if (!tags.Any(t => GlobalState.TagsFilterInclude.Contains(t, StringComparer.OrdinalIgnoreCase)))
-                    {
-                        throw new Exception($"ScenarioTest skipped due to missing include tags. Test tags: [{string.Join(", ", tags)}], Include tags: [{string.Join(", ", GlobalState.TagsFilterInclude)}]");
-                    }
-                }
-
-                if (GlobalState.TagsFilterExclude.Count > 0)
-                {
-                    if (tags.Any(t => GlobalState.TagsFilterExclude.Contains(t, StringComparer.OrdinalIgnoreCase)))
-                    {
-                        throw new Exception($"ScenarioTest skipped due to matching exclude tags. Test tags: [{string.Join(", ", tags)}], Exclude tags: [{string.Join(", ", GlobalState.TagsFilterExclude)}]");
-                    }
-                }
+                return (true, [new() { Outcome = UnitTestOutcome.Inconclusive, TestFailureException = new Exception($"Test skipped due to missing include tags. Test tags: [{string.Join(", ", tags)}], Include tags: [{string.Join(", ", GlobalState.TagsFilterInclude)}]") }]);
             }
+        }
+
+        if (GlobalState.TagsFilterExclude.Count > 0)
+        {
+            if (tags.Any(t => GlobalState.TagsFilterExclude.Contains(t, StringComparer.OrdinalIgnoreCase)))
+            {
+                return (true, [new() { Outcome = UnitTestOutcome.Inconclusive, TestFailureException = new Exception($"Test skipped due to matching exclude tags. Test tags: [{string.Join(", ", tags)}], Exclude tags: [{string.Join(", ", GlobalState.TagsFilterExclude)}]") }]);
+            }
+        }
+
+        return (false, null);
+    }
+
+    public static (bool Skip, TestResult[] Results) ShouldSkipBasedOnEnvironment(ITestMethod testMethod)
+    {
+        var environmentsAttributes = testMethod.MethodInfo.GetCustomAttributes(typeof(EnvironmentsAttribute), inherit: true)
+                                               .OfType<EnvironmentsAttribute>()
+                                               .ToList();
+
+        var currentEnvironment = GlobalState.EnvironmentName;
+
+        if (environmentsAttributes.Count > 0)
+        {
+            var environments = environmentsAttributes.SelectMany(e => e.Environments).ToList();
+
+            if (!environments.Any(x => string.Equals(x, currentEnvironment, StringComparison.OrdinalIgnoreCase)))
+                return (true, [new() { Outcome = UnitTestOutcome.Inconclusive, TestFailureException = new Exception($"Test skipped due to environment-mismatch.") }]);
         }
         else
         {
-            if (GlobalState.TagsFilterInclude.Count > 0)
-            {
-                throw new Exception($"Test skipped due to missing include tags. ScenarioTest has no tags, Include tags: [{string.Join(", ", GlobalState.TagsFilterInclude)}]");
-            }
+            if (!string.IsNullOrEmpty(currentEnvironment))
+                return (true, [new() { Outcome = UnitTestOutcome.Inconclusive, TestFailureException = new Exception($"Test skipped due to environment-mismatch.") }]);
+
         }
+
+        return (false, null);
     }
 }

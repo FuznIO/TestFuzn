@@ -6,7 +6,7 @@ using Fuzn.TestFuzn.Sinks.InfluxDB;
 namespace Fuzn.TestFuzn.Tests;
 
 [TestClass]
-public class Startup : IStartup, IInitGlobal, ICleanupGlobal
+public class Startup : IStartup, ISetupRun, ITeardownRun
 {
     [AssemblyInitialize]
     public static async Task Initialize(TestContext testContext)
@@ -69,12 +69,12 @@ public class Startup : IStartup, IInitGlobal, ICleanupGlobal
         return configuration;
     }
 
-    public Task InitGlobal(Context context)
+    public Task BeforeRun(Context context)
     {
         return Task.CompletedTask;
     }
 
-    public Task CleanupGlobal(Context context)
+    public Task TeardownRun(Context context)
     {
         return Task.CompletedTask;
     }

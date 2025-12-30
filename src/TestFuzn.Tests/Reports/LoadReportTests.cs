@@ -1,13 +1,14 @@
-﻿using Fuzn.TestFuzn.Attributes;
-
-namespace Fuzn.TestFuzn.Tests.Reports;
+﻿namespace Fuzn.TestFuzn.Tests.Reports;
 
 [TestClass]
-public class LoadReportTests : BaseFeatureTest
+public class LoadReportTests : TestBase
 {
-    public override string FeatureId { get => "FeatureID-1"; }
-    public override string FeatureName { get => "Feature-Name-1"; }
-    public override Dictionary<string, string> FeatureMetadata { get => new Dictionary<string, string>() { { "Meta1", "Value1" } }; }
+    public override FeatureInfo Feature => new()
+    {
+        Name = "Feature-Name-1",
+        Id = "FeatureID-1",
+        Metadata = new() { { "Meta1", "Value1" } }
+    };
 
     [Test]
     [Tags("Category1", "Category2", "Category3")]
