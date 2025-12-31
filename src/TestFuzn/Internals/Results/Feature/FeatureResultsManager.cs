@@ -1,28 +1,54 @@
 ﻿using Fuzn.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Internals.State;
+using System.Collections.Generic;
 
 namespace Fuzn.TestFuzn.Internals.Results.Feature;
 
 internal class FeatureResultManager
 {
-    private static TestSuiteFeatureResult _testSuiteResult { get; } = new TestSuiteFeatureResult();
+    private static SuiteResult _suiteResult { get; } = new SuiteResult();
 
-    public TestSuiteFeatureResult GetTestSuiteResults()
+    public SuiteResult GetSuiteResults()
     {
-        return _testSuiteResult;
+        return _suiteResult;
     }
 
-    public void AddScenarioResults(IFeatureTest featureTest,
-        Dictionary<string, ScenarioFeatureResult> scenarioCollectors)
+    public void AddScenarioResults(SharedExecutionState sharedExecutionState)
     {
-        var featureResult = _testSuiteResult.FeatureResults.GetOrAdd(featureTest.Group.Name, 
-                                (key) => new GroupResult(featureTest.Group.Name, featureTest.Group.Id, featureTest.Group.Metadata));
+        var featureTest = sharedExecutionState.IFeatureTestClassInstance;
+        var scenarioCollectors = sharedExecutionState.ResultState.FeatureCollectors;
 
-        foreach (var scenarioCollector in scenarioCollectors)
+        var groupResult = _suiteResult.GroupResults.GetOrAdd(featureTest.TestInfo.Group.Name, 
+                                (key) => new GroupResult(featureTest.TestInfo.Group.Name));
+
+        var testResult = new TestResult();
+        testResult.Name = featureTest.TestInfo.Name;
+        // TODO
+        //testResult.FullName = featureTest.Test.FullName;
+        testResult.Id = featureTest.TestInfo.Id;
+        testResult.Metadata = featureTest.TestInfo.Metadata;
+        testResult.Tags = featureTest.TestInfo.Tags;
+
+        if (sharedExecutionState.TestType == Contracts.TestType.Standard)
         {
-            if (!featureResult.TestResults.TryAdd(scenarioCollector.Key, scenarioCollector.Value))
+            testResult.ScenarioResult = scenarioCollectors.First().Value;
+            testResult.Duration = scenarioCollectors.First().Value.TestRunTotalDuration();
+        }
+        else
+        {
+            var duration = TimeSpan.Zero;
+
+            foreach (var scenario in scenarioCollectors)
             {
-                throw new Exception($"Test name '{scenarioCollector.Key}' is duplicated, it already exists in feature '{featureTest.Group.Name}'.");
+                duration += scenario.Value.TestRunTotalDuration();
             }
+
+            testResult.Duration = duration;
+        }
+
+        if (!groupResult.TestResults.TryAdd(testResult.Name, testResult))
+        {
+            throw new Exception($"Test name '{testResult.Name}' is duplicated, it already exists in feature '{featureTest.TestInfo.Group.Name}'.");
         }
     }
 }

@@ -260,17 +260,17 @@ public class ScenarioBuilder<TModel>
     private void InheritValuesFromTest(List<Scenario> scenarios)
     {
         var firstScenario = scenarios.First();
-        firstScenario.Name = _featureTest.Test.Name;
-        firstScenario.Id = _featureTest.Test.Id;
-        firstScenario.Description = _featureTest.Test.Description;
+        firstScenario.Name = _featureTest.TestInfo.Name;
+        firstScenario.Id = _featureTest.TestInfo.Id;
+        firstScenario.Description = _featureTest.TestInfo.Description;
 
         foreach (var scenario in scenarios)
         {
             if (string.IsNullOrEmpty(scenario.Name))
                 throw new Exception("Scenario name cannot be null or empty.");
 
-            scenario.MetadataInternal = _featureTest.Test.Metadata;
-            scenario.TagsInternal = _featureTest.Test.Tags;
+            scenario.MetadataInternal = _featureTest.TestInfo.Metadata;
+            scenario.TagsInternal = _featureTest.TestInfo.Tags;
         }
     }
 }

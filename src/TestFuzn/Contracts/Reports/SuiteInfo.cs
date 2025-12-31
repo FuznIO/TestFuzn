@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Reports;
 
-internal class TestSuiteInfo
+internal class SuiteInfo
 {
     public string Name { get; set; }
     public string Id { get; set; }

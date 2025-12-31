@@ -34,7 +34,7 @@ internal class ExecuteScenarioMessageHandler
 
         var iterationState = ContextFactory.CreateIterationState(_testFramework, scenario, currentInputData);
 
-        var iterationResult = new IterationFeatureResult();
+        var iterationResult = new IterationResult();
         iterationResult.CorrelationId = iterationState.Info.CorrelationId;
 
         var scenarioDuration = new Stopwatch();
@@ -89,11 +89,11 @@ internal class ExecuteScenarioMessageHandler
 
             if (message.IsWarmup)
             {
-                scenarioLoadCollector.RecordWarmup(executeStepHandler.CurrentScenarioStatus ?? ScenarioStatus.Failed);
+                scenarioLoadCollector.RecordWarmup(executeStepHandler.CurrentScenarioStatus ?? TestStatus.Failed);
                 return;
             }
 
-            scenarioLoadCollector.RecordMeasurement(executeStepHandler.CurrentScenarioStatus ?? ScenarioStatus.Failed, iterationResult);
+            scenarioLoadCollector.RecordMeasurement(executeStepHandler.CurrentScenarioStatus ?? TestStatus.Failed, iterationResult);
 
             var scenarioLoadResult = scenarioLoadCollector.GetCurrentResult();
 
@@ -113,7 +113,7 @@ internal class ExecuteScenarioMessageHandler
                     _sharedExecutionState.TestRunState.ExecutionStoppedReason = ex;
                     _sharedExecutionState.TestRunState.FirstException = ex;
                     scenarioLoadCollector.SetAssertWhileRunningException(ex);
-                    scenarioLoadCollector.SetStatus(ScenarioStatus.Failed);
+                    scenarioLoadCollector.SetStatus(TestStatus.Failed);
                 }
             }
 
@@ -158,7 +158,7 @@ internal class ExecuteScenarioMessageHandler
                     {
                         foreach (var sinkPlugin in GlobalState.Configuration.SinkPlugins)
                         {
-                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _sharedExecutionState.IFeatureTestClassInstance.Group.Name, scenarioLoadResult);
+                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _sharedExecutionState.IFeatureTestClassInstance.TestInfo.Group.Name, scenarioLoadResult);
                         }
                     }
                     _lastSinkWrite[scenario.Name] = now;

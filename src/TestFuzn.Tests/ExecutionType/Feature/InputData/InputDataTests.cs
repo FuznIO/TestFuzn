@@ -3,8 +3,6 @@
 [TestClass]
 public class InputDataTests :  TestBase
 {
-    public override GroupInfo Group => new() { Name = "" };
-
     [Test]
     public async Task Feature_Verify_List_based_InputData_Sync()
     {
@@ -147,7 +145,7 @@ public class InputDataTests :  TestBase
                  })
                  .AssertInternalState((state) =>
                  {
-                     Assert.AreEqual(ScenarioStatus.Failed, state.SharedExecutionState.ResultState.FeatureCollectors.First().Value.Status);
+                     Assert.AreEqual(TestStatus.Failed, state.SharedExecutionState.ResultState.FeatureCollectors.First().Value.Status);
                  })
                  .Run();
         }

@@ -5,9 +5,9 @@ using System.Text;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Feature;
 
-internal class FeatureHtmlReportWriter : IFeatureReport
+internal class FeatureHtmlReportWriter : IStandardReport
 {
-    public async Task WriteReport(FeatureReportData featureReportData)
+    public async Task WriteReport(StandardReportData featureReportData)
     {
         try
         {
@@ -26,7 +26,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         }
     }
 
-    private string GenerateHtmlReport(FeatureReportData featureReportData)
+    private string GenerateHtmlReport(StandardReportData featureReportData)
     {
         var b = new StringBuilder();
 
@@ -61,7 +61,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         return b.ToString();
     }
 
-    private static void WriteTestInfo(FeatureReportData featureReportData, StringBuilder b)
+    private static void WriteTestInfo(StandardReportData featureReportData, StringBuilder b)
     {
         b.AppendLine($"<h2>Test Info</h2>");
         b.AppendLine("<table>");
@@ -86,16 +86,16 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("</table>");
     }
 
-    private static void WriteStatus(FeatureReportData featureReportData, StringBuilder b)
+    private static void WriteStatus(StandardReportData featureReportData, StringBuilder b)
     {
-        var featuresTotal = featureReportData.Results.FeatureResults.Count;
-        var featuresPassed = featureReportData.Results.FeatureResults.Count(x => x.Value.Status == ScenarioStatus.Passed);
-        var featuresFailed = featureReportData.Results.FeatureResults.Count(x => x.Value.Status == ScenarioStatus.Failed);
-        var featuresSkipped = featureReportData.Results.FeatureResults.Count(x => x.Value.Status == ScenarioStatus.Skipped);
-        var scenariosTotal = featureReportData.Results.FeatureResults.Sum(f => f.Value.TestResults.Count);
-        var scenariosPassed = featureReportData.Results.FeatureResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == ScenarioStatus.Passed));
-        var scenariosSkipped = featureReportData.Results.FeatureResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == ScenarioStatus.Skipped));
-        var scenariosFailed = featureReportData.Results.FeatureResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == ScenarioStatus.Failed));
+        var featuresTotal = featureReportData.Results.GroupResults.Count;
+        var featuresPassed = featureReportData.Results.GroupResults.Count(x => x.Value.Status == TestStatus.Passed);
+        var featuresFailed = featureReportData.Results.GroupResults.Count(x => x.Value.Status == TestStatus.Failed);
+        var featuresSkipped = featureReportData.Results.GroupResults.Count(x => x.Value.Status == TestStatus.Skipped);
+        var scenariosTotal = featureReportData.Results.GroupResults.Sum(f => f.Value.TestResults.Count);
+        var scenariosPassed = featureReportData.Results.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Passed));
+        var scenariosSkipped = featureReportData.Results.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Skipped));
+        var scenariosFailed = featureReportData.Results.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Failed));
 
         b.AppendLine($"<h2>Test Status</h2>");
         if (featuresFailed == 0)
@@ -132,7 +132,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("</table>");
     }
 
-    private void WriteFeatureResults(FeatureReportData featureReportData, StringBuilder b)
+    private void WriteFeatureResults(StandardReportData featureReportData, StringBuilder b)
     {
         b.AppendLine($"<h2>Test Results</h2>");
         // Features
@@ -144,22 +144,22 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine(@$"<th>Duration</th>");
         b.AppendLine(@$"<th>Tags</th>");
         b.AppendLine($"</tr>");
-        foreach (var featureResult in featureReportData.Results.FeatureResults.OrderBy(f => f.Value.Name))
+        foreach (var featureResult in featureReportData.Results.GroupResults.OrderBy(f => f.Value.Name))
         {
             var symbol = "";
             var statusText = "";
 
             switch (featureResult.Value.Status)
             {
-                case ScenarioStatus.Passed: 
+                case TestStatus.Passed: 
                     symbol = "✅";
                     statusText = "✅ Passed";
                     break;
-                case ScenarioStatus.Failed:
+                case TestStatus.Failed:
                      symbol = "❌";
                     statusText = "❌ Failed";
                     break;
-                case ScenarioStatus.Skipped:
+                case TestStatus.Skipped:
                     symbol = "⚠️";
                     statusText = "⚠️ Skipped";
                     break;
@@ -183,21 +183,21 @@ internal class FeatureHtmlReportWriter : IFeatureReport
     {
         foreach (var testResult in featureResult.Value.TestResults.OrderBy(t => t.Value.Name))
         {
-            var sr = testResult.Value;
+            var sr = testResult.Value.ScenarioResult;
 
             var symbol = "";
             var statusText = "";
             switch (testResult.Value.Status)
             {
-                case ScenarioStatus.Passed:
+                case TestStatus.Passed:
                     symbol = "→ ✅ ";
                     statusText = "✅ Passed";
                     break;
-                case ScenarioStatus.Failed:
+                case TestStatus.Failed:
                     symbol = "→ ❌";
                     statusText = "❌ Failed";
                     break;
-                case ScenarioStatus.Skipped:
+                case TestStatus.Skipped:
                     symbol = "→ ⚠️";
                     statusText = "⚠️ Skipped";
                     break;
@@ -222,9 +222,9 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         }
     }
 
-    private void WriteScenarioDetails(StringBuilder b, ScenarioFeatureResult sr)
+    private void WriteScenarioDetails(StringBuilder b, ScenarioStandardResult sr)
     {
-        if (sr.Status != ScenarioStatus.Skipped
+        if (sr.Status != TestStatus.Skipped
             && sr.IterationResults.Count > 0)
         {
             b.AppendLine(@"<details class=""results"">");
@@ -237,12 +237,12 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         if (sr.IterationResults.Count > 0)
             WriteStepDetails(b, sr);
 
-        if (sr.Status != ScenarioStatus.Skipped
+        if (sr.Status != TestStatus.Skipped
             && sr.IterationResults.Count > 0)
             b.AppendLine("</details>");
     }
 
-    private void WriteStepDetails(StringBuilder b, ScenarioFeatureResult sr)
+    private void WriteStepDetails(StringBuilder b, ScenarioStandardResult sr)
     {
         b.AppendLine(@"<table style=""margin:30px;0;30px;0;"">");
         //b.AppendLine("<tr>");
@@ -291,7 +291,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         b.AppendLine("</table>");
     }
 
-    private void WriteStepResult(StringBuilder b, StepFeatureResult stepResult, int level)
+    private void WriteStepResult(StringBuilder b, StepStandardResult stepResult, int level)
     {
         var padding = ((30 * level) - 30);
         //var symbol = level == 1 ? "" : " → ";
@@ -359,7 +359,7 @@ internal class FeatureHtmlReportWriter : IFeatureReport
         }
     }
 
-    private async Task IncludeEmbeddedResources(FeatureReportData featureReportData)
+    private async Task IncludeEmbeddedResources(StandardReportData featureReportData)
     {
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
             "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",

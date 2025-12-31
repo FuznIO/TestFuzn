@@ -33,7 +33,7 @@ internal class SharedExecutionState
             ExecutionState.MessageCountPerScenario[scenario.Name] = 0;
 
             ResultState.LoadCollectors.Add(scenario.Name, new ScenarioLoadCollector(scenario));
-            ResultState.FeatureCollectors.Add(scenario.Name, new ScenarioFeatureResult(scenario));
+            ResultState.FeatureCollectors.Add(scenario.Name, new ScenarioStandardResult(scenario));
         }
     }
 

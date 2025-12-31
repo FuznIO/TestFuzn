@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
-internal class ScenarioFeatureResult
+internal class ScenarioStandardResult
 {
     private bool _skipped = false;
 
@@ -19,24 +19,24 @@ internal class ScenarioFeatureResult
     public DateTime CleanupEndTime { get; set; }
     public bool HasInputData { get; set; } = false;
     public TestType TestType { get; set; }
-    public List<IterationFeatureResult> IterationResults { get; } = new();
+    public List<IterationResult> IterationResults { get; } = new();
     public int TotalCount => IterationResults.Count;
     public int PassedCount => IterationResults.Count(x => x.Passed);
     public int FailedCount => IterationResults.Count(x => !x.Passed);
-    public ScenarioStatus Status
+    public TestStatus Status
     {
         get
         {
             if (_skipped)
-                return ScenarioStatus.Skipped;
+                return TestStatus.Skipped;
 
             if (PassedCount == TotalCount)
-                return ScenarioStatus.Passed;
-            return ScenarioStatus.Failed;
+                return TestStatus.Passed;
+            return TestStatus.Failed;
         }
     }
 
-    internal ScenarioFeatureResult(Scenario scenario)
+    internal ScenarioStandardResult(Scenario scenario)
     {
         Name = scenario.Name;
         Id = scenario.Id;
@@ -46,7 +46,7 @@ internal class ScenarioFeatureResult
         TestType = scenario.TestType;
     }
 
-    internal void AddIterationResult(IterationFeatureResult iterationResult)
+    internal void AddIterationResult(IterationResult iterationResult)
     {
         IterationResults.Add(iterationResult);
     }

@@ -6,5 +6,5 @@ namespace Fuzn.TestFuzn.Internals.State;
 internal class ScenarioResultState
 {
     public Dictionary<string, ScenarioLoadCollector> LoadCollectors = new();
-    public Dictionary<string, ScenarioFeatureResult> FeatureCollectors = new();
+    public Dictionary<string, ScenarioStandardResult> FeatureCollectors = new();
 }

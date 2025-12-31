@@ -47,7 +47,7 @@ internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter
                 $"{scenario.Key.Name}",
                 $"{scenario.Value.TotalExecutionDuration.ToTestFuznFormattedDuration()}",
                 $"{(scenario.Value.TestRunTotalDuration()).ToTestFuznFormattedDuration()}",
-                $"{(scenario.Value.Status == ScenarioStatus.Passed ? "[green]Passed[/]" : "[red]Failed[/]")}"
+                $"{(scenario.Value.Status == TestStatus.Passed ? "[green]Passed[/]" : "[red]Failed[/]")}"
             );
 
             AnsiConsole

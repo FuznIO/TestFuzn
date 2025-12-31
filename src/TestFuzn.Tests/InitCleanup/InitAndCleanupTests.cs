@@ -3,7 +3,6 @@
 [TestClass]
 public class InitAndCleanupTests : TestBase, ISetupTest, ITeardownTest
 {
-    public override GroupInfo Group => new() { Name = "Feature-Init-Cleanup" };
     private bool _initScenarioTestMethodCalled = false;
     private bool _cleanupScenarioTestMethodCalled = false;
 

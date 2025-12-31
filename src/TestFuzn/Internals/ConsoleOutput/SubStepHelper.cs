@@ -4,7 +4,7 @@ namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 
 internal class SubStepHelper
 {
-    internal static List<SubStepFeatureResult> GetSubStepResults(StepFeatureResult stepResult, int[] parentStepNumber, int level = 0)
+    internal static List<SubStepFeatureResult> GetSubStepResults(StepStandardResult stepResult, int[] parentStepNumber, int level = 0)
     {
         var list = new List<SubStepFeatureResult>();
         if (stepResult?.StepResults == null || stepResult.StepResults.Count == 0)
@@ -36,7 +36,7 @@ internal class SubStepHelper
         return list;
     }
 
-    internal class SubStepFeatureResult : StepFeatureResult
+    internal class SubStepFeatureResult : StepStandardResult
     {
         public int Level { get; set; }
         public string StepNumber { get; set; }

@@ -5,8 +5,6 @@ namespace Fuzn.TestFuzn.Tests.InputData;
 [TestClass]
 public class InputDataBehaviorTests : TestBase
 {
-    public override GroupInfo Group => new() { Name = "InputData-EndOfBehavior" };
-
     [Test]
     public async Task Verify_Loop()
     {

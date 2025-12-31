@@ -5,9 +5,9 @@ using Fuzn.TestFuzn.Contracts.Results.Feature;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Feature;
 
-internal class FeatureXmlReportWriter : IFeatureReport
+internal class FeatureXmlReportWriter : IStandardReport
 {
-    public async Task WriteReport(FeatureReportData featureReportData)
+    public async Task WriteReport(StandardReportData featureReportData)
     {
         try
         {
@@ -44,7 +44,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
                 writer.WriteElementString("TestRunId", featureReportData.TestRunId);
                 writer.WriteElementString("EnvironmentName", GlobalState.EnvironmentName);
 
-                foreach (var featureResult in featureReportData.Results.FeatureResults.Values)
+                foreach (var featureResult in featureReportData.Results.GroupResults.Values)
                 {
                     WriteGroup(writer, featureResult);
                 }
@@ -66,31 +66,16 @@ internal class FeatureXmlReportWriter : IFeatureReport
         writer.WriteStartElement("Group");
 
         writer.WriteElementString("Name", groupResult.Name);
-        if (!string.IsNullOrWhiteSpace(groupResult.Id))
-            writer.WriteElementString("Id", groupResult.Id);
-
-        if (groupResult.Metadata != null)
-        {
-            writer.WriteStartElement("Metadata");
-            foreach (var metadata in groupResult.Metadata)
-            {
-                writer.WriteStartElement("Property");
-                writer.WriteElementString("Key", metadata.Key);
-                writer.WriteElementString("Value", metadata.Value);
-                writer.WriteEndElement();
-            }
-            writer.WriteEndElement();
-        }
 
         foreach (var scenarioResult in groupResult.TestResults)
         {
-            WriteScenario(writer, scenarioResult.Value);
+            WriteScenario(writer, scenarioResult.Value.ScenarioResult);
         }
 
         writer.WriteEndElement();
     }
 
-    private void WriteScenario(XmlWriter writer, ScenarioFeatureResult scenarioResult)
+    private void WriteScenario(XmlWriter writer, ScenarioStandardResult scenarioResult)
     {
         writer.WriteStartElement("Scenario");
 
@@ -141,7 +126,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
         writer.WriteEndElement();
     }
 
-    private void WriteIteration(XmlWriter writer, IterationFeatureResult iterationResult)
+    private void WriteIteration(XmlWriter writer, IterationResult iterationResult)
     {
         writer.WriteStartElement("Iteration");
 
@@ -155,7 +140,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
         writer.WriteEndElement();
     }
 
-    private void WriteSteps(XmlWriter writer, List<StepFeatureResult> steps)
+    private void WriteSteps(XmlWriter writer, List<StepStandardResult> steps)
     {
         writer.WriteStartElement("Steps");
         foreach (var step in steps)
@@ -165,7 +150,7 @@ internal class FeatureXmlReportWriter : IFeatureReport
         writer.WriteEndElement();
     }
 
-    private void WriteStep(XmlWriter writer, StepFeatureResult step)
+    private void WriteStep(XmlWriter writer, StepStandardResult step)
     {
         writer.WriteStartElement("Step");
         writer.WriteElementString("Name", step.Name);

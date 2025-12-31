@@ -3,8 +3,6 @@
 [TestClass]
 public class TagsTests : TestBase
 {
-    public override GroupInfo Group => new() { Name = "" };
-
     [Tags("Category1", "Category2", "Category3")]
     [Test]
     public async Task VerifySingleTestCategoryIsTurnedIntoTag()

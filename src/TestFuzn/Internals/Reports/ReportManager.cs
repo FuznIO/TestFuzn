@@ -9,10 +9,10 @@ internal class ReportManager
 {
     public async Task WriteFeatureReports(FeatureResultManager featureResultsManager)
     {
-        var featureResults = featureResultsManager.GetTestSuiteResults();
+        var featureResults = featureResultsManager.GetSuiteResults();
 
-        var data = new FeatureReportData();
-        data.TestSuite = new Contracts.Reports.TestSuiteInfo();
+        var data = new StandardReportData();
+        data.TestSuite = new Contracts.Reports.SuiteInfo();
         data.TestSuite.Name = GlobalState.Configuration.TestSuite.Name;
         data.TestSuite.Id = GlobalState.Configuration.TestSuite.Id;
         data.TestSuite.Metadata = GlobalState.Configuration.TestSuite.Metadata;
@@ -23,7 +23,7 @@ internal class ReportManager
         data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
         data.Results = featureResults;
         
-        foreach (var featureReport in GlobalState.Configuration.FeatureReports)
+        foreach (var featureReport in GlobalState.Configuration.StandardReports)
             await featureReport.WriteReport(data);
     }
 
@@ -40,15 +40,13 @@ internal class ReportManager
         foreach (var scenario in sharedExecutionState.Scenarios)
         {
             var data = new LoadReportData();
-            data.TestSuite = new Contracts.Reports.TestSuiteInfo();
+            data.TestSuite = new Contracts.Reports.SuiteInfo();
             data.TestSuite.Name = GlobalState.Configuration.TestSuite.Name;
             data.TestSuite.Id = GlobalState.Configuration.TestSuite.Id;
             data.TestSuite.Metadata = GlobalState.Configuration.TestSuite.Metadata;
             data.TestRunId = GlobalState.TestRunId;
             data.Group = new Contracts.Reports.GroupInfo();
-            data.Group.Name = sharedExecutionState.IFeatureTestClassInstance.Group.Name;
-            data.Group.Id = sharedExecutionState.IFeatureTestClassInstance.Group.Id;
-            data.Group.Metadata = sharedExecutionState.IFeatureTestClassInstance.Group.Metadata;
+            data.Group.Name = sharedExecutionState.IFeatureTestClassInstance.TestInfo.Group.Name;
             data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
             data.ScenarioResult = sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
 

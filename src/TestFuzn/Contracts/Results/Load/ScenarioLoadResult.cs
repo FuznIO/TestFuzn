@@ -26,7 +26,7 @@ internal class ScenarioLoadResult
         }
     }
     public int RequestsPerSecond { get; internal set; }
-    public ScenarioStatus Status { get; internal set; }
+    public TestStatus Status { get; internal set; }
     public Stats Ok { get; internal set; }
     public Stats Failed { get; internal set; }
     public int WarmupRequestCountOk { get; internal set; }

@@ -141,16 +141,7 @@ internal class LoadHtmlReportWriter : ILoadReport
                 b.AppendLine(@$"<li>{metadata.Key}: {metadata.Value}</li>");
             b.AppendLine("</ul></td></tr>");
         }
-        b.AppendLine(@$"<tr><th class=""vertical"">Feature - Name</td><td>{loadReportData.Group.Name}</th></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Feature - ID</td><td>{loadReportData.Group.Id}</th></tr>");
-
-        if (loadReportData.Group.Metadata != null && loadReportData.Group.Metadata.Count > 0)
-        {
-            b.AppendLine("<tr><th class=\"vertical\">Feature - Metadata</th><td><ul>");
-            foreach (var metadata in loadReportData.Group.Metadata)
-                b.AppendLine($"<li>{metadata.Key}: {metadata.Value}</li>");
-            b.AppendLine("</ul></td></tr>");
-        }
+        b.AppendLine(@$"<tr><th class=""vertical"">Group - Name</td><td>{loadReportData.Group.Name}</th></tr>");
 
         b.AppendLine(@$"<tr><th class=""vertical"">Scenario - Name</th><td>{loadReportData.ScenarioResult.ScenarioName}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Scenario - ID</th><td>{loadReportData.ScenarioResult.Id}</td></tr>");
@@ -182,13 +173,13 @@ internal class LoadHtmlReportWriter : ILoadReport
     private static void WriteTestStatus(ScenarioLoadResult scenarioResult, StringBuilder b)
     {
         b.AppendLine($"<h2>Test Status</h2>");
-        if (scenarioResult.Status == ScenarioStatus.Passed)
+        if (scenarioResult.Status == TestStatus.Passed)
         {
             b.AppendLine(@$"<div class=""status-panel passed"">");
             b.AppendLine(@$"<div class=""title"">✅ Load test passed</div>");
             b.AppendLine(@$"</div>");
         }
-        else if (scenarioResult.Status == ScenarioStatus.Failed)
+        else if (scenarioResult.Status == TestStatus.Failed)
         {
             var exception = "";
             if (scenarioResult.AssertWhileRunningException != null)

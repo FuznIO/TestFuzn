@@ -7,8 +7,6 @@ namespace SampleApp.Tests;
 [TestClass]
 public class ProductHttpTests : TestBase
 {
-    public override GroupInfo Group => new() { Name = "Product catalog" };
-
     [Test]
     public async Task Verify_that_products_can_be_managed()
     {

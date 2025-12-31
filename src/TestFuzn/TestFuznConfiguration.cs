@@ -11,15 +11,15 @@ public class TestFuznConfiguration
 {
     public TestSuiteInfo TestSuite { get; set; } = new();
     internal List<IContextPlugin> ContextPlugins { get; set; } = new();
-    internal List<IFeatureReport> FeatureReports { get; set; } = new();
+    internal List<IStandardReport> StandardReports { get; set; } = new();
     internal List<ILoadReport> LoadReports { get; set; } = new();
     internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
     internal ISerializerProvider SerializerProvider { get; set; }
 
     public TestFuznConfiguration()
     {
-        AddFeatureReport(new FeatureXmlReportWriter());
-        AddFeatureReport(new FeatureHtmlReportWriter());
+        AddStandardReport(new FeatureXmlReportWriter());
+        AddStandardReport(new FeatureHtmlReportWriter());
 
         AddSinkPlugin(new InMemorySnapshotCollectorSinkPlugin());
         AddLoadReport(new LoadHtmlReportWriter());
@@ -35,11 +35,11 @@ public class TestFuznConfiguration
         ContextPlugins.Add(plugin);
     }
 
-    internal void AddFeatureReport(IFeatureReport report)
+    internal void AddStandardReport(IStandardReport report)
     {
         if (report == null)
-            throw new ArgumentNullException(nameof(report), "Feature report cannot be null");
-        FeatureReports.Add(report);
+            throw new ArgumentNullException(nameof(report), "Standard report cannot be null");
+        StandardReports.Add(report);
     }
 
     internal void AddLoadReport(ILoadReport report)
@@ -66,7 +66,7 @@ public class TestFuznConfiguration
 
     internal void ClearReports()
     {
-        FeatureReports.Clear();
+        StandardReports.Clear();
         LoadReports.Clear();
         var sinkPlugin = SinkPlugins.OfType<InMemorySnapshotCollectorSinkPlugin>().FirstOrDefault();
         if (sinkPlugin != null)

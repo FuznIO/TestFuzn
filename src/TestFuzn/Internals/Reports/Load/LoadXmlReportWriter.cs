@@ -47,19 +47,6 @@ internal class LoadXmlReportWriter : ILoadReport
 
                 writer.WriteStartElement("Group");
                 writer.WriteElementString("Name", loadReportData.Group.Name);
-                writer.WriteElementString("Id", loadReportData.Group.Id);
-                if (loadReportData.Group.Metadata != null)
-                {
-                    writer.WriteStartElement("Metadata");
-                    foreach (var metadata in loadReportData.Group.Metadata)
-                    {
-                        writer.WriteStartElement("Property");
-                        writer.WriteElementString("Key", metadata.Key);
-                        writer.WriteElementString("Value", metadata.Value);
-                        writer.WriteEndElement();
-                    }
-                    writer.WriteEndElement();
-                }
                 writer.WriteEndElement();
 
                 writer.WriteElementString("TestRunId", loadReportData.TestRunId);

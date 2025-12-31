@@ -61,7 +61,7 @@ internal class ExecutionManager
                 {
                     _sharedExecutionState.TestRunState.FirstException = e;
                     scenarioCollector.SetAssertWhenDoneException(e);
-                    scenarioCollector.SetStatus(ScenarioStatus.Failed);
+                    scenarioCollector.SetStatus(TestStatus.Failed);
                 }
             }
         }

@@ -3,8 +3,6 @@
 [TestClass]
 public class InputDataTests : TestBase
 {
-    public override GroupInfo Group => new() { Name = "InputData" };
-
     [Test]
     public async Task Verify_Params_based_InputData()
     {

@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Contracts.Results.Feature;
 
-internal class StepFeatureResult
+internal class StepStandardResult
 {
     public string Name { get; internal set; }
     public string Id { get; internal set; }
@@ -9,6 +9,5 @@ internal class StepFeatureResult
     public TimeSpan Duration { get; internal set; }
     public List<Attachment> Attachments { get; internal set; }
     public List<Comment> Comments { get; internal set; }
-
-    public List<StepFeatureResult> StepResults { get; internal set; }
+    public List<StepStandardResult> StepResults { get; internal set; }
 }

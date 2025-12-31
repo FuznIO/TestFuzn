@@ -11,7 +11,6 @@ public abstract class TestBase : IFeatureTest
         {
             if (field == null)
                 field = new MsTestRunnerAdapter(TestContext);
-
             return field;
         }
         set
@@ -43,19 +42,17 @@ public abstract class TestBase : IFeatureTest
             field = value;
         }
     }
-    public FeatureTestInfo Test { get; set; }
+    public TestInfo TestInfo { get; set; }
     public TestContext TestContext { get; set; }
-    public virtual GroupInfo Group { get; set; }
 
     protected TestBase()
     {
-        var className = GetType().Name.Replace('_', ' ');
+        var className = GetType().FullName ?? GetType().Name;
+        className = className.Replace('_', ' ');
         if (className.EndsWith("Tests"))
             className = className.Substring(0, className.Length - 5);
         else if (className.EndsWith("Test"))
             className = className.Substring(0, className.Length - 4);
-        
-        Group = new GroupInfo() { Name = className };
     }
 
     public ScenarioBuilder<EmptyModel> Scenario([CallerMemberName] string scenarioName = null)
@@ -68,15 +65,15 @@ public abstract class TestBase : IFeatureTest
     {
         var testMethod = TestMethodInfo;
         
-        if (Test == null)
-            Test = GetTestInfoFromTestAttribute(testMethod);
+        if (TestInfo == null)
+            TestInfo = GetTestInfoFromTestAttribute(testMethod);
 
         var scenario = new ScenarioBuilder<TModel>(TestFramework, this, scenarioName);
 
         return scenario;
     }
 
-    private FeatureTestInfo GetTestInfoFromTestAttribute(MethodInfo methodInfo)
+    private TestInfo GetTestInfoFromTestAttribute(MethodInfo methodInfo)
     {
         // Check for [Test] attribute.
         var testAttribute = methodInfo.GetCustomAttributes(typeof(TestAttribute), inherit: true)

@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn;
 
-public enum ScenarioStatus
+public enum TestStatus
 {
     Passed,
     Failed,

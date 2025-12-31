@@ -10,6 +10,8 @@ public class TestAttribute : TestMethodAttribute
     public string? Id { get; set; }
     public string? Description { get; set; }
 
+    
+
     public TestAttribute([CallerFilePath] string callerFilePath = "", 
         [CallerLineNumber] int callerLineNumber = -1) : base(callerFilePath, callerLineNumber)
     {
@@ -20,41 +22,55 @@ public class TestAttribute : TestMethodAttribute
         if (string.IsNullOrEmpty(testMethod.TestMethodName))
             throw new Exception("testMethod.TestMethodName is null or empty.");
 
-        var skipBasedOnSkipAttributeResult = ShouldSkipBasedOnSkipAttribute(testMethod);
-        if (skipBasedOnSkipAttributeResult.Skip)
-            return skipBasedOnSkipAttributeResult.Results;
+        var testInfo = GetTestInfo(testMethod.MethodInfo);
 
-        var skipBasedOnTagsResult = ShouldSkipBasedOnTags(testMethod);
-        if (skipBasedOnTagsResult.Skip)
-            return skipBasedOnTagsResult.Results;
+        var (skipResult, reason) = new SkipEvaluator().Evaluate(testInfo, testMethod.MethodInfo);
 
-        var skipBasedOnEnvironmentResult = ShouldSkipBasedOnEnvironment(testMethod);
-        if (skipBasedOnEnvironmentResult.Skip)
-            return skipBasedOnEnvironmentResult.Results;
+        if (skipResult != SkipResult.None)
+        {
+            return [new()
+            {
+                Outcome = skipResult == SkipResult.Ignored ? UnitTestOutcome.Ignored : UnitTestOutcome.Inconclusive,
+                TestFailureException = new Exception(reason)
+            }];
+        }
 
         var result = await base.ExecuteAsync(testMethod);
         return result;
     }
 
-    public FeatureTestInfo GetTestInfo(MethodInfo testMethod)
+    public TestInfo GetTestInfo(MethodInfo methodInfo)
     {
-        var tags = GetTags(testMethod);
-        var metadata = GetMetadata(testMethod);
-        
-        return new FeatureTestInfo
+        var testInfo = new TestInfo();
+        testInfo.Name = methodInfo.Name.Replace("_", " ");
+        testInfo.FullName = methodInfo.DeclaringType.FullName + "." + methodInfo.Name;
+        testInfo.Description = Description;
+        testInfo.Id = Id;
+        testInfo.Group = GetGroupInfo(methodInfo);
+        testInfo.Tags = GetTags(methodInfo);
+        testInfo.Metadata = GetMetadata(methodInfo);
+        testInfo.Environments = GetEnvironments(methodInfo);
+        var skipAttributeInfo = GetSkipAttributeInfo(methodInfo);
+        testInfo.HasSkipAttribute = skipAttributeInfo.HasSkipAttribute;
+        testInfo.SkipAttributeReason = skipAttributeInfo.Reason;
+
+        return testInfo;
+    }
+
+    private static (bool HasSkipAttribute, string Reason) GetSkipAttributeInfo(MethodInfo testMethod)
+    {
+        var skipAttribute = testMethod.GetCustomAttributes<SkipAttribute>(inherit: true)
+                                      .FirstOrDefault();
+        if (skipAttribute != null)
         {
-            Name = Name ?? testMethod.Name.Replace("_", ""),
-            Description = Description,
-            Id = Id,
-            Tags = tags,
-            Metadata = metadata
-        };
+            return (true, skipAttribute.Reason);
+        }
+        return (false, string.Empty);
     }
 
     private static List<string>? GetTags(MethodInfo testMethod)
     {
-        var tagsAttributes = testMethod.GetCustomAttributes(typeof(TagsAttribute), inherit: true)
-                                               .OfType<TagsAttribute>()
+        var tagsAttributes = testMethod.GetCustomAttributes<TagsAttribute>(inherit: true)
                                                .ToList();
 
         return tagsAttributes.Any() 
@@ -64,8 +80,7 @@ public class TestAttribute : TestMethodAttribute
 
     private static Dictionary<string, string>? GetMetadata(MethodInfo testMethod)
     {
-        var metadataAttributes = testMethod.GetCustomAttributes(typeof(MetadataAttribute), inherit: true)
-                                                      .OfType<MetadataAttribute>()
+        var metadataAttributes = testMethod.GetCustomAttributes<MetadataAttribute>(inherit: true)
                                                       .ToList();
 
         return metadataAttributes.Any()
@@ -73,80 +88,40 @@ public class TestAttribute : TestMethodAttribute
             : null;
     }
 
-    private static (bool Skip, TestResult[] Results) ShouldSkipBasedOnSkipAttribute(ITestMethod testMethod)
+    private static List<string> GetEnvironments(MethodInfo methodInfo)
     {
-        var skipAttributes = testMethod.MethodInfo.GetCustomAttributes(typeof(SkipAttribute), inherit: true)
-            .OfType<SkipAttribute>()
-            .ToList();
+        var environmentsAttributes = methodInfo.GetCustomAttributes<EnvironmentsAttribute>(inherit: true)
+                                     .ToList();
 
-        if (!skipAttributes.Any())
-            return (false, null);
-
-
-        return (true, 
-            [new() { Outcome = UnitTestOutcome.Ignored, TestFailureException = new Exception($"Test is skipped. Reason: {skipAttributes.First().Reason}") }]);
+        return environmentsAttributes.Any()
+            ? environmentsAttributes.SelectMany(e => e.Environments ?? []).ToList()
+            : new();
     }
 
-    private static (bool Skip, TestResult[] Results) ShouldSkipBasedOnTags(ITestMethod testMethod)
+    private static GroupInfo GetGroupInfo(MethodInfo methodInfo)
     {
-        var tagsAttributes = testMethod.MethodInfo.GetCustomAttributes(typeof(TagsAttribute), inherit: true)
-                                               .OfType<TagsAttribute>()
-                                               .ToList();
+        string groupName = "";
+        var declaringType = methodInfo.DeclaringType;
 
-        List<string> tags = null;
-        if (tagsAttributes.Any())
-            tags = tagsAttributes.SelectMany(t => t.Tags ?? []).ToList();
-
-        if (GlobalState.TagsFilterInclude.Count == 0
-            && GlobalState.TagsFilterExclude.Count == 0)
+        if (declaringType != null)
         {
-            return (false, null);
-        }
+            var groupAttribute = declaringType.GetCustomAttribute<GroupAttribute>(inherit: false);
 
-        if (!tags.Any())
-            return (true, [new() { Outcome = UnitTestOutcome.Inconclusive, TestFailureException = new Exception($"Test skipped due to tags mismatch.") }]);
-
-        if (GlobalState.TagsFilterInclude.Count > 0)
-        {
-            if (!tags.Any(t => GlobalState.TagsFilterInclude.Contains(t, StringComparer.OrdinalIgnoreCase)))
+            if (groupAttribute == null)
             {
-                return (true, [new() { Outcome = UnitTestOutcome.Inconclusive, TestFailureException = new Exception($"Test skipped due to missing include tags. Test tags: [{string.Join(", ", tags)}], Include tags: [{string.Join(", ", GlobalState.TagsFilterInclude)}]") }]);
+                groupName = declaringType.FullName ?? declaringType.Name;
+                groupName = groupName.Replace('_', ' ');
+                if (groupName.EndsWith("Tests"))
+                    groupName = groupName.Substring(0, groupName.Length - 5);
+                else if (groupName.EndsWith("Test"))
+                    groupName = groupName.Substring(0, groupName.Length - 4);
+            }
+            else
+            {
+                groupName = groupAttribute.Name;
             }
         }
 
-        if (GlobalState.TagsFilterExclude.Count > 0)
-        {
-            if (tags.Any(t => GlobalState.TagsFilterExclude.Contains(t, StringComparer.OrdinalIgnoreCase)))
-            {
-                return (true, [new() { Outcome = UnitTestOutcome.Inconclusive, TestFailureException = new Exception($"Test skipped due to matching exclude tags. Test tags: [{string.Join(", ", tags)}], Exclude tags: [{string.Join(", ", GlobalState.TagsFilterExclude)}]") }]);
-            }
-        }
-
-        return (false, null);
-    }
-
-    public static (bool Skip, TestResult[] Results) ShouldSkipBasedOnEnvironment(ITestMethod testMethod)
-    {
-        var environmentsAttributes = testMethod.MethodInfo.GetCustomAttributes(typeof(EnvironmentsAttribute), inherit: true)
-                                               .OfType<EnvironmentsAttribute>()
-                                               .ToList();
-
-        var currentEnvironment = GlobalState.EnvironmentName;
-
-        if (environmentsAttributes.Count > 0)
-        {
-            var environments = environmentsAttributes.SelectMany(e => e.Environments).ToList();
-
-            if (!environments.Any(x => string.Equals(x, currentEnvironment, StringComparison.OrdinalIgnoreCase)))
-                return (true, [new() { Outcome = UnitTestOutcome.Inconclusive, TestFailureException = new Exception($"Test skipped due to environment-mismatch.") }]);
-        }
-        else
-        {
-            if (!string.IsNullOrEmpty(currentEnvironment))
-                return (true, [new() { Outcome = UnitTestOutcome.Inconclusive, TestFailureException = new Exception($"Test skipped due to environment-mismatch.") }]);
-
-        }
-
-        return (false, null);
+        return new GroupInfo { Name = groupName };
     }
 }

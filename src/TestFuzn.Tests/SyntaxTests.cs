@@ -4,19 +4,9 @@ using Microsoft.Extensions.Logging;
 namespace Fuzn.TestFuzn.Tests;
 
 [TestClass]
+[Group("TestFuzn Group Example")]
 public class SyntaxTests : TestBase, ISetupTest, ITeardownTest
 {
-    public override GroupInfo Group => new()
-    {
-        Name = "TestFuzn Syntax",
-        Id = "FeatureId-1",
-        Metadata = new()
-        {
-            { "Key1", "Value1" },
-            { "Key2", "Value2" }
-        }
-    };
-
     public Task SetupTest(Context context)
     {
         return Task.CompletedTask;

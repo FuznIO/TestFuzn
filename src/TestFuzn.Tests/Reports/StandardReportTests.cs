@@ -1,11 +1,33 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Reports;
 
 [TestClass]
-public class FeatureReportTests : TestBase
+public class StandardReportTests : TestBase
 {
     [Test]
-    [Tags("Category1", "Category2", "Category3")]
-    public async Task Feature1()
+    public async Task WithSteps()
+    {
+        await Scenario()
+            .Step("Test Step 1", (context) =>
+            {
+            })
+            .Step("Test Step 2", (context) =>
+            {
+            })
+            .Step("Test Step 3", (context) =>
+            {
+            })
+            .Step("Test Step 4", (context) =>
+            {
+            })
+            .Step("Test Step 5", (context) =>
+            {
+            })
+            .Run();
+    }
+
+    [Test]
+    [Tags("Tag1", "Tag2", "Tag2")]
+    public async Task WithSubStepsAndMetadata()
     {
         await Scenario()
             .Id("ID-1234")
@@ -54,25 +76,5 @@ public class FeatureReportTests : TestBase
             })
             .Run();
     }
-    [Test]
-    public async Task Feature2()
-    {
-        await Scenario()
-            .Step("Test Step 1", (context) =>
-            {
-            })
-            .Step("Test Step 2", (context) =>
-            {
-            })
-            .Step("Test Step 3", (context) =>
-            {
-            })
-            .Step("Test Step 4", (context) =>
-            {
-            })
-            .Step("Test Step 5", (context) =>
-            {
-            })
-            .Run();
-    }
+
 }

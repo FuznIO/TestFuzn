@@ -5,8 +5,6 @@ namespace Fuzn.TestFuzn.Tests.WebSocket;
 [TestClass]
 public class WebSocketLoadTests : TestBase
 {
-    public override GroupInfo Group => new() { Name = "WebSocket Load Testing" };
-
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
     [Test]

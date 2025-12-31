@@ -3,13 +3,6 @@
 [TestClass]
 public class LoadReportTests : TestBase
 {
-    public override GroupInfo Group => new()
-    {
-        Name = "Feature-Name-1",
-        Id = "FeatureID-1",
-        Metadata = new() { { "Meta1", "Value1" } }
-    };
-
     [Test]
     [Tags("Category1", "Category2", "Category3")]
     public async Task ShortRunning_NoErrors()
