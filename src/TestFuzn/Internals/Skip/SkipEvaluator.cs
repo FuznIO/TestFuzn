@@ -21,6 +21,11 @@ public class SkipEvaluator
         return (SkipResult.None, null);
     }
 
+    //private static AddToResults(TestInfo testInfo)
+    //{
+    //    new StandardResult
+    //}
+
     private static (SkipResult Result, string? Reason) EvaluateSkipAttribute(TestInfo testInfo, 
         MethodInfo methodInfo)
     {
