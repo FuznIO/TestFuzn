@@ -7,14 +7,14 @@ public class ContextTests : Test, IBeforeTest, IAfterTest
     public Task BeforeTest(Context context)
     {
         Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
-        Assert.AreEqual("InitScenarioTestMethod", context.StepInfo.Name);
+        Assert.AreEqual("BeforeTest", context.StepInfo.Name);
         return Task.CompletedTask;
     }
 
     public Task AfterTest(Context context)
     {
         Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
-        Assert.AreEqual("CleanupScenarioTestMethod", context.StepInfo.Name);
+        Assert.AreEqual("AfterTest", context.StepInfo.Name);
         return Task.CompletedTask;
     }
 
@@ -25,13 +25,13 @@ public class ContextTests : Test, IBeforeTest, IAfterTest
             .BeforeScenario(context =>
             {
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
-                Assert.AreEqual("InitScenario", context.StepInfo.Name);
+                Assert.AreEqual("BeforeScenario", context.StepInfo.Name);
             })
             .BeforeIteration(context =>             
             {
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.CorrelationId));
-                Assert.AreEqual("InitIteration", context.StepInfo.Name);
+                Assert.AreEqual("BeforeIteration", context.StepInfo.Name);
             })
             .Step("Step 1", context =>
             {
@@ -50,12 +50,12 @@ public class ContextTests : Test, IBeforeTest, IAfterTest
             {
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.CorrelationId));
-                Assert.AreEqual("CleanupIteration", context.StepInfo.Name);
+                Assert.AreEqual("AfterIteration", context.StepInfo.Name);
             })
             .AfterScenario(context =>
             {
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
-                Assert.AreEqual("CleanupScenario", context.StepInfo.Name);
+                Assert.AreEqual("AfterScenario", context.StepInfo.Name);
             })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(10))
             .Run();

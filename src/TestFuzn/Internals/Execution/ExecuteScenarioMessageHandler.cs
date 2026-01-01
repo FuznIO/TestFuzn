@@ -46,7 +46,7 @@ internal class ExecuteScenarioMessageHandler
         {
             if (scenario.BeforeIterationAction != null)
             {
-                var stepContext = ContextFactory.CreateIterationContext(iterationState, "InitIteration", null, null);
+                var stepContext = ContextFactory.CreateIterationContext(iterationState, "BeforeIteration", null, null);
                 await scenario.BeforeIterationAction(stepContext);
             }
 
@@ -70,7 +70,7 @@ internal class ExecuteScenarioMessageHandler
 
             if (scenario.AfterIterationAction != null)
             {
-                var stepContext = ContextFactory.CreateIterationContext(iterationState, "CleanupIteration", null, null);
+                var stepContext = ContextFactory.CreateIterationContext(iterationState, "AfterIteration", null, null);
                 await scenario.AfterIterationAction(stepContext);
             }
         }

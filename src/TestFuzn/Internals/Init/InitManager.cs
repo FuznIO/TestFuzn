@@ -54,7 +54,7 @@ internal class InitManager
     {
         if (_sharedExecutionState.TestClassInstance is IBeforeTest init)
         {
-            var context = ContextFactory.CreateContext(_testFramework, "InitScenarioTestMethod");
+            var context = ContextFactory.CreateContext(_testFramework, "BeforeTest");
             await init.BeforeTest(context);
         }
     }
@@ -63,7 +63,7 @@ internal class InitManager
     {
         if (scenario.BeforeScenario != null)
         {
-            var context = ContextFactory.CreateScenarioContext(_testFramework, "InitScenario");
+            var context = ContextFactory.CreateScenarioContext(_testFramework, "BeforeScenario");
             await scenario.BeforeScenario(context);
         }
 

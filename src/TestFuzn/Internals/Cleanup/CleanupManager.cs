@@ -44,7 +44,7 @@ internal class CleanupManager
 
     private async Task ExecuteCleanupScenario(ITestFrameworkAdapter testFramework, Scenario scenario)
     {
-        var context = ContextFactory.CreateScenarioContext(testFramework, "CleanupScenario");
+        var context = ContextFactory.CreateScenarioContext(testFramework, "AfterScenario");
         await scenario.AfterScenarioAction(context);
     }
 
@@ -52,7 +52,7 @@ internal class CleanupManager
     {
         if (_sharedExecutionState.TestClassInstance is IAfterTest cleanup)
         {
-            Context context = ContextFactory.CreateContext(_testFramework, "CleanupScenarioTestMethod");
+            Context context = ContextFactory.CreateContext(_testFramework, "AfterTest");
             await cleanup.AfterTest(context);
         }
     }
