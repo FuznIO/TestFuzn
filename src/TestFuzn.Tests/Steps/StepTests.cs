@@ -54,11 +54,17 @@ public class StepTests : Test
         bool step4Executed = false;
 
         await Scenario<CustomModel>()
+            .BeforeIteration(async (context) =>
+            {
+                context.Model.AsyncLocalCustomProperty = "AsyncLocalCustomPropertyValue";
+                Assert.AreEqual("AsyncLocalCustomPropertyValue", context.Model.AsyncLocalCustomProperty);
+            })
             .Step("Step 1 - Async with context", async (context) =>
             {
                 Assert.IsNotNull(context);
                 Assert.IsNotNull(context.Model);
                 context.Model.CustomProperty = "Step1";
+                Assert.AreEqual("AsyncLocalCustomPropertyValue", context.Model.AsyncLocalCustomProperty);
                 step1Executed = true;
                 await Task.CompletedTask;
 

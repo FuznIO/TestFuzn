@@ -1,4 +1,4 @@
-﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Feature.Execution;
+﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Standard.Execution;
 
 [TestClass]
 public class ExecutionTests : Test

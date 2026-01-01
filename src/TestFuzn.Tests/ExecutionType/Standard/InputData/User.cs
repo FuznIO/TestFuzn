@@ -1,4 +1,4 @@
-﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Feature.InputData;
+﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Standard.InputData;
 
 public class User(string name)
 {
