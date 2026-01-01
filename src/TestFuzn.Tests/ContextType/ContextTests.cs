@@ -2,16 +2,16 @@
 namespace Fuzn.TestFuzn.Tests.ContextType;
 
 [TestClass]
-public class ContextTests : Test, ISetupTest, ITeardownTest
+public class ContextTests : Test, IBeforeTest, IAfterTest
 {
-    public Task SetupTest(Context context)
+    public Task BeforeTest(Context context)
     {
         Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
         Assert.AreEqual("InitScenarioTestMethod", context.StepInfo.Name);
         return Task.CompletedTask;
     }
 
-    public Task TeardownTest(Context context)
+    public Task AfterTest(Context context)
     {
         Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
         Assert.AreEqual("CleanupScenarioTestMethod", context.StepInfo.Name);
@@ -22,12 +22,12 @@ public class ContextTests : Test, ISetupTest, ITeardownTest
     public async Task VerifyContext()
     {
         await Scenario()
-            .SetupScenario(context =>
+            .BeforeScenario(context =>
             {
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
                 Assert.AreEqual("InitScenario", context.StepInfo.Name);
             })
-            .SetupIteration(context =>             
+            .BeforeIteration(context =>             
             {
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.CorrelationId));
@@ -46,13 +46,13 @@ public class ContextTests : Test, ISetupTest, ITeardownTest
                 Assert.AreEqual("Step 2", context.StepInfo.Name);
                 Assert.AreEqual("ID2", context.StepInfo.Id);
             })
-            .TeardownIteration(context =>
+            .AfterIteration(context =>
             {
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.CorrelationId));
                 Assert.AreEqual("CleanupIteration", context.StepInfo.Name);
             })
-            .TeardownScenario(context =>
+            .AfterScenario(context =>
             {
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
                 Assert.AreEqual("CleanupScenario", context.StepInfo.Name);

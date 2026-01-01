@@ -19,7 +19,7 @@ internal class PlaywrightManager
 
         _playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
-        foreach (var browserType in PlaywrightGlobalState.Configuration.BrowserTypesToUse)
+        foreach (var browserType in PlaywrightGlobalState.Configuration.BrowserTypes)
         {
             var state = new PlaywrightState();
 
@@ -49,7 +49,7 @@ internal class PlaywrightManager
     public async Task<IPage> CreatePage(string browserType = null)
     {
         if (browserType == null)
-            browserType = PlaywrightGlobalState.Configuration.BrowserTypesToUse.First();
+            browserType = PlaywrightGlobalState.Configuration.BrowserTypes.First();
 
         if (!_isBrowserInitialized)
             throw new InvalidOperationException("PlaywrightManager not initialized. Call IniatializeGlobalResources() first.");

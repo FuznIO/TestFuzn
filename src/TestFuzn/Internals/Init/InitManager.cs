@@ -52,10 +52,10 @@ internal class InitManager
 
     private async Task ExecuteInitTestMethod()
     {
-        if (_sharedExecutionState.TestClassInstance is ISetupTest init)
+        if (_sharedExecutionState.TestClassInstance is IBeforeTest init)
         {
             var context = ContextFactory.CreateContext(_testFramework, "InitScenarioTestMethod");
-            await init.SetupTest(context);
+            await init.BeforeTest(context);
         }
     }
 

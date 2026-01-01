@@ -5,14 +5,14 @@ namespace Fuzn.TestFuzn.Tests;
 
 [TestClass]
 [Group("TestFuzn Group Example")]
-public class SyntaxTests : Test, ISetupTest, ITeardownTest
+public class SyntaxTests : Test, IBeforeTest, IAfterTest
 {
-    public Task SetupTest(Context context)
+    public Task BeforeTest(Context context)
     {
         return Task.CompletedTask;
     }
 
-    public Task TeardownTest(Context context)
+    public Task AfterTest(Context context)
     {
         return Task.CompletedTask;
     }
@@ -38,10 +38,10 @@ public class SyntaxTests : Test, ISetupTest, ITeardownTest
         await Scenario()
             .Id("Scenario-Id-1234") // Optional id for the scenario.
             // Init is the first method that will be run.
-            .SetupScenario((context) =>
+            .BeforeScenario((context) =>
             {
             })
-            .SetupScenario(async (context) =>
+            .BeforeScenario(async (context) =>
             {
                 // This will be executed before any steps.
             })
@@ -75,11 +75,11 @@ public class SyntaxTests : Test, ISetupTest, ITeardownTest
             // Load test specific: Runs through the input data sequentially, then repeats the last input data for the remaining iterations.
             .InputDataBehavior(InputDataBehavior.LoopThenRepeatLast)
             // Steps are executed in order. If one steps fails within an execution, the rest of the steps will be skipped (=not executed).
-            .SetupIteration((context) =>
+            .BeforeIteration((context) =>
             {
                 // This will be executed once per iteration, before any steps.
             })
-            .SetupIteration(async (context) =>
+            .BeforeIteration(async (context) =>
             {
                 // This will be execute once per iteration before any steps.
             })
@@ -173,16 +173,16 @@ public class SyntaxTests : Test, ISetupTest, ITeardownTest
                 Assert.IsTrue(3 == stats.GetStep("Sub step 1.1").Ok.RequestCount);
             })
             .Load().IncludeScenario(scenario2)
-            .TeardownIteration((context) =>
+            .AfterIteration((context) =>
             {
             })
-            .TeardownIteration(async (context) =>
+            .AfterIteration(async (context) =>
             {
             })
-            .TeardownScenario((context) =>
+            .AfterScenario((context) =>
             {
             })
-            .TeardownScenario(async (context) =>
+            .AfterScenario(async (context) =>
             {
             })
             .Run();

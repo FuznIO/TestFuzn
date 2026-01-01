@@ -19,13 +19,12 @@ public class Startup : IStartup
         await TestFuznIntegration.Cleanup(testContext);
     }
 
-    public TestFuznConfiguration Configuration()
+    public void Configure(TestFuznConfiguration configuration)
     {
-        var configuration = new TestFuznConfiguration();
         configuration.UseHttp();
         configuration.UsePlaywright(c =>
         {
-            c.BrowserTypesToUse = new List<string> { "chromium" };
+            c.BrowserTypes = new List<string> { "chromium" };
             c.ConfigureBrowserLaunchOptions = (browserType, launchOptions) =>
             {
                 launchOptions.Args =
@@ -45,8 +44,6 @@ public class Startup : IStartup
                 return Task.CompletedTask;
             };
         });
-
-        return configuration;
     }
 
     public Task InitGlobal(Context context)

@@ -47,23 +47,17 @@ internal static class TestFuznIntegrationCore
         if (_startupInstance == null)
             throw new InvalidOperationException($"Failed to create an instance of {startupType.FullName}.");
 
-        var configuration = _startupInstance.Configuration();
-        if (configuration == null)
-        {
-            configuration = new TestFuznConfiguration();
-        }
-        if (configuration.TestSuite == null)
-            configuration.TestSuite = new();
-
-        if (string.IsNullOrEmpty(configuration.TestSuite.Name))
-            configuration.TestSuite.Name = Assembly.GetExecutingAssembly().GetName().Name;
+        var configuration = new TestFuznConfiguration();
+        configuration.TestSuite = new TestSuiteInfo();
+        configuration.TestSuite.Name = Assembly.GetExecutingAssembly().GetName().Name;
+        _startupInstance.Configure(configuration);            
 
         GlobalState.Configuration = configuration;
 
-        if (_startupInstance is ISetupRun initGlobalInstance)
+        if (_startupInstance is IBeforeSuite initGlobalInstance)
         {
             var context = ContextFactory.CreateContext(testFramework, "InitGlobal");
-            await initGlobalInstance.BeforeRun(context);
+            await initGlobalInstance.BeforeSuite(context);
         }
 
         foreach (var plugin in GlobalState.Configuration.SinkPlugins)
@@ -80,9 +74,9 @@ internal static class TestFuznIntegrationCore
         if (_startupInstance == null)
             throw new InvalidOperationException("TestFuznIntegration has not been initialized. Please call TestFuznIntegration.InitGlobal() before running tests.");
 
-        if (_startupInstance is ITeardownRun cleanupGlobalInstance)
+        if (_startupInstance is IAfterSuite cleanupGlobalInstance)
         {
-            await cleanupGlobalInstance.TeardownRun(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
+            await cleanupGlobalInstance.AfterSuite(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
         }
 
         GlobalState.TestRunEndTime = DateTime.UtcNow;

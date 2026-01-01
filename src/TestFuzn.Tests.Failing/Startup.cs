@@ -3,7 +3,7 @@ using Fuzn.TestFuzn.Sinks.InfluxDB;
 
 namespace Fuzn.TestFuzn.Tests;
 
-[Microsoft.VisualStudio.TestTools.UnitTesting.TestClass]
+[TestClass]
 public class Startup : IStartup
 {
     [AssemblyInitialize]
@@ -18,9 +18,8 @@ public class Startup : IStartup
         await TestFuznIntegration.Cleanup(testContext);
     }
 
-    public TestFuznConfiguration Configuration()
+    public void Configure(TestFuznConfiguration configuration)
     {
-        var configuration = new TestFuznConfiguration();
         configuration.TestSuite = new TestSuiteInfo
         {
             Id = "TestFuzn.Tests.Failing",
@@ -31,7 +30,6 @@ public class Startup : IStartup
         configuration.UseInfluxDB();
         // Only one serializer can be used, last one set wins, have these 2 lines just to show both options.
         configuration.SerializerProvider = new SystemTextJsonSerializerProvider();
-        return configuration;
     }
 
     public Task InitGlobal(Context context)

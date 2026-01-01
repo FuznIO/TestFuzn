@@ -23,11 +23,11 @@ public static class TestFuznConfigurationExtensions
 
     private static void ValidateConfiguration(PluginConfiguration config)
     {
-        if (config.BrowserTypesToUse == null || !config.BrowserTypesToUse.Any())
+        if (config.BrowserTypes == null || !config.BrowserTypes.Any())
             throw new InvalidOperationException("At least one browser type must be specified in the Playwright configuration.");
 
         var validBrowserTypes = new HashSet<string> { "chromium", "firefox", "webkit" };
-        foreach (var browserType in config.BrowserTypesToUse)
+        foreach (var browserType in config.BrowserTypes)
         {
             if (!validBrowserTypes.Contains(browserType.ToLower()))
                 throw new InvalidOperationException($"Invalid browser type '{browserType}' specified in the Playwright configuration. Valid options are: chromium, firefox, webkit.");

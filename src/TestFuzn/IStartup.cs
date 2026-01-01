@@ -2,5 +2,5 @@
 
 public interface IStartup
 {
-    public TestFuznConfiguration Configuration();
+    public void Configure(TestFuznConfiguration configuration);
 }

@@ -165,7 +165,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             }
 
             b.AppendLine(@$"<tr class=""group"">");
-            b.AppendLine($"<td>📁 {groupResult.Value.Name}</td>");
+            b.AppendLine($"<td>{symbol} {groupResult.Value.Name}</td>");
             b.AppendLine($"<td>{statusText}</td>");
             b.AppendLine($"<td></td>");
             b.AppendLine($"<td></td>");
