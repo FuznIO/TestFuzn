@@ -7,13 +7,13 @@ public class ScenarioBuilder<TModel>
     where TModel : new()
 {
     private ITestFrameworkAdapter _testFramework;
-    private readonly IFeatureTest _featureTest;
+    private readonly ITest _featureTest;
     internal Scenario Scenario;
     internal List<Func<Scenario>> IncludeScenarios;
     private Action<AssertInternalState> _assertInternalState;
 
     internal ScenarioBuilder(object testFramework, 
-        IFeatureTest featureTest, 
+        ITest featureTest, 
         string name)
     {
         if (testFramework is not ITestFrameworkAdapter adapter)

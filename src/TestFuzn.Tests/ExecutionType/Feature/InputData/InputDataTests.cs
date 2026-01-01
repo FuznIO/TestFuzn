@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Feature.InputData;
 
 [TestClass]
-public class InputDataTests :  TestBase
+public class InputDataTests :  Test
 {
     [Test]
     public async Task Feature_Verify_List_based_InputData_Sync()
@@ -145,7 +145,7 @@ public class InputDataTests :  TestBase
                  })
                  .AssertInternalState((state) =>
                  {
-                     Assert.AreEqual(TestStatus.Failed, state.SharedExecutionState.ResultState.FeatureCollectors.First().Value.Status);
+                     Assert.AreEqual(TestStatus.Failed, state.SharedExecutionState.ScenarioResultState.StandardCollectors.First().Value.Status);
                  })
                  .Run();
         }

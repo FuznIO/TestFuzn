@@ -4,7 +4,7 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
-public class WebSocketConnectionTests : TestBase
+public class WebSocketConnectionTests : Test
 {
     // Use local SampleApp WebSocket server
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";

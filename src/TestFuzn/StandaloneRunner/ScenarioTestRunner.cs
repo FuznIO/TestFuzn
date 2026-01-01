@@ -13,7 +13,7 @@ internal class ScenarioTestRunner
         AnsiConsole.WriteLine();
 
         var testClassInstance = Activator.CreateInstance(testInfo.Class);
-        var featureTestClassInstance = testClassInstance as IFeatureTest;
+        var featureTestClassInstance = testClassInstance as ITest;
         if (featureTestClassInstance == null)
             throw new Exception($"Test class '{testInfo.Class.Name}' must implement IFeatureTest interface.");
 

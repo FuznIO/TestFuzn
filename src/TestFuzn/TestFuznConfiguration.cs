@@ -2,7 +2,7 @@
 using Fuzn.TestFuzn.Contracts.Providers;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Sinks;
-using Fuzn.TestFuzn.Internals.Reports.Feature;
+using Fuzn.TestFuzn.Internals.Reports.Standard;
 using Fuzn.TestFuzn.Internals.Reports.Load;
 
 namespace Fuzn.TestFuzn;
@@ -18,8 +18,8 @@ public class TestFuznConfiguration
 
     public TestFuznConfiguration()
     {
-        AddStandardReport(new FeatureXmlReportWriter());
-        AddStandardReport(new FeatureHtmlReportWriter());
+        AddStandardReport(new StandardXmlReportWriter());
+        AddStandardReport(new StandardHtmlReportWriter());
 
         AddSinkPlugin(new InMemorySnapshotCollectorSinkPlugin());
         AddLoadReport(new LoadHtmlReportWriter());

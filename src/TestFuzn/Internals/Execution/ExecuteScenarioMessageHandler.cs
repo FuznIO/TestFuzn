@@ -80,12 +80,12 @@ internal class ExecuteScenarioMessageHandler
             if (currentInputData != null)
                 iterationResult.InputData = PropertyHelper.GetStringFromProperties(currentInputData);
 
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].IterationResults.Add(iterationResult);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].IterationResults.Add(iterationResult);
             await CleanupContext(iterationState);
         }
         else if (_sharedExecutionState.TestType == TestType.Load)
         {
-            var scenarioLoadCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
+            var scenarioLoadCollector = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
 
             if (message.IsWarmup)
             {
@@ -158,7 +158,7 @@ internal class ExecuteScenarioMessageHandler
                     {
                         foreach (var sinkPlugin in GlobalState.Configuration.SinkPlugins)
                         {
-                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _sharedExecutionState.IFeatureTestClassInstance.TestInfo.Group.Name, scenarioLoadResult);
+                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _sharedExecutionState.TestClassInstance.TestInfo.Group.Name, scenarioLoadResult);
                         }
                     }
                     _lastSinkWrite[scenario.Name] = now;

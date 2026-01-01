@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Tests;
 
 [TestClass]
 [Group("TestFuzn Group Example")]
-public class SyntaxTests : TestBase, ISetupTest, ITeardownTest
+public class SyntaxTests : Test, ISetupTest, ITeardownTest
 {
     public Task SetupTest(Context context)
     {

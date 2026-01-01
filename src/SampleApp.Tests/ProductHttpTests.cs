@@ -5,7 +5,7 @@ using SampleApp.WebApp.Models;
 namespace SampleApp.Tests;
 
 [TestClass]
-public class ProductHttpTests : TestBase
+public class ProductHttpTests : Test
 {
     [Test]
     public async Task Verify_that_products_can_be_managed()

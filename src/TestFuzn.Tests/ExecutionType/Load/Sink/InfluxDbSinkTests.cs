@@ -4,7 +4,7 @@ using Fuzn.TestFuzn.Tests.Http;
 namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Sink;
 
 [TestClass]
-public class InfluxDbSinkTests : TestBase
+public class InfluxDbSinkTests : Test
 {
     [Test]
     public async Task Test()

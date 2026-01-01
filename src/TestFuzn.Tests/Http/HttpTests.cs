@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 namespace Fuzn.TestFuzn.Tests.Http;
 
 [TestClass]
-public class GetProductsE2ETests : TestBase
+public class GetProductsE2ETests : Test
 {
     [Test]
     public async Task Verify_Using_SystemText_Set_During_Startup()

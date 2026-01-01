@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Feature.Execution;
 
 [TestClass]
-public class ExecutionTests : TestBase
+public class ExecutionTests : Test
 {
     [Test]
     public async Task Verify_Run_Once()

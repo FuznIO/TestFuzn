@@ -133,6 +133,10 @@ tr.summary
 {
     font-weight: bold;
 }
+tr.group
+{
+    background-color: #FAFAFA;
+}
 
 ul, li {
     margin: 0;

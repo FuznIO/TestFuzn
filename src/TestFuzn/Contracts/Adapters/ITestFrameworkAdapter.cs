@@ -6,7 +6,7 @@ namespace Fuzn.TestFuzn.Contracts.Adapters;
 
 internal interface ITestFrameworkAdapter
 {
-    Task ExecuteTestMethod(IFeatureTest featureTest, MethodInfo methodInfo);
+    Task ExecuteTestMethod(ITest featureTest, MethodInfo methodInfo);
     bool SupportsRealTimeConsoleOutput { get; }
     ConsoleColor ForegroundColor { get; set; }
     ConsoleColor BackgroundColor { get; set; }

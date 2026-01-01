@@ -3,7 +3,7 @@
 namespace Fuzn.TestFuzn.Tests.Http;
 
 [TestClass]
-public class SerializerProviderTests : TestBase
+public class SerializerProviderTests : Test
 {
     [Test]
     public async Task Verify_Using_SystemText_Set_During_Startup()

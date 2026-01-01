@@ -3,15 +3,15 @@ using System.Xml;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Feature;
 
-namespace Fuzn.TestFuzn.Internals.Reports.Feature;
+namespace Fuzn.TestFuzn.Internals.Reports.Standard;
 
-internal class FeatureXmlReportWriter : IStandardReport
+internal class StandardXmlReportWriter : IStandardReport
 {
-    public async Task WriteReport(StandardReportData featureReportData)
+    public async Task WriteReport(StandardReportData reportData)
     {
         try
         {
-            var filePath = Path.Combine(featureReportData.TestsOutputDirectory, "TestReport.xml");
+            var filePath = Path.Combine(reportData.TestsOutputDirectory, "TestReport.xml");
 
             var stringBuilder = new StringBuilder();
             using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))
@@ -21,15 +21,15 @@ internal class FeatureXmlReportWriter : IStandardReport
 
                 writer.WriteElementString("Version", "1.0");
 
-                writer.WriteStartElement("TestSuite");
+                writer.WriteStartElement("Suite");
                 {
-                    writer.WriteElementString("Name", featureReportData.TestSuite.Name);
-                    writer.WriteElementString("Id", featureReportData.TestSuite.Id);
+                    writer.WriteElementString("Name", reportData.Suite.Name);
+                    writer.WriteElementString("Id", reportData.Suite.Id);
 
-                    if (featureReportData.TestSuite.Metadata != null)
+                    if (reportData.Suite.Metadata != null)
                     {
                         writer.WriteStartElement("Metadata");
-                        foreach (var metadata in featureReportData.TestSuite.Metadata)
+                        foreach (var metadata in reportData.Suite.Metadata)
                         {
                             writer.WriteStartElement("Property");
                             writer.WriteElementString("Key", metadata.Key);
@@ -41,10 +41,10 @@ internal class FeatureXmlReportWriter : IStandardReport
                 }
                 writer.WriteEndElement();
 
-                writer.WriteElementString("TestRunId", featureReportData.TestRunId);
+                writer.WriteElementString("TestRunId", reportData.TestRunId);
                 writer.WriteElementString("EnvironmentName", GlobalState.EnvironmentName);
 
-                foreach (var featureResult in featureReportData.Results.GroupResults.Values)
+                foreach (var featureResult in reportData.GroupResults.Values)
                 {
                     WriteGroup(writer, featureResult);
                 }
@@ -67,35 +67,36 @@ internal class FeatureXmlReportWriter : IStandardReport
 
         writer.WriteElementString("Name", groupResult.Name);
 
-        foreach (var scenarioResult in groupResult.TestResults)
+        foreach (var testResult in groupResult.TestResults)
         {
-            WriteScenario(writer, scenarioResult.Value.ScenarioResult);
+            WriteTest(writer, testResult.Value);
+
+            
         }
 
         writer.WriteEndElement();
     }
 
-    private void WriteScenario(XmlWriter writer, ScenarioStandardResult scenarioResult)
+    private void WriteTest(XmlWriter writer, TestResult testResult)
     {
-        writer.WriteStartElement("Scenario");
+        writer.WriteStartElement("Test");
+        writer.WriteElementString("Name", testResult.Name);
+        writer.WriteElementString("Id", testResult.Id);
 
-        writer.WriteElementString("Name", scenarioResult.Name);
-        writer.WriteElementString("Id", scenarioResult.Id);
-
-        if (scenarioResult.Tags != null && scenarioResult.Tags.Count > 0)
+        if (testResult.Tags != null && testResult.Tags.Count > 0)
         {
             writer.WriteStartElement("Tags");
-            foreach (var tag in scenarioResult.Tags)
+            foreach (var tag in testResult.Tags)
             {
                 writer.WriteElementString("Tag", tag);
             }
             writer.WriteEndElement();
         }
 
-        if (scenarioResult.Metadata != null)
+        if (testResult.Metadata != null)
         {
             writer.WriteStartElement("Metadata");
-            foreach (var metadata in scenarioResult.Metadata)
+            foreach (var metadata in testResult.Metadata)
             {
                 writer.WriteStartElement("Property");
                 writer.WriteElementString("Key", metadata.Key);
@@ -104,6 +105,18 @@ internal class FeatureXmlReportWriter : IStandardReport
             }
             writer.WriteEndElement();
         }
+
+        writer.WriteElementString("Duration", testResult.Duration.ToString(@"hh\:mm\:ss\.fff"));
+
+        if (testResult.ScenarioResult != null)
+            WriteScenario(writer, testResult.ScenarioResult);
+
+        writer.WriteEndElement();
+    }
+
+    private void WriteScenario(XmlWriter writer, ScenarioStandardResult scenarioResult)
+    {
+        writer.WriteStartElement("Scenario");
 
         var status = scenarioResult.Status.ToString();
 

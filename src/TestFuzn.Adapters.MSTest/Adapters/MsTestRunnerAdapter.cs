@@ -29,7 +29,7 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
         set;
     }
 
-    public Task ExecuteTestMethod(IFeatureTest featureTest, MethodInfo methodInfo)
+    public Task ExecuteTestMethod(ITest featureTest, MethodInfo methodInfo)
     {
         throw new NotImplementedException();
     }

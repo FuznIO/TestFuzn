@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
-public class StepTests : TestBase
+public class StepTests : Test
 {
     [Test]
     public async Task Verify_Step_Syntax_For_Scenario_With_Default_StepContext()

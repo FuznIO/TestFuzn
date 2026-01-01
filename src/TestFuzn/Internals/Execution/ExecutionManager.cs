@@ -48,7 +48,7 @@ internal class ExecutionManager
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            var scenarioCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
+            var scenarioCollector = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
             var scenarioResult = scenarioCollector.GetCurrentResult();
             if (scenario.AssertWhenDoneAction != null)
             {

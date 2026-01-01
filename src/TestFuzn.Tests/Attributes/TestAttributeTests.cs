@@ -1,10 +1,10 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Attributes;
 
 [TestClass]
-public class TestAttributeTests : TestBase
+public class TestAttributeTests : Test
 {
     [Test]
-    public async Task TestAttributeUsedShouldExecuteScenario()
+    public async Task WhenTestAttributeIsUsedScenarioasShouldBeExecuted()
     {
         var wasRun = false;
 

@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Failing;
 
 [TestClass]
-public class DatarowAttributeTests : TestBase
+public class DatarowAttributeTests : Test
 {
     [DataRow("Test")]
     [Test]

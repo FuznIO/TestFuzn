@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Adapters;
 
 internal class StandaloneRunnerAdapter : BaseStandaloneRunnerAdapter
 {
-    public override async Task ExecuteTestMethod(IFeatureTest featureTest, MethodInfo methodInfo)
+    public override async Task ExecuteTestMethod(ITest featureTest, MethodInfo methodInfo)
     {
         var testContextProperty = featureTest.GetType().GetProperty("TestContext");
 

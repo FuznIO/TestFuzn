@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Environment;
 
 [TestClass]
-public class EnvironmentTests : TestBase
+public class EnvironmentTests : Test
 {
 
     [Test]

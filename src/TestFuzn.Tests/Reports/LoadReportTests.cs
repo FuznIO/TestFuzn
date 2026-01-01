@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Reports;
 
 [TestClass]
-public class LoadReportTests : TestBase
+public class LoadReportTests : Test
 {
     [Test]
     [Tags("Category1", "Category2", "Category3")]

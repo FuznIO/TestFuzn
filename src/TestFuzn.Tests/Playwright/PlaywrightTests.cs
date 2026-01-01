@@ -3,7 +3,7 @@
 namespace Fuzn.TestFuzn.Tests.Playwright;
 
 [TestClass]
-public class PlaywrightTests : TestBase
+public class PlaywrightTests : Test
 {
     [Test]
     public async Task Verify_that_playwright_works()

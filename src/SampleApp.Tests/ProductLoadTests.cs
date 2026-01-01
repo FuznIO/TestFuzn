@@ -5,7 +5,7 @@ using SampleApp.WebApp.Models;
 namespace SampleApp.Tests;
 
 [TestClass]
-public class ProductLoadTests : TestBase
+public class ProductLoadTests : Test
 {
     [Test]
     public async Task Verify_that_get_products_scales()

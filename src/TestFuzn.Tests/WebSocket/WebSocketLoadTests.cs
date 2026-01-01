@@ -3,7 +3,7 @@
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
-public class WebSocketLoadTests : TestBase
+public class WebSocketLoadTests : Test
 {
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 

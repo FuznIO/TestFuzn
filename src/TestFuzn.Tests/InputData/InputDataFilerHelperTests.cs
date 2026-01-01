@@ -3,7 +3,7 @@
 namespace Fuzn.TestFuzn.Tests.InputData;
 
 [TestClass]
-public class InputDataFilerHelperTests : TestBase
+public class InputDataFilerHelperTests : Test
 {
     [Test]
     public async Task Verify_Csv_InputData()

@@ -9,19 +9,19 @@ namespace Fuzn.TestFuzn.Internals.State;
 internal class SharedExecutionState
 {
     public List<Scenario> Scenarios { get; set; } = new();
-    public IFeatureTest IFeatureTestClassInstance { get; set; }
+    public ITest TestClassInstance { get; set; }
     public TestType TestType { get; set; }
     public TestRunState TestRunState { get; } = new();
     public ScenarioExecutionState ExecutionState { get; } = new();
-    public ScenarioResultState ResultState { get; } = new();
+    public ScenarioResultState ScenarioResultState { get; } = new();
 
     public bool IsConsumingCompleted { get; private set; }
 
-    public SharedExecutionState(IFeatureTest featureTest, params Scenario[] scenarios)
+    public SharedExecutionState(ITest featureTest, params Scenario[] scenarios)
     {
         TestRunState.StartTime = DateTime.UtcNow;
         TestRunState.ExecutionStatus = ExecutionStatus.Running;
-        IFeatureTestClassInstance = featureTest;
+        TestClassInstance = featureTest;
         Scenarios.AddRange(scenarios);
         TestType = scenarios.First().TestType;
 
@@ -32,8 +32,8 @@ internal class SharedExecutionState
 
             ExecutionState.MessageCountPerScenario[scenario.Name] = 0;
 
-            ResultState.LoadCollectors.Add(scenario.Name, new ScenarioLoadCollector(scenario));
-            ResultState.FeatureCollectors.Add(scenario.Name, new ScenarioStandardResult(scenario));
+            ScenarioResultState.LoadCollectors.Add(scenario.Name, new ScenarioLoadCollector(scenario));
+            ScenarioResultState.StandardCollectors.Add(scenario.Name, new ScenarioStandardResult(scenario));
         }
     }
 
@@ -108,7 +108,7 @@ internal class SharedExecutionState
 
         foreach (var scenario in Scenarios)
         {
-            ResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Measurement);
+            ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Measurement);
         }
     }
 }

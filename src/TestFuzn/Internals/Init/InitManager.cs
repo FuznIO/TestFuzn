@@ -26,8 +26,8 @@ internal class InitManager
     {
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsStarted(FeatureTestPhase.Init);
-            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(FeatureTestPhase.Init);
+            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init);
         }
 
         await ExecuteInitTestMethod();
@@ -45,14 +45,14 @@ internal class InitManager
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsCompleted(FeatureTestPhase.Init);
-            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(FeatureTestPhase.Init);
+            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init);
         }
     }
 
     private async Task ExecuteInitTestMethod()
     {
-        if (_sharedExecutionState.IFeatureTestClassInstance is ISetupTest init)
+        if (_sharedExecutionState.TestClassInstance is ISetupTest init)
         {
             var context = ContextFactory.CreateContext(_testFramework, "InitScenarioTestMethod");
             await init.SetupTest(context);

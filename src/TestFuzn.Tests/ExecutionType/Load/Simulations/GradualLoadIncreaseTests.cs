@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Simulations;
 
 [TestClass]
-public class GradualLoadIncreaseTests : TestBase
+public class GradualLoadIncreaseTests : Test
 {
     [Test]
     public async Task GradualLoadIncreaseTestsInitialize()

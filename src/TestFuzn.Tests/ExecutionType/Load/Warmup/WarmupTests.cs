@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Warmup;
 
 [TestClass]
-public class WarmupTests : TestBase
+public class WarmupTests : Test
 {
     [Test]
     public async Task Verify()

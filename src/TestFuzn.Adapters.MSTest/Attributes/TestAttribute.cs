@@ -8,9 +8,7 @@ public class TestAttribute : TestMethodAttribute
 {
     public string? Name { get; set; }
     public string? Id { get; set; }
-    public string? Description { get; set; }
-
-    
+    public string? Description { get; set; }    
 
     public TestAttribute([CallerFilePath] string callerFilePath = "", 
         [CallerLineNumber] int callerLineNumber = -1) : base(callerFilePath, callerLineNumber)
@@ -24,14 +22,14 @@ public class TestAttribute : TestMethodAttribute
 
         var testInfo = GetTestInfo(testMethod.MethodInfo);
 
-        var (skipResult, reason) = new SkipEvaluator().Evaluate(testInfo, testMethod.MethodInfo);
+        new SkipHandler().ApplySkipEvaluation(testInfo, testMethod.MethodInfo);
 
-        if (skipResult != SkipResult.None)
+        if (testInfo.Skipped)
         {
             return [new()
             {
-                Outcome = skipResult == SkipResult.Ignored ? UnitTestOutcome.Ignored : UnitTestOutcome.Inconclusive,
-                TestFailureException = new Exception(reason)
+                Outcome = UnitTestOutcome.Ignored,
+                TestFailureException = new Exception(testInfo.SkipReason)
             }];
         }
 

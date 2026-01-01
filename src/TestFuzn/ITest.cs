@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn;
 
-public interface IFeatureTest
+public interface ITest
 {
     object TestFramework { get; set; }
     public MethodInfo TestMethodInfo { get; set; }

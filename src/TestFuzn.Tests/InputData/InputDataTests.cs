@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.InputData;
 
 [TestClass]
-public class InputDataTests : TestBase
+public class InputDataTests : Test
 {
     [Test]
     public async Task Verify_Params_based_InputData()

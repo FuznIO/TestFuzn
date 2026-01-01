@@ -1,27 +1,27 @@
 ﻿using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Reports;
-using Fuzn.TestFuzn.Internals.Results.Feature;
+using Fuzn.TestFuzn.Internals.Results.Standard;
 using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Reports;
 
 internal class ReportManager
 {
-    public async Task WriteFeatureReports(FeatureResultManager featureResultsManager)
+    public async Task WriteStandardReports(StandardResultManager featureResultsManager)
     {
         var featureResults = featureResultsManager.GetSuiteResults();
 
         var data = new StandardReportData();
-        data.TestSuite = new Contracts.Reports.SuiteInfo();
-        data.TestSuite.Name = GlobalState.Configuration.TestSuite.Name;
-        data.TestSuite.Id = GlobalState.Configuration.TestSuite.Id;
-        data.TestSuite.Metadata = GlobalState.Configuration.TestSuite.Metadata;
+        data.Suite = new SuiteInfo();
+        data.Suite.Name = GlobalState.Configuration.TestSuite.Name;
+        data.Suite.Id = GlobalState.Configuration.TestSuite.Id;
+        data.Suite.Metadata = GlobalState.Configuration.TestSuite.Metadata;
         data.TestRunId = GlobalState.TestRunId;
         data.TestRunStartTime = GlobalState.TestRunStartTime;
         data.TestRunEndTime = GlobalState.TestRunEndTime;
         data.TestRunDuration = data.TestRunEndTime - data.TestRunStartTime;
         data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
-        data.Results = featureResults;
+        data.GroupResults = featureResults.GroupResults;
         
         foreach (var featureReport in GlobalState.Configuration.StandardReports)
             await featureReport.WriteReport(data);
@@ -46,9 +46,9 @@ internal class ReportManager
             data.TestSuite.Metadata = GlobalState.Configuration.TestSuite.Metadata;
             data.TestRunId = GlobalState.TestRunId;
             data.Group = new Contracts.Reports.GroupInfo();
-            data.Group.Name = sharedExecutionState.IFeatureTestClassInstance.TestInfo.Group.Name;
+            data.Group.Name = sharedExecutionState.TestClassInstance.TestInfo.Group.Name;
             data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
-            data.ScenarioResult = sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
+            data.ScenarioResult = sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
 
             foreach (var loadReport in loadReports)
                 await loadReport.WriteReport(data);

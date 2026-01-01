@@ -2,7 +2,7 @@
 namespace Fuzn.TestFuzn.Tests.ContextType;
 
 [TestClass]
-public class ContextTests : TestBase, ISetupTest, ITeardownTest
+public class ContextTests : Test, ISetupTest, ITeardownTest
 {
     public Task SetupTest(Context context)
     {

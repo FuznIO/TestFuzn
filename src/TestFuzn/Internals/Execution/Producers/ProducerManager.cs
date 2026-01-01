@@ -25,8 +25,8 @@ internal class ProducerManager
 
     private async Task Produce(Scenario scenario)
     {
-        var featureCollector = _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name];
-        var loadCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
+        var featureCollector = _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name];
+        var loadCollector = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
         var hasWarmupPhase = false;
         var measurementPhaseStarted = false;
 

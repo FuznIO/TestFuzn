@@ -4,7 +4,7 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
-public class WebSocketCleanupTests : TestBase
+public class WebSocketCleanupTests : Test
 {
     private static readonly string EchoServerUrl = "wss://localhost:44316/ws";
 

@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Fuzn.TestFuzn;
 
-public abstract class TestBase : IFeatureTest
+public abstract class Test : ITest
 {
     public object TestFramework
     {
@@ -45,7 +45,7 @@ public abstract class TestBase : IFeatureTest
     public TestInfo TestInfo { get; set; }
     public TestContext TestContext { get; set; }
 
-    protected TestBase()
+    protected Test()
     {
         var className = GetType().FullName ?? GetType().Name;
         className = className.Replace('_', ' ');

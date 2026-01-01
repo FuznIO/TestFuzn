@@ -3,7 +3,7 @@
 namespace Fuzn.TestFuzn.Tests.InputData;
 
 [TestClass]
-public class InputDataBehaviorTests : TestBase
+public class InputDataBehaviorTests : Test
 {
     [Test]
     public async Task Verify_Loop()

@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Reports;
 
 [TestClass]
-public class StandardReportTests : TestBase
+public class StandardReportTests : Test
 {
     [Test]
     public async Task WithSteps()

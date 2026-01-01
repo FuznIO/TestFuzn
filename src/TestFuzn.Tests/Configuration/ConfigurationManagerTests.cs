@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Configuration;
 
 [TestClass]
-public class ConfigurationManagerTests : TestBase
+public class ConfigurationManagerTests : Test
 {
     [Test]
     public async Task Verify_that_ConfigurationManager_works()

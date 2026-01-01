@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.InitCleanup;
 
 [TestClass]
-public class InitAndCleanupTests : TestBase, ISetupTest, ITeardownTest
+public class InitAndCleanupTests : Test, ISetupTest, ITeardownTest
 {
     private bool _initScenarioTestMethodCalled = false;
     private bool _cleanupScenarioTestMethodCalled = false;

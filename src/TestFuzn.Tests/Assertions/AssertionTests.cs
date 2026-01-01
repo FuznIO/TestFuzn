@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Assertions;
 
 [TestClass]
-public class AssertionTests : TestBase
+public class AssertionTests : Test
 {
     [Test]
     public async Task Verify_assert_while_running_should_fail()

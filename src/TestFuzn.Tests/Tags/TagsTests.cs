@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
-public class TagsTests : TestBase
+public class TagsTests : Test
 {
     [Tags("Category1", "Category2", "Category3")]
     [Test]

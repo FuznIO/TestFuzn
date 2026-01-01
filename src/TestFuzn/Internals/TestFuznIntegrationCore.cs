@@ -1,6 +1,6 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals.Reports;
-using Fuzn.TestFuzn.Internals.Results.Feature;
+using Fuzn.TestFuzn.Internals.Results.Standard;
 using System.Reflection;
 
 namespace Fuzn.TestFuzn.Internals;
@@ -90,7 +90,7 @@ internal static class TestFuznIntegrationCore
         if (!GlobalState.IsInitializeGlobalExecuted)
             return;
         
-        await new ReportManager().WriteFeatureReports(new FeatureResultManager());
+        await new ReportManager().WriteStandardReports(new StandardResultManager());
 
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)
             await plugin.CleanupGlobal();

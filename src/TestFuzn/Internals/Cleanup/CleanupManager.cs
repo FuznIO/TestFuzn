@@ -19,8 +19,8 @@ internal class CleanupManager
     {
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsStarted(FeatureTestPhase.Cleanup);
-            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Cleanup);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(FeatureTestPhase.Cleanup);
+            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Cleanup);
         }
 
         var cleanupPerScenarioTasks = new List<Task>();
@@ -37,8 +37,8 @@ internal class CleanupManager
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsCompleted(FeatureTestPhase.Cleanup);
-            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Cleanup);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(FeatureTestPhase.Cleanup);
+            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Cleanup);
         }
     }
 
@@ -50,7 +50,7 @@ internal class CleanupManager
 
     private async Task ExecuteCleanupTestMethod()
     {
-        if (_sharedExecutionState.IFeatureTestClassInstance is ITeardownTest cleanup)
+        if (_sharedExecutionState.TestClassInstance is ITeardownTest cleanup)
         {
             Context context = ContextFactory.CreateContext(_testFramework, "CleanupScenarioTestMethod");
             await cleanup.TeardownTest(context);

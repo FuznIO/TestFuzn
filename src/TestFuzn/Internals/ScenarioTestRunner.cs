@@ -8,7 +8,7 @@ using Fuzn.TestFuzn.Internals.Init;
 using Fuzn.TestFuzn.Internals.InputData;
 using Fuzn.TestFuzn.Internals.Logger;
 using Fuzn.TestFuzn.Internals.Reports;
-using Fuzn.TestFuzn.Internals.Results.Feature;
+using Fuzn.TestFuzn.Internals.Results.Standard;
 using Fuzn.TestFuzn.Internals.State;
 using System.Runtime.ExceptionServices;
 
@@ -17,11 +17,11 @@ namespace Fuzn.TestFuzn.Internals;
 internal class ScenarioTestRunner
 {
     private readonly ITestFrameworkAdapter _testFramework;
-    private readonly IFeatureTest _featureTest;
+    private readonly ITest _featureTest;
     internal Action<AssertInternalState> _assertInternalState;
 
     public ScenarioTestRunner(ITestFrameworkAdapter testFramework, 
-        IFeatureTest featureTest,
+        ITest featureTest,
         Action<AssertInternalState> assertInternalState)
     {
         if (testFramework == null)
@@ -44,7 +44,7 @@ internal class ScenarioTestRunner
         var consumerManager = new ConsumerManager(sharedExecutionState, executeScenarioMessageHandler);
         var executionManager = new ExecutionManager(_testFramework, sharedExecutionState, producerManager, consumerManager);
         var cleanupManager = new CleanupManager(_testFramework, sharedExecutionState);
-        var featureResultManager = new FeatureResultManager();
+        var featureResultManager = new StandardResultManager();
         var reportManager = new ReportManager();
 
         try
@@ -53,7 +53,7 @@ internal class ScenarioTestRunner
             await initManager.Run();
             await executionManager.Run();
             await cleanupManager.Run();
-            featureResultManager.AddScenarioResults(sharedExecutionState);
+            featureResultManager.AddNonSkippedTestResults(sharedExecutionState);
             await reportManager.WriteLoadReports(sharedExecutionState);
             await consoleManager.Complete();
 
