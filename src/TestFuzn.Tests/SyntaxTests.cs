@@ -23,7 +23,7 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
         Id = "Test-Id-1234")]
     [Metadata("Key1", "Value1")]
     [Metadata("Key2", "Value2")]
-    [Tags("Category1", "Category2", "FooTag123")]
+    [Tags("UT", "IT")]
     [TargetEnvironments("Dev", "Test")]
     public async Task DefaultContext()
     {
@@ -38,7 +38,7 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
         // Load Test = A test runs multiple times with the same input data, simulating load on the system.
         await Scenario()
             .Id("Scenario-Id-1234") // Optional id for the scenario.
-            // Init is the first method that will be run.
+            // BeforeScenario is the first method that will be run.
             .BeforeScenario((context) =>
             {
             })
@@ -47,7 +47,7 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
                 // This will be executed before any steps.
             })
             // InputData will run before steps. Only one of the InputData* methods should be used.
-            // For feature test: Defines the number of iterations the test will be run.
+            // For standard test: Defines the number of iterations the test will be run.
             // For load test: Load().Simulations() defines the number of iterations the test will run, input data provides test data for each iteration.
             .InputData("user1", "user2", "user3")
             .InputDataFromList((context) =>
@@ -117,7 +117,7 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
                     });
                 });
 
-                // Comments: Feature: Outputted to console and reports. Load load tests: Outputted to log file
+                // Comments: Standard test: Outputted to console and reports. Load tests: Outputted to log file
                 context.Comment("Opening"); 
                 context.Comment("Closing");
 
