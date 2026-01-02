@@ -3,18 +3,40 @@ using System.Runtime.CompilerServices;
 
 namespace Fuzn.TestFuzn;
 
+/// <summary>
+/// Marks a method as a TestFuzn test method.
+/// This attribute extends MSTest's TestMethodAttribute and provides additional metadata for TestFuzn.
+/// </summary>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 public class TestAttribute : TestMethodAttribute
 {
+    /// <summary>
+    /// Gets or sets the display name of the test.
+    /// If not specified, the method name is used with underscores replaced by spaces.
+    /// </summary>
     public string? Name { get; set; }
-    public string? Id { get; set; }
-    public string? Description { get; set; }    
 
+    /// <summary>
+    /// Gets or sets the unique identifier for the test. This can be used for tracking and reporting purposes if a test is renamed.
+    /// </summary>
+    public string? Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets the description of the test.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TestAttribute"/> class.
+    /// </summary>
+    /// <param name="callerFilePath">The source file path of the caller. Automatically populated by the compiler.</param>
+    /// <param name="callerLineNumber">The line number in the source file. Automatically populated by the compiler.</param>
     public TestAttribute([CallerFilePath] string callerFilePath = "", 
         [CallerLineNumber] int callerLineNumber = -1) : base(callerFilePath, callerLineNumber)
     {
     }
 
+    /// <inheritdoc/>
     public override async Task<TestResult[]> ExecuteAsync(ITestMethod testMethod)
     {
         if (string.IsNullOrEmpty(testMethod.TestMethodName))
@@ -37,7 +59,7 @@ public class TestAttribute : TestMethodAttribute
         return result;
     }
 
-    public TestInfo GetTestInfo(MethodInfo methodInfo)
+    internal TestInfo GetTestInfo(MethodInfo methodInfo)
     {
         var testInfo = new TestInfo();
         testInfo.Name = methodInfo.Name.Replace("_", " ");

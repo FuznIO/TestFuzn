@@ -3,8 +3,13 @@ using System.Runtime.CompilerServices;
 
 namespace Fuzn.TestFuzn;
 
+/// <summary>
+/// Abstract base class for test classes using the MSTest adapter.
+/// Inherit from this class to create TestFuzn tests with MSTest.
+/// </summary>
 public abstract class Test : ITest
 {
+    /// <inheritdoc/>
     public object TestFramework
     {
         get
@@ -19,6 +24,7 @@ public abstract class Test : ITest
         }
     }
 
+    /// <inheritdoc/>
     public MethodInfo TestMethodInfo
     {
         get
@@ -42,18 +48,38 @@ public abstract class Test : ITest
             field = value;
         }
     }
+
+    /// <inheritdoc/>
     public TestInfo TestInfo { get; set; }
+
+    /// <summary>
+    /// Gets or sets the MSTest test context.
+    /// </summary>
     public TestContext TestContext { get; set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Test"/> class.
+    /// </summary>
     protected Test()
     {
     }
 
+    /// <summary>
+    /// Creates a new scenario builder using the default <see cref="EmptyModel"/> for data sharing.
+    /// </summary>
+    /// <param name="scenarioName">The name of the scenario. Defaults to the test name for tests with a single scenario.</param>
+    /// <returns>A <see cref="ScenarioBuilder{TModel}"/> instance for configuring and running the scenario.</returns>
     public ScenarioBuilder<EmptyModel> Scenario([CallerMemberName] string scenarioName = null)
     {
         return Scenario<EmptyModel>(scenarioName);
     }
 
+    /// <summary>
+    /// Creates a new scenario builder with a custom model type for sharing data across steps.
+    /// </summary>
+    /// <typeparam name="TModel">The model type used to share data across steps within an iteration.</typeparam>
+    /// <param name="scenarioName">The name of the scenario. Defaults to the test name for tests with a single scenario.</param>
+    /// <returns>A <see cref="ScenarioBuilder{TModel}"/> instance for configuring and running the scenario.</returns>
     public ScenarioBuilder<TModel> Scenario<TModel>([CallerMemberName] string scenarioName = "")
         where TModel : new()
     {
