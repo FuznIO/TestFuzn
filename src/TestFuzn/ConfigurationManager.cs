@@ -86,7 +86,6 @@ public class ConfigurationManager
             throw new InvalidOperationException($"Configuration key 'TestFuzn:Values:{key}' could not be converted to type {typeof(T).Name}.");
         }
     }
-
     private static IConfigurationRoot GetConfigRoot()
     {
         if (_configRoot != null)
@@ -101,11 +100,21 @@ public class ConfigurationManager
                                 .SetBasePath(Directory.GetCurrentDirectory())
                                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
 
-            if (!string.IsNullOrEmpty(GlobalState.EnvironmentName))
-                builder.AddJsonFile($"appsettings.{GlobalState.EnvironmentName}.json", optional: true, reloadOnChange: false);
+            var executionEnv = GlobalState.ExecutionEnvironment;
+            var targetEnv = GlobalState.TargetEnvironment;
+            var nodeName = GlobalState.NodeName;
 
-            if (!string.IsNullOrEmpty(GlobalState.NodeName))
-                builder.AddJsonFile($"appsettings.{GlobalState.NodeName}.json", optional: true, reloadOnChange: false);
+            if (!string.IsNullOrEmpty(executionEnv))
+                builder.AddJsonFile($"appsettings.exec-{executionEnv}.json", optional: true, reloadOnChange: false);
+
+            if (!string.IsNullOrEmpty(targetEnv))
+                builder.AddJsonFile($"appsettings.target-{targetEnv}.json", optional: true, reloadOnChange: false);
+
+            if (!string.IsNullOrEmpty(executionEnv) && !string.IsNullOrEmpty(targetEnv))
+                builder.AddJsonFile($"appsettings.exec-{executionEnv}.target-{targetEnv}.json", optional: true, reloadOnChange: false);
+
+            if (!string.IsNullOrEmpty(nodeName))
+                builder.AddJsonFile($"appsettings.{nodeName}.json", optional: true, reloadOnChange: false);
 
             _configRoot = builder.Build();
 

@@ -42,7 +42,8 @@ internal class StandardXmlReportWriter : IStandardReport
                 writer.WriteEndElement();
 
                 writer.WriteElementString("TestRunId", reportData.TestRunId);
-                writer.WriteElementString("EnvironmentName", GlobalState.EnvironmentName);
+                writer.WriteElementString("TargetEnvironment", GlobalState.TargetEnvironment);
+                writer.WriteElementString("ExecutionEnvironment", GlobalState.ExecutionEnvironment);
 
                 foreach (var featureResult in reportData.GroupResults.Values)
                 {

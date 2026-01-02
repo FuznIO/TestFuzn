@@ -24,6 +24,7 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
     [Metadata("Key1", "Value1")]
     [Metadata("Key2", "Value2")]
     [Tags("Category1", "Category2", "FooTag123")]
+    [TargetEnvironments("Dev", "Test")]
     public async Task DefaultContext()
     {
         var scenario2 = Scenario("Scenario2").Step("Step1", (context) => { })
@@ -33,7 +34,7 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
             });
 
         // Definition of test types:
-        // Feature Test = A test runs once with one set of input data, or run multiple times with different input data.
+        // Standard Test = A test runs once with one set of input data, or run multiple times with different input data.
         // Load Test = A test runs multiple times with the same input data, simulating load on the system.
         await Scenario()
             .Id("Scenario-Id-1234") // Optional id for the scenario.

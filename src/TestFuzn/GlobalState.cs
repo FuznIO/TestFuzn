@@ -17,7 +17,20 @@ public static class GlobalState
     internal static TimeSpan SinkWriteFrequency { get; set; } = TimeSpan.FromSeconds(3);
     internal static string NodeName { get; set; }
     internal static ISerializerProvider SerializerProvider => Configuration.SerializerProvider;
-    public static string EnvironmentName { get; set; }
+    
+    /// <summary>
+    /// The target environment the tests are executing against (e.g., Dev, Test, Staging, Production).
+    /// Set via TESTFUZN_TARGET_ENVIRONMENT or --target-environment argument.
+    /// </summary>
+    public static string TargetEnvironment { get; set; }
+    
+    /// <summary>
+    /// The execution environment where tests are running (e.g., Local, CI, CloudAgent).
+    /// Set via TESTFUZN_EXECUTION_ENVIRONMENT or --execution-environment argument.
+    /// Used for configuration loading, not for test filtering.
+    /// </summary>
+    public static string ExecutionEnvironment { get; set; }
+    
     public static List<string> TagsFilterInclude { get; set; } = new();
     public static List<string> TagsFilterExclude { get; set; } = new();
     

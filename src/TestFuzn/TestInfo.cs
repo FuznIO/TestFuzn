@@ -13,5 +13,5 @@ public class TestInfo
     public GroupInfo Group { get; set; }
     public Dictionary<string, string> Metadata { get; set; }
     public List<string> Tags { get; set; }
-    public List<string> Environments { get; set; }
+    public List<string> TargetEnvironments { get; set; }
 }

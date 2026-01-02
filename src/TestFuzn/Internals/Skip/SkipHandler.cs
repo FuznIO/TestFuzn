@@ -29,9 +29,9 @@ public class SkipHandler
         if (tagsResult.Skip)
             return tagsResult;
 
-        var environmentResult = EvaluateEnvironment(testInfo, testMethod);
-        if (environmentResult.Skip)
-            return environmentResult;
+        var targetEnvResult = EvaluateTargetEnvironment(testInfo);
+        if (targetEnvResult.Skip)
+            return targetEnvResult;
 
         return (false, null);
     }
@@ -51,8 +51,8 @@ public class SkipHandler
         if (GlobalState.TagsFilterInclude.Count == 0 && GlobalState.TagsFilterExclude.Count == 0)
             return (false, null);
 
-        if (test.Tags.Count == 0)
-            return (false, "Test skipped due to tags mismatch.");
+        if (test.Tags == null || test.Tags.Count == 0)
+            return (false, null);
 
         if (GlobalState.TagsFilterInclude.Count > 0 &&
             !test.Tags.Any(t => GlobalState.TagsFilterInclude.Contains(t, StringComparer.OrdinalIgnoreCase)))
@@ -70,20 +70,33 @@ public class SkipHandler
 
         return (false, null);
     }
-
-    private static (bool Skip, string? Reason) EvaluateEnvironment(TestInfo testInfo,
-        MethodInfo methodInfo)
+    private static (bool Skip, string? Reason) EvaluateTargetEnvironment(TestInfo testInfo)
     {
-        var currentEnvironment = GlobalState.EnvironmentName;
+        var testTargetEnvs = testInfo.TargetEnvironments;
+        var currentTargetEnv = GlobalState.TargetEnvironment ?? "";
 
-        if (testInfo.Environments.Count > 0)
+        if (testTargetEnvs == null || testTargetEnvs.Count == 0)
         {
-            if (!testInfo.Environments.Any(x => string.Equals(x, currentEnvironment, StringComparison.OrdinalIgnoreCase)))
-                return (true, "Test skipped due to environment-mismatch.");
+            if (string.IsNullOrEmpty(currentTargetEnv))
+                return (false, null);
+            
+            return (true, 
+                $"Test skipped: test has no target environment specified, but runtime target is [{currentTargetEnv}].");
         }
-        else if (!string.IsNullOrEmpty(currentEnvironment))
+
+        if (string.IsNullOrEmpty(currentTargetEnv))
         {
-            return (true, "Test skipped due to environment-mismatch.");
+            if (!testTargetEnvs.Any(x => x == ""))
+            {
+                return (true,
+                    $"Test skipped: requires target environment [{string.Join(", ", testTargetEnvs)}] but none specified at runtime.");
+            }
+        }
+
+        if (!testTargetEnvs.Any(x => string.Equals(x, currentTargetEnv, StringComparison.OrdinalIgnoreCase)))
+        {
+            return (true, 
+                $"Test skipped: target environment mismatch. Test allows [{string.Join(", ", testTargetEnvs)}], current is [{currentTargetEnv}].");
         }
 
         return (false, null);

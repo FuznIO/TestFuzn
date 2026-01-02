@@ -79,7 +79,8 @@ internal class StandardHtmlReportWriter : IStandardReport
         }
 
         b.AppendLine(@$"<tr><th class=""vertical"">Run ID</th><td>{featureReportData.TestRunId}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Environment Name</th><td>{(string.IsNullOrEmpty(GlobalState.EnvironmentName) ? "-" : GlobalState.EnvironmentName)}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Target Environment</th><td>{(string.IsNullOrEmpty(GlobalState.TargetEnvironment) ? "-" : GlobalState.TargetEnvironment)}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Execution Environment</th><td>{(string.IsNullOrEmpty(GlobalState.ExecutionEnvironment) ? "-" : GlobalState.ExecutionEnvironment)}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Start Time</th><td>{featureReportData.TestRunStartTime.ToLocalTime()}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">End Time</th><td>{featureReportData.TestRunEndTime.ToLocalTime()}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Duration</th><td>{featureReportData.TestRunDuration.ToTestFuznReadableString()}</td></tr>");

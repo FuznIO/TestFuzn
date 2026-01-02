@@ -47,7 +47,7 @@ public class TestAttribute : TestMethodAttribute
         testInfo.Group = GetGroupInfo(methodInfo);
         testInfo.Tags = GetTags(methodInfo);
         testInfo.Metadata = GetMetadata(methodInfo);
-        testInfo.Environments = GetEnvironments(methodInfo);
+        testInfo.TargetEnvironments = GetTargetEnvironments(methodInfo);
         var skipAttributeInfo = GetSkipAttributeInfo(methodInfo);
         testInfo.HasSkipAttribute = skipAttributeInfo.HasSkipAttribute;
         testInfo.SkipAttributeReason = skipAttributeInfo.Reason;
@@ -86,14 +86,14 @@ public class TestAttribute : TestMethodAttribute
             : null;
     }
 
-    private static List<string> GetEnvironments(MethodInfo methodInfo)
+    private static List<string> GetTargetEnvironments(MethodInfo methodInfo)
     {
-        var environmentsAttributes = methodInfo.GetCustomAttributes<EnvironmentsAttribute>(inherit: true)
+        var targetEnvAttributes = methodInfo.GetCustomAttributes<TargetEnvironmentsAttribute>(inherit: true)
                                      .ToList();
 
-        return environmentsAttributes.Any()
-            ? environmentsAttributes.SelectMany(e => e.Environments ?? []).ToList()
-            : new();
+        return targetEnvAttributes.Any()
+            ? targetEnvAttributes.SelectMany(e => e.Environments ?? []).ToList()
+            : [];
     }
 
     private static GroupInfo GetGroupInfo(MethodInfo methodInfo)

@@ -13,8 +13,12 @@ internal static class TestFuznIntegrationCore
     {
         GlobalState.TestRunStartTime = DateTime.UtcNow;
         GlobalState.TestRunId = $"{DateTime.Now:yyyy-MM-dd_HH-mm}__{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+        
+        GlobalState.TargetEnvironment = 
+            ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(args, "target-environment", "TESTFUZN_TARGET_ENVIRONMENT");
 
-        GlobalState.EnvironmentName = ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(args, "environment", "TESTFUZN_ENVIRONMENT");
+        GlobalState.ExecutionEnvironment = 
+            ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(args, "execution-environment", "TESTFUZN_EXECUTION_ENVIRONMENT");
 
         var tagsInclude = ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(args, "tags-filter-include", "TESTFUZN_TAGS_FILTER_INCLUDE");
         if (!string.IsNullOrEmpty(tagsInclude))

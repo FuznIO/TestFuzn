@@ -68,7 +68,8 @@ internal class ContextFactory
     private static void PopulateSharedProperties(ITestFrameworkAdapter testFramework, IterationState context)
     {
         context.Info = new ExecutionInfo();
-        context.Info.EnvironmentName = GlobalState.EnvironmentName;
+        context.Info.TargetEnvironment = GlobalState.TargetEnvironment;
+        context.Info.ExecutionEnvironment = GlobalState.ExecutionEnvironment;
         context.Info.NodeName = GlobalState.NodeName;
         context.Info.TestRunId = GlobalState.TestRunId;
         context.Info.CorrelationId = Guid.NewGuid().ToString();
