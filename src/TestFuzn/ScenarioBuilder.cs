@@ -3,6 +3,10 @@ using Fuzn.TestFuzn.Internals;
 
 namespace Fuzn.TestFuzn;
 
+/// <summary>
+/// Builds and configures test scenarios with a specific model type for sharing data across steps.
+/// </summary>
+/// <typeparam name="TModel">The model type used to share data across steps within an iteration.</typeparam>
 public class ScenarioBuilder<TModel>
     where TModel : new()
 {
@@ -27,20 +31,15 @@ public class ScenarioBuilder<TModel>
         Scenario.ContextType = typeof(IterationContext<TModel>);
     }
 
+    /// <summary>
+    /// Sets a unique identifier for the scenario. Only needed for Load tests. Standard tests inherits the test Id.
+    /// Typically used for reporting and tracking to keep the history of scenario executions consistent across scenario name renames.
+    /// </summary>
+    /// <param name="id">The unique identifier for the scenario.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> Id(string id)
     {
         Scenario.Id = id;
-        return this;
-    }
-
-    internal ScenarioBuilder<TModel> Environments(params string[] environments)
-    {
-        if (environments == null || environments.Length == 0)
-            throw new ArgumentException("Environments cannot be null or empty.", nameof(environments));
-
-        if (Scenario.Environments == null)
-            Scenario.Environments = new();
-        Scenario.Environments.AddRange(environments);
         return this;
     }
 
@@ -73,6 +72,11 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Registers an action to execute before the scenario starts.
+    /// </summary>
+    /// <param name="action">The synchronous action to execute before the scenario.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> BeforeScenario(Action<Context> action)
     {
         if (action == null)
@@ -85,6 +89,11 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Registers an asynchronous action to execute before the scenario starts.
+    /// </summary>
+    /// <param name="action">The asynchronous action to execute before the scenario.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> BeforeScenario(Func<Context, Task> action)
     {
         if (action == null)
@@ -96,6 +105,11 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Provides static input data for the scenario iterations.
+    /// </summary>
+    /// <param name="inputData">The input data objects to use for iterations.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> InputData(params object[] inputData)
     {
         Scenario.InputDataInfo.AddParams(inputData);
@@ -103,6 +117,11 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Provides input data for the scenario from an asynchronous function.
+    /// </summary>
+    /// <param name="action">An asynchronous function that returns a list of input data objects.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> InputDataFromList(Func<Context, Task<List<object>>> action)
     {
         Scenario.InputDataInfo.AddAction(context =>
@@ -113,6 +132,11 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Provides input data for the scenario from a synchronous function.
+    /// </summary>
+    /// <param name="action">A synchronous function that returns a list of input data objects.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> InputDataFromList(Func<Context, List<object>> action)
     {
         Scenario.InputDataInfo.AddAction((context) =>
@@ -123,12 +147,22 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Sets the behavior for how input data is consumed across iterations.
+    /// </summary>
+    /// <param name="inputDataBehavior">The behavior to use when consuming input data.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> InputDataBehavior(InputDataBehavior inputDataBehavior)
     {
         Scenario.InputDataInfo.InputDataBehavior = inputDataBehavior;
         return this;
     }
 
+    /// <summary>
+    /// Registers an asynchronous action to execute before each iteration.
+    /// </summary>
+    /// <param name="action">The asynchronous action to execute before each iteration.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> BeforeIteration(Func<IterationContext<TModel>, Task> action)
     {
         if (action == null)
@@ -139,6 +173,11 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Registers a synchronous action to execute before each iteration.
+    /// </summary>
+    /// <param name="action">The synchronous action to execute before each iteration.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> BeforeIteration(Action<IterationContext<TModel>> action)
     {
         if (action == null)
@@ -150,6 +189,13 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Adds an asynchronous step to the scenario with a name and identifier.
+    /// </summary>
+    /// <param name="name">The name of the step.</param>
+    /// <param name="id">The unique identifier for the step.</param>
+    /// <param name="action">The asynchronous action to execute for the step.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> Step(string name, string id, Func<IterationContext<TModel>, Task> action)
     {
         EnsureStepNameIsUnique(name);
@@ -167,6 +213,13 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Adds a synchronous step to the scenario with a name and identifier.
+    /// </summary>
+    /// <param name="name">The name of the step.</param>
+    /// <param name="id">The unique identifier for the step.</param>
+    /// <param name="action">The synchronous action to execute for the step.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> Step(string name, string id, Action<IterationContext<TModel>> action)
     {
         Step(name, id, context =>
@@ -178,12 +231,24 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Adds an asynchronous step to the scenario with a name.
+    /// </summary>
+    /// <param name="name">The display name of the step.</param>
+    /// <param name="action">The asynchronous action to execute for the step.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> Step(string name, Func<IterationContext<TModel>, Task> action)
     {
         Step(name, null, action);
         return this;
     }
 
+    /// <summary>
+    /// Adds a synchronous step to the scenario with a name.
+    /// </summary>
+    /// <param name="name">The display name of the step.</param>
+    /// <param name="action">The synchronous action to execute for the step.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> Step(string name, Action<IterationContext<TModel>> action)
     {
         Step(name, null, action);
@@ -199,11 +264,20 @@ public class ScenarioBuilder<TModel>
             throw new InvalidOperationException($"A step with the name '{name}' already exists in the scenario.");
     }
 
+    /// <summary>
+    /// Configures the scenario for load testing.
+    /// </summary>
+    /// <returns>A <see cref="LoadBuilder{TModel}"/> instance for configuring load test parameters.</returns>
     public LoadBuilder<TModel> Load()
     {
         return new LoadBuilder<TModel>(this);
     }
 
+    /// <summary>
+    /// Registers a synchronous action to execute after each iteration.
+    /// </summary>
+    /// <param name="action">The synchronous action to execute after each iteration.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> AfterIteration(Action<IterationContext<TModel>> action)
     {
         Scenario.AfterIterationAction = (context) => {
@@ -213,6 +287,11 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Registers an asynchronous action to execute after each iteration.
+    /// </summary>
+    /// <param name="action">The asynchronous action to execute after each iteration.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> AfterIteration(Func<IterationContext<TModel>, Task> action)
     {
         Scenario.AfterIterationAction = (context) => {
@@ -221,6 +300,11 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Registers a synchronous action to execute after the scenario completes.
+    /// </summary>
+    /// <param name="action">The synchronous action to execute after the scenario.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> AfterScenario(Action<Context> action)
     {
         Scenario.AfterScenarioAction = (context) => {
@@ -230,6 +314,11 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Registers an asynchronous action to execute after the scenario completes.
+    /// </summary>
+    /// <param name="action">The asynchronous action to execute after the scenario.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
     public ScenarioBuilder<TModel> AfterScenario(Func<Context, Task> action)
     {
         Scenario.AfterScenarioAction = (context) => {
@@ -245,6 +334,11 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Executes the configured scenario. 
+    /// For load tests, use Load().IncludeScenario() to execute multiple scenarios in a single test, in parallel.
+    /// </summary>
+    /// <returns>A task representing the asynchronous scenario execution.</returns>
     public async Task Run()
     {
         var scenarios = new List<Scenario>();

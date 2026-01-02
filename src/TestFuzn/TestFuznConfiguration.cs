@@ -7,15 +7,26 @@ using Fuzn.TestFuzn.Internals.Reports.Load;
 
 namespace Fuzn.TestFuzn;
 
+/// <summary>
+/// Configuration class for customizing TestFuzn behavior.
+/// Use this class in your <see cref="IStartup"/> implementation to configure plugins, reports, and serialization.
+/// </summary>
 public class TestFuznConfiguration
 {
+    /// <summary>
+    /// Gets or sets the test suite information including name, ID, and metadata.
+    /// </summary>
     public SuiteInfo Suite { get; set; }
+
     internal List<IContextPlugin> ContextPlugins { get; set; } = new();
     internal List<IStandardReport> StandardReports { get; set; } = new();
     internal List<ILoadReport> LoadReports { get; set; } = new();
     internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
     internal ISerializerProvider SerializerProvider { get; set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TestFuznConfiguration"/> class with default settings.
+    /// </summary>
     public TestFuznConfiguration()
     {
         AddStandardReport(new StandardXmlReportWriter());
@@ -28,6 +39,12 @@ public class TestFuznConfiguration
         SetSerializerProvider(new SystemTextJsonSerializerProvider());
     }
 
+    /// <summary>
+    /// Adds a context plugin to the configuration.
+    /// Context plugins can manage state and resources for tests.
+    /// </summary>
+    /// <param name="plugin">The context plugin to add.</param>
+    /// <exception cref="ArgumentNullException">Thrown when the plugin is null.</exception>
     public void AddContextPlugin(IContextPlugin plugin)
     {
         if (plugin == null)
@@ -56,6 +73,12 @@ public class TestFuznConfiguration
         SinkPlugins.Add(plugin);
     }
 
+    /// <summary>
+    /// Sets the serializer provider for JSON serialization and deserialization.
+    /// Default serializer if not set is <see cref="SystemTextJsonSerializerProvider"/>.
+    /// </summary>
+    /// <param name="serializerProvider">The serializer provider to use.</param>
+    /// <exception cref="ArgumentNullException">Thrown when the serializer provider is null.</exception>
     public void SetSerializerProvider(ISerializerProvider serializerProvider)
     {
         if (serializerProvider == null)
