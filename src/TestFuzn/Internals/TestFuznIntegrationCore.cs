@@ -52,8 +52,8 @@ internal static class TestFuznIntegrationCore
             throw new InvalidOperationException($"Failed to create an instance of {startupType.FullName}.");
 
         var configuration = new TestFuznConfiguration();
-        configuration.TestSuite = new TestSuiteInfo();
-        configuration.TestSuite.Name = Assembly.GetExecutingAssembly().GetName().Name;
+        configuration.Suite = new SuiteInfo();
+        configuration.Suite.Name = Assembly.GetExecutingAssembly().GetName().Name;
         _startupInstance.Configure(configuration);            
 
         GlobalState.Configuration = configuration;

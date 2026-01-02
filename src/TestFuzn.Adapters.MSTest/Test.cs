@@ -47,12 +47,6 @@ public abstract class Test : ITest
 
     protected Test()
     {
-        var className = GetType().FullName ?? GetType().Name;
-        className = className.Replace('_', ' ');
-        if (className.EndsWith("Tests"))
-            className = className.Substring(0, className.Length - 5);
-        else if (className.EndsWith("Test"))
-            className = className.Substring(0, className.Length - 4);
     }
 
     public ScenarioBuilder<EmptyModel> Scenario([CallerMemberName] string scenarioName = null)

@@ -20,7 +20,7 @@ public class Startup : IStartup
 
     public void Configure(TestFuznConfiguration configuration)
     {
-        configuration.TestSuite = new TestSuiteInfo
+        configuration.Suite = new SuiteInfo
         {
             Id = "TestFuzn.Tests.Failing",
             Name = "TestFuzn Tests Failing",

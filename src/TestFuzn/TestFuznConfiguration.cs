@@ -9,7 +9,7 @@ namespace Fuzn.TestFuzn;
 
 public class TestFuznConfiguration
 {
-    public TestSuiteInfo TestSuite { get; set; } = new();
+    public SuiteInfo Suite { get; set; }
     internal List<IContextPlugin> ContextPlugins { get; set; } = new();
     internal List<IStandardReport> StandardReports { get; set; } = new();
     internal List<ILoadReport> LoadReports { get; set; } = new();

@@ -3,7 +3,7 @@ using System.Reflection;
     
 namespace Fuzn.TestFuzn;
 
-public class SkipHandler
+internal class SkipHandler
 {
     private readonly StandardResultManager _resultManager = new();
 

@@ -26,7 +26,7 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
 
     public void Configure(TestFuznConfiguration configuration)
     {
-        configuration.TestSuite = new TestSuiteInfo
+        configuration.Suite = new SuiteInfo
         {
             Id = "TestFuzn.Tests",
             Name = "TestFuzn Tests",

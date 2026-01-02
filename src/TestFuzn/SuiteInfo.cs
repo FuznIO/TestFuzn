@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn;
 
-public class TestSuiteInfo
+public class SuiteInfo
 {
     public string Name { get; set; }
     public string Id { get; set; }
