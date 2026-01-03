@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
-using System.Dynamic;
 using System.Net;
 using System.Text;
-using System.Text.Json;
 using Fuzn.TestFuzn.Plugins.Http.Internals;
 using Fuzn.TestFuzn.Contracts.Providers;
 
@@ -22,7 +20,7 @@ public class HttpRequest
     public AcceptTypes AcceptTypes { get; set; } = AcceptTypes.Json;
     public List<Cookie> Cookies { get; set; } = new();
     public Dictionary<string, string> Headers { get; private set; } = new();
-    public Hooks? Hooks { get; set; } = new();
+    public Action<HttpRequest>? BeforeSend { get; set; }
     public string UserAgent { get; set; } = "TestFuznHttp/1.0";
     public TimeSpan Timeout { get; set; } = HttpGlobalState.Configuration.DefaultRequestTimeout;
     internal ISerializerProvider SerializerProvider { get; set; }
@@ -73,7 +71,7 @@ public class HttpRequest
                 request.Headers.Add("Cookie", cookieHeader);
         }
 
-        Hooks?.PreSend?.Invoke(this);
+        BeforeSend?.Invoke(this);
 
         if (_contentType == ContentTypes.Json && Body != null)
         {
@@ -187,16 +185,5 @@ public class HttpRequest
         }
 
         return null;
-    }
-
-    private List<KeyValuePair<string, string>> ConvertExpandoObjectToKeyPairList(ExpandoObject obj)
-    {
-        var list = new List<KeyValuePair<string, string>>();
-
-        var bodyAsDictionary = (IDictionary<string, object>)obj;
-        foreach (var item in bodyAsDictionary)
-            list.Add(new KeyValuePair<string, string>(item.Key, item.Value.ToString()));
-
-        return list;
     }
 }

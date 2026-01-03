@@ -6,6 +6,9 @@ namespace Fuzn.TestFuzn.Plugins.Http;
 
 public class HttpRequestBuilder
 {
+    private static readonly string DefaultUserAgent = 
+        $"TestFuzn.Http/{typeof(HttpRequestBuilder).Assembly.GetName().Version?.ToString(3) ?? "1.0.0"}";
+    private string _userAgent = DefaultUserAgent;
     private readonly Context _context;
     private readonly string _url;
     private ContentTypes _contentType = ContentTypes.Json;
@@ -14,9 +17,8 @@ public class HttpRequestBuilder
     private readonly List<Cookie> _cookies = new();
     private readonly Dictionary<string, string> _headers = new();
     private Authentication _auth = new();
-    private Hooks _hooks = new();
+    private Action<HttpRequest> _beforeSend;
     private LoggingVerbosity _loggingVerbosity = Http.LoggingVerbosity.Full;
-    private string _userAgent = "TestFuznHttpTesting/1.0";
     private TimeSpan _timeout = HttpGlobalState.Configuration.DefaultRequestTimeout;
     private ISerializerProvider _serializerProvider;
 
@@ -99,9 +101,9 @@ public class HttpRequestBuilder
         return this;
     }
 
-    public HttpRequestBuilder Hooks(Hooks hooks)
+    public HttpRequestBuilder BeforeSend(Action<HttpRequest> action)
     {
-        _hooks = hooks;
+        _beforeSend = action;
         return this;
     }
 
@@ -130,7 +132,7 @@ public class HttpRequestBuilder
             Body = _body,
             AcceptTypes = _acceptTypes,
             Auth = _auth,
-            Hooks = _hooks,
+            BeforeSend = _beforeSend,
             Cookies = new List<Cookie>(_cookies),
             UserAgent = _userAgent,
             Timeout = _timeout,

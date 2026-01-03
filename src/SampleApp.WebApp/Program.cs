@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using SampleApp.WebApp.Models;
 using SampleApp.WebApp.Services;
 using SampleApp.WebApp.WebSockets;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,15 +23,36 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Authentication
+// JWT Configuration
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKeyThatIsAtLeast32CharactersLong!";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "SampleApp";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "SampleApp";
+
+builder.Services.AddSingleton(new JwtSettings(jwtKey, jwtIssuer, jwtAudience));
+builder.Services.AddTransient<TokenService>();
+
+// Authentication - Cookies for web pages, JWT for API
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+.AddCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/Login";
+    options.ExpireTimeSpan = TimeSpan.FromHours(1);
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.LoginPath = "/Account/Login";
-        options.LogoutPath = "/Account/Logout";
-        options.AccessDeniedPath = "/Account/Login";
-        options.ExpireTimeSpan = TimeSpan.FromHours(1);
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
 
 // App Services
 builder.Services.AddTransient<ProductService>();

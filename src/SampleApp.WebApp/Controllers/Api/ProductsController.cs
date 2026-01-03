@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SampleApp.WebApp.Models;
 
@@ -5,6 +7,7 @@ namespace SampleApp.WebApp.Controllers.Api;
 
 [ApiController]
 [Route("api/Products")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class ProductsController : ControllerBase
 {
     private readonly ProductService _productService;
