@@ -5,13 +5,14 @@ namespace Fuzn.TestFuzn.Plugins.Playwright.Internals;
 internal class PlaywrightPlugin : IContextPlugin
 {
     public bool RequireState => true;
+    public bool RequireStepExceptionHandling => true;
 
-    public async Task InitGlobal()
+    public async Task InitSuite()
     {
         await PlaywrightManager.InitializeGlobalResources();
     }
     
-    public async Task CleanupGlobal()
+    public async Task CleanupSuite()
     {
         await PlaywrightManager.CleanupGlobalResources();
     }
@@ -27,5 +28,12 @@ internal class PlaywrightPlugin : IContextPlugin
         var playwrightManager = state as PlaywrightManager;
 
         await playwrightManager.CleanupContext();
+    }
+
+    public async Task HandleStepException(object state, IterationContext context, Exception exception)
+    {
+        var playwrightManager = state as PlaywrightManager;
+
+        await playwrightManager.AddOrLogPageMetadata(context);
     }
 }

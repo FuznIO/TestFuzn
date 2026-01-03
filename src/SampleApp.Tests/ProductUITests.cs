@@ -20,8 +20,7 @@ public class ProductUITests : Test
                 await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter password" }).ClickAsync();
                 await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter password" }).FillAsync("admin123");
                 await page.GetByRole(AriaRole.Button, new() { Name = "Login" }).ClickAsync();
-                await Assertions.Expect(page.Locator("h1")).ToContainTextAsync("Welcome, Administrator!");
-                await Task.Delay(5000);
+                await Assertions.Expect(page.Locator("h1")).ToContainTextAsync("Welcome, Administrator2!");
             })
             .Run();
     }

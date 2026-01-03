@@ -178,7 +178,7 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
         throw new NotImplementedException("Should not happen");
     }
 
-    public string TestResultsDirectory => Directory.GetParent(_testContext.TestRunDirectory).ToString();
+    public string TestResultsDirectory => new DirectoryInfo(_testContext.TestRunDirectory).Parent.Parent.ToString();
 
     private static string StripMarkup(string input)
     {

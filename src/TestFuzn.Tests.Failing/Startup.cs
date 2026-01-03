@@ -31,14 +31,4 @@ public class Startup : IStartup
         // Only one serializer can be used, last one set wins, have these 2 lines just to show both options.
         configuration.SerializerProvider = new SystemTextJsonSerializerProvider();
     }
-
-    public Task InitGlobal(Context context)
-    {
-        return Task.CompletedTask;
-    }
-
-    public Task CleanupGlobal(Context context)
-    {
-        return Task.CompletedTask;
-    }
 }

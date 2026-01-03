@@ -25,7 +25,7 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteStartElement("LoadTestResults");
                 writer.WriteElementString("Version", "1.0");
 
-                writer.WriteStartElement("TestSuite");
+                writer.WriteStartElement("Suite");
                 {
                     writer.WriteElementString("Name", loadReportData.TestSuite.Name);
                     writer.WriteElementString("Id", loadReportData.TestSuite.Id);

@@ -16,7 +16,7 @@ internal class InfluxDbSink : ISinkPlugin
         _config = config;
     }
 
-    public Task InitGlobal()
+    public Task InitSuite()
     {
         _client = new InfluxDBClient(_config.Url, _config.Token);
         return Task.CompletedTask;
@@ -124,7 +124,7 @@ internal class InfluxDbSink : ISinkPlugin
         await writeApi.WritePointsAsync(points, _config.Bucket, _config.Org);
     }
 
-    public Task CleanupGlobal()
+    public Task CleanupSuite()
     {
         _client.Dispose();
         return Task.CompletedTask;

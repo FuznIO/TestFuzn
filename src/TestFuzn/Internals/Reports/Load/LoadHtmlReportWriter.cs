@@ -130,10 +130,10 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine($"<h2>Test Info</h2>");
         b.AppendLine("<table>");
         b.AppendLine(@$"<tr><th class=""vertical"">Test Run ID</td><td>{loadReportData.TestRunId}</th></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Target Environment</td><td>{GlobalState.TargetEnvironment}</th></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Execution Environment</td><td>{GlobalState.ExecutionEnvironment}</th></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Test Suite - Name</td><td>{loadReportData.TestSuite.Name}</th></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Test Suite - ID</td><td>{loadReportData.TestSuite.Id}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Target Environment</td><td>{GlobalState.TargetEnvironment}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Suite - Name</td><td>{loadReportData.TestSuite.Name}</th></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Suite - ID</td><td>{loadReportData.TestSuite.Id}</th></tr>");
 
         if (loadReportData.TestSuite.Metadata != null && loadReportData.TestSuite.Metadata.Count > 0)
         {

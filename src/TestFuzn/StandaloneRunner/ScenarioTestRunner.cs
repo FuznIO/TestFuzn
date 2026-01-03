@@ -26,7 +26,7 @@ internal class ScenarioTestRunner
 
         try
         {
-            await TestFuznIntegrationCore.InitGlobal(testFramework);
+            await TestFuznIntegrationCore.Init(testFramework);
             featureTestClassInstance.TestFramework = testFramework;
             featureTestClassInstance.TestMethodInfo = testInfo.Method;
 
@@ -37,7 +37,7 @@ internal class ScenarioTestRunner
         }
         finally
         {
-            await TestFuznIntegrationCore.CleanupGlobal(testFramework);
+            await TestFuznIntegrationCore.Cleanup(testFramework);
         }
     }
 }

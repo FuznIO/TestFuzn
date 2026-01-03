@@ -9,7 +9,7 @@ internal static class TestFuznIntegrationCore
 {
     private static IStartup _startupInstance;
 
-    public static async Task InitGlobal(ITestFrameworkAdapter testFramework, Dictionary<string, string> args = null)
+    public static async Task Init(ITestFrameworkAdapter testFramework, Dictionary<string, string> args = null)
     {
         GlobalState.TestRunStartTime = DateTime.UtcNow;
         GlobalState.TestRunId = $"{DateTime.Now:yyyy-MM-dd_HH-mm}__{Guid.NewGuid().ToString("N").Substring(0, 6)}";
@@ -33,7 +33,7 @@ internal static class TestFuznIntegrationCore
         }
 
         GlobalState.NodeName = Environment.MachineName;
-        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, "TestFuzn", $"TestFuzn_{GlobalState.TestRunId}");
+        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, "TestFuznResults", $"{GlobalState.TestRunId}");
         Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
         GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
         GlobalState.Logger.LogInformation("Logging initialized");
@@ -60,27 +60,27 @@ internal static class TestFuznIntegrationCore
 
         if (_startupInstance is IBeforeSuite initGlobalInstance)
         {
-            var context = ContextFactory.CreateContext(testFramework, "InitGlobal");
+            var context = ContextFactory.CreateContext(testFramework, "Init");
             await initGlobalInstance.BeforeSuite(context);
         }
 
         foreach (var plugin in GlobalState.Configuration.SinkPlugins)
-            await plugin.InitGlobal();
+            await plugin.InitSuite();
 
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)
-            await plugin.InitGlobal();
+            await plugin.InitSuite();
 
         GlobalState.IsInitializeGlobalExecuted = true;
     }
 
-    public static async Task CleanupGlobal(ITestFrameworkAdapter testFramework)
+    public static async Task Cleanup(ITestFrameworkAdapter testFramework)
     {
         if (_startupInstance == null)
-            throw new InvalidOperationException("TestFuznIntegration has not been initialized. Please call TestFuznIntegration.InitGlobal() before running tests.");
+            throw new InvalidOperationException("TestFuznIntegration has not been initialized. Please call TestFuznIntegration.InitSuite() before running tests.");
 
         if (_startupInstance is IAfterSuite cleanupGlobalInstance)
         {
-            await cleanupGlobalInstance.AfterSuite(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
+            await cleanupGlobalInstance.AfterSuite(ContextFactory.CreateContext(testFramework, "Cleanup"));
         }
 
         GlobalState.TestRunEndTime = DateTime.UtcNow;
@@ -91,9 +91,9 @@ internal static class TestFuznIntegrationCore
         await new ReportManager().WriteStandardReports(new StandardResultManager());
 
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)
-            await plugin.CleanupGlobal();
+            await plugin.CleanupSuite();
 
         foreach (var plugin in GlobalState.Configuration.SinkPlugins)
-            await plugin.CleanupGlobal();
+            await plugin.CleanupSuite();
     }
 }

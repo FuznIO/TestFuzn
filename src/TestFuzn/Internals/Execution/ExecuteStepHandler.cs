@@ -60,6 +60,8 @@ internal class ExecuteStepHandler
             }
             catch (Exception ex)
             {
+                await HandlePluginExceptionHandler(stepContext, ex);
+
                 stepResult.Status = StepStatus.Failed;
                 CurrentScenarioStatus = TestStatus.Failed;
                 stepResult.Exception = ex;
@@ -125,5 +127,25 @@ internal class ExecuteStepHandler
         }
 
         return null;
+    }
+
+    private static async Task HandlePluginExceptionHandler(IterationContext iterationContext, Exception exception)
+    {
+        //try
+        //{ 
+            foreach (var plugin in GlobalState.Configuration.ContextPlugins)
+            {
+                if (!plugin.RequireStepExceptionHandling)
+                    continue;
+
+                var state = iterationContext.Internals.Plugins.GetState(plugin.GetType());
+                await plugin.HandleStepException(state, iterationContext, exception);
+            }
+        //}
+        //catch (Exception ex)
+        //{
+        //    GlobalState.Logger.LogError(ex, "An exception occurred in a plugin's step exception handler.");
+        //    // Swallow exceptions from plugin exception handlers to not override the original exception.
+        //}
     }
 }

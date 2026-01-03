@@ -9,13 +9,14 @@ internal class WebSocketPlugin : IContextPlugin
     }
         
     public bool RequireState => true;
+    public bool RequireStepExceptionHandling => false;
     
-    public Task InitGlobal()
+    public Task InitSuite()
     {
         return Task.CompletedTask;
     }
 
-    public async Task CleanupGlobal()
+    public async Task CleanupSuite()
     {
         await Task.CompletedTask;
     }
@@ -33,5 +34,10 @@ internal class WebSocketPlugin : IContextPlugin
         {
             await webSocketManager.CleanupContext();
         }
+    }
+
+    public Task HandleStepException(object state, IterationContext context, Exception exception)
+    {
+        throw new NotImplementedException();
     }
 }

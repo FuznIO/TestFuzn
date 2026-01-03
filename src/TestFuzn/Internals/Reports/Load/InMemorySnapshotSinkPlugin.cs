@@ -9,7 +9,7 @@ internal class InMemorySnapshotCollectorSinkPlugin : ISinkPlugin
     private static readonly object _lock = new object();
     private static readonly Dictionary<string, EvenlySpreadSnapshots> _snapshotsPerScenario = new();
 
-    public Task InitGlobal()
+    public Task InitSuite()
     {
         return Task.CompletedTask;
     }
@@ -50,7 +50,7 @@ internal class InMemorySnapshotCollectorSinkPlugin : ISinkPlugin
         }
     }
 
-    public Task CleanupGlobal()
+    public Task CleanupSuite()
     {
         return Task.CompletedTask;
     }

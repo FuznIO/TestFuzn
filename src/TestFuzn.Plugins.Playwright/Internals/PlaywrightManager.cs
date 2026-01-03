@@ -79,6 +79,23 @@ internal class PlaywrightManager
         }
     }
 
+    public async ValueTask AddOrLogPageMetadata(IterationContext context)
+    {
+        if (_pages == null)
+            return;
+
+        foreach (var page in _pages)
+        {
+            var title = await page.TitleAsync();
+            var url = page.Url;
+            context.Comment($"Playwright Page - Title: '{title}', URL: '{url}'");
+            var html = await page.EvaluateAsync<string>("() => document.documentElement.outerHTML");
+            await context.Attach($"playwright-page-html", html);
+            var screenshot = await page.ScreenshotAsync(new PageScreenshotOptions { FullPage = true, Type = ScreenshotType.Png });
+            await context.Attach("playwright-page-screenshot.png", screenshot);
+        }
+    }
+
     internal static async Task CleanupGlobalResources()
     {
         foreach (var state in _state.Values)
