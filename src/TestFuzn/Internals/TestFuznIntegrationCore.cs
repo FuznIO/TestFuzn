@@ -33,8 +33,6 @@ internal static class TestFuznIntegrationCore
         }
 
         GlobalState.NodeName = Environment.MachineName;
-        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, "TestFuznResults", $"{GlobalState.TestRunId}");
-        Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
         GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
         GlobalState.Logger.LogInformation("Logging initialized");
 
@@ -46,6 +44,10 @@ internal static class TestFuznIntegrationCore
 
         if (startupType == null)
             throw new InvalidOperationException("No class implementing IStartup was found in the loaded assemblies.");
+
+        var testAssemblyName = startupType.Assembly.GetName().Name;
+        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, "TestFuznResults", testAssemblyName, $"{GlobalState.TestRunId}");
+        Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
 
         _startupInstance = Activator.CreateInstance(startupType) as IStartup;
         if (_startupInstance == null)
