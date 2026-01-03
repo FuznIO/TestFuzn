@@ -9,84 +9,146 @@ public class ProductHttpTests : Test
 {
     private const string BaseUrl = "https://localhost:44316";
 
-    [Test]
-    public async Task Verify_that_products_can_be_managed()
+    private class ProductTestContext
     {
-        Product newProduct = null;
-        Product updatedProduct = null;
-        string authToken = null;
+        public string AuthToken { get; set; }
+        public Product NewProduct { get; set; }
+        public Product UpdatedProduct { get; set; }
+    }
 
-        await Scenario()
+    private async Task<string> GetAuthTokenAsync(IterationContext context)
+    {
+        var response = await context.CreateHttpRequest($"{BaseUrl}/api/Auth/token")
+            .Body(new { Username = "admin", Password = "admin123" })
+            .Post();
+
+        Assert.IsTrue(response.Ok, $"Authentication failed: {response.StatusCode}");
+        var tokenResponse = response.BodyAs<TokenResponse>();
+        Assert.IsFalse(string.IsNullOrEmpty(tokenResponse.Token), "Token should not be empty");
+        return tokenResponse.Token;
+    }
+
+    [Test]
+    public async Task Verify_product_can_be_created()
+    {
+        await Scenario<ProductTestContext>()
             .Step("Authenticate and retrieve JWT token", async (context) =>
             {
-                var response = await context.CreateHttpRequest($"{BaseUrl}/api/Auth/token")
-                    .Body(new { Username = "admin", Password = "admin123" })
-                    .Post();
-
-                Assert.IsTrue(response.Ok, $"Authentication failed: {response.StatusCode}");
-                var tokenResponse = response.BodyAs<TokenResponse>();
-                authToken = tokenResponse.Token;
-                Assert.IsFalse(string.IsNullOrEmpty(authToken), "Token should not be empty");
+                context.Model.AuthToken = await GetAuthTokenAsync(context);
             })
             .Step("Call POST /Products to create a new product", async (context) =>
             {
-                newProduct = new Product
+                context.Model.NewProduct = new Product
                 {
                     Id = Guid.NewGuid(),
                     Name = "Test Product",
                     Price = 100
                 };
                 var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products")
-                    .AuthBearer(authToken)
-                    .Body(newProduct)
+                    .AuthBearer(context.Model.AuthToken)
+                    .Body(context.Model.NewProduct)
                     .Post();
 
                 Assert.IsTrue(response.Ok);
             })
             .Step("Call GET /Products to verify the product was created", async (context) =>
             {
-                var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products/{newProduct.Id}")
-                    .AuthBearer(authToken)
+                var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products/{context.Model.NewProduct.Id}")
+                    .AuthBearer(context.Model.AuthToken)
                     .Get();
                 Assert.IsTrue(response.Ok);
                 var createdProduct = response.BodyAs<Product>();
-                Assert.AreEqual(newProduct.Name, createdProduct.Name);
-                Assert.AreEqual(newProduct.Price, createdProduct.Price);
+                Assert.AreEqual(context.Model.NewProduct.Name, createdProduct.Name);
+                Assert.AreEqual(context.Model.NewProduct.Price, createdProduct.Price);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_product_can_be_updated()
+    {
+        await Scenario<ProductTestContext>()
+            .Step("Authenticate and retrieve JWT token", async (context) =>
+            {
+                context.Model.AuthToken = await GetAuthTokenAsync(context);
+            })
+            .Step("Call POST /Products to create a new product", async (context) =>
+            {
+                context.Model.NewProduct = new Product
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Test Product",
+                    Price = 100
+                };
+                var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products")
+                    .AuthBearer(context.Model.AuthToken)
+                    .Body(context.Model.NewProduct)
+                    .Post();
+
+                Assert.IsTrue(response.Ok);
             })
             .Step("Call PUT /Products to update the product", async (context) =>
             {
-                updatedProduct = new Product();
-                updatedProduct.Id = newProduct.Id;
-                updatedProduct.Name = "Updated Test Product";
-                updatedProduct.Price = 150;
+                context.Model.UpdatedProduct = new Product
+                {
+                    Id = context.Model.NewProduct.Id,
+                    Name = "Updated Test Product",
+                    Price = 150
+                };
                 var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products/")
-                    .AuthBearer(authToken)
-                    .Body(updatedProduct)
+                    .AuthBearer(context.Model.AuthToken)
+                    .Body(context.Model.UpdatedProduct)
                     .Put();
 
                 Assert.IsTrue(response.Ok);
             })
             .Step("Call GET /Products to verify the product was updated", async (context) =>
             {
-                var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products/{newProduct.Id}")
-                    .AuthBearer(authToken)
+                var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products/{context.Model.NewProduct.Id}")
+                    .AuthBearer(context.Model.AuthToken)
                     .Get();
                 Assert.IsTrue(response.Ok);
                 var product = response.BodyAs<Product>();
-                Assert.AreEqual(updatedProduct.Name, product.Name);
-                Assert.AreEqual(updatedProduct.Price, product.Price);
+                Assert.AreEqual(context.Model.UpdatedProduct.Name, product.Name);
+                Assert.AreEqual(context.Model.UpdatedProduct.Price, product.Price);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_product_can_be_deleted()
+    {
+        await Scenario<ProductTestContext>()
+            .Step("Authenticate and retrieve JWT token", async (context) =>
+            {
+                context.Model.AuthToken = await GetAuthTokenAsync(context);
+            })
+            .Step("Call POST /Products to create a new product", async (context) =>
+            {
+                context.Model.NewProduct = new Product
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Test Product",
+                    Price = 100
+                };
+                var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products")
+                    .AuthBearer(context.Model.AuthToken)
+                    .Body(context.Model.NewProduct)
+                    .Post();
+
+                Assert.IsTrue(response.Ok);
             })
             .Step("Call DELETE /Products to delete the product", async (context) =>
             {
-                var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products/{newProduct.Id}")
-                    .AuthBearer(authToken)
+                var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products/{context.Model.NewProduct.Id}")
+                    .AuthBearer(context.Model.AuthToken)
                     .Delete();
                 Assert.IsTrue(response.Ok);
             })
             .Step("Call GET /Products to verify the product was deleted", async (context) =>
             {
-                var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products/{newProduct.Id}")
-                    .AuthBearer(authToken)
+                var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products/{context.Model.NewProduct.Id}")
+                    .AuthBearer(context.Model.AuthToken)
                     .Get();
                 Assert.IsFalse(response.Ok);
                 Assert.AreEqual(System.Net.HttpStatusCode.NotFound, response.StatusCode);
@@ -109,5 +171,3 @@ public class ProductHttpTests : Test
             .Run();
     }
 }
-
-record TokenResponse(string Token, DateTime ExpiresAt);
