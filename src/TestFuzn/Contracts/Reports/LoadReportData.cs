@@ -8,5 +8,6 @@ internal class LoadReportData
     public string TestRunId { get; internal set; }
     public string TestsOutputDirectory { get; internal set; }
     public GroupInfo Group { get; internal set; }
-    public ScenarioLoadResult ScenarioResult { get; internal set; }
+    public TestInfo Test { get; internal set; }
+    public List<ScenarioLoadResult> ScenarioResults { get; internal set; } = new();
 }

@@ -37,21 +37,31 @@ internal class ReportManager
         if (loadReports == null || loadReports.Count == 0)
             return;
 
+        var testInfo = sharedExecutionState.TestClassInstance.TestInfo;
+
+        var data = new LoadReportData();
+        data.TestSuite = new Contracts.Reports.SuiteInfo();
+        data.TestSuite.Name = GlobalState.Configuration.Suite.Name;
+        data.TestSuite.Id = GlobalState.Configuration.Suite.Id;
+        data.TestSuite.Metadata = GlobalState.Configuration.Suite.Metadata;
+        data.TestRunId = GlobalState.TestRunId;
+        data.Group = new Contracts.Reports.GroupInfo();
+        data.Group.Name = testInfo.Group.Name;
+        data.Test = new Contracts.Reports.TestInfo();
+        data.Test.Name = testInfo.Name;
+        data.Test.FullName = testInfo.FullName;
+        data.Test.Id = testInfo.Id;
+        data.Test.Metadata = testInfo.Metadata ?? new();
+        data.Test.Tags = testInfo.Tags ?? new();
+        data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
+
         foreach (var scenario in sharedExecutionState.Scenarios)
         {
-            var data = new LoadReportData();
-            data.TestSuite = new Contracts.Reports.SuiteInfo();
-            data.TestSuite.Name = GlobalState.Configuration.Suite.Name;
-            data.TestSuite.Id = GlobalState.Configuration.Suite.Id;
-            data.TestSuite.Metadata = GlobalState.Configuration.Suite.Metadata;
-            data.TestRunId = GlobalState.TestRunId;
-            data.Group = new Contracts.Reports.GroupInfo();
-            data.Group.Name = sharedExecutionState.TestClassInstance.TestInfo.Group.Name;
-            data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
-            data.ScenarioResult = sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
-
-            foreach (var loadReport in loadReports)
-                await loadReport.WriteReport(data);
+            var scenarioResult = sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
+            data.ScenarioResults.Add(scenarioResult);
         }
+
+        foreach (var loadReport in loadReports)
+            await loadReport.WriteReport(data);
     }
 }

@@ -15,7 +15,7 @@ internal class LoadXmlReportWriter : ILoadReport
     {
         try
         {
-            var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Group.Name}-{loadReportData.ScenarioResult.ScenarioName}");
+            var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Group.Name}-{loadReportData.Test.Name}");
             var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"LoadTestReport-{reportName}.xml");
 
             var stringBuilder = new StringBuilder();
@@ -49,17 +49,27 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteElementString("Name", loadReportData.Group.Name);
                 writer.WriteEndElement();
 
+                WriteTest(writer, loadReportData.Test);
+
                 writer.WriteElementString("TestRunId", loadReportData.TestRunId);
                 writer.WriteElementString("TargetEnvironment", GlobalState.TargetEnvironment);
                 writer.WriteElementString("ExecutionEnvironment", GlobalState.ExecutionEnvironment);
 
-                WriteScenario(writer, loadReportData.Group.Name, loadReportData.ScenarioResult);
+                writer.WriteStartElement("Scenarios");
+                foreach (var scenarioResult in loadReportData.ScenarioResults)
+                {
+                    WriteScenario(writer, loadReportData.Group.Name, scenarioResult);
+                }
+                writer.WriteEndElement();
 
                 writer.WriteEndElement();
                 writer.WriteEndDocument();
             }
 
-            InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Group.Name, loadReportData.ScenarioResult.ScenarioName);
+            foreach (var scenarioResult in loadReportData.ScenarioResults)
+            {
+                InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Group.Name, scenarioResult.ScenarioName);
+            }
 
             await File.WriteAllTextAsync(filePath, stringBuilder.ToString());
         }
@@ -67,6 +77,39 @@ internal class LoadXmlReportWriter : ILoadReport
         {
             throw new InvalidOperationException("Failed to write XML load test report.", ex);
         }
+    }
+
+    private void WriteTest(XmlWriter writer, Contracts.Reports.TestInfo test)
+    {
+        writer.WriteStartElement("Test");
+        writer.WriteElementString("Name", test.Name);
+        writer.WriteElementString("FullName", test.FullName);
+        writer.WriteElementString("Id", test.Id);
+
+        if (test.Tags != null && test.Tags.Count > 0)
+        {
+            writer.WriteStartElement("Tags");
+            foreach (var tag in test.Tags)
+            {
+                writer.WriteElementString("Tag", tag);
+            }
+            writer.WriteEndElement();
+        }
+
+        if (test.Metadata != null && test.Metadata.Count > 0)
+        {
+            writer.WriteStartElement("Metadata");
+            foreach (var metadata in test.Metadata)
+            {
+                writer.WriteStartElement("Property");
+                writer.WriteElementString("Key", metadata.Key);
+                writer.WriteElementString("Value", metadata.Value);
+                writer.WriteEndElement();
+            }
+            writer.WriteEndElement();
+        }
+
+        writer.WriteEndElement();
     }
 
     private void WriteScenario(XmlWriter writer, string featureName, ScenarioLoadResult scenarioResult)
