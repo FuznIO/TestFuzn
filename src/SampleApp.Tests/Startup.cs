@@ -27,6 +27,7 @@ public class Startup : IStartup
             c.BrowserTypes = new List<string> { "chromium" };
             c.ConfigureBrowserLaunchOptions = (browserType, launchOptions) =>
             {
+                launchOptions.Timeout = 5000;
                 launchOptions.Headless = false;
             };
         });

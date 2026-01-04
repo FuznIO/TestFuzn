@@ -15,7 +15,6 @@
   - [Custom Context](#custom-context)
   - [Shared Data](#shared-data)
   - [Lifecycle Hooks](#lifecycle-hooks)
-- [Advanced Features](#advanced-features)
   - [Sub-Steps](#sub-steps)
   - [Shared Steps](#shared-steps)
   - [Comments and Attachments](#comments-and-attachments)
@@ -34,9 +33,9 @@
   - [HTTP Load Testing](#http-load-testing)
 - [Web UI Testing with Playwright](#web-ui-testing-with-playwright)
   - [Basic Browser Testing](#basic-browser-testing)
-  - [Browser Interactions](#browser-interactions)
   - [UI Load Testing](#ui-load-testing)
 - [Real-Time Statistics with InfluxDB](#real-time-statistics-with-influxdb)
+- [Test Reports](#test-reports)
 - [API Reference](#api-reference)
 - [Examples](#examples)
 
@@ -44,18 +43,24 @@
 
 ## Overview
 
-TestFuzn is a modern testing framework for .NET 10 that provides a fluent, scenario-based approach to writing both standard tests and load tests. It's built on top of **MSTest v4** and combines the simplicity of traditional unit testing with powerful capabilities for complex test scenarios, data-driven testing, and performance validation.
+**TestFuzn** (pronounced "testfusion") is a unified testing framework that brings together **unit tests**, **end-to-end tests**, and **load tests** in a single, streamlined experience. It's designed to bridge the gap between developers and testers by offering clean, readable tests, reports, and a consistent testing approach.
 
-**Key Features:**
-- 🎯 Fluent API for readable, maintainable tests
-- 📊 Built-in support for standard and load testing
-- 🔄 Flexible input data management
-- 📈 Real-time statistics with InfluxDB/Grafana integration
-- 🔌 Extensible with shared steps and plugins
-- 📎 File attachments and logging support
-- ⚡ Async/await support throughout
-- 🎨 Custom context models for type-safe data sharing
-- 🧪 MSTest v4 compatible with full Visual Studio integration
+Built on top of **MSTest v4**, TestFuzn provides a fluent, scenario-based approach to writing tests.
+
+### ✨ Key Features
+
+- 🧪 **One framework for all test types** — Write and run unit, end-to-end, and load tests using the same framework — no need to mix and match tools.
+- 📊 **Readable and useful reports** — Get clear HTML and XML test results that are easy to understand for both developers and testers.
+- 🧼 **Slim and clean by design** — Built to be lightweight and focused — includes just the right features to stay easy to use and maintain.
+- 💬 **Test any system over HTTP** — End-to-end and load tests support HTTP-based systems, regardless of the underlying technology stack.
+- 🌐 **Web UI testing with Microsoft Playwright** — Automate and validate browser-based applications using Playwright — works with any web app, no matter what language or framework it's built in.
+- 💻 **C# / .NET first** — Write all your tests in C#. Leverages the power of .NET to keep things fast and flexible.
+- ✅ **MSTest compatible** — Built-in support for the widely used MSTest framework — reuse what you already know and love.
+- 📈 **Real-time statistics** — Stream load test metrics to InfluxDB/Grafana for live monitoring.
+
+### 💸 License & Usage
+
+TestFuzn is **100% free** — for personal, organizational, and commercial use.
 
 ---
 
@@ -63,7 +68,6 @@ TestFuzn is a modern testing framework for .NET 10 that provides a fluent, scena
 
 - **.NET 10** or later
 - **MSTest v4** (included via `MSTest.Sdk/4.0.0`)
-- Visual Studio 2022 17.8+ or VS Code with C# Dev Kit
 
 ---
 
@@ -149,6 +153,7 @@ public class Startup : IStartup
 
     public void Configure(TestFuznConfiguration configuration)
     {
+        // For HTTP testing, optional.
         configuration.UseHttp();
     }
 }
@@ -534,6 +539,43 @@ Share untyped data between steps within the same iteration:
 })
 ```
 
+> **⚠️ Important for Load Tests:**
+> 
+> In **standard tests**, you can use method-scoped variables to share data between steps since iterations run sequentially:
+> 
+> ```csharp
+> [Test]
+> public async Task Standard_test_with_variables()
+> {
+>     string token = null; // Method variable works for standard tests
+>     
+>     await Scenario()
+>         .Step("Login", context => { token = "abc123"; })
+>         .Step("Use Token", context => { Console.WriteLine(token); })
+>         .Run();
+> }
+> ```
+> 
+> However, in **load tests**, iterations run in parallel across multiple threads. Method-scoped variables are **not thread-safe** and will cause race conditions. Instead, use one of these approaches:
+> 
+> 1. **Custom Context Model** (recommended for type safety):
+>    ```csharp
+>    await Scenario<MyContext>()
+>        .Step("Login", context => { context.Model.Token = "abc123"; })
+>        .Step("Use Token", context => { Console.WriteLine(context.Model.Token); })
+>        .Load().Simulations(...)
+>        .Run();
+>    ```
+> 
+> 2. **Shared Data Methods**:
+>    ```csharp
+>    await Scenario()
+>        .Step("Login", context => { context.SetSharedData("token", "abc123"); })
+>        .Step("Use Token", context => { var token = context.GetSharedData<string>("token"); })
+>        .Load().Simulations(...)
+>        .Run();
+>    ```
+
 ### Lifecycle Hooks
 
 #### Scenario Level
@@ -606,10 +648,6 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
     // ... Configure method
 }
 ```
-
----
-
-## Advanced Features
 
 ### Sub-Steps
 
@@ -726,7 +764,7 @@ Use the built-in logger for structured logging:
 
 Load tests are defined by adding `Load().Simulations()` to a scenario. This changes the test from a standard test to a load test.
 
-Standard tests run once by default or once per input data item, while load tests ignore input-driven iteration and instead run the number of iterations defined by their simulations.
+Standard tests run once by default or once per input data item, while load tests instead run the number of iterations defined by their simulations.
 
 ### Multiple Scenarios
 
@@ -736,37 +774,22 @@ Load tests can include multiple scenarios that execute in parallel:
 [Test]
 public async Task Mixed_workload_load_test()
 {
-    var readScenario = Scenario("Read Operations")
-        .Step("Get Products", async context => 
+    var scenario2 = Scenario("Second scenario")
+        .Step("Step 1", (context) =>
         {
-            await apiClient.GetAsync("/api/products");
-        });
-    
-    var writeScenario = Scenario("Write Operations")
-        .Step("Create Order", async context =>
-        {
-            await apiClient.PostAsync("/api/orders", content);
-        });
-    
-    await Scenario("Main Scenario")
-        .Step("Primary Operation", async context =>
-        {
-            await apiClient.GetAsync("/api/health");
         })
-        .Load().Simulations((context, simulations) =>
+        .Load().Simulations((context, simulations) => simulations.OneTimeLoad(30));
+
+    await Scenario("First scenario")
+        .Id("Scenario-1")
+        .Step("Step 1", (context) =>
         {
-            simulations.FixedConcurrentLoad(50, TimeSpan.FromMinutes(5));
         })
-        .Load().IncludeScenario(readScenario)   // Runs in parallel
-        .Load().IncludeScenario(writeScenario)  // Runs in parallel
-        .Load().AssertWhenDone((context, stats) =>
+        .Step("Step 2", async (context) =>
         {
-            var readStats = stats.GetStep("Get Products");
-            var writeStats = stats.GetStep("Create Order");
-            
-            Assert.IsTrue(readStats.Ok.ResponseTimeMean < TimeSpan.FromMilliseconds(100));
-            Assert.IsTrue(writeStats.Ok.ResponseTimeMean < TimeSpan.FromMilliseconds(500));
         })
+        .Load().Simulations((context, simulations) => simulations.OneTimeLoad(20))
+        .Load().IncludeScenario(scenario2)
         .Run();
 }
 ```
@@ -1051,6 +1074,41 @@ TestFuzn uses System.Text.Json by default but supports custom serializers:
         .SerializerProvider(serializer)
         .Get();
 })
+
+public class NewtonsoftSerializerProvider : ISerializerProvider
+{
+    private readonly JsonSerializerSettings _jsonSerializerSettings;
+
+    public NewtonsoftSerializerProvider()
+    {
+        _jsonSerializerSettings = new JsonSerializerSettings();
+    }
+
+    public NewtonsoftSerializerProvider(JsonSerializerSettings jsonSerializerSettings)
+    {
+        _jsonSerializerSettings = jsonSerializerSettings;
+    }
+
+    public string Serialize<T>(T obj) where T : class
+    {
+        if (obj == null)
+            throw new ArgumentNullException(nameof(obj));
+
+        var json = JsonConvert.SerializeObject(obj, _jsonSerializerSettings);
+        return json;
+    }
+
+    public T Deserialize<T>(string json) where T : class
+    {
+        if (json == null)
+            throw new ArgumentNullException(nameof(json));
+
+        var obj = JsonConvert.DeserializeObject<T>(json, _jsonSerializerSettings);
+        if (obj == null)
+            throw new Exception($"Could not deserialize {typeof(T).Name} from JSON: {json}");
+        return obj;
+    }
+}
 ```
 
 ### HTTP Load Testing
@@ -1111,45 +1169,25 @@ using Microsoft.Playwright;
 [Test]
 public async Task Verify_login_flow()
 {
+    IPage page = null;
+
     await Scenario()
-        .Step("Navigate and login", async context =>
+        .Step("Enter login data", async (context) =>
         {
-            var page = await context.CreateBrowserPage();
-            await page.GotoAsync("https://myapp.com/login");
-            
-            await page.GetByRole(AriaRole.Textbox, new() { Name = "Username" }).FillAsync("admin");
-            await page.GetByRole(AriaRole.Textbox, new() { Name = "Password" }).FillAsync("password");
+            page = await context.CreateBrowserPage();
+            await page.GotoAsync("https://localhost:44316/");
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter username" }).ClickAsync();
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter username" }).FillAsync("admin");
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter password" }).ClickAsync();
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter password" }).FillAsync("admin123");
             await page.GetByRole(AriaRole.Button, new() { Name = "Login" }).ClickAsync();
-            
-            await Assertions.Expect(page.Locator("h1")).ToContainTextAsync("Welcome");
+        })
+        .Step("Verify login success", async (context) =>
+        {
+            await Assertions.Expect(page.Locator("h1")).ToContainTextAsync("Welcome, Administrator!");
         })
         .Run();
 }
-```
-
-### Browser Interactions
-
-```csharp
-.Step("Complete checkout", async context =>
-{
-    var page = await context.CreateBrowserPage();
-    await page.GotoAsync("https://shop.example.com");
-    
-    // Click elements
-    await page.ClickAsync(".product-card:first-child");
-    await page.ClickAsync("button.add-to-cart");
-    
-    // Fill forms
-    await page.FillAsync("#email", "customer@example.com");
-    await page.SelectOptionAsync("#country", "US");
-    
-    // Wait for elements
-    await page.WaitForSelectorAsync(".order-confirmation");
-    
-    // Take screenshot
-    var screenshot = await page.ScreenshotAsync();
-    await context.Attach("confirmation.png", screenshot);
-})
 ```
 
 ### UI Load Testing
@@ -1159,23 +1197,27 @@ public async Task Verify_login_flow()
 public async Task UI_load_test()
 {
     await Scenario()
-        .Step("Simulate user interaction", async context =>
+        .InputData(new LoginInfo("Administrator", "admin", "admin123"),
+                    new LoginInfo("Demo User", "demo", "demo"))
+        .Step("Enter login data", async (context) =>
         {
+            var loginInfo = context.InputData<LoginInfo>();
+
             var page = await context.CreateBrowserPage();
-            await page.GotoAsync("https://myapp.com");
-            await page.ClickAsync("a.login");
-            await page.FillAsync("#username", $"user{Random.Shared.Next(1000)}");
-            await page.FillAsync("#password", "password");
-            await page.ClickAsync("button[type='submit']");
-            await page.WaitForSelectorAsync(".dashboard");
+            await page.GotoAsync("https://localhost:44316/");
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter username" }).ClickAsync();
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter username" }).FillAsync(loginInfo.Username);
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter password" }).ClickAsync();
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter password" }).FillAsync(loginInfo.Password);
+            await page.GetByRole(AriaRole.Button, new() { Name = "Login" }).ClickAsync();
+            context.SetSharedData("page", page);
         })
-        .Load().Simulations((context, simulations) =>
+        .Step("Verify login success", async (context) =>
         {
-            simulations.OneTimeLoad(10);
-        })
-        .Load().AssertWhenDone((context, stats) =>
-        {
-            Assert.AreEqual(10, stats.Ok.RequestCount);
+            var page = context.GetSharedData<IPage>("page");
+            var loginInfo = context.InputData<LoginInfo>();
+
+            await Assertions.Expect(page.Locator("h1")).ToContainTextAsync($"Welcome, {loginInfo.Name}!");
         })
         .Run();
 }
@@ -1243,6 +1285,47 @@ Create a Grafana dashboard to visualize:
 
 ---
 
+## Test Reports
+
+TestFuzn automatically generates HTML and XML reports for both standard tests and load tests.
+
+### Standard Test Reports
+
+| File | Description |
+|------|-------------|
+| `TestReport.html` | Visual HTML report with test status, step details, comments, and attachments |
+| `TestReport.xml` | Machine-readable XML report for CI/CD integration |
+
+### Load Test Reports
+
+Each load test generates its own dedicated report files:
+
+| File | Description |
+|------|-------------|
+| `LoadTestReport-{GroupName}-{TestName}.html` | Visual HTML report with performance metrics |
+| `LoadTestReport-{GroupName}-{TestName}.xml` | Machine-readable XML report with detailed statistics |
+
+The load test reports include:
+- Phase timings (Init, Warmup, Execution, Cleanup)
+- Performance metrics (RPS, response times, percentiles)
+- Per-step breakdown and error summary
+- Snapshot timeline showing metrics over time
+
+### Report Location
+
+Reports are saved to the MSTest results directory:
+
+```
+TestResults/{run-guid}/
+├── TestReport.html
+├── TestReport.xml
+├── LoadTestReport-*.html
+├── LoadTestReport-*.xml
+├── Attachments/
+```
+
+---
+
 ## API Reference
 
 ### ScenarioBuilder Methods
@@ -1297,206 +1380,3 @@ Create a Grafana dashboard to visualize:
 | `FixedConcurrentLoad(count, duration)` | Constant concurrent users |
 | `RandomLoadPerSecond(min, max, duration)` | Random load in range |
 | `Pause(duration)` | Pause between simulations |
-
----
-
-## Examples
-
-### Example 1: Unit Test with Validation
-
-```csharp
-[TestClass]
-[Group("Product Unit Tests")]
-public class ProductUnitTests : Test
-{
-    [Test(Name = "Verify product validation rejects empty names", Id = "UT-001")]
-    [Tags("Unit", "Validation")]
-    public async Task Verify_product_name_validation()
-    {
-        await Scenario()
-            .Step("Create product with empty name", context =>
-            {
-                var product = new Product { Name = "", Price = 100 };
-                context.SetSharedData("product", product);
-            })
-            .Step("Validate product name is invalid", context =>
-            {
-                var product = context.GetSharedData<Product>("product");
-                var isValid = !string.IsNullOrWhiteSpace(product.Name);
-                Assert.IsFalse(isValid, "Empty product name should be invalid");
-            })
-            .Run();
-    }
-}
-```
-
-### Example 2: Data-Driven Test
-
-```csharp
-[Test]
-[Tags("Unit", "DataDriven")]
-public async Task Validate_multiple_products()
-{
-    await Scenario()
-        .InputData(
-            new Product { Name = "Product A", Price = 10 },
-            new Product { Name = "Product B", Price = 20 },
-            new Product { Name = "Product C", Price = 30 }
-        )
-        .InputDataBehavior(InputDataBehavior.Loop)
-        .Step("Validate each product", context =>
-        {
-            var product = context.InputData<Product>();
-            context.Comment($"Validating: {product.Name}");
-            
-            Assert.IsFalse(string.IsNullOrWhiteSpace(product.Name));
-            Assert.IsTrue(product.Price > 0);
-        })
-        .Run();
-}
-```
-
-### Example 3: Integration Test with Custom Context
-
-```csharp
-private class ProductTestContext
-{
-    public string AuthToken { get; set; }
-    public Product CreatedProduct { get; set; }
-}
-
-[Test(Name = "Complete product lifecycle test", Id = "IT-001")]
-[Tags("Integration", "CRUD")]
-[Metadata("Category", "API")]
-public async Task Product_lifecycle_test()
-{
-    await Scenario<ProductTestContext>()
-        .BeforeScenario(context => context.Logger.LogInformation("Starting lifecycle test"))
-        .Step("Authenticate", async context =>
-        {
-            var response = await context.CreateHttpRequest($"{BaseUrl}/api/Auth/token")
-                .Body(new { Username = "admin", Password = "admin123" })
-                .Post();
-            
-            Assert.IsTrue(response.Ok);
-            context.Model.AuthToken = response.BodyAs<TokenResponse>().Token;
-        })
-        .Step("Create product", async context =>
-        {
-            context.Model.CreatedProduct = new Product
-            {
-                Id = Guid.NewGuid(),
-                Name = "Test Product",
-                Price = 99.99m
-            };
-            
-            var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products")
-                .AuthBearer(context.Model.AuthToken)
-                .Body(context.Model.CreatedProduct)
-                .Post();
-            
-            Assert.IsTrue(response.Ok);
-        })
-        .Step("Verify product exists", async context =>
-        {
-            var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products/{context.Model.CreatedProduct.Id}")
-                .AuthBearer(context.Model.AuthToken)
-                .Get();
-            
-            Assert.IsTrue(response.Ok);
-            var product = response.BodyAs<Product>();
-            Assert.AreEqual(context.Model.CreatedProduct.Name, product.Name);
-        })
-        .Step("Delete product", async context =>
-        {
-            var response = await context.CreateHttpRequest($"{BaseUrl}/api/Products/{context.Model.CreatedProduct.Id}")
-                .AuthBearer(context.Model.AuthToken)
-                .Delete();
-            
-            Assert.IsTrue(response.Ok);
-        })
-        .AfterScenario(context => context.Logger.LogInformation("Lifecycle test complete"))
-        .Run();
-}
-```
-
-### Example 4: Load Test with Assertions
-
-```csharp
-[Test(Name = "API performance load test")]
-[Tags("Load", "Performance")]
-public async Task API_load_test()
-{
-    await Scenario()
-        .Step("Call API endpoint", async context =>
-        {
-            var response = await context.CreateHttpRequest("https://api.example.com/health")
-                .Get();
-            
-            Assert.IsTrue(response.Ok);
-        })
-        .Load().Warmup((context, simulations) =>
-        {
-            simulations.FixedConcurrentLoad(5, TimeSpan.FromSeconds(3));
-        })
-        .Load().Simulations((context, simulations) =>
-        {
-            simulations.GradualLoadIncrease(1, 100, TimeSpan.FromSeconds(10));
-            simulations.FixedLoad(100, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30));
-        })
-        .Load().AssertWhileRunning((context, stats) =>
-        {
-            Assert.AreEqual(0, stats.Failed.RequestCount, "No failures during test");
-        })
-        .Load().AssertWhenDone((context, stats) =>
-        {
-            Assert.IsTrue(stats.Ok.ResponseTimeMean < TimeSpan.FromMilliseconds(500));
-            Assert.IsTrue(stats.Ok.ResponseTimePercentile99 < TimeSpan.FromSeconds(1));
-            Assert.AreEqual(0, stats.Failed.RequestCount);
-        })
-        .Run();
-}
-```
-
-### Example 5: Playwright UI Test
-
-```csharp
-[Test(Name = "Verify login and product creation")]
-[Tags("UI", "E2E")]
-public async Task Login_and_create_product()
-{
-    await Scenario()
-        .Step("Login and create product", async context =>
-        {
-            var page = await context.CreateBrowserPage();
-            await page.GotoAsync("https://localhost:44316/");
-            
-            // Login
-            await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter username" }).FillAsync("admin");
-            await page.GetByRole(AriaRole.Textbox, new() { Name = "Enter password" }).FillAsync("admin123");
-            await page.GetByRole(AriaRole.Button, new() { Name = "Login" }).ClickAsync();
-            
-            await Assertions.Expect(page.Locator("h1")).ToContainTextAsync("Welcome");
-            
-            // Take screenshot
-            var screenshot = await page.ScreenshotAsync();
-            await context.Attach("login-success.png", screenshot);
-        })
-        .Run();
-}
-```
-
----
-
-## Best Practices
-
-1. **Use descriptive names** - Test and step names should clearly describe what's being tested
-2. **Leverage custom context** - Use typed context models for complex scenarios
-3. **Use shared steps** - Create extension methods for common patterns
-4. **Add meaningful logs** - Use `context.Logger` and `context.Comment()` for debugging
-5. **Attach evidence** - Capture screenshots, responses, etc. for failed tests
-6. **Use warmup** - Always warm up before load tests
-7. **Set realistic assertions** - Base load test assertions on actual SLAs
-8. **Organize with groups and tags** - Use `[Group]` and `[Tags]` for organization
-9. **Clean up resources** - Use `AfterIteration` and `AfterScenario` for cleanup
-10. **Use async/await** - Leverage async throughout for better performance

@@ -131,9 +131,9 @@ internal class ExecuteStepHandler
 
     private static async Task HandlePluginExceptionHandler(IterationContext iterationContext, Exception exception)
     {
-        //try
-        //{ 
-            foreach (var plugin in GlobalState.Configuration.ContextPlugins)
+        foreach (var plugin in GlobalState.Configuration.ContextPlugins)
+        {
+            try
             {
                 if (!plugin.RequireStepExceptionHandling)
                     continue;
@@ -141,11 +141,10 @@ internal class ExecuteStepHandler
                 var state = iterationContext.Internals.Plugins.GetState(plugin.GetType());
                 await plugin.HandleStepException(state, iterationContext, exception);
             }
-        //}
-        //catch (Exception ex)
-        //{
-        //    GlobalState.Logger.LogError(ex, "An exception occurred in a plugin's step exception handler.");
-        //    // Swallow exceptions from plugin exception handlers to not override the original exception.
-        //}
+            catch (Exception ex)
+            {
+                GlobalState.Logger.LogError(ex, $"An exception occurred in the plugin {plugin.GetType()} step exception handler.");
+            }
+        }
     }
 }

@@ -33,8 +33,6 @@ internal static class TestFuznIntegrationCore
         }
 
         GlobalState.NodeName = Environment.MachineName;
-        GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
-        GlobalState.Logger.LogInformation("Logging initialized");
 
         // Scan all loaded assemblies for a type that implements IStartup
         var startupType = AppDomain.CurrentDomain
@@ -48,6 +46,9 @@ internal static class TestFuznIntegrationCore
         var testAssemblyName = startupType.Assembly.GetName().Name;
         GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, "TestFuznResults", testAssemblyName, $"{GlobalState.TestRunId}");
         Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
+
+        GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
+        GlobalState.Logger.LogInformation("Logging initialized");
 
         _startupInstance = Activator.CreateInstance(startupType) as IStartup;
         if (_startupInstance == null)

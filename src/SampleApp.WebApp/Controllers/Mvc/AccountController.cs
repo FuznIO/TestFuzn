@@ -54,7 +54,7 @@ public class AccountController : Controller
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var authProperties = new AuthenticationProperties
         {
-            IsPersistent = true,
+            IsPersistent = false,
             ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1)
         };
 
