@@ -24,7 +24,7 @@ internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter
 
     public int WindowWidth => Console.WindowWidth;
 
-    public abstract Task ExecuteTestMethod(IFeatureTest featureTest, MethodInfo methodInfo);
+    public abstract Task ExecuteTestMethod(ITest test, MethodInfo methodInfo);
 
     public void WriteAdvancedTable(AdvancedTable table)
     {
@@ -47,7 +47,7 @@ internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter
                 $"{scenario.Key.Name}",
                 $"{scenario.Value.TotalExecutionDuration.ToTestFuznFormattedDuration()}",
                 $"{(scenario.Value.TestRunTotalDuration()).ToTestFuznFormattedDuration()}",
-                $"{(scenario.Value.Status == ScenarioStatus.Passed ? "[green]Passed[/]" : "[red]Failed[/]")}"
+                $"{(scenario.Value.Status == TestStatus.Passed ? "[green]Passed[/]" : "[red]Failed[/]")}"
             );
 
             AnsiConsole
@@ -235,5 +235,10 @@ internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter
     public void SetCurrentTestAsSkipped()
     {
         throw new ScenarioRunModeIgnoreException();
+    }
+
+    public void ThrowTestFuznIsNotInitializedException()
+    {
+        throw new NotImplementedException();
     }
 }

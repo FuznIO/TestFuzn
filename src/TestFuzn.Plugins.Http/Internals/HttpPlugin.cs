@@ -14,12 +14,14 @@ internal class HttpPlugin : IContextPlugin
     }
         
     public bool RequireState => true;
-    public Task InitGlobal()
+    public bool RequireStepExceptionHandling => false;
+
+    public Task InitSuite()
     {
         return Task.CompletedTask;
     }
 
-    public async Task CleanupGlobal()
+    public async Task CleanupSuite()
     {
         await Task.CompletedTask;
     }
@@ -32,5 +34,10 @@ internal class HttpPlugin : IContextPlugin
     public Task CleanupContext(object state)
     {
         return Task.CompletedTask;
+    }
+
+    public Task HandleStepException(object state, IterationContext context, Exception exception)
+    {
+        throw new NotImplementedException();
     }
 }

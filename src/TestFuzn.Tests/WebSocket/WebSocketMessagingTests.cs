@@ -2,14 +2,12 @@
 
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
-[FeatureTest]
-public class WebSocketMessagingTests : BaseFeatureTest
+[TestClass]
+public class WebSocketMessagingTests : Test
 {
-    public override string FeatureName => "WebSocket Messaging";
-
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
-    [ScenarioTest]
+    [Test]
     public async Task Send_And_Receive_Text_Message()
     {
         await Scenario()
@@ -30,7 +28,7 @@ public class WebSocketMessagingTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Send_Multiple_Messages()
     {
         await Scenario()
@@ -63,7 +61,7 @@ public class WebSocketMessagingTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Send_And_Receive_Json_Message()
     {
         await Scenario()
@@ -92,7 +90,7 @@ public class WebSocketMessagingTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task GetReceivedMessages_Returns_All_Messages()
     {
         await Scenario()
@@ -116,7 +114,7 @@ public class WebSocketMessagingTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task ClearReceivedMessages_Empties_Buffer()
     {
         await Scenario()
@@ -144,7 +142,7 @@ public class WebSocketMessagingTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task WaitForMessage_Times_Out_When_No_Message()
     {
         await Scenario()
@@ -175,7 +173,7 @@ public class WebSocketMessagingTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task WaitForMessage_Returns_Immediately_If_Message_Available()
     {
         await Scenario()
@@ -199,7 +197,7 @@ public class WebSocketMessagingTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Send_Binary_Data()
     {
         await Scenario()
@@ -220,7 +218,7 @@ public class WebSocketMessagingTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Cannot_Send_When_Not_Connected()
     {
         await Scenario()

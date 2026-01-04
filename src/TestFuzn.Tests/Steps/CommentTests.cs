@@ -1,10 +1,10 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
-[FeatureTest]
-public class CommentTests : BaseFeatureTest
+[TestClass]
+public class CommentTests : Test
 {
-    [ScenarioTest]
-    public async Task FeatureTest_Comment_Should_Be_Written_ToConsoleAndReports()
+    [Test]
+    public async Task StandardTest_Comment_Should_Be_Written_ToConsoleAndReports()
     {
         await Scenario()
             .Step("Step 1 - Write comment", (context) =>
@@ -20,7 +20,7 @@ public class CommentTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task LoadTest_Comment_Should_Be_Written_To_Log()
     {
         await Scenario()

@@ -1,0 +1,23 @@
+@{
+    ViewData["Title"] = "Home";
+    var displayName = User.FindFirst("DisplayName")?.Value ?? User.Identity?.Name ?? "User";
+}
+
+<div class="card">
+    <h1 class="card-title">Welcome, @displayName!</h1>
+    <p style="color: #666; margin-bottom: 1.5rem;">You are now logged in to the SampleApp test application.</p>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+        <div class="card" style="background-color: #f8f9fa;">
+            <h3 style="color: #3498db; margin-bottom: 0.5rem;">Products</h3>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">Manage your product catalog - add, edit, search, and delete products.</p>
+            <a href="/Products" class="btn btn-primary" id="go-to-products">Manage Products</a>
+        </div>
+        
+        <div class="card" style="background-color: #f8f9fa;">
+            <h3 style="color: #27ae60; margin-bottom: 0.5rem;">API</h3>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">Explore the REST API endpoints via Swagger documentation.</p>
+            <a href="/swagger" class="btn btn-success" target="_blank" id="go-to-swagger">Open Swagger</a>
+        </div>
+    </div>
+</div>

@@ -19,15 +19,15 @@ internal class CleanupManager
     {
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsStarted(FeatureTestPhase.Cleanup);
-            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Cleanup);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Cleanup);
+            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Cleanup);
         }
 
         var cleanupPerScenarioTasks = new List<Task>();
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            if (scenario.CleanupScenarioAction != null)
+            if (scenario.AfterScenarioAction != null)
                 cleanupPerScenarioTasks.Add(ExecuteCleanupScenario(_testFramework, scenario));
         }
 
@@ -37,23 +37,23 @@ internal class CleanupManager
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsCompleted(FeatureTestPhase.Cleanup);
-            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Cleanup);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Cleanup);
+            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Cleanup);
         }
     }
 
     private async Task ExecuteCleanupScenario(ITestFrameworkAdapter testFramework, Scenario scenario)
     {
-        var context = ContextFactory.CreateScenarioContext(testFramework, "CleanupScenario");
-        await scenario.CleanupScenarioAction(context);
+        var context = ContextFactory.CreateScenarioContext(testFramework, "AfterScenario");
+        await scenario.AfterScenarioAction(context);
     }
 
     private async Task ExecuteCleanupTestMethod()
     {
-        if (_sharedExecutionState.IFeatureTestClassInstance is ICleanupScenarioTestMethod cleanup)
+        if (_sharedExecutionState.TestClassInstance is IAfterTest cleanup)
         {
-            Context context = ContextFactory.CreateContext(_testFramework, "CleanupScenarioTestMethod");
-            await cleanup.CleanupScenarioTestMethod(context);
+            Context context = ContextFactory.CreateContext(_testFramework, "AfterTest");
+            await cleanup.AfterTest(context);
         }
     }
 }

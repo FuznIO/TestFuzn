@@ -23,16 +23,16 @@ internal class ConsoleWriter
 
     public void WriteSummary()
     {
-        if (_sharedExecutionState.TestType == TestType.Feature)
-            WriteSummaryFeature();
+        if (_sharedExecutionState.TestType == TestType.Standard)
+            WriteSummaryStandard();
         else
             WriteSummaryLoad();
     }
 
-    public void WriteSummaryFeature()
+    public void WriteSummaryStandard()
     {
         var scenario = _sharedExecutionState.Scenarios.Single();
-        var scenarioResult = _sharedExecutionState.ResultState.FeatureCollectors.First().Value;
+        var scenarioResult = _sharedExecutionState.ScenarioResultState.StandardCollectors.First().Value;
         
         if (scenarioResult.IterationResults.Count > 0)
         {
@@ -172,7 +172,7 @@ internal class ConsoleWriter
 
             foreach (var scenario in _sharedExecutionState.Scenarios)
             {
-                loadtestResults.TryAdd(scenario, _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult());
+                loadtestResults.TryAdd(scenario, _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult());
             }
             
             _testFramework.WriteSummary(loadtestResults.First().Value.StartTime(), _sharedExecutionState.TestRunState.TestRunDuration(), loadtestResults);
@@ -192,7 +192,7 @@ internal class ConsoleWriter
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            var loadResult = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult();
+            var loadResult = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult();
 
             var table = new AdvancedTable
             {

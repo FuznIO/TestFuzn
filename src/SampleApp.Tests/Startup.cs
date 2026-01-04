@@ -19,43 +19,17 @@ public class Startup : IStartup
         await TestFuznIntegration.Cleanup(testContext);
     }
 
-    public TestFuznConfiguration Configuration()
+    public void Configure(TestFuznConfiguration configuration)
     {
-        var configuration = new TestFuznConfiguration();
         configuration.UseHttp();
         configuration.UsePlaywright(c =>
         {
-            c.BrowserTypesToUse = new List<string> { "chromium" };
+            c.BrowserTypes = new List<string> { "chromium" };
             c.ConfigureBrowserLaunchOptions = (browserType, launchOptions) =>
             {
-                launchOptions.Args =
-                [
-                    "--disable-web-security",
-                    "--disable-features=IsolateOrigins,site-per-process"
-                ];
+                launchOptions.Timeout = 5000;
                 launchOptions.Headless = false;
             };
-            c.ConfigureContextOptions = (browserType, contextOptions) =>
-            {
-                contextOptions.IgnoreHTTPSErrors = true;
-            };
-            c.AfterPageCreated = (browserType, page) =>
-            {
-                page.SetDefaultTimeout(10000);
-                return Task.CompletedTask;
-            };
         });
-
-        return configuration;
-    }
-
-    public Task InitGlobal(Context context)
-    {
-        return Task.CompletedTask;
-    }
-
-    public Task CleanupGlobal(Context context)
-    {
-        return Task.CompletedTask;
     }
 }

@@ -18,29 +18,17 @@ public class Startup : IStartup
         await TestFuznIntegration.Cleanup(testContext);
     }
 
-    public TestFuznConfiguration Configuration()
+    public void Configure(TestFuznConfiguration configuration)
     {
-        var configuration = new TestFuznConfiguration();
-        configuration.TestSuite = new TestSuiteInfo
+        configuration.Suite = new SuiteInfo
         {
             Id = "TestFuzn.Tests.Failing",
             Name = "TestFuzn Tests Failing",
         };
         //configuration.UsePlaywright();
         configuration.UseHttp();
-        configuration.UseInfluxDb();
+        configuration.UseInfluxDB();
         // Only one serializer can be used, last one set wins, have these 2 lines just to show both options.
         configuration.SerializerProvider = new SystemTextJsonSerializerProvider();
-        return configuration;
-    }
-
-    public Task InitGlobal(Context context)
-    {
-        return Task.CompletedTask;
-    }
-
-    public Task CleanupGlobal(Context context)
-    {
-        return Task.CompletedTask;
     }
 }

@@ -29,9 +29,29 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
         set;
     }
 
-    public Task ExecuteTestMethod(IFeatureTest featureTest, MethodInfo methodInfo)
+    public async Task ExecuteTestMethod(ITest test, MethodInfo methodInfo)
     {
-        throw new NotImplementedException();
+        try
+        {
+            // Invoke the test method using reflection
+            var result = methodInfo.Invoke(test, null);
+
+            // Await if the result is a Task
+            if (result is Task task)
+            {
+                await task;
+            }
+        }
+        catch (TargetInvocationException ex)
+        {
+            // Handle any exceptions thrown by the test method
+            throw new Exception("Test method execution failed.", ex.InnerException);
+        }
+        catch (Exception ex)
+        {
+            // Handle any other exceptions
+            throw new Exception("An error occurred while executing the test method.", ex);
+        }
     }
 
     public CursorPosition GetCursorPosition()
@@ -178,7 +198,7 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
         throw new NotImplementedException("Should not happen");
     }
 
-    public string TestResultsDirectory => Directory.GetParent(_testContext.TestRunDirectory).ToString();
+    public string TestResultsDirectory => new DirectoryInfo(_testContext.TestRunDirectory).Parent.Parent.ToString();
 
     private static string StripMarkup(string input)
     {
@@ -188,5 +208,10 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
     public void SetCurrentTestAsSkipped()
     {
         Assert.Inconclusive("Scenario test skipped.");
+    }
+
+    public void ThrowTestFuznIsNotInitializedException()
+    {
+        throw new InvalidOperationException("TestFuzn is not initialized. Please ensure that TestFuznIntegration.Init() has been called from [AssemblyInitialize].");
     }
 }

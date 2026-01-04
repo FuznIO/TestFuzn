@@ -1,4 +1,4 @@
-﻿using Fuzn.TestFuzn.Contracts.Results.Feature;
+﻿using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Internals.Execution;
 
@@ -8,9 +8,8 @@ internal class ScenarioLoadCollector
 {
     private readonly object _lock = new object();
     private string _scenarioName;
+    private string _description;
     private string _id;
-    private List<string> _tags;
-    private Dictionary<string, string> _metadata;
     private DateTime _initStartTime;
     private DateTime _initEndTime;
     private DateTime _warmupStartTime;
@@ -20,7 +19,7 @@ internal class ScenarioLoadCollector
     private DateTime _cleanupStartTime;
     private DateTime _cleanupEndTime;
     private bool _isCompleted;
-    private ScenarioStatus _status;
+    private TestStatus _status;
     private Dictionary<string, StepLoadCollector> _steps = new();
     private int _requestsPerSecond = 0;
     private int _requestCount = 0;
@@ -41,9 +40,8 @@ internal class ScenarioLoadCollector
     {
         _scenarioName = scenario.Name;
         _id = scenario.Id;
-        _tags = scenario.TagsInternal;
-        _metadata = scenario.MetadataInternal;
-        _status = ScenarioStatus.Passed;
+        _description = scenario.Description;
+        _status = TestStatus.Passed;
         foreach (var step in scenario.Steps)
         {
             _steps.Add(step.Name, new StepLoadCollector(step.Name, step.Id));
@@ -51,18 +49,18 @@ internal class ScenarioLoadCollector
         _scenario = scenario;
     }
 
-    internal void RecordWarmup(ScenarioStatus status)
+    internal void RecordWarmup(TestStatus status)
     {
         lock (_lock)
         {
-            if (status == ScenarioStatus.Passed)
+            if (status == TestStatus.Passed)
                 _warmupRequestCountOk++;
-            else if (status == ScenarioStatus.Failed)
+            else if (status == TestStatus.Failed)
                 _warmupRequestCountFailed++;
         }
     }
 
-    internal void RecordMeasurement(ScenarioStatus status, IterationFeatureResult result)
+    internal void RecordMeasurement(TestStatus status, IterationResult result)
     {
         lock (_lock)
         {
@@ -76,9 +74,9 @@ internal class ScenarioLoadCollector
             else
                 _requestsPerSecond = _requestCount / testRunTimeInSeconds;
 
-            if (status == ScenarioStatus.Passed)
+            if (status == TestStatus.Passed)
                 _ok.Record(result.ExecutionDuration, _measurementStartTime, _lastUpdated);
-            else if (status == ScenarioStatus.Failed)
+            else if (status == TestStatus.Failed)
                 _failed.Record(result.ExecutionDuration, _measurementStartTime, _lastUpdated);
             else
                 throw new Exception($"Invalid scenario status: {status}");
@@ -169,8 +167,7 @@ internal class ScenarioLoadCollector
             var result = new ScenarioLoadResult();
             result.ScenarioName = _scenarioName;
             result.Id = _id;
-            result.Tags = _tags;
-            result.Metadata = _metadata;
+            result.Description = _description;
 
             result.Simulations = new List<string>();
             foreach (var simulation in _scenario.SimulationsInternal)
@@ -230,7 +227,7 @@ internal class ScenarioLoadCollector
         }
     }
 
-    internal void SetStatus(ScenarioStatus status)
+    internal void SetStatus(TestStatus status)
     {
         lock (_lock)
         {

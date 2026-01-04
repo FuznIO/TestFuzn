@@ -1,8 +1,17 @@
-﻿namespace Fuzn.TestFuzn.Plugins.Http
+﻿namespace Fuzn.TestFuzn.Plugins.Http;
+
+/// <summary>
+/// Specifies the accepted response content types for HTTP requests.
+/// </summary>
+public enum AcceptTypes
 {
-    public enum AcceptTypes
-    {
-        Json,
-        Html
-    }
+    /// <summary>
+    /// Accept JSON responses (application/json).
+    /// </summary>
+    Json,
+
+    /// <summary>
+    /// Accept HTML responses (text/html).
+    /// </summary>
+    Html
 }

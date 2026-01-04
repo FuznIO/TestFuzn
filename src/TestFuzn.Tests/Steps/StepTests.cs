@@ -1,11 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
-[FeatureTest]
-public class StepTests : BaseFeatureTest
+[TestClass]
+public class StepTests : Test
 {
-    public override string FeatureName => "";
-
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Step_Syntax_For_Scenario_With_Default_StepContext()
     {
         bool step1Executed = false;
@@ -47,7 +45,7 @@ public class StepTests : BaseFeatureTest
         Assert.IsTrue(step4Executed);
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Step_Syntax_For_Scenario_With_CustomStepContext()
     {
         bool step1Executed = false;
@@ -97,7 +95,7 @@ public class StepTests : BaseFeatureTest
         Assert.IsTrue(step4Executed);
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task StepNameCannotBeEmpty()
     {
         try
@@ -114,7 +112,7 @@ public class StepTests : BaseFeatureTest
         }
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task StepNameMustBeUnique()
     {
         try

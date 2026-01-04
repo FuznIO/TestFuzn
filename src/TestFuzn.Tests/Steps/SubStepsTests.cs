@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
-[FeatureTest]
-public class SubStepsTests : BaseFeatureTest
+[TestClass]
+public class SubStepsTests : Test
 {
-    [ScenarioTest]
+    [Test]
     public async Task SubSteps_Sync()
     {
         await Scenario()
@@ -47,13 +47,11 @@ public class SubStepsTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
-    [TestCategory("Category1")]
-    [TestCategory("Category2")]
+    [Test]
+    [Tags("Category1", "Category2")]
     public async Task SubSteps_Async()
     {
         await Scenario()
-            .Tags("CategoryA", "CategoryB")
             .Step("Step 1", async (context) =>
             {
                 Assert.AreEqual("Step 1", context.StepInfo.Name);
@@ -96,8 +94,8 @@ public class SubStepsTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
-    [TestCategory("Category1")]
+    [Test]
+    [Tags("Category1")]
     public async Task SubSteps_Async_Load()
     {
         await Scenario()

@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.TargetEnvironment;
 
-[FeatureTest]
-public class EnvironmentTests : BaseFeatureTest
+[TestClass]
+public class EnvironmentTests : Test
 {
-    [ScenarioTest]
+    [Test]
     public async Task Manual_CurrentEnvIsEmpty_ScenarioEnvIsEmpty_ScenarioShouldRun()
     {
         await Scenario()
@@ -11,13 +11,13 @@ public class EnvironmentTests : BaseFeatureTest
             {
                 Assert.AreEqual("ValuesSectionValue1Root", ConfigurationManager.GetRequiredValue<string>("Value1"));
                 Assert.AreEqual("CustomSectionValue1Root", ConfigurationManager.GetRequiredSection<CustomConfigSection>("CustomSection").Value1);
-                Assert.IsEmpty(GlobalState.EnvironmentName);
+                Assert.IsEmpty(GlobalState.TargetEnvironment);
             })
             .Run();
     }
 
-    [ScenarioTest]
-    [Environments("test")]
+    [Test]
+    [TargetEnvironments("test")]
     public async Task Manual_CurrentEnvIsTest_ScenarioEnvIsTest_ScenarioShouldRun()
     {
         await Scenario()
@@ -25,7 +25,7 @@ public class EnvironmentTests : BaseFeatureTest
             {
                 Assert.AreEqual("ValuesSectionValue1Test", ConfigurationManager.GetRequiredValue<string>("Value1"));
                 Assert.AreEqual("CustomSectionValue1Test", ConfigurationManager.GetRequiredSection<CustomConfigSection>("CustomSection").Value1);
-                Assert.AreEqual("test", context.Info.EnvironmentName);
+                Assert.AreEqual("test", context.Info.TargetEnvironment);
             })
             .Run();
     }

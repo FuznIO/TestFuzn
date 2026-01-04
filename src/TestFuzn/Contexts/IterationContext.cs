@@ -1,5 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts;
-using Fuzn.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Contracts.Results.Standard;
 
 namespace Fuzn.TestFuzn;
 
@@ -36,7 +36,6 @@ public abstract class IterationContext : Context
     {
         IterationState.SharedData[key] = value;
     }
-
 
     public void Comment(string message)
     {

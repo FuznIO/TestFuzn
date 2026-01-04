@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using Fuzn.TestFuzn.Internals.State;
-using Fuzn.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Contracts;
 
 namespace Fuzn.TestFuzn.Internals.Execution;
@@ -9,12 +9,12 @@ internal class ExecuteStepHandler
 {
     private readonly SharedExecutionState _sharedExecutionState;
     private readonly IterationState _iterationContext;
-    public ScenarioStatus? CurrentScenarioStatus { get; set; }
-    public StepFeatureResult? RootStepResult { get; set; }
+    public TestStatus? CurrentScenarioStatus { get; set; }
+    public StepStandardResult? RootStepResult { get; set; }
 
     public ExecuteStepHandler(SharedExecutionState sharedExecutionState,
         IterationState iterationContext,
-        ScenarioStatus? scenarioStatus)
+        TestStatus? scenarioStatus)
     {
         _sharedExecutionState = sharedExecutionState;
         _iterationContext = iterationContext;
@@ -28,12 +28,12 @@ internal class ExecuteStepHandler
         var stepDuration = new Stopwatch();
         stepDuration.Start();
 
-        var stepResult = new StepFeatureResult();
+        var stepResult = new StepStandardResult();
         stepResult.Name = step.Name;
 
         AddResultToParentStep(step, stepResult);
 
-        if (CurrentScenarioStatus != null && CurrentScenarioStatus == ScenarioStatus.Failed)
+        if (CurrentScenarioStatus != null && CurrentScenarioStatus == TestStatus.Failed)
         {
             stepResult.Status = StepStatus.Skipped;
         }
@@ -46,7 +46,7 @@ internal class ExecuteStepHandler
             {    
                 await step.Action(stepContext);
 
-                if (CurrentScenarioStatus != null && CurrentScenarioStatus == ScenarioStatus.Failed)
+                if (CurrentScenarioStatus != null && CurrentScenarioStatus == TestStatus.Failed)
                 {
                     // Can happen if a child step fails.
                     stepResult.Status = StepStatus.Failed;
@@ -54,16 +54,18 @@ internal class ExecuteStepHandler
                 else
                 {
                     stepResult.Status = StepStatus.Passed;  
-                    CurrentScenarioStatus = ScenarioStatus.Passed;
+                    CurrentScenarioStatus = TestStatus.Passed;
                 }
                     
             }
             catch (Exception ex)
             {
+                await HandlePluginExceptionHandler(stepContext, ex);
+
                 stepResult.Status = StepStatus.Failed;
-                CurrentScenarioStatus = ScenarioStatus.Failed;
+                CurrentScenarioStatus = TestStatus.Failed;
                 stepResult.Exception = ex;
-                if (_sharedExecutionState.TestType == TestType.Feature
+                if (_sharedExecutionState.TestType == TestType.Standard
                     && _sharedExecutionState.TestRunState.FirstException == null)
                     _sharedExecutionState.TestRunState.FirstException = ex;
             }
@@ -90,7 +92,7 @@ internal class ExecuteStepHandler
         stepResult.Duration = stepDuration.Elapsed;
     }
 
-    private void AddResultToParentStep(Step step, StepFeatureResult stepResult)
+    private void AddResultToParentStep(Step step, StepStandardResult stepResult)
     {
         if (step.ParentName == null)
         {
@@ -109,7 +111,7 @@ internal class ExecuteStepHandler
         parentResult.StepResults.Add(stepResult);
     }
 
-    private static StepFeatureResult? FindParentRecursive(StepFeatureResult current, string parentName)
+    private static StepStandardResult? FindParentRecursive(StepStandardResult current, string parentName)
     {
         if (current.StepResults == null || current.StepResults.Count == 0)
             return null;
@@ -125,5 +127,24 @@ internal class ExecuteStepHandler
         }
 
         return null;
+    }
+
+    private static async Task HandlePluginExceptionHandler(IterationContext iterationContext, Exception exception)
+    {
+        foreach (var plugin in GlobalState.Configuration.ContextPlugins)
+        {
+            try
+            {
+                if (!plugin.RequireStepExceptionHandling)
+                    continue;
+
+                var state = iterationContext.Internals.Plugins.GetState(plugin.GetType());
+                await plugin.HandleStepException(state, iterationContext, exception);
+            }
+            catch (Exception ex)
+            {
+                GlobalState.Logger.LogError(ex, $"An exception occurred in the plugin {plugin.GetType()} step exception handler.");
+            }
+        }
     }
 }

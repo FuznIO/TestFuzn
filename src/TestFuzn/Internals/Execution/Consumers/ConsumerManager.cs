@@ -42,12 +42,12 @@ internal class ConsumerManager
 
             if (_sharedExecutionState.IsScenarioExecutionComplete(message.ScenarioName))
             {
-                _sharedExecutionState.ResultState.FeatureCollectors[message.ScenarioName].MarkPhaseAsCompleted(FeatureTestPhase.Execute);
+                _sharedExecutionState.ScenarioResultState.StandardCollectors[message.ScenarioName].MarkPhaseAsCompleted(StandardTestPhase.Execute);
                 
                 if (_sharedExecutionState.TestType == TestType.Load)
                 {
-                    _sharedExecutionState.ResultState.LoadCollectors[message.ScenarioName].MarkPhaseAsCompleted(LoadTestPhase.Measurement);
-                    var scenarioLoadResult = _sharedExecutionState.ResultState.LoadCollectors[message.ScenarioName].GetCurrentResult(true);
+                    _sharedExecutionState.ScenarioResultState.LoadCollectors[message.ScenarioName].MarkPhaseAsCompleted(LoadTestPhase.Measurement);
+                    var scenarioLoadResult = _sharedExecutionState.ScenarioResultState.LoadCollectors[message.ScenarioName].GetCurrentResult(true);
                     await _scenarioExecutor.WriteToSinks(scenario, scenarioLoadResult, true);
                 }
             }

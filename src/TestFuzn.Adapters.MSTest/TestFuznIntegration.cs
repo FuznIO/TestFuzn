@@ -9,7 +9,7 @@ public static class TestFuznIntegration
     {
         var testFramework = new MsTestRunnerAdapter(testContext);
 
-        await TestFuznIntegrationCore.InitGlobal(testFramework);
+        await TestFuznIntegrationCore.Init(testFramework);
     }
 
     [AssemblyCleanup]
@@ -17,6 +17,6 @@ public static class TestFuznIntegration
     {
         var testFramework = new MsTestRunnerAdapter(testContext);
 
-        await TestFuznIntegrationCore.CleanupGlobal(testFramework);
+        await TestFuznIntegrationCore.Cleanup(testFramework);
     }
 }

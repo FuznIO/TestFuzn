@@ -1,18 +1,18 @@
-﻿using Fuzn.TestFuzn.Contracts.Results.Feature;
+﻿using Fuzn.TestFuzn.Contracts.Results.Standard;
 
 namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 
 internal class SubStepHelper
 {
-    internal static List<SubStepFeatureResult> GetSubStepResults(StepFeatureResult stepResult, int[] parentStepNumber, int level = 0)
+    internal static List<SubStepStandardResult> GetSubStepResults(StepStandardResult stepResult, int[] parentStepNumber, int level = 0)
     {
-        var list = new List<SubStepFeatureResult>();
+        var list = new List<SubStepStandardResult>();
         if (stepResult?.StepResults == null || stepResult.StepResults.Count == 0)
             return list;
 
         foreach (var (child, index) in stepResult.StepResults.Select((sr, i) => (sr, i)))
         {
-            var node = new SubStepFeatureResult
+            var node = new SubStepStandardResult
             {
                 Name = child.Name,
                 StepNumber = $"{string.Join(".", parentStepNumber)}.{index + 1}",
@@ -36,10 +36,10 @@ internal class SubStepHelper
         return list;
     }
 
-    internal class SubStepFeatureResult : StepFeatureResult
+    internal class SubStepStandardResult : StepStandardResult
     {
         public int Level { get; set; }
         public string StepNumber { get; set; }
-        public new List<SubStepFeatureResult> StepResults { get; set; } = [];
+        public new List<SubStepStandardResult> StepResults { get; set; } = [];
     }
 }

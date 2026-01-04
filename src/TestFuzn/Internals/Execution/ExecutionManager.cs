@@ -40,7 +40,7 @@ internal class ExecutionManager
 
     private void ExecuteAssertWhenDone()
     {
-        if (_sharedExecutionState.TestType == TestType.Feature)
+        if (_sharedExecutionState.TestType == TestType.Standard)
             return;
 
         if (_sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
@@ -48,7 +48,7 @@ internal class ExecutionManager
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            var scenarioCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
+            var scenarioCollector = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
             var scenarioResult = scenarioCollector.GetCurrentResult();
             if (scenario.AssertWhenDoneAction != null)
             {
@@ -61,7 +61,7 @@ internal class ExecutionManager
                 {
                     _sharedExecutionState.TestRunState.FirstException = e;
                     scenarioCollector.SetAssertWhenDoneException(e);
-                    scenarioCollector.SetStatus(ScenarioStatus.Failed);
+                    scenarioCollector.SetStatus(TestStatus.Failed);
                 }
             }
         }

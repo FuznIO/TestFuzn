@@ -1,6 +1,6 @@
 ﻿using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Internals.InputData;
 using Fuzn.TestFuzn.Internals.State;
@@ -34,7 +34,7 @@ internal class ExecuteScenarioMessageHandler
 
         var iterationState = ContextFactory.CreateIterationState(_testFramework, scenario, currentInputData);
 
-        var iterationResult = new IterationFeatureResult();
+        var iterationResult = new IterationResult();
         iterationResult.CorrelationId = iterationState.Info.CorrelationId;
 
         var scenarioDuration = new Stopwatch();
@@ -44,10 +44,10 @@ internal class ExecuteScenarioMessageHandler
 
         try
         {
-            if (scenario.InitIterationAction != null)
+            if (scenario.BeforeIterationAction != null)
             {
-                var stepContext = ContextFactory.CreateIterationContext(iterationState, "InitIteration", null, null);
-                await scenario.InitIterationAction(stepContext);
+                var stepContext = ContextFactory.CreateIterationContext(iterationState, "BeforeIteration", null, null);
+                await scenario.BeforeIterationAction(stepContext);
             }
 
             foreach (var (step, index) in scenario.Steps.Select((s,i)=> (s,i)))
@@ -68,32 +68,32 @@ internal class ExecuteScenarioMessageHandler
 
             iterationResult.ExecutionDuration = scenarioDuration.Elapsed;
 
-            if (scenario.CleanupIterationAction != null)
+            if (scenario.AfterIterationAction != null)
             {
-                var stepContext = ContextFactory.CreateIterationContext(iterationState, "CleanupIteration", null, null);
-                await scenario.CleanupIterationAction(stepContext);
+                var stepContext = ContextFactory.CreateIterationContext(iterationState, "AfterIteration", null, null);
+                await scenario.AfterIterationAction(stepContext);
             }
         }
 
-        if (_sharedExecutionState.TestType == TestType.Feature)
+        if (_sharedExecutionState.TestType == TestType.Standard)
         {
             if (currentInputData != null)
                 iterationResult.InputData = PropertyHelper.GetStringFromProperties(currentInputData);
 
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].IterationResults.Add(iterationResult);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].IterationResults.Add(iterationResult);
             await CleanupContext(iterationState);
         }
         else if (_sharedExecutionState.TestType == TestType.Load)
         {
-            var scenarioLoadCollector = _sharedExecutionState.ResultState.LoadCollectors[scenario.Name];
+            var scenarioLoadCollector = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
 
             if (message.IsWarmup)
             {
-                scenarioLoadCollector.RecordWarmup(executeStepHandler.CurrentScenarioStatus ?? ScenarioStatus.Failed);
+                scenarioLoadCollector.RecordWarmup(executeStepHandler.CurrentScenarioStatus ?? TestStatus.Failed);
                 return;
             }
 
-            scenarioLoadCollector.RecordMeasurement(executeStepHandler.CurrentScenarioStatus ?? ScenarioStatus.Failed, iterationResult);
+            scenarioLoadCollector.RecordMeasurement(executeStepHandler.CurrentScenarioStatus ?? TestStatus.Failed, iterationResult);
 
             var scenarioLoadResult = scenarioLoadCollector.GetCurrentResult();
 
@@ -113,7 +113,7 @@ internal class ExecuteScenarioMessageHandler
                     _sharedExecutionState.TestRunState.ExecutionStoppedReason = ex;
                     _sharedExecutionState.TestRunState.FirstException = ex;
                     scenarioLoadCollector.SetAssertWhileRunningException(ex);
-                    scenarioLoadCollector.SetStatus(ScenarioStatus.Failed);
+                    scenarioLoadCollector.SetStatus(TestStatus.Failed);
                 }
             }
 
@@ -158,7 +158,7 @@ internal class ExecuteScenarioMessageHandler
                     {
                         foreach (var sinkPlugin in GlobalState.Configuration.SinkPlugins)
                         {
-                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _sharedExecutionState.IFeatureTestClassInstance.FeatureName, scenarioLoadResult);
+                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _sharedExecutionState.TestClassInstance.TestInfo.Group.Name, _sharedExecutionState.TestClassInstance.TestInfo.Name, scenarioLoadResult);
                         }
                     }
                     _lastSinkWrite[scenario.Name] = now;

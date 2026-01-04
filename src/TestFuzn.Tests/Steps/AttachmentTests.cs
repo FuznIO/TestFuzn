@@ -1,9 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
-[FeatureTest]
-public class AttachmentTests : BaseFeatureTest
+[TestClass]
+public class AttachmentTests : Test
 {
-    [ScenarioTest]
+    [Test]
     public async Task Verify_attachments()
     {
         await Scenario()

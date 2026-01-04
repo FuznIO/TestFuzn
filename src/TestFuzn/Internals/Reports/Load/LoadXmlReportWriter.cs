@@ -15,17 +15,17 @@ internal class LoadXmlReportWriter : ILoadReport
     {
         try
         {
-            var reportName = FileNameHelper.MakeFilenameSafe(loadReportData.ScenarioResult.ScenarioName);
-            var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"Load-Report-{reportName}.xml");
+            var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Group.Name}-{loadReportData.Test.Name}");
+            var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"LoadTestReport-{reportName}.xml");
 
             var stringBuilder = new StringBuilder();
             using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))
             {
                 writer.WriteStartDocument();
-                writer.WriteStartElement("LoadTestResults");
+                writer.WriteStartElement("LoadTestRunResults");
                 writer.WriteElementString("Version", "1.0");
 
-                writer.WriteStartElement("TestSuite");
+                writer.WriteStartElement("Suite");
                 {
                     writer.WriteElementString("Name", loadReportData.TestSuite.Name);
                     writer.WriteElementString("Id", loadReportData.TestSuite.Id);
@@ -45,33 +45,31 @@ internal class LoadXmlReportWriter : ILoadReport
                 }
                 writer.WriteEndElement();
 
-                writer.WriteStartElement("Feature");
-                writer.WriteElementString("Name", loadReportData.Feature.Name);
-                writer.WriteElementString("Id", loadReportData.Feature.Id);
-                if (loadReportData.Feature.Metadata != null)
-                {
-                    writer.WriteStartElement("Metadata");
-                    foreach (var metadata in loadReportData.Feature.Metadata)
-                    {
-                        writer.WriteStartElement("Property");
-                        writer.WriteElementString("Key", metadata.Key);
-                        writer.WriteElementString("Value", metadata.Value);
-                        writer.WriteEndElement();
-                    }
-                    writer.WriteEndElement();
-                }
+                writer.WriteStartElement("Group");
+                writer.WriteElementString("Name", loadReportData.Group.Name);
                 writer.WriteEndElement();
 
                 writer.WriteElementString("TestRunId", loadReportData.TestRunId);
-                writer.WriteElementString("EnvironmentName", GlobalState.EnvironmentName);
+                writer.WriteElementString("TargetEnvironment", GlobalState.TargetEnvironment);
+                writer.WriteElementString("ExecutionEnvironment", GlobalState.ExecutionEnvironment);
 
-                WriteScenario(writer, loadReportData.Feature.Name, loadReportData.ScenarioResult);
+                WriteTest(writer, loadReportData.Test);
+
+                writer.WriteStartElement("Scenarios");
+                foreach (var scenarioResult in loadReportData.ScenarioResults)
+                {
+                    WriteScenario(writer, loadReportData.Group.Name, loadReportData.Test.Name, scenarioResult);
+                }
+                writer.WriteEndElement();
 
                 writer.WriteEndElement();
                 writer.WriteEndDocument();
             }
 
-            InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Feature.Name, loadReportData.ScenarioResult.ScenarioName);
+            foreach (var scenarioResult in loadReportData.ScenarioResults)
+            {
+                InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Group.Name, loadReportData.Test.Name, scenarioResult.ScenarioName);
+            }
 
             await File.WriteAllTextAsync(filePath, stringBuilder.ToString());
         }
@@ -81,27 +79,27 @@ internal class LoadXmlReportWriter : ILoadReport
         }
     }
 
-    private void WriteScenario(XmlWriter writer, string featureName, ScenarioLoadResult scenarioResult)
+    private void WriteTest(XmlWriter writer, Contracts.Reports.TestInfo test)
     {
-        writer.WriteStartElement("Scenario");
-        writer.WriteElementString("Name", scenarioResult.ScenarioName);
-        writer.WriteElementString("Id", scenarioResult.Id);
-        writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString(@"hh\:mm\:ss\.fff"));
+        writer.WriteStartElement("Test");
+        writer.WriteElementString("Name", test.Name);
+        writer.WriteElementString("FullName", test.FullName);
+        writer.WriteElementString("Id", test.Id);
 
-        if (scenarioResult.Tags != null && scenarioResult.Tags.Count > 0)
+        if (test.Tags != null && test.Tags.Count > 0)
         {
             writer.WriteStartElement("Tags");
-            foreach (var tag in scenarioResult.Tags)
+            foreach (var tag in test.Tags)
             {
                 writer.WriteElementString("Tag", tag);
             }
             writer.WriteEndElement();
         }
 
-        if (scenarioResult.Metadata != null)
+        if (test.Metadata != null && test.Metadata.Count > 0)
         {
             writer.WriteStartElement("Metadata");
-            foreach (var metadata in scenarioResult.Metadata)
+            foreach (var metadata in test.Metadata)
             {
                 writer.WriteStartElement("Property");
                 writer.WriteElementString("Key", metadata.Key);
@@ -110,6 +108,17 @@ internal class LoadXmlReportWriter : ILoadReport
             }
             writer.WriteEndElement();
         }
+
+        writer.WriteEndElement();
+    }
+
+    private void WriteScenario(XmlWriter writer, string groupName, string testName, ScenarioLoadResult scenarioResult)
+    {
+        writer.WriteStartElement("Scenario");
+        writer.WriteElementString("Name", scenarioResult.ScenarioName);
+        writer.WriteElementString("Id", scenarioResult.Id);
+        writer.WriteElementString("Description", scenarioResult.Description);
+        writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString(@"hh\:mm\:ss\.fff"));
 
         writer.WriteStartElement("Simulations");
         foreach (var simulation in scenarioResult.Simulations)
@@ -122,7 +131,7 @@ internal class LoadXmlReportWriter : ILoadReport
 
         WriteSteps(writer, scenarioResult.Steps.Values.ToList());
 
-        WriteSnapshots(writer, featureName, scenarioResult.ScenarioName);
+        WriteSnapshots(writer, groupName, testName, scenarioResult.ScenarioName);
 
         writer.WriteEndElement();
     }
@@ -186,9 +195,9 @@ internal class LoadXmlReportWriter : ILoadReport
         }
     }
 
-    private void WriteSnapshots(XmlWriter writer, string featureName, string scenarioName)
+    private void WriteSnapshots(XmlWriter writer, string groupName, string testName, string scenarioName)
     {
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(featureName, scenarioName);
+        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(groupName, testName, scenarioName);
 
         writer.WriteStartElement("Snapshots");
 

@@ -1,14 +1,10 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
-[FeatureTest]
-public class TagsTests : BaseFeatureTest
+[TestClass]
+public class TagsTests : Test
 {
-    public override string FeatureName => "";
-
-    [TestCategory("Category1")]
-    [TestCategory("Category2")]
-    [TestCategory("Category3")]
-    [ScenarioTest]
+    [Tags("Category1", "Category2", "Category3")]
+    [Test]
     public async Task VerifySingleTestCategoryIsTurnedIntoTag()
     {
         await Scenario()
@@ -18,16 +14,14 @@ public class TagsTests : BaseFeatureTest
             })
             .AssertInternalState(state => 
             {
-                var tags = state.SharedExecutionState.Scenarios.First().TagsInternal;
+                var tags = state.SharedExecutionState.TestClassInstance.TestInfo.Tags;
                 Assert.Contains("Category1", tags);
             })
             .Run();
     }
 
-    [ScenarioTest]
-    [TestCategory("Category1")]
-    [TestCategory("Category2")]
-    [TestCategory("Category3")]
+    [Test]
+    [Tags("Category1", "Category2", "Category3")]
     public async Task VerifyMultipleTestCategoriesAreTurnedIntoTags()
     {
         await Scenario()
@@ -37,7 +31,7 @@ public class TagsTests : BaseFeatureTest
             })
             .AssertInternalState(state => 
             {
-                var tags = state.SharedExecutionState.Scenarios.First().TagsInternal;
+                var tags = state.SharedExecutionState.TestClassInstance.TestInfo.Tags;
                 Assert.Contains("Category1", tags);
                 Assert.Contains("Category2", tags);
             })

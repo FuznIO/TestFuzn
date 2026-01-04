@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn.StandaloneRunner;
 
-internal class ScenarioTestInfo
+internal class DiscoveredTest
 {
     public string Name { get; set; }
     public Type Class { get; set; }

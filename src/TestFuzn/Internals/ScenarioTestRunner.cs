@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Contracts.Results.Feature;
 using Fuzn.TestFuzn.Internals.Cleanup;
 using Fuzn.TestFuzn.Internals.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.Execution;
@@ -9,7 +8,7 @@ using Fuzn.TestFuzn.Internals.Init;
 using Fuzn.TestFuzn.Internals.InputData;
 using Fuzn.TestFuzn.Internals.Logger;
 using Fuzn.TestFuzn.Internals.Reports;
-using Fuzn.TestFuzn.Internals.Results.Feature;
+using Fuzn.TestFuzn.Internals.Results.Standard;
 using Fuzn.TestFuzn.Internals.State;
 using System.Runtime.ExceptionServices;
 
@@ -18,24 +17,24 @@ namespace Fuzn.TestFuzn.Internals;
 internal class ScenarioTestRunner
 {
     private readonly ITestFrameworkAdapter _testFramework;
-    private readonly IFeatureTest _featureTest;
+    private readonly ITest _test;
     internal Action<AssertInternalState> _assertInternalState;
 
     public ScenarioTestRunner(ITestFrameworkAdapter testFramework, 
-        IFeatureTest featureTest,
+        ITest test,
         Action<AssertInternalState> assertInternalState)
     {
         if (testFramework == null)
                 throw new ArgumentNullException(nameof(testFramework));
             _testFramework = testFramework;
 
-        _featureTest = featureTest;
+        _test = test;
         _assertInternalState = assertInternalState;
     }
 
     public async Task Run(params Scenario[] scenarios)
     {
-        var sharedExecutionState = new SharedExecutionState(_featureTest, scenarios);
+        var sharedExecutionState = new SharedExecutionState(_test, scenarios);
         var consoleWriter = new ConsoleWriter(_testFramework, sharedExecutionState);
         var consoleManager = new ConsoleManager(_testFramework, sharedExecutionState, consoleWriter);
         var inputDataFeeder = new InputDataFeeder(sharedExecutionState);
@@ -45,24 +44,16 @@ internal class ScenarioTestRunner
         var consumerManager = new ConsumerManager(sharedExecutionState, executeScenarioMessageHandler);
         var executionManager = new ExecutionManager(_testFramework, sharedExecutionState, producerManager, consumerManager);
         var cleanupManager = new CleanupManager(_testFramework, sharedExecutionState);
-        var featureResultManager = new FeatureResultManager();
+        var standardResultManager = new StandardResultManager();
         var reportManager = new ReportManager();
 
         try
         {
-            SetScenariosToSkipIfEnvironmentMismatch(scenarios);
-
-            if (ShouldSkipScenarios(scenarios))
-            {
-                SkipScenarios(scenarios, featureResultManager);
-                _testFramework.SetCurrentTestAsSkipped();
-            }
-
             consoleManager.StartRealtimeConsoleOutputIfEnabled();
             await initManager.Run();
             await executionManager.Run();
             await cleanupManager.Run();
-            featureResultManager.AddScenarioResults(sharedExecutionState.IFeatureTestClassInstance, sharedExecutionState.ResultState.FeatureCollectors);
+            standardResultManager.AddNonSkippedTestResults(sharedExecutionState);
             await reportManager.WriteLoadReports(sharedExecutionState);
             await consoleManager.Complete();
 
@@ -81,47 +72,5 @@ internal class ScenarioTestRunner
 
             throw;
         }
-    }
-
-    private void SetScenariosToSkipIfEnvironmentMismatch(Scenario[] scenarios)
-    {
-        var currentEnvironmentName = GlobalState.EnvironmentName;
-
-        foreach (var scenario in scenarios)
-        {
-            if (scenario.Environments == null || scenario.Environments.Count == 0)
-            {
-                if (!string.IsNullOrEmpty(currentEnvironmentName))
-                    scenario.RunMode = ScenarioRunMode.Skip;
-            }
-            else
-            {
-                if (string.IsNullOrEmpty(currentEnvironmentName))
-                    scenario.RunMode = ScenarioRunMode.Skip;
-                else
-                {
-                    if (!scenario.Environments.Contains(currentEnvironmentName, StringComparer.OrdinalIgnoreCase))
-                        scenario.RunMode = ScenarioRunMode.Skip;
-                }
-            }
-        }
-    }
-
-    private static bool ShouldSkipScenarios(Scenario[] scenarios)
-    {
-        return scenarios.Length > 0 && scenarios.First().RunMode == ScenarioRunMode.Skip;
-    }
-
-    private void SkipScenarios(Scenario[] scenarios, FeatureResultManager featureResultManager)
-    {
-        var scenarioCollectors = new Dictionary<string, ScenarioFeatureResult>();
-
-        foreach (var scenario in scenarios)
-        {
-            var scenarioCollector = new ScenarioFeatureResult(scenario);
-            scenarioCollector.MarkAsSkipped();
-            scenarioCollectors.Add(scenario.Name, scenarioCollector);
-        }
-        featureResultManager.AddScenarioResults(_featureTest, scenarioCollectors);
     }
 }

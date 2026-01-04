@@ -7,7 +7,7 @@ public class ScenarioInfo
     public string Name => _scenario.Name;
     public string Id => _scenario.Id;
 
-    public ScenarioInfo(Scenario scenario)
+    internal ScenarioInfo(Scenario scenario)
     {
         _scenario = scenario;
     }

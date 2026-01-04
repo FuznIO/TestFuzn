@@ -1,20 +1,32 @@
 ﻿using Fuzn.TestFuzn.Plugins.Http;
 using System.Security.Cryptography;
-
 namespace Fuzn.TestFuzn.Tests.Http;
 
-[FeatureTest]
-public class GetProductsE2ETests : BaseFeatureTest
+[TestClass]
+public class HttpTests : Test
 {
-    public override string FeatureName => "Http";
+    public static async Task<string> GetAuthToken(Context context)
+    {
+        var response = await context.CreateHttpRequest($"https://localhost:44316/api/Auth/token")
+            .Body(new { Username = "admin", Password = "admin123" })
+            .Post();
 
-    [ScenarioTest]
+        Assert.IsTrue(response.Ok, $"Authentication failed: {response.StatusCode}");
+        var tokenResponse = response.BodyAs<TokenResponse>();
+        Assert.IsFalse(string.IsNullOrEmpty(tokenResponse.Token), "Token should not be empty");
+        return tokenResponse.Token;
+    }
+
+    [Test]
     public async Task Verify_Using_SystemText_Set_During_Startup()
     {
         await Scenario()
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products").Get();
+                var token = await GetAuthToken(context);
+                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                                .AuthBearer(token)
+                                .Get();
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
@@ -23,14 +35,18 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Using_SystemText_Override()
     {
         await Scenario()
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
+                var token = await GetAuthToken(context);
                 var systemTextJsonSerializer = new SystemTextJsonSerializerProvider();
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products").SerializerProvider(systemTextJsonSerializer).Get();
+                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                    .AuthBearer(token)
+                    .SerializerProvider(systemTextJsonSerializer)
+                    .Get();
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
@@ -39,14 +55,16 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Using_Newtonsoft()
     {
         await Scenario()
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
+                var token = await GetAuthToken(context);
                 var newtonsoftSerializer = new NewtonsoftSerializerProvider();
                 var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                                        .AuthBearer(token)
                                         .SerializerProvider(newtonsoftSerializer).Get();
 
                 Assert.IsTrue(response.Ok);
@@ -56,7 +74,7 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Ping_LoadTest()
     {
         await Scenario()
@@ -71,24 +89,31 @@ public class GetProductsE2ETests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Load()
     {
+        var token = "";
+
         await Scenario()
+            .BeforeScenario(async context =>
+            {
+                token = await GetAuthToken(context);
+            })
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products").Get();
+                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                                .AuthBearer(token)
+                                .Get();
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
                 Assert.IsTrue(products.Count > 0, "Expected more than one product to be returned.");
             })
-            .Load().Simulations((context, simulations) => simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
             .Run();
     }
 
-    [ScenarioTest]
-    [Ignore]
+    [Test]
     public async Task Max_Load()
     {
         await Scenario()
@@ -99,11 +124,11 @@ public class GetProductsE2ETests : BaseFeatureTest
                 Assert.IsTrue(response.Ok);
                 Assert.IsTrue(response.BodyAs<string>() == "Pong");
             })
-            .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Raw_JsonString()
     {
         await Scenario()
@@ -113,7 +138,9 @@ public class GetProductsE2ETests : BaseFeatureTest
                 var name = $"ProductName_{Guid.NewGuid()}";
                 var price = RandomNumberGenerator.GetInt32(10, 2000);
 
+                var token = await GetAuthToken(context);
                 var postResponse = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                    .AuthBearer(token)
                     .Body($@"
                         {{
                             ""id"": ""{productId}"",
@@ -125,7 +152,8 @@ public class GetProductsE2ETests : BaseFeatureTest
                 Assert.IsTrue(postResponse.Ok);
 
                 var getResponse = await context.CreateHttpRequest($"https://localhost:44316/api/Products/{productId}")
-                    .Get();
+                                    .AuthBearer(token)
+                                    .Get();
 
                 Assert.IsTrue(getResponse.Ok);
                 var product = getResponse.BodyAsJson();

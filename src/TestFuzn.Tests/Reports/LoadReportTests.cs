@@ -1,22 +1,16 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Reports;
 
-[FeatureTest]
-public class LoadReportTests : BaseFeatureTest
+[TestClass]
+public class LoadReportTests : Test
 {
-    public override string FeatureId { get => "FeatureID-1"; }
-    public override string FeatureName { get => "Feature-Name-1"; }
-    public override Dictionary<string, string> FeatureMetadata { get => new Dictionary<string, string>() { { "Meta1", "Value1" } }; }
-
-    [ScenarioTest]
-    [TestCategory("Category1")]
-    [TestCategory("Category2")]
-    [TestCategory("Category3")]
+    [Test]
+    [Tags("Category1", "Category2", "Category3")]
+    [Metadata("MetadataKey1", "MetadataValue1")]
+    [Metadata("ClassMetaKey1", "ClassMetaValue1")]
     public async Task ShortRunning_NoErrors()
     {
         await Scenario()
             .Id("ID-1234")
-            .Metadata("MetadataScenarioKey1", "Value1")
-            .Metadata("MetadataScenarioKey2", "Value2")
             .Step("Test Step 1", (context) =>
             {
             })
@@ -36,12 +30,12 @@ public class LoadReportTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
+    [Metadata("MetaKey", "MetaValue")]
     public async Task ShortRunning_WithErrors_NoAssert()
     {
         await Scenario()
             .Id("ScenarioId-1234")
-            .Metadata("Scenario-Meta1", "Value1")
             .Step("Step 1", "Test-1234", (context) =>
             {
                 return Task.CompletedTask;
@@ -55,7 +49,8 @@ public class LoadReportTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
+    [Metadata("MetaKey", "MetaValue")]
     public async Task ShouldFail_ShortRunning_WithErrors_WithFailingAssertWhenDone()
     {
         bool catchWasRun = false;
@@ -64,7 +59,6 @@ public class LoadReportTests : BaseFeatureTest
         {
             await Scenario("Short running report with errors and failing assert")
                 .Id("ScenarioId-1234")
-                .Metadata("Scenario-Meta1", "Value1")
                 .Step("Step 1", "Test-1234", (context) =>
                 {
                 })
@@ -98,8 +92,8 @@ public class LoadReportTests : BaseFeatureTest
         Assert.IsTrue(catchWasRun);
     }
 
-    [ScenarioTest]
-    [Ignore]
+    [Test]
+    [Skip]
     public async Task ZLongRunning()
     {
         int i = 0;

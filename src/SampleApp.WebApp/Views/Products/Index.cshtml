@@ -1,0 +1,87 @@
+@model ProductListViewModel
+@{
+    ViewData["Title"] = "Products";
+}
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1 class="card-title" style="margin: 0;">Products</h1>
+        <a href="/Products/Create" class="btn btn-success" id="add-product-btn">Add New Product</a>
+    </div>
+
+    <form method="get" action="/Products" style="margin-bottom: 1.5rem;" id="search-form">
+        <div style="display: flex; gap: 0.5rem;">
+            <input type="text" 
+                   name="search" 
+                   value="@Model.SearchTerm" 
+                   class="form-control" 
+                   placeholder="Search products by name..." 
+                   id="search-input"
+                   style="max-width: 300px;" />
+            <button type="submit" class="btn btn-primary" id="search-btn">Search</button>
+            @if (!string.IsNullOrEmpty(Model.SearchTerm))
+            {
+                <a href="/Products" class="btn btn-secondary" id="clear-search-btn">Clear</a>
+            }
+        </div>
+    </form>
+
+    @if (!string.IsNullOrEmpty(Model.SearchTerm))
+    {
+        <p style="color: #666; margin-bottom: 1rem;" id="search-results-info">
+            Showing results for: <strong>"@Model.SearchTerm"</strong> 
+            (@Model.Products.Count product@(Model.Products.Count != 1 ? "s" : "") found)
+        </p>
+    }
+
+    @if (Model.Products.Count == 0)
+    {
+        <div style="text-align: center; padding: 2rem; color: #666;" id="no-products-message">
+            @if (!string.IsNullOrEmpty(Model.SearchTerm))
+            {
+                <p>No products found matching "<strong>@Model.SearchTerm</strong>"</p>
+                <a href="/Products" class="btn btn-secondary">View All Products</a>
+            }
+            else
+            {
+                <p>No products available.</p>
+                <a href="/Products/Create" class="btn btn-success">Add your first product</a>
+            }
+        </div>
+    }
+    else
+    {
+        <table id="products-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th style="width: 200px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var product in Model.Products)
+                {
+                    <tr data-product-id="@product.Id" class="product-row">
+                        <td class="product-name">@product.Name</td>
+                        <td class="product-price">$@product.Price.ToString("F2")</td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="/Products/Edit/@product.Id" 
+                                   class="btn btn-warning btn-sm edit-btn" 
+                                   data-product-id="@product.Id">Edit</a>
+                                <a href="/Products/Delete/@product.Id" 
+                                   class="btn btn-danger btn-sm delete-btn" 
+                                   data-product-id="@product.Id">Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        
+        <p style="color: #666; margin-top: 1rem; font-size: 0.9rem;" id="product-count">
+            Total: @Model.Products.Count product@(Model.Products.Count != 1 ? "s" : "")
+        </p>
+    }
+</div>

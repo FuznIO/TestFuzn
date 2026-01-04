@@ -6,7 +6,7 @@ namespace Fuzn.TestFuzn.Contracts.Adapters;
 
 internal interface ITestFrameworkAdapter
 {
-    Task ExecuteTestMethod(IFeatureTest featureTest, MethodInfo methodInfo);
+    Task ExecuteTestMethod(ITest test, MethodInfo methodInfo);
     bool SupportsRealTimeConsoleOutput { get; }
     ConsoleColor ForegroundColor { get; set; }
     ConsoleColor BackgroundColor { get; set; }
@@ -21,4 +21,5 @@ internal interface ITestFrameworkAdapter
     public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults);
     string TestResultsDirectory { get; }
     void SetCurrentTestAsSkipped();
+    void ThrowTestFuznIsNotInitializedException();
 }

@@ -6,8 +6,11 @@ using Fuzn.TestFuzn.Sinks.InfluxDB;
 namespace Fuzn.TestFuzn.Tests;
 
 [TestClass]
-public class Startup : IStartup, IInitGlobal, ICleanupGlobal
+public class Startup : IStartup, IBeforeSuite, IAfterSuite
 {
+    public static bool BeforeSuiteExecuted = false;
+    public static bool AfterSuiteExecuted = false;
+    
     [AssemblyInitialize]
     public static async Task Initialize(TestContext testContext)
     {
@@ -18,12 +21,12 @@ public class Startup : IStartup, IInitGlobal, ICleanupGlobal
     public static async Task Cleanup(TestContext testContext)
     {
         await TestFuznIntegration.Cleanup(testContext);
+        Assert.IsTrue(AfterSuiteExecuted);
     }
 
-    public TestFuznConfiguration Configuration()
+    public void Configure(TestFuznConfiguration configuration)
     {
-        var configuration = new TestFuznConfiguration();
-        configuration.TestSuite = new TestSuiteInfo
+        configuration.Suite = new SuiteInfo
         {
             Id = "TestFuzn.Tests",
             Name = "TestFuzn Tests",
@@ -33,9 +36,10 @@ public class Startup : IStartup, IInitGlobal, ICleanupGlobal
                 { "OwnerID", "123" },
             }
         };
+        configuration.LoggingVerbosity = LoggingVerbosity.Normal;
         configuration.UsePlaywright(c =>
         {
-            c.BrowserTypesToUse = new List<string> { "chromium" };
+            c.BrowserTypes = new List<string> { "chromium" };
             c.ConfigureBrowserLaunchOptions = (browserType, launchOptions) =>
             {
                 launchOptions.Args =
@@ -43,7 +47,7 @@ public class Startup : IStartup, IInitGlobal, ICleanupGlobal
                     "--disable-web-security",
                     "--disable-features=IsolateOrigins,site-per-process"
                 ];
-                launchOptions.Headless = false;
+                launchOptions.Headless = true;
             };
             c.ConfigureContextOptions = (browserType, contextOptions) =>
             {
@@ -62,20 +66,21 @@ public class Startup : IStartup, IInitGlobal, ICleanupGlobal
             config.DefaultKeepAliveInterval = TimeSpan.FromSeconds(30);
             config.LogFailedConnectionsToTestConsole = true;
         });
-        configuration.UseInfluxDb();
+        configuration.UseInfluxDB();
         // Only one serializer can be used, last one set wins, have these 2 lines just to show both options.
         configuration.SerializerProvider = new NewtonsoftSerializerProvider();
         configuration.SerializerProvider = new SystemTextJsonSerializerProvider();
-        return configuration;
     }
 
-    public Task CleanupGlobal(Context context)
+    public Task BeforeSuite(Context context)
     {
+        BeforeSuiteExecuted = true;
         return Task.CompletedTask;
     }
 
-    public Task InitGlobal(Context context)
+    public Task AfterSuite(Context context)
     {
+        AfterSuiteExecuted = true;
         return Task.CompletedTask;
     }
 }

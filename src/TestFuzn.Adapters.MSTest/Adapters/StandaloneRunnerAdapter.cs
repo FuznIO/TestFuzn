@@ -5,17 +5,17 @@ namespace Fuzn.TestFuzn.Adapters;
 
 internal class StandaloneRunnerAdapter : BaseStandaloneRunnerAdapter
 {
-    public override async Task ExecuteTestMethod(IFeatureTest featureTest, MethodInfo methodInfo)
+    public override async Task ExecuteTestMethod(ITest test, MethodInfo methodInfo)
     {
-        var testContextProperty = featureTest.GetType().GetProperty("TestContext");
+        var testContextProperty = test.GetType().GetProperty("TestContext");
 
         if (testContextProperty == null)
-            throw new InvalidOperationException("The feature test does not have a TestContext property.");
+            throw new InvalidOperationException("The test class does not have a TestContext property.");
 
         var testContext = new BasicMsTestContext(methodInfo.Name);
-        testContextProperty.SetValue(featureTest, testContext);
+        testContextProperty.SetValue(test, testContext);
 
-        var invocationResult = methodInfo.Invoke(featureTest, null);
+        var invocationResult = methodInfo.Invoke(test, null);
         if (invocationResult is Task task)
             await task;
     }

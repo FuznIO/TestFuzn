@@ -1,6 +1,6 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals.Reports;
-using Fuzn.TestFuzn.Internals.Results.Feature;
+using Fuzn.TestFuzn.Internals.Results.Standard;
 using System.Reflection;
 
 namespace Fuzn.TestFuzn.Internals;
@@ -9,12 +9,16 @@ internal static class TestFuznIntegrationCore
 {
     private static IStartup _startupInstance;
 
-    public static async Task InitGlobal(ITestFrameworkAdapter testFramework, Dictionary<string, string> args = null)
+    public static async Task Init(ITestFrameworkAdapter testFramework, Dictionary<string, string> args = null)
     {
         GlobalState.TestRunStartTime = DateTime.UtcNow;
         GlobalState.TestRunId = $"{DateTime.Now:yyyy-MM-dd_HH-mm}__{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+        
+        GlobalState.TargetEnvironment = 
+            ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(args, "target-environment", "TESTFUZN_TARGET_ENVIRONMENT");
 
-        GlobalState.EnvironmentName = ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(args, "environment", "TESTFUZN_ENVIRONMENT");
+        GlobalState.ExecutionEnvironment = 
+            ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(args, "execution-environment", "TESTFUZN_EXECUTION_ENVIRONMENT");
 
         var tagsInclude = ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(args, "tags-filter-include", "TESTFUZN_TAGS_FILTER_INCLUDE");
         if (!string.IsNullOrEmpty(tagsInclude))
@@ -29,10 +33,6 @@ internal static class TestFuznIntegrationCore
         }
 
         GlobalState.NodeName = Environment.MachineName;
-        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, $"TestFuzn_{GlobalState.TestRunId}");
-        Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
-        GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
-        GlobalState.Logger.LogInformation("Logging initialized");
 
         // Scan all loaded assemblies for a type that implements IStartup
         var startupType = AppDomain.CurrentDomain
@@ -43,46 +43,47 @@ internal static class TestFuznIntegrationCore
         if (startupType == null)
             throw new InvalidOperationException("No class implementing IStartup was found in the loaded assemblies.");
 
+        var testAssemblyName = startupType.Assembly.GetName().Name;
+        GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, "TestFuznResults", testAssemblyName, $"{GlobalState.TestRunId}");
+        Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
+
+        GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
+        GlobalState.Logger.LogInformation("Logging initialized");
+
         _startupInstance = Activator.CreateInstance(startupType) as IStartup;
         if (_startupInstance == null)
             throw new InvalidOperationException($"Failed to create an instance of {startupType.FullName}.");
 
-        var configuration = _startupInstance.Configuration();
-        if (configuration == null)
-        {
-            configuration = new TestFuznConfiguration();
-        }
-        if (configuration.TestSuite == null)
-            configuration.TestSuite = new();
-
-        if (string.IsNullOrEmpty(configuration.TestSuite.Name))
-            configuration.TestSuite.Name = Assembly.GetExecutingAssembly().GetName().Name;
+        var configuration = new TestFuznConfiguration();
+        configuration.Suite = new SuiteInfo();
+        configuration.Suite.Name = Assembly.GetExecutingAssembly().GetName().Name;
+        _startupInstance.Configure(configuration);            
 
         GlobalState.Configuration = configuration;
 
-        if (_startupInstance is IInitGlobal initGlobalInstance)
+        if (_startupInstance is IBeforeSuite initGlobalInstance)
         {
-            var context = ContextFactory.CreateContext(testFramework, "InitGlobal");
-            await initGlobalInstance.InitGlobal(context);
+            var context = ContextFactory.CreateContext(testFramework, "Init");
+            await initGlobalInstance.BeforeSuite(context);
         }
 
         foreach (var plugin in GlobalState.Configuration.SinkPlugins)
-            await plugin.InitGlobal();
+            await plugin.InitSuite();
 
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)
-            await plugin.InitGlobal();
+            await plugin.InitSuite();
 
         GlobalState.IsInitializeGlobalExecuted = true;
     }
 
-    public static async Task CleanupGlobal(ITestFrameworkAdapter testFramework)
+    public static async Task Cleanup(ITestFrameworkAdapter testFramework)
     {
         if (_startupInstance == null)
-            throw new InvalidOperationException("TestFuznIntegration has not been initialized. Please call TestFuznIntegration.InitGlobal() before running tests.");
+            throw new InvalidOperationException("TestFuznIntegration has not been initialized. Please call TestFuznIntegration.InitSuite() before running tests.");
 
-        if (_startupInstance is ICleanupGlobal cleanupGlobalInstance)
+        if (_startupInstance is IAfterSuite cleanupGlobalInstance)
         {
-            await cleanupGlobalInstance.CleanupGlobal(ContextFactory.CreateContext(testFramework, "CleanupGlobal"));
+            await cleanupGlobalInstance.AfterSuite(ContextFactory.CreateContext(testFramework, "Cleanup"));
         }
 
         GlobalState.TestRunEndTime = DateTime.UtcNow;
@@ -90,12 +91,12 @@ internal static class TestFuznIntegrationCore
         if (!GlobalState.IsInitializeGlobalExecuted)
             return;
         
-        await new ReportManager().WriteFeatureReports(new FeatureResultManager());
+        await new ReportManager().WriteStandardReports(new StandardResultManager());
 
         foreach (var plugin in GlobalState.Configuration.ContextPlugins)
-            await plugin.CleanupGlobal();
+            await plugin.CleanupSuite();
 
         foreach (var plugin in GlobalState.Configuration.SinkPlugins)
-            await plugin.CleanupGlobal();
+            await plugin.CleanupSuite();
     }
 }

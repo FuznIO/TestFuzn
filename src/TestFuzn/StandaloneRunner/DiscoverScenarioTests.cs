@@ -2,41 +2,35 @@
 
 namespace Fuzn.TestFuzn.StandaloneRunner;
 
-internal class DiscoverScenarioTests
+internal class DiscoverTests
 {
-    public List<ScenarioTestInfo> GetScenarioTests(Assembly assembly)
+    public List<DiscoveredTest> GetTests(Assembly assembly)
     {
-        var scenarioTests = new List<ScenarioTestInfo>();
+        var scenarioTests = new List<DiscoveredTest>();
 
         foreach (var type in assembly.GetTypes())
         {
             if (!type.IsClass)
                 continue;
 
-            // Check if the class has an attribute named "FeatureTest"
-            var hasFeatureTestAttribute = type
-                .GetCustomAttributes(inherit: true)
-                .Any(attr => attr.GetType().FullName == "Fuzn.TestFuzn.FeatureTestAttribute");
-
-            if (!hasFeatureTestAttribute)
+            if (!typeof(ITest).IsAssignableFrom(type))
                 continue;
 
-
-            // Find methods with the "ScenarioTest" attribute
+            // Find methods with the "Test" attribute
             foreach (var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
             {
-                var hasScenarioTestAttribute = method
+                var hasTestAttribute = method
                     .GetCustomAttributes(inherit: false)
-                    .Any(attr => attr.GetType().FullName == "Fuzn.TestFuzn.ScenarioTestAttribute");
+                    .Any(attr => attr.GetType().FullName == "Fuzn.TestFuzn.TestAttribute");
 
-                if (!hasScenarioTestAttribute)
+                if (!hasTestAttribute)
                     continue;
                 
-                var testInfo = new ScenarioTestInfo();
-                testInfo.Name = type.FullName + "." +  method.Name;
-                testInfo.Class = type;
-                testInfo.Method = method;
-                scenarioTests.Add(testInfo);
+                var test = new DiscoveredTest();
+                test.Name = type.FullName + "." +  method.Name;
+                test.Class = type;
+                test.Method = method;
+                scenarioTests.Add(test);
             }
         }
 

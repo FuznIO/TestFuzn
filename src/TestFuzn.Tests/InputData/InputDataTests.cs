@@ -1,11 +1,9 @@
 ﻿namespace Fuzn.TestFuzn.Tests.InputData;
 
-[FeatureTest]
-public class InputDataTests : BaseFeatureTest
+[TestClass]
+public class InputDataTests : Test
 {
-    public override string FeatureName => "";
-
-    [ScenarioTest]
+    [Test]
     public async Task Verify_Params_based_InputData()
     {
         var userExecuted = new Dictionary<string, bool>();
@@ -34,7 +32,7 @@ public class InputDataTests : BaseFeatureTest
         }
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_List_based_InputData()
     {
         var userExecuted = new Dictionary<string, bool>();
@@ -67,7 +65,7 @@ public class InputDataTests : BaseFeatureTest
         }
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Verify_List_based_InputData_Async()
     {
         var userExecuted = new Dictionary<string, bool>();
@@ -99,8 +97,8 @@ public class InputDataTests : BaseFeatureTest
         }
     }
 
-    [ScenarioTest]
-    public async Task Verify_Params_based_InputData_Feature()
+    [Test]
+    public async Task Verify_Params_based_InputData_Standard()
     {
         var userExecuted = new Dictionary<string, bool>();
         userExecuted["user1"] = false;

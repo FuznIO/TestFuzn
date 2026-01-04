@@ -1,30 +1,30 @@
 ﻿using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Reports;
-using Fuzn.TestFuzn.Internals.Results.Feature;
+using Fuzn.TestFuzn.Internals.Results.Standard;
 using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Reports;
 
 internal class ReportManager
 {
-    public async Task WriteFeatureReports(FeatureResultManager featureResultsManager)
+    public async Task WriteStandardReports(StandardResultManager standardResultsManager)
     {
-        var featureResults = featureResultsManager.GetTestSuiteResults();
+        var groupResults = standardResultsManager.GetSuiteResults();
 
-        var data = new FeatureReportData();
-        data.TestSuite = new Contracts.Reports.TestSuiteInfo();
-        data.TestSuite.Name = GlobalState.Configuration.TestSuite.Name;
-        data.TestSuite.Id = GlobalState.Configuration.TestSuite.Id;
-        data.TestSuite.Metadata = GlobalState.Configuration.TestSuite.Metadata;
+        var data = new StandardReportData();
+        data.Suite = new Contracts.Reports.SuiteInfo();
+        data.Suite.Name = GlobalState.Configuration.Suite.Name;
+        data.Suite.Id = GlobalState.Configuration.Suite.Id;
+        data.Suite.Metadata = GlobalState.Configuration.Suite.Metadata;
         data.TestRunId = GlobalState.TestRunId;
         data.TestRunStartTime = GlobalState.TestRunStartTime;
         data.TestRunEndTime = GlobalState.TestRunEndTime;
         data.TestRunDuration = data.TestRunEndTime - data.TestRunStartTime;
         data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
-        data.Results = featureResults;
+        data.GroupResults = groupResults.GroupResults;
         
-        foreach (var featureReport in GlobalState.Configuration.FeatureReports)
-            await featureReport.WriteReport(data);
+        foreach (var standardReport in GlobalState.Configuration.StandardReports)
+            await standardReport.WriteReport(data);
     }
 
     public async Task WriteLoadReports(SharedExecutionState sharedExecutionState)
@@ -37,23 +37,31 @@ internal class ReportManager
         if (loadReports == null || loadReports.Count == 0)
             return;
 
+        var testInfo = sharedExecutionState.TestClassInstance.TestInfo;
+
+        var data = new LoadReportData();
+        data.TestSuite = new Contracts.Reports.SuiteInfo();
+        data.TestSuite.Name = GlobalState.Configuration.Suite.Name;
+        data.TestSuite.Id = GlobalState.Configuration.Suite.Id;
+        data.TestSuite.Metadata = GlobalState.Configuration.Suite.Metadata;
+        data.TestRunId = GlobalState.TestRunId;
+        data.Group = new Contracts.Reports.GroupInfo();
+        data.Group.Name = testInfo.Group.Name;
+        data.Test = new Contracts.Reports.TestInfo();
+        data.Test.Name = testInfo.Name;
+        data.Test.FullName = testInfo.FullName;
+        data.Test.Id = testInfo.Id;
+        data.Test.Metadata = testInfo.Metadata ?? new();
+        data.Test.Tags = testInfo.Tags ?? new();
+        data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
+
         foreach (var scenario in sharedExecutionState.Scenarios)
         {
-            var data = new LoadReportData();
-            data.TestSuite = new Contracts.Reports.TestSuiteInfo();
-            data.TestSuite.Name = GlobalState.Configuration.TestSuite.Name;
-            data.TestSuite.Id = GlobalState.Configuration.TestSuite.Id;
-            data.TestSuite.Metadata = GlobalState.Configuration.TestSuite.Metadata;
-            data.TestRunId = GlobalState.TestRunId;
-            data.Feature = new Contracts.Reports.FeatureInfo();
-            data.Feature.Name = sharedExecutionState.IFeatureTestClassInstance.FeatureName;
-            data.Feature.Id = sharedExecutionState.IFeatureTestClassInstance.FeatureId;
-            data.Feature.Metadata = sharedExecutionState.IFeatureTestClassInstance.FeatureMetadata;
-            data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
-            data.ScenarioResult = sharedExecutionState.ResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
-
-            foreach (var loadReport in loadReports)
-                await loadReport.WriteReport(data);
+            var scenarioResult = sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
+            data.ScenarioResults.Add(scenarioResult);
         }
+
+        foreach (var loadReport in loadReports)
+            await loadReport.WriteReport(data);
     }
 }

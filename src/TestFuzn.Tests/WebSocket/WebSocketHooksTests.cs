@@ -2,14 +2,12 @@
 
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
-[FeatureTest]
-public class WebSocketHooksTests : BaseFeatureTest
+[TestClass]
+public class WebSocketHooksTests : Test
 {
-    public override string FeatureName => "WebSocket Hooks";
-
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
-    [ScenarioTest]
+    [Test]
     public async Task PreConnect_Hook_Is_Called()
     {
         await Scenario()
@@ -28,7 +26,7 @@ public class WebSocketHooksTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task PostConnect_Hook_Is_Called()
     {
         await Scenario()
@@ -47,7 +45,7 @@ public class WebSocketHooksTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task OnMessageReceived_Hook_Is_Called()
     {
         await Scenario()
@@ -78,7 +76,7 @@ public class WebSocketHooksTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task OnDisconnect_Hook_Is_Called()
     {
         await Scenario()
@@ -97,7 +95,7 @@ public class WebSocketHooksTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task All_Hooks_Work_Together()
     {
         await Scenario()
@@ -126,7 +124,7 @@ public class WebSocketHooksTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Hooks_Can_Access_Connection_State()
     {
         await Scenario()
@@ -148,7 +146,7 @@ public class WebSocketHooksTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Hook_Can_Store_Context_Data()
     {
         await Scenario()

@@ -1,0 +1,29 @@
+@model ProductViewModel
+@{
+    ViewData["Title"] = "Add Product";
+}
+
+<div class="card" style="max-width: 500px;">
+    <h1 class="card-title">Add New Product</h1>
+    
+    <form asp-action="Create" asp-controller="Products" method="post" id="create-product-form">
+        @Html.AntiForgeryToken()
+        
+        <div class="form-group">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" id="product-name" placeholder="Enter product name" autofocus />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        
+        <div class="form-group">
+            <label asp-for="Price" class="form-label"></label>
+            <input asp-for="Price" class="form-control" id="product-price" type="number" step="0.01" min="0.01" placeholder="0.00" />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+        
+        <div class="form-group" style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+            <button type="submit" class="btn btn-success" id="save-product-btn">Save Product</button>
+            <a href="/Products" class="btn btn-secondary" id="cancel-btn">Cancel</a>
+        </div>
+    </form>
+</div>

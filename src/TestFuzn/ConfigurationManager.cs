@@ -2,6 +2,9 @@
 
 namespace Fuzn.TestFuzn;
 
+/// <summary>
+/// Provides access to configuration values from appsettings.json and environment-specific configuration files.
+/// </summary>
 public class ConfigurationManager
 {
     private static IConfigurationRoot _configRoot;
@@ -10,6 +13,8 @@ public class ConfigurationManager
     /// <summary>
     /// Returns true if the configuration section TestFuzn:{sectionName} exists. Otherwise, false.
     /// </summary>
+    /// <param name="sectionName">The name of the configuration section to check.</param>
+    /// <returns>True if the section exists; otherwise, false.</returns>
     public static bool HasSection(string sectionName)
     {
         try
@@ -27,6 +32,10 @@ public class ConfigurationManager
     /// <summary>
     /// Returns the configuration section from TestFuzn:{sectionName} as the specified type. Throws an exception if not found.
     /// </summary>
+    /// <typeparam name="T">The type to bind the configuration section to.</typeparam>
+    /// <param name="sectionName">The name of the configuration section to retrieve.</param>
+    /// <returns>An instance of <typeparamref name="T"/> populated with configuration values.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the section does not exist or cannot be bound.</exception>
     public static T GetRequiredSection<T>(string sectionName) 
         where T : new()
     {
@@ -53,6 +62,8 @@ public class ConfigurationManager
     /// <summary>
     /// Returns true if the value exists in TestFuzn:Values:{key}. Otherwise, false.
     /// </summary>
+    /// <param name="key">The configuration key to check.</param>
+    /// <returns>True if the value exists; otherwise, false.</returns>
     public static bool HasValue(string key)
     {
         try
@@ -68,7 +79,12 @@ public class ConfigurationManager
 
     /// <summary>
     /// Returns the value from TestFuzn:Values:{key} as the specified type. Throws an exception if not found or cannot be converted.
-    /// </summary>    
+    /// </summary>
+    /// <typeparam name="T">The type to convert the value to.</typeparam>
+    /// <param name="key">The configuration key to retrieve.</param>
+    /// <returns>The configuration value converted to <typeparamref name="T"/>.</returns>
+    /// <exception cref="KeyNotFoundException">Thrown when the key does not exist.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the value cannot be converted to the specified type.</exception>
     public static T GetRequiredValue<T>(string key)
     {
         var section = GetConfigRoot().GetSection($"TestFuzn:Values:{key}");
@@ -86,7 +102,6 @@ public class ConfigurationManager
             throw new InvalidOperationException($"Configuration key 'TestFuzn:Values:{key}' could not be converted to type {typeof(T).Name}.");
         }
     }
-
     private static IConfigurationRoot GetConfigRoot()
     {
         if (_configRoot != null)
@@ -101,11 +116,21 @@ public class ConfigurationManager
                                 .SetBasePath(Directory.GetCurrentDirectory())
                                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
 
-            if (!string.IsNullOrEmpty(GlobalState.EnvironmentName))
-                builder.AddJsonFile($"appsettings.{GlobalState.EnvironmentName}.json", optional: true, reloadOnChange: false);
+            var executionEnv = GlobalState.ExecutionEnvironment;
+            var targetEnv = GlobalState.TargetEnvironment;
+            var nodeName = GlobalState.NodeName;
 
-            if (!string.IsNullOrEmpty(GlobalState.NodeName))
-                builder.AddJsonFile($"appsettings.{GlobalState.NodeName}.json", optional: true, reloadOnChange: false);
+            if (!string.IsNullOrEmpty(executionEnv))
+                builder.AddJsonFile($"appsettings.exec-{executionEnv}.json", optional: true, reloadOnChange: false);
+
+            if (!string.IsNullOrEmpty(targetEnv))
+                builder.AddJsonFile($"appsettings.target-{targetEnv}.json", optional: true, reloadOnChange: false);
+
+            if (!string.IsNullOrEmpty(executionEnv) && !string.IsNullOrEmpty(targetEnv))
+                builder.AddJsonFile($"appsettings.exec-{executionEnv}.target-{targetEnv}.json", optional: true, reloadOnChange: false);
+
+            if (!string.IsNullOrEmpty(nodeName))
+                builder.AddJsonFile($"appsettings.{nodeName}.json", optional: true, reloadOnChange: false);
 
             _configRoot = builder.Build();
 

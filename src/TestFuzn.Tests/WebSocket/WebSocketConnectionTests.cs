@@ -3,15 +3,13 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
-[FeatureTest]
-public class WebSocketConnectionTests : BaseFeatureTest
+[TestClass]
+public class WebSocketConnectionTests : Test
 {
-    public override string FeatureName => "WebSocket Connection";
-
     // Use local SampleApp WebSocket server
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
-    [ScenarioTest]
+    [Test]
     public async Task Connect_And_Disconnect_Successfully()
     {
         await Scenario()
@@ -30,7 +28,7 @@ public class WebSocketConnectionTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Connect_With_Custom_Headers()
     {
         await Scenario()
@@ -48,7 +46,7 @@ public class WebSocketConnectionTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Connect_With_Custom_Timeout()
     {
         await Scenario()
@@ -66,7 +64,7 @@ public class WebSocketConnectionTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Connect_With_Verbosity_Settings()
     {
         await Scenario()
@@ -83,7 +81,7 @@ public class WebSocketConnectionTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Connection_State_Changes_Correctly()
     {
         await Scenario()
@@ -113,7 +111,7 @@ public class WebSocketConnectionTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Dispose_Closes_Connection()
     {
         await Scenario()
@@ -131,7 +129,7 @@ public class WebSocketConnectionTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Build_Without_Connect()
     {
         await Scenario()
@@ -148,7 +146,7 @@ public class WebSocketConnectionTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Multiple_Headers_Can_Be_Added()
     {
         await Scenario()

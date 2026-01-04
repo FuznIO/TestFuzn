@@ -3,4 +3,4 @@
 public class CustomModel
 {
     public string CustomProperty { get; set; }
-}
+}   

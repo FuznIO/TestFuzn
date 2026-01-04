@@ -26,8 +26,8 @@ internal class InitManager
     {
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsStarted(FeatureTestPhase.Init);
-            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Init);
+            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init);
         }
 
         await ExecuteInitTestMethod();
@@ -45,26 +45,26 @@ internal class InitManager
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            _sharedExecutionState.ResultState.FeatureCollectors[scenario.Name].MarkPhaseAsCompleted(FeatureTestPhase.Init);
-            _sharedExecutionState.ResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Init);
+            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init);
         }
     }
 
     private async Task ExecuteInitTestMethod()
     {
-        if (_sharedExecutionState.IFeatureTestClassInstance is IInitScenarioTestMethod init)
+        if (_sharedExecutionState.TestClassInstance is IBeforeTest init)
         {
-            var context = ContextFactory.CreateContext(_testFramework, "InitScenarioTestMethod");
-            await init.InitScenarioTestMethod(context);
+            var context = ContextFactory.CreateContext(_testFramework, "BeforeTest");
+            await init.BeforeTest(context);
         }
     }
 
     private async Task ExecuteInitMethodsOnScenario(Scenario scenario)
     {
-        if (scenario.InitScenario != null)
+        if (scenario.BeforeScenario != null)
         {
-            var context = ContextFactory.CreateScenarioContext(_testFramework, "InitScenario");
-            await scenario.InitScenario(context);
+            var context = ContextFactory.CreateScenarioContext(_testFramework, "BeforeScenario");
+            await scenario.BeforeScenario(context);
         }
 
         if (!scenario.InputDataInfo.HasInputData)
@@ -81,7 +81,7 @@ internal class InitManager
     {
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            if (_sharedExecutionState.TestType == TestType.Feature)
+            if (_sharedExecutionState.TestType == TestType.Standard)
             {
                 var totalExecutions = 1;
                 if (scenario.InputDataInfo.HasInputData)

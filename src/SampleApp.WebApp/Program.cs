@@ -1,5 +1,10 @@
-﻿using SampleApp.WebApp.Models;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using SampleApp.WebApp.Models;
+using SampleApp.WebApp.Services;
 using SampleApp.WebApp.WebSockets;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,14 +17,46 @@ builder.WebHost.ConfigureKestrel(o =>
 });
 
 // Add services to the container.
-
+builder.Services.AddControllersWithViews();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// JWT Configuration
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKeyThatIsAtLeast32CharactersLong!";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "SampleApp";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "SampleApp";
+
+builder.Services.AddSingleton(new JwtSettings(jwtKey, jwtIssuer, jwtAudience));
+builder.Services.AddTransient<TokenService>();
+
+// Authentication - Cookies for web pages, JWT for API
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+.AddCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/Login";
+    options.ExpireTimeSpan = TimeSpan.FromHours(1);
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
+
 // App Services
 builder.Services.AddTransient<ProductService>();
+builder.Services.AddSingleton<UserService>();
 builder.Services.AddSingleton<WebSocketHandler>();
 
 var app = builder.Build();
@@ -50,6 +87,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
 
 // Enable WebSockets
 app.UseWebSockets(new WebSocketOptions
@@ -72,8 +111,12 @@ app.Map("/ws", async context =>
     await handler.HandleWebSocketConnection(context, socket);
 });
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

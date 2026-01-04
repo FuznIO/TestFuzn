@@ -403,3 +403,4 @@ FodyWeavers.xsd
 **/appsettings.frankintel.json
 **/appsettings.void.json
 /src/SampleApp.WebApp/App_Data/
+*/TestFuznResults/*

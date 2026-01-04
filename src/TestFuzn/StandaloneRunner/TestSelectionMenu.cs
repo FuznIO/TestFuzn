@@ -4,7 +4,7 @@ namespace Fuzn.TestFuzn.StandaloneRunner;
 
 internal class TestSelectionMenu
 {
-    public string DisplayAndSelectTest(List<ScenarioTestInfo> scenarioTests)
+    public string DisplayAndSelectTest(List<DiscoveredTest> scenarioTests)
     {
         var testTable = new Table()
             .Border(TableBorder.Rounded)

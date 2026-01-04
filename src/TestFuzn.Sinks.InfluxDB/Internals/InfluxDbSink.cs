@@ -16,13 +16,13 @@ internal class InfluxDbSink : ISinkPlugin
         _config = config;
     }
 
-    public Task InitGlobal()
+    public Task InitSuite()
     {
         _client = new InfluxDBClient(_config.Url, _config.Token);
         return Task.CompletedTask;
     }
 
-    public async Task WriteStats(string testRunId, string featureName, ScenarioLoadResult scenarioResult)
+    public async Task WriteStats(string testRunId, string groupName, string testName, ScenarioLoadResult scenarioResult)
     {
         var points = new List<PointData>();
 
@@ -30,7 +30,8 @@ internal class InfluxDbSink : ISinkPlugin
         var scenarioPoint = PointData
             .Measurement("scenario_metrics")
             .Tag("test_run_id", testRunId)
-            .Tag("feature_name", featureName)
+            .Tag("group_name", groupName)
+            .Tag("test_name", testName)
             .Tag("scenario_name", scenarioResult.ScenarioName)
             .Field("request_count", scenarioResult.RequestCount)
             .Field("total_execution_duration_ms", scenarioResult.TotalExecutionDuration.TotalMilliseconds)
@@ -77,7 +78,8 @@ internal class InfluxDbSink : ISinkPlugin
             var stepPoint = PointData
                 .Measurement("step_metrics")
                 .Tag("test_run_id", testRunId)
-                .Tag("feature_name", featureName)
+                .Tag("group_name", groupName)
+                .Tag("test_name", testName)
                 .Tag("scenario_name", scenarioResult.ScenarioName)
                 .Tag("step_name", stepResult.Name)
                 .Field("total_execution_duration_ms", stepResult.TotalExecutionDuration.TotalMilliseconds)
@@ -124,7 +126,7 @@ internal class InfluxDbSink : ISinkPlugin
         await writeApi.WritePointsAsync(points, _config.Bucket, _config.Org);
     }
 
-    public Task CleanupGlobal()
+    public Task CleanupSuite()
     {
         _client.Dispose();
         return Task.CompletedTask;

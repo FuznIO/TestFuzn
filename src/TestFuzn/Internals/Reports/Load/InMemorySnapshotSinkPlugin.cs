@@ -9,14 +9,14 @@ internal class InMemorySnapshotCollectorSinkPlugin : ISinkPlugin
     private static readonly object _lock = new object();
     private static readonly Dictionary<string, EvenlySpreadSnapshots> _snapshotsPerScenario = new();
 
-    public Task InitGlobal()
+    public Task InitSuite()
     {
         return Task.CompletedTask;
     }
 
-    public Task WriteStats(string testRunId, string featureName, ScenarioLoadResult scenarioResult)
+    public Task WriteStats(string testRunId, string groupName, string testName, ScenarioLoadResult scenarioResult)
     {
-        var key = GetKey(featureName, scenarioResult.ScenarioName);
+        var key = GetKey(groupName, testName, scenarioResult.ScenarioName);
 
         lock (_lock)
         {
@@ -31,32 +31,32 @@ internal class InMemorySnapshotCollectorSinkPlugin : ISinkPlugin
         }
     }
 
-    public static IReadOnlyList<ScenarioLoadResult> GetSnapshots(string featureName, string scenarioName)
+    public static IReadOnlyList<ScenarioLoadResult> GetSnapshots(string groupName, string testName, string scenarioName)
     {
         lock (_lock)
         {
-            if (_snapshotsPerScenario.TryGetValue(GetKey(featureName, scenarioName), out var snapshots))
+            if (_snapshotsPerScenario.TryGetValue(GetKey(groupName, testName, scenarioName), out var snapshots))
                 return snapshots.GetSnapshots();
 
             return new List<ScenarioLoadResult>();
         }
     }
 
-    public static void RemoveSnapshots(string featureName, string scenarioName)
+    public static void RemoveSnapshots(string groupName, string testName, string scenarioName)
     {
         lock (_lock)
-        { 
-            _snapshotsPerScenario.Remove(GetKey(featureName, scenarioName));
+        {
+            _snapshotsPerScenario.Remove(GetKey(groupName, testName, scenarioName));
         }
     }
 
-    public Task CleanupGlobal()
+    public Task CleanupSuite()
     {
         return Task.CompletedTask;
     }
 
-    private static string GetKey(string featureName, string scenarioName)
+    private static string GetKey(string groupName, string testName, string scenarioName)
     {
-        return $"{featureName}_{scenarioName}";
+        return $"{groupName}_{testName}_{scenarioName}";
     }
 }

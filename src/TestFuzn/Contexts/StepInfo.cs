@@ -1,4 +1,4 @@
-﻿using Fuzn.TestFuzn.Contracts.Results.Feature;
+﻿using Fuzn.TestFuzn.Contracts.Results.Standard;
 
 namespace Fuzn.TestFuzn;
 

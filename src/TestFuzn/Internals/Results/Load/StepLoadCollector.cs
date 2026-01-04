@@ -1,4 +1,4 @@
-﻿using Fuzn.TestFuzn.Contracts.Results.Feature;
+﻿using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 
 namespace Fuzn.TestFuzn.Internals.Results.Load;
@@ -20,7 +20,7 @@ internal class StepLoadCollector
         _id = id;
     }
 
-    internal void Record(StepFeatureResult result, DateTime startTime, DateTime endTime)
+    internal void Record(StepStandardResult result, DateTime startTime, DateTime endTime)
     {
         lock (_lock)
         {

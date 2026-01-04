@@ -4,11 +4,11 @@ namespace Fuzn.TestFuzn.Sinks.InfluxDB;
 
 public static class TestFuznConfigurationExtensions
 {
-    public static void UseInfluxDb(this TestFuznConfiguration config)
+    public static void UseInfluxDB(this TestFuznConfiguration config)
     {
         var influxDbSinkConfig = ConfigurationManager.GetRequiredSection<InfluxDbSinkConfiguration>("InfluxDB");
         if (influxDbSinkConfig is null)
-            throw new InvalidOperationException("InfluxDb configuration is not set in appsettings.json");
+            throw new InvalidOperationException("InfluxDB configuration is not set in appsettings.json");
 
         config.AddSinkPlugin(new InfluxDbSink(influxDbSinkConfig));
     }

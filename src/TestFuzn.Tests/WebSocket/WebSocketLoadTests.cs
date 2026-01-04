@@ -2,14 +2,12 @@
 
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
-[FeatureTest]
-public class WebSocketLoadTests : BaseFeatureTest
+[TestClass]
+public class WebSocketLoadTests : Test
 {
-    public override string FeatureName => "WebSocket Load Testing";
-
     private const string WebSocketServerUrl = "wss://localhost:44316/ws";
 
-    [ScenarioTest]
+    [Test]
     public async Task Concurrent_Connections_OneTime_Load()
     {
         await Scenario()
@@ -32,14 +30,14 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Fixed_Load_Multiple_Messages_Per_Connection()
     {
         await Scenario()
             .Step("Send multiple messages in load test", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 // Send 5 messages per connection
@@ -59,7 +57,7 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Long_Running_Connection_With_Periodic_Messages()
     {
         await Scenario()
@@ -67,7 +65,7 @@ public class WebSocketLoadTests : BaseFeatureTest
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
                     .KeepAliveInterval(TimeSpan.FromSeconds(30))
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 // Send messages every 2 seconds for 10 seconds
@@ -84,14 +82,14 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Load_Test_With_JSON_Messages()
     {
         await Scenario()
             .Step("Send JSON messages in load test", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 var message = new WebSocketMessage
@@ -115,14 +113,14 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Load_Test_Verifies_No_Message_Loss()
     {
         await Scenario()
             .Step("Verify all messages are received during load", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 const int messageCount = 10;
@@ -148,14 +146,14 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Load_Test_With_Shared_Data_Across_Iterations()
     {
         await Scenario()
             .Step("Track messages across iterations", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 await connection.SendText("Test message");
@@ -172,8 +170,8 @@ public class WebSocketLoadTests : BaseFeatureTest
             .Run();
     }
 
-    [ScenarioTest]
-    [Ignore] // Remove this attribute when you want to run this intensive test
+    [Test]
+    [Skip] // Remove this attribute when you want to run this intensive test
     public async Task Stress_Test_High_Concurrency()
     {
         await Scenario()
@@ -192,11 +190,11 @@ public class WebSocketLoadTests : BaseFeatureTest
                 await connection.Close();
             })
             .Load()
-            .Simulations((context, simulations) => simulations.FixedLoad(100, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1)))
+            .Simulations((context, simulations) => simulations.FixedLoad(100, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
             .Run();
     }
 
-    [ScenarioTest]
+    [Test]
     public async Task Load_Test_Measures_Connection_Duration()
     {
         await Scenario()
@@ -205,7 +203,7 @@ public class WebSocketLoadTests : BaseFeatureTest
                 var startTime = DateTime.UtcNow;
 
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 var connectionTime = DateTime.UtcNow - startTime;
