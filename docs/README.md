@@ -348,7 +348,7 @@ public async Task Another_skipped_test() { ... }
 
 ### `[TargetEnvironments]` Attribute
 
-Specifies which environments the test should run against. The current environment is determined by the `TESTFUZN_TARGET_ENVIRONMENT` environment variable or --target-environment argument.
+Specifies which environments the test should run against. The current environment is determined by the `TESTFUZN_TARGET_ENVIRONMENT` environment variable or `--target-environment` argument.
 
 ```csharp
 [Test]
@@ -384,11 +384,12 @@ public async Task Basic_scenario()
 
 ### Scenario Configuration
 
-Add an identifier to scenarios (useful for load tests with multiple scenarios):
+Scenarios can be assigned a stable identifier and an optional description.
 
 ```csharp
 await Scenario()
     .Id("SCEN-1234")  // Optional identifier
+    .Description("Scenario description")  // Optional description
     .Step("Step", context => { })
     .Run();
 ```
@@ -426,12 +427,23 @@ Steps are the building blocks of scenarios. They execute in order, and if one fa
 
 ### Input Data
 
-Provide test data to drive multiple iterations:
+Input data is used to drive multiple iterations of the same scenario.
+
+Both simple types (e.g. `string`, `int`) and complex types (custom classes, records, DTOs) are supported.
 
 #### Static Input Data
 
 ```csharp
 .InputData("user1", "user2", "user3")
+```
+
+#### Static Input Data (Complex Type)
+
+```csharp
+.InputData(
+    new User { Id = 1, Name = "user1" },
+    new User { Id = 2, Name = "user2" }
+)
 ```
 
 #### Input Data from Function (Sync)
@@ -713,6 +725,8 @@ Use the built-in logger for structured logging:
 ## Load Testing
 
 Load tests are defined by adding `Load().Simulations()` to a scenario. This changes the test from a standard test to a load test.
+
+Standard tests run once by default or once per input data item, while load tests ignore input-driven iteration and instead run the number of iterations defined by their simulations.
 
 ### Multiple Scenarios
 
