@@ -15,13 +15,12 @@ public class HttpRequest
     private Context _context;
 
     public Authentication Auth { get; set; } = new();
-    //public dynamic Body { get; set; } = new ExpandoObject();
     public object? Body { get; set; }
     public AcceptTypes AcceptTypes { get; set; } = AcceptTypes.Json;
     public List<Cookie> Cookies { get; set; } = new();
     public Dictionary<string, string> Headers { get; private set; } = new();
     public Action<HttpRequest>? BeforeSend { get; set; }
-    public string UserAgent { get; set; } = "TestFuznHttp/1.0";
+    public string UserAgent { get; set; } = "TestFuzn.Http/1.0";
     public TimeSpan Timeout { get; set; } = HttpGlobalState.Configuration.DefaultRequestTimeout;
     internal ISerializerProvider SerializerProvider { get; set; }
 
