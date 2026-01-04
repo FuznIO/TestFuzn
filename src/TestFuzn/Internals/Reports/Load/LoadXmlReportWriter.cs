@@ -22,7 +22,7 @@ internal class LoadXmlReportWriter : ILoadReport
             using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))
             {
                 writer.WriteStartDocument();
-                writer.WriteStartElement("LoadTestResults");
+                writer.WriteStartElement("LoadTestRunResults");
                 writer.WriteElementString("Version", "1.0");
 
                 writer.WriteStartElement("Suite");
@@ -49,11 +49,11 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteElementString("Name", loadReportData.Group.Name);
                 writer.WriteEndElement();
 
-                WriteTest(writer, loadReportData.Test);
-
                 writer.WriteElementString("TestRunId", loadReportData.TestRunId);
                 writer.WriteElementString("TargetEnvironment", GlobalState.TargetEnvironment);
                 writer.WriteElementString("ExecutionEnvironment", GlobalState.ExecutionEnvironment);
+
+                WriteTest(writer, loadReportData.Test);
 
                 writer.WriteStartElement("Scenarios");
                 foreach (var scenarioResult in loadReportData.ScenarioResults)
@@ -117,30 +117,8 @@ internal class LoadXmlReportWriter : ILoadReport
         writer.WriteStartElement("Scenario");
         writer.WriteElementString("Name", scenarioResult.ScenarioName);
         writer.WriteElementString("Id", scenarioResult.Id);
+        writer.WriteElementString("Description", scenarioResult.Description);
         writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString(@"hh\:mm\:ss\.fff"));
-
-        if (scenarioResult.Tags != null && scenarioResult.Tags.Count > 0)
-        {
-            writer.WriteStartElement("Tags");
-            foreach (var tag in scenarioResult.Tags)
-            {
-                writer.WriteElementString("Tag", tag);
-            }
-            writer.WriteEndElement();
-        }
-
-        if (scenarioResult.Metadata != null)
-        {
-            writer.WriteStartElement("Metadata");
-            foreach (var metadata in scenarioResult.Metadata)
-            {
-                writer.WriteStartElement("Property");
-                writer.WriteElementString("Key", metadata.Key);
-                writer.WriteElementString("Value", metadata.Value);
-                writer.WriteEndElement();
-            }
-            writer.WriteEndElement();
-        }
 
         writer.WriteStartElement("Simulations");
         foreach (var simulation in scenarioResult.Simulations)

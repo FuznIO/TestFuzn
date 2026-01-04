@@ -144,22 +144,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<table>");
         b.AppendLine(@$"<tr><th class=""vertical"">Scenario - Name</th><td>{scenarioResult.ScenarioName}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Scenario - ID</th><td>{scenarioResult.Id}</td></tr>");
-
-        if (scenarioResult.Tags != null && scenarioResult.Tags.Count > 0)
-        {
-            b.AppendLine(@"<tr><th class=""vertical"">Scenario - Tags</th><td><ul>");
-            foreach (var tag in scenarioResult.Tags)
-                b.AppendLine($"<li>{tag}</li>");
-            b.AppendLine("</ul></td></tr>");
-        }
-
-        if (scenarioResult.Metadata != null && scenarioResult.Metadata.Count > 0)
-        {
-            b.AppendLine(@"<tr><th class=""vertical"">Scenario - Metadata</th><td><ul>");
-            foreach (var metadata in scenarioResult.Metadata)
-                b.AppendLine($"<li>{metadata.Key}: {metadata.Value}</li>");
-            b.AppendLine("</ul></td></tr>");
-        }
+        b.AppendLine(@$"<tr><th class=""vertical"">Scenario - Description</th><td>{scenarioResult.Description}</td></tr>");
 
         b.AppendLine("<tr>");
         b.AppendLine(@"<th class=""vertical"">Simulations</th><td><ul>");
