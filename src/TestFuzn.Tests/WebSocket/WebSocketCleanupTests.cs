@@ -163,7 +163,7 @@ public class WebSocketCleanupTests : Test
             .Step("Create connection in load test iteration", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(EchoServerUrl)
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 await connection.SendText($"Message from iteration {context.Info.CorrelationId}");

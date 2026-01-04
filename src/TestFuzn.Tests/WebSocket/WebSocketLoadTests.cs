@@ -37,7 +37,7 @@ public class WebSocketLoadTests : Test
             .Step("Send multiple messages in load test", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 // Send 5 messages per connection
@@ -65,7 +65,7 @@ public class WebSocketLoadTests : Test
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
                     .KeepAliveInterval(TimeSpan.FromSeconds(30))
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 // Send messages every 2 seconds for 10 seconds
@@ -89,7 +89,7 @@ public class WebSocketLoadTests : Test
             .Step("Send JSON messages in load test", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 var message = new WebSocketMessage
@@ -120,7 +120,7 @@ public class WebSocketLoadTests : Test
             .Step("Verify all messages are received during load", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 const int messageCount = 10;
@@ -153,7 +153,7 @@ public class WebSocketLoadTests : Test
             .Step("Track messages across iterations", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 await connection.SendText("Test message");
@@ -203,7 +203,7 @@ public class WebSocketLoadTests : Test
                 var startTime = DateTime.UtcNow;
 
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.Minimal)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .Connect();
 
                 var connectionTime = DateTime.UtcNow - startTime;

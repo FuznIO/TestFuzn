@@ -145,14 +145,14 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
 
             OnPreConnect?.Invoke(this);
 
-            if (_verbosity >= LoggingVerbosity.Minimal)
+            if (_verbosity >= LoggingVerbosity.Normal)
                 _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Connecting: {_url} - CorrelationId: {_context.Info.CorrelationId}");
 
             using var timeoutCts = new CancellationTokenSource(ConnectionTimeout);
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, ct);
             await _webSocket.ConnectAsync(new Uri(_url), linkedCts.Token);
 
-            if (_verbosity >= LoggingVerbosity.Minimal)
+            if (_verbosity >= LoggingVerbosity.Normal)
                 _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Connected: {_url} - State: {_webSocket.State} - CorrelationId: {_context.Info.CorrelationId}");
 
             OnPostConnect?.Invoke(this);
@@ -172,7 +172,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
         {
             // Transient disposal during handshake (e.g., premature cleanup or server rejecting quickly).
             triedRetry = true;
-            if (_verbosity >= LoggingVerbosity.Minimal)
+            if (_verbosity >= LoggingVerbosity.Normal)
                 _context.Logger.LogWarning($"Step {_context.StepInfo?.Name} - Transient disposal during connect. Retrying once. {_url}");
             await DoConnectAsync(cancellationToken);
         }
@@ -231,7 +231,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
 
         var buffer = new ArraySegment<byte>(data);
 
-        if (_verbosity >= LoggingVerbosity.Minimal)
+        if (_verbosity >= LoggingVerbosity.Normal)
             _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Sending binary data ({data.Length} bytes) - CorrelationId: {_context.Info.CorrelationId}");
 
         await _webSocket!.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
@@ -331,7 +331,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
 
         if (_webSocket != null && (_webSocket.State == WebSocketState.Open || _webSocket.State == WebSocketState.CloseReceived))
         {
-            if (_verbosity >= LoggingVerbosity.Minimal)
+            if (_verbosity >= LoggingVerbosity.Normal)
                 _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Closing: {_url} - CorrelationId: {_context.Info.CorrelationId}");
 
             try
@@ -343,7 +343,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
             }
             catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.InvalidState)
             {
-                if (_verbosity >= LoggingVerbosity.Minimal)
+                if (_verbosity >= LoggingVerbosity.Normal)
                     _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket already closed or invalid state - CorrelationId: {_context.Info.CorrelationId}");
             }
             catch (Exception ex)
@@ -363,7 +363,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
 
             OnDisconnect?.Invoke(this);
 
-            if (_verbosity >= LoggingVerbosity.Minimal)
+            if (_verbosity >= LoggingVerbosity.Normal)
                 _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Closed: {_url} - CorrelationId: {_context.Info.CorrelationId}");
         }
     }
@@ -389,7 +389,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    if (_verbosity >= LoggingVerbosity.Minimal)
+                    if (_verbosity >= LoggingVerbosity.Normal)
                         _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket received close message - CorrelationId: {_context.Info.CorrelationId}");
                     break;
                 }
@@ -417,7 +417,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
                 }
                 else if (result.MessageType == WebSocketMessageType.Binary)
                 {
-                    if (_verbosity >= LoggingVerbosity.Minimal)
+                    if (_verbosity >= LoggingVerbosity.Normal)
                         _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Received binary message ({result.Count} bytes) - CorrelationId: {_context.Info.CorrelationId}");
                 }
             }
