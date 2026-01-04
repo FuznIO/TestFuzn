@@ -17,24 +17,24 @@ namespace Fuzn.TestFuzn.Internals;
 internal class ScenarioTestRunner
 {
     private readonly ITestFrameworkAdapter _testFramework;
-    private readonly ITest _featureTest;
+    private readonly ITest _test;
     internal Action<AssertInternalState> _assertInternalState;
 
     public ScenarioTestRunner(ITestFrameworkAdapter testFramework, 
-        ITest featureTest,
+        ITest test,
         Action<AssertInternalState> assertInternalState)
     {
         if (testFramework == null)
                 throw new ArgumentNullException(nameof(testFramework));
             _testFramework = testFramework;
 
-        _featureTest = featureTest;
+        _test = test;
         _assertInternalState = assertInternalState;
     }
 
     public async Task Run(params Scenario[] scenarios)
     {
-        var sharedExecutionState = new SharedExecutionState(_featureTest, scenarios);
+        var sharedExecutionState = new SharedExecutionState(_test, scenarios);
         var consoleWriter = new ConsoleWriter(_testFramework, sharedExecutionState);
         var consoleManager = new ConsoleManager(_testFramework, sharedExecutionState, consoleWriter);
         var inputDataFeeder = new InputDataFeeder(sharedExecutionState);
@@ -44,7 +44,7 @@ internal class ScenarioTestRunner
         var consumerManager = new ConsumerManager(sharedExecutionState, executeScenarioMessageHandler);
         var executionManager = new ExecutionManager(_testFramework, sharedExecutionState, producerManager, consumerManager);
         var cleanupManager = new CleanupManager(_testFramework, sharedExecutionState);
-        var featureResultManager = new StandardResultManager();
+        var standardResultManager = new StandardResultManager();
         var reportManager = new ReportManager();
 
         try
@@ -53,7 +53,7 @@ internal class ScenarioTestRunner
             await initManager.Run();
             await executionManager.Run();
             await cleanupManager.Run();
-            featureResultManager.AddNonSkippedTestResults(sharedExecutionState);
+            standardResultManager.AddNonSkippedTestResults(sharedExecutionState);
             await reportManager.WriteLoadReports(sharedExecutionState);
             await consoleManager.Complete();
 

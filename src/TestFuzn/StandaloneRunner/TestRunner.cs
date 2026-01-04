@@ -4,18 +4,18 @@ using Spectre.Console;
 
 namespace Fuzn.TestFuzn.StandaloneRunner;
 
-internal class ScenarioTestRunner
+internal class TestRunner
 {
-    internal async Task RunScenarioTest(string[] args, ITestFrameworkAdapter testFramework, 
-        ScenarioTestInfo testInfo)
+    internal async Task RunTest(string[] args, ITestFrameworkAdapter testFramework, 
+        DiscoveredTest testInfo)
     {
         AnsiConsole.Write(new Markup($"[green]Running test:[/] [bold green]{testInfo.Name}[/]"));
         AnsiConsole.WriteLine();
 
         var testClassInstance = Activator.CreateInstance(testInfo.Class);
-        var featureTestClassInstance = testClassInstance as ITest;
-        if (featureTestClassInstance == null)
-            throw new Exception($"Test class '{testInfo.Class.Name}' must implement IFeatureTest interface.");
+        var iTestClassInstance = testClassInstance as ITest;
+        if (iTestClassInstance == null)
+            throw new Exception($"Test class '{testInfo.Class.Name}' must implement {nameof(ITest)} interface.");
 
         if (testClassInstance == null)
         {
@@ -27,10 +27,10 @@ internal class ScenarioTestRunner
         try
         {
             await TestFuznIntegrationCore.Init(testFramework);
-            featureTestClassInstance.TestFramework = testFramework;
-            featureTestClassInstance.TestMethodInfo = testInfo.Method;
+            iTestClassInstance.TestFramework = testFramework;
+            iTestClassInstance.TestMethodInfo = testInfo.Method;
 
-            var invocationResult = testFramework.ExecuteTestMethod(featureTestClassInstance, testInfo.Method);
+            var invocationResult = testFramework.ExecuteTestMethod(iTestClassInstance, testInfo.Method);
 
             if (invocationResult is Task task)
                 await task;

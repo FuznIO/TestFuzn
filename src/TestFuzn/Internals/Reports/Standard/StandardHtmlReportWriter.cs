@@ -1,5 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts.Reports;
-using Fuzn.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
 using System.Text;
 
@@ -26,7 +26,7 @@ internal class StandardHtmlReportWriter : IStandardReport
         }
     }
 
-    private string GenerateHtmlReport(StandardReportData featureReportData)
+    private string GenerateHtmlReport(StandardReportData reportData)
     {
         var b = new StringBuilder();
 
@@ -46,13 +46,13 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine(@"<div class=""page-container"">");
 
         // Header
-        b.AppendLine($"<h1>{featureReportData.Suite.Name} - Feature Test Report</h1>");
+        b.AppendLine($"<h1>{reportData.Suite.Name} - Feature Test Report</h1>");
 
-        WriteTestInfo(featureReportData, b);
+        WriteTestInfo(reportData, b);
 
-        WriteStatus(featureReportData, b);
+        WriteStatus(reportData, b);
 
-        WriteGroupResults(featureReportData, b);
+        WriteGroupResults(reportData, b);
 
         b.AppendLine("</div>");
         b.AppendLine("</body>");
@@ -61,38 +61,38 @@ internal class StandardHtmlReportWriter : IStandardReport
         return b.ToString();
     }
 
-    private static void WriteTestInfo(StandardReportData featureReportData, StringBuilder b)
+    private static void WriteTestInfo(StandardReportData reportData, StringBuilder b)
     {
         b.AppendLine($"<h2>Test Info</h2>");
         b.AppendLine("<table>");
-        b.AppendLine(@"<tr><th class=""vertical"">Suite - Name</th><td>" + featureReportData.Suite.Name + "</td></tr>");
-        b.AppendLine(@"<tr><th class=""vertical"">Suite - ID</th><td>" + featureReportData.Suite.Id + "</td></tr>");
+        b.AppendLine(@"<tr><th class=""vertical"">Suite - Name</th><td>" + reportData.Suite.Name + "</td></tr>");
+        b.AppendLine(@"<tr><th class=""vertical"">Suite - ID</th><td>" + reportData.Suite.Id + "</td></tr>");
 
-        if (featureReportData.Suite.Metadata != null)
+        if (reportData.Suite.Metadata != null)
         {
             b.AppendLine(@$"<tr><th class=""vertical"">Suite - Metadata</th><td><ul>");
-            foreach (var metadata in featureReportData.Suite.Metadata)
+            foreach (var metadata in reportData.Suite.Metadata)
             {
                 b.AppendLine(@$"<li>{metadata.Key}: {metadata.Value}</li>");
             }
             b.AppendLine(@$"</tr>");
         }
 
-        b.AppendLine(@$"<tr><th class=""vertical"">Run ID</th><td>{featureReportData.TestRunId}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Run ID</th><td>{reportData.TestRunId}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Execution Environment</th><td>{(string.IsNullOrEmpty(GlobalState.ExecutionEnvironment) ? "-" : GlobalState.ExecutionEnvironment)}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Target Environment</th><td>{(string.IsNullOrEmpty(GlobalState.TargetEnvironment) ? "-" : GlobalState.TargetEnvironment)}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Start Time</th><td>{featureReportData.TestRunStartTime.ToLocalTime()}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">End Time</th><td>{featureReportData.TestRunEndTime.ToLocalTime()}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Duration</th><td>{featureReportData.TestRunDuration.ToTestFuznReadableString()}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Start Time</th><td>{reportData.TestRunStartTime.ToLocalTime()}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">End Time</th><td>{reportData.TestRunEndTime.ToLocalTime()}</td></tr>");
+        b.AppendLine(@$"<tr><th class=""vertical"">Duration</th><td>{reportData.TestRunDuration.ToTestFuznReadableString()}</td></tr>");
         b.AppendLine("</table>");
     }
 
-    private static void WriteStatus(StandardReportData featureReportData, StringBuilder b)
+    private static void WriteStatus(StandardReportData reportData, StringBuilder b)
     {
-        var testsTotal = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count);
-        var testsPassed = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Passed));
-        var testsSkipped = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Skipped));
-        var testsFailed = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Failed));
+        var testsTotal = reportData.GroupResults.Sum(f => f.Value.TestResults.Count);
+        var testsPassed = reportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Passed));
+        var testsSkipped = reportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Skipped));
+        var testsFailed = reportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Failed));
 
         b.AppendLine($"<h2>Test Status</h2>");
         if (testsTotal == 0)
@@ -126,7 +126,7 @@ internal class StandardHtmlReportWriter : IStandardReport
     {
         b.AppendLine($"<h2>Test Results</h2>");
         // Features
-        b.Append(@"<table class=""feature-results"">");
+        b.Append(@"<table class=""group-results"">");
         b.AppendLine($"<tr>");
         b.AppendLine($"<th>Details</th>");
         b.AppendLine(@$"<th>Status</th>");
@@ -345,14 +345,14 @@ internal class StandardHtmlReportWriter : IStandardReport
         }
     }
 
-    private async Task IncludeEmbeddedResources(StandardReportData featureReportData)
+    private async Task IncludeEmbeddedResources(StandardReportData reportData)
     {
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
             "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
-            Path.Combine(featureReportData.TestsOutputDirectory, "assets/styles/testfuzn.css"));
+            Path.Combine(reportData.TestsOutputDirectory, "assets/styles/testfuzn.css"));
 
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
             "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
-            Path.Combine(featureReportData.TestsOutputDirectory, "assets/scripts/chart.js"));
+            Path.Combine(reportData.TestsOutputDirectory, "assets/scripts/chart.js"));
     }
 }

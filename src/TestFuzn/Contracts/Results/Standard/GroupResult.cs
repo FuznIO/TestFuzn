@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace Fuzn.TestFuzn.Contracts.Results.Feature;
+namespace Fuzn.TestFuzn.Contracts.Results.Standard;
 
 internal class GroupResult(string name)
 {

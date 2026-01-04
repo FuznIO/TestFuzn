@@ -24,7 +24,7 @@ internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter
 
     public int WindowWidth => Console.WindowWidth;
 
-    public abstract Task ExecuteTestMethod(ITest featureTest, MethodInfo methodInfo);
+    public abstract Task ExecuteTestMethod(ITest test, MethodInfo methodInfo);
 
     public void WriteAdvancedTable(AdvancedTable table)
     {

@@ -15,25 +15,25 @@ internal class StandaloneRunnerCore
         Console.OutputEncoding = Encoding.UTF8;
         GlobalState.AssemblyWithTestsName = assembly.GetName().Name;
 
-        var scenarioTests = new DiscoverScenarioTests().GetScenarioTests(assembly);
+        var tests = new DiscoverTests().GetTests(assembly);
 
-        var scenarioTestName = ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(parsedArgs, "test-name", "TESTFUZN_TEST_NAME");
+        var testName = ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(parsedArgs, "test-name", "TESTFUZN_TEST_NAME");
 
-        if (string.IsNullOrEmpty(scenarioTestName))
+        if (string.IsNullOrEmpty(testName))
         {
-            scenarioTestName = new TestSelectionMenu().DisplayAndSelectTest(scenarioTests);
+            testName = new TestSelectionMenu().DisplayAndSelectTest(tests);
 
-            if (scenarioTestName == null)
+            if (testName == null)
                 return;
         }
 
-        var testInfo = scenarioTests.SingleOrDefault(t => t.Name == scenarioTestName);
+        var testInfo = tests.SingleOrDefault(t => t.Name == testName);
         if (testInfo == null)
         {
-            Console.WriteLine($"Test '{scenarioTestName}' not found.");
+            Console.WriteLine($"Test '{testName}' not found.");
             return;
         }
 
-        await new ScenarioTestRunner().RunScenarioTest(args, testFrameworkInstanceCreator(), testInfo);
+        await new TestRunner().RunTest(args, testFrameworkInstanceCreator(), testInfo);
     }
 }

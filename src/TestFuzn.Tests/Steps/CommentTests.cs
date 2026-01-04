@@ -4,7 +4,7 @@
 public class CommentTests : Test
 {
     [Test]
-    public async Task FeatureTest_Comment_Should_Be_Written_ToConsoleAndReports()
+    public async Task StandardTest_Comment_Should_Be_Written_ToConsoleAndReports()
     {
         await Scenario()
             .Step("Step 1 - Write comment", (context) =>

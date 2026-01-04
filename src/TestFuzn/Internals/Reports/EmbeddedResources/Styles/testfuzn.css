@@ -151,8 +151,8 @@ li:last-child
 {
     padding-bottom: 0;
 }
-.feature-results th:not(:first-child),
-.feature-results td:not(:first-child) {
+.group-results th:not(:first-child),
+.group-results td:not(:first-child) {
     width: 1%;
     white-space: nowrap;
 }

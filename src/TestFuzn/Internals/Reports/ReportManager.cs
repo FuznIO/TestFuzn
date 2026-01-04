@@ -7,9 +7,9 @@ namespace Fuzn.TestFuzn.Internals.Reports;
 
 internal class ReportManager
 {
-    public async Task WriteStandardReports(StandardResultManager featureResultsManager)
+    public async Task WriteStandardReports(StandardResultManager standardResultsManager)
     {
-        var featureResults = featureResultsManager.GetSuiteResults();
+        var groupResults = standardResultsManager.GetSuiteResults();
 
         var data = new StandardReportData();
         data.Suite = new Contracts.Reports.SuiteInfo();
@@ -21,7 +21,7 @@ internal class ReportManager
         data.TestRunEndTime = GlobalState.TestRunEndTime;
         data.TestRunDuration = data.TestRunEndTime - data.TestRunStartTime;
         data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
-        data.GroupResults = featureResults.GroupResults;
+        data.GroupResults = groupResults.GroupResults;
         
         foreach (var featureReport in GlobalState.Configuration.StandardReports)
             await featureReport.WriteReport(data);

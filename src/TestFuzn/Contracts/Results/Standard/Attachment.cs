@@ -1,4 +1,4 @@
-﻿namespace Fuzn.TestFuzn.Contracts.Results.Feature;
+﻿namespace Fuzn.TestFuzn.Contracts.Results.Standard;
 
 internal class Attachment
 {

@@ -1,4 +1,4 @@
-﻿using Fuzn.TestFuzn.Contracts.Results.Feature;
+﻿using Fuzn.TestFuzn.Contracts.Results.Standard;
 using System.Collections.Concurrent;
 
 namespace Fuzn.TestFuzn.Contracts.Reports;

@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Xml;
 using Fuzn.TestFuzn.Contracts.Reports;
-using Fuzn.TestFuzn.Contracts.Results.Feature;
+using Fuzn.TestFuzn.Contracts.Results.Standard;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Standard;
 

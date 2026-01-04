@@ -2,5 +2,5 @@
 
 internal interface IStandardReport
 {
-    Task WriteReport(StandardReportData featureReportData);
+    Task WriteReport(StandardReportData standardReportData);
 }

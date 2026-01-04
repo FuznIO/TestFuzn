@@ -98,7 +98,7 @@ public class InputDataTests : Test
     }
 
     [Test]
-    public async Task Verify_Params_based_InputData_Feature()
+    public async Task Verify_Params_based_InputData_Standard()
     {
         var userExecuted = new Dictionary<string, bool>();
         userExecuted["user1"] = false;

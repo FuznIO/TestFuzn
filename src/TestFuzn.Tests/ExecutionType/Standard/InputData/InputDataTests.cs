@@ -4,7 +4,7 @@
 public class InputDataTests :  Test
 {
     [Test]
-    public async Task Feature_Verify_List_based_InputData_Sync()
+    public async Task StandardTest_Verify_List_based_InputData_Sync()
     {
         var userExecuted = new Dictionary<string, bool>();
         userExecuted["user1"] = false;
@@ -34,7 +34,7 @@ public class InputDataTests :  Test
     }
 
     [Test]
-    public async Task Feature_Verify_List_based_InputData_Async()
+    public async Task StandardTest__Verify_List_based_InputData_Async()
     {
         var userExecuted = new Dictionary<string, bool>();
         userExecuted["user1"] = false;
@@ -65,7 +65,7 @@ public class InputDataTests :  Test
     }
 
     [Test]
-    public async Task Feature_Verify_Params_based_InputData()
+    public async Task StandardTest__Verify_Params_based_InputData()
     {
         var userExecuted = new Dictionary<string, bool>();
         userExecuted["user1"] = false;
@@ -87,7 +87,7 @@ public class InputDataTests :  Test
     }
 
     [Test]
-    public async Task Feature_Verify_String_Params_based_InputData()
+    public async Task StandardTest__Verify_String_Params_based_InputData()
     {
         var executed = new Dictionary<string, bool>();
         executed["user1"] = false;
@@ -109,7 +109,7 @@ public class InputDataTests :  Test
     }
 
     [Test]
-    public async Task Feature_Verify_Int_Params_based_InputData()
+    public async Task StandardTest__Verify_Int_Params_based_InputData()
     {
         var executed = new Dictionary<string, bool>();
         executed["1"] = false;
@@ -131,7 +131,7 @@ public class InputDataTests :  Test
     }
 
     [Test]
-    public async Task Should_Fail_Feature_Verify_Scenario_Fails_When_InputData_Iteration_Fails()
+    public async Task Should_Fail_StandardTest_Verify_Scenario_Fails_When_InputData_Iteration_Fails()
     {
         var catchWasCalled = false;
 

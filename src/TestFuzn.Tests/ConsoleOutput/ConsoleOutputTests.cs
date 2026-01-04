@@ -4,7 +4,7 @@
     public class ConsoleOutputTests : Test
     {
         [Test]
-        public async Task FeatureTest()
+        public async Task StandardTest()
         {
             await Scenario()
                 .Step("Step 1", (context) => { })
@@ -18,7 +18,7 @@
         }
 
         [Test]
-        public async Task FeatureTestWithInputData()
+        public async Task StandardTest_TestWithInputData()
         {
             await Scenario()
                 .InputData(new User("User1", "user1@foo.com"),

@@ -58,7 +58,7 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteStartElement("Scenarios");
                 foreach (var scenarioResult in loadReportData.ScenarioResults)
                 {
-                    WriteScenario(writer, loadReportData.Group.Name, scenarioResult);
+                    WriteScenario(writer, loadReportData.Group.Name, loadReportData.Test.Name, scenarioResult);
                 }
                 writer.WriteEndElement();
 
@@ -68,7 +68,7 @@ internal class LoadXmlReportWriter : ILoadReport
 
             foreach (var scenarioResult in loadReportData.ScenarioResults)
             {
-                InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Group.Name, scenarioResult.ScenarioName);
+                InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Group.Name, loadReportData.Test.Name, scenarioResult.ScenarioName);
             }
 
             await File.WriteAllTextAsync(filePath, stringBuilder.ToString());
@@ -112,7 +112,7 @@ internal class LoadXmlReportWriter : ILoadReport
         writer.WriteEndElement();
     }
 
-    private void WriteScenario(XmlWriter writer, string featureName, ScenarioLoadResult scenarioResult)
+    private void WriteScenario(XmlWriter writer, string groupName, string testName, ScenarioLoadResult scenarioResult)
     {
         writer.WriteStartElement("Scenario");
         writer.WriteElementString("Name", scenarioResult.ScenarioName);
@@ -153,7 +153,7 @@ internal class LoadXmlReportWriter : ILoadReport
 
         WriteSteps(writer, scenarioResult.Steps.Values.ToList());
 
-        WriteSnapshots(writer, featureName, scenarioResult.ScenarioName);
+        WriteSnapshots(writer, groupName, testName, scenarioResult.ScenarioName);
 
         writer.WriteEndElement();
     }
@@ -217,9 +217,9 @@ internal class LoadXmlReportWriter : ILoadReport
         }
     }
 
-    private void WriteSnapshots(XmlWriter writer, string featureName, string scenarioName)
+    private void WriteSnapshots(XmlWriter writer, string groupName, string testName, string scenarioName)
     {
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(featureName, scenarioName);
+        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(groupName, testName, scenarioName);
 
         writer.WriteStartElement("Snapshots");
 

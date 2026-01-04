@@ -26,7 +26,7 @@ internal class InitManager
     {
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(FeatureTestPhase.Init);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Init);
             _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init);
         }
 
@@ -45,7 +45,7 @@ internal class InitManager
 
         foreach (var scenario in _sharedExecutionState.Scenarios)
         {
-            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(FeatureTestPhase.Init);
+            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Init);
             _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init);
         }
     }

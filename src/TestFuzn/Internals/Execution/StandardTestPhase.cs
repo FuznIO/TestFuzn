@@ -1,6 +1,6 @@
 ﻿namespace Fuzn.TestFuzn.Internals.Execution;
 
-internal enum FeatureTestPhase
+internal enum StandardTestPhase
 {
     Init,
     Execute,

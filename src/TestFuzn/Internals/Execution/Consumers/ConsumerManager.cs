@@ -42,7 +42,7 @@ internal class ConsumerManager
 
             if (_sharedExecutionState.IsScenarioExecutionComplete(message.ScenarioName))
             {
-                _sharedExecutionState.ScenarioResultState.StandardCollectors[message.ScenarioName].MarkPhaseAsCompleted(FeatureTestPhase.Execute);
+                _sharedExecutionState.ScenarioResultState.StandardCollectors[message.ScenarioName].MarkPhaseAsCompleted(StandardTestPhase.Execute);
                 
                 if (_sharedExecutionState.TestType == TestType.Load)
                 {

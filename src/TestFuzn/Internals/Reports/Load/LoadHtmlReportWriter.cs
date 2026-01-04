@@ -349,7 +349,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("</thead>");
         b.AppendLine("<tbody>");
 
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Group.Name, scenario.ScenarioName);
+        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
 
         foreach (var snapshot in snapshots)
         {

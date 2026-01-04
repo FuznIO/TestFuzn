@@ -1,6 +1,6 @@
 ﻿using Fuzn.TestFuzn.Internals.Execution;
 
-namespace Fuzn.TestFuzn.Contracts.Results.Feature;
+namespace Fuzn.TestFuzn.Contracts.Results.Standard;
 
 internal class ScenarioStandardResult
 {
@@ -51,39 +51,39 @@ internal class ScenarioStandardResult
         IterationResults.Add(iterationResult);
     }
 
-    internal void MarkPhaseAsStarted(FeatureTestPhase featureTestPhase)
+    internal void MarkPhaseAsStarted(StandardTestPhase standardTestPhase)
     {
-        switch (featureTestPhase)
+        switch (standardTestPhase)
         {
-            case FeatureTestPhase.Init:
+            case StandardTestPhase.Init:
                 InitStartTime = DateTime.UtcNow;
                 break;
-            case FeatureTestPhase.Execute:
+            case StandardTestPhase.Execute:
                 ExecuteStartTime = DateTime.UtcNow;
                 break;
-            case FeatureTestPhase.Cleanup:
+            case StandardTestPhase.Cleanup:
                 CleanupStartTime = DateTime.UtcNow;
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(featureTestPhase), featureTestPhase, null);
+                throw new ArgumentOutOfRangeException(nameof(standardTestPhase), standardTestPhase, null);
         }
     }
 
-    internal void MarkPhaseAsCompleted(FeatureTestPhase featureTestPhase)
+    internal void MarkPhaseAsCompleted(StandardTestPhase standardTestPhase)
     {
-        switch (featureTestPhase)
+        switch (standardTestPhase)
         {
-            case FeatureTestPhase.Init:
+            case StandardTestPhase.Init:
                 InitEndTime = DateTime.UtcNow;
                 break;
-            case FeatureTestPhase.Execute:
+            case StandardTestPhase.Execute:
                 ExecuteEndTime = DateTime.UtcNow;
                 break;
-            case FeatureTestPhase.Cleanup:
+            case StandardTestPhase.Cleanup:
                 CleanupEndTime = DateTime.UtcNow;
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(featureTestPhase), featureTestPhase, null);
+                throw new ArgumentOutOfRangeException(nameof(standardTestPhase), standardTestPhase, null);
         }
     }
 

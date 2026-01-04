@@ -24,12 +24,12 @@ internal class ConsoleWriter
     public void WriteSummary()
     {
         if (_sharedExecutionState.TestType == TestType.Standard)
-            WriteSummaryFeature();
+            WriteSummaryStandard();
         else
             WriteSummaryLoad();
     }
 
-    public void WriteSummaryFeature()
+    public void WriteSummaryStandard()
     {
         var scenario = _sharedExecutionState.Scenarios.Single();
         var scenarioResult = _sharedExecutionState.ScenarioResultState.StandardCollectors.First().Value;
