@@ -10,7 +10,7 @@ public enum LoggingVerbosity
     /// </summary>
     None = 1,
     /// <summary>
-    /// Minimal logging output.
+    /// Normal logging with basic request/response information.
     /// </summary>
     Normal = 2,
     /// <summary>

@@ -14,7 +14,7 @@ internal class LoadHtmlReportWriter : ILoadReport
     {
         try
         {
-            var reportName = FileNameHelper.MakeFilenameSafe(loadReportData.ScenarioResult.ScenarioName);
+            var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Group.Name}-{loadReportData.ScenarioResult.ScenarioName}");
             var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"LoadTestReport-{reportName}.html");
 
             var htmlContent = GenerateHtmlReport(loadReportData);

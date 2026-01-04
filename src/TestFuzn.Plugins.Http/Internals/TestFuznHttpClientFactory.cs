@@ -1,12 +1,20 @@
 ﻿using System.Net;
 
-namespace Fuzn.TestFuzn.Plugins.Http;
+namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
-public class TestFuznHttpClientFactory : IHttpClientFactory
+/// <summary>
+/// A thread-safe implementation of <see cref="IHttpClientFactory"/> that caches HTTP clients by base URL.
+/// </summary>
+internal class TestFuznHttpClientFactory : IHttpClientFactory
 {
     private static readonly Dictionary<string, HttpClient> _clients = new Dictionary<string, HttpClient>();
     private static readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
+    /// <summary>
+    /// Gets or creates a cached HTTP client for the specified base URL.
+    /// </summary>
+    /// <param name="baseUrl">The base URL for the HTTP client.</param>
+    /// <returns>An <see cref="HttpClient"/> configured for the specified base URL.</returns>
     public static HttpClient GetClient(string baseUrl)
     {
         _lock.EnterReadLock();
@@ -52,6 +60,11 @@ public class TestFuznHttpClientFactory : IHttpClientFactory
         }
     }
 
+    /// <summary>
+    /// Creates an HTTP client for the specified base URL.
+    /// </summary>
+    /// <param name="baseUrl">The base URL (used as the client name/key).</param>
+    /// <returns>An <see cref="HttpClient"/> configured for the specified base URL.</returns>
     public HttpClient CreateClient(string baseUrl)
     {
         return GetClient(baseUrl);

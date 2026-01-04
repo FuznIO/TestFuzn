@@ -11,7 +11,11 @@ public class SerializerProviderTests : Test
         await Scenario()
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products").Get();
+                var token = await HttpTests.GetAuthToken(context);
+
+                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                                .AuthBearer(token)
+                                .Get();
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
@@ -26,8 +30,13 @@ public class SerializerProviderTests : Test
         await Scenario()
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
+                var token = await HttpTests.GetAuthToken(context);
+
                 var systemTextJsonSerializer = new SystemTextJsonSerializerProvider();
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products").SerializerProvider(systemTextJsonSerializer).Get();
+                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                                        .AuthBearer(token)
+                                        .SerializerProvider(systemTextJsonSerializer)
+                                        .Get();
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
@@ -42,8 +51,13 @@ public class SerializerProviderTests : Test
         await Scenario()
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
+                var token = await HttpTests.GetAuthToken(context);
+
                 var newtonsoftSerializer = new NewtonsoftSerializerProvider();
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products").SerializerProvider(newtonsoftSerializer).Get();
+                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                                        .AuthBearer(token)
+                                        .SerializerProvider(newtonsoftSerializer)
+                                        .Get();
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();

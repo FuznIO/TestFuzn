@@ -5,6 +5,9 @@ using Fuzn.TestFuzn.Plugins.Http.Internals;
 
 namespace Fuzn.TestFuzn.Plugins.Http;
 
+/// <summary>
+/// Represents an HTTP response received from executing an HTTP request.
+/// </summary>
 public class HttpResponse
 {
     private readonly List<Cookie> _cookies = new List<Cookie>();
@@ -33,13 +36,24 @@ public class HttpResponse
         }
     }
 
-
+    /// <summary>
+    /// Gets or sets the URL that was requested.
+    /// </summary>
     public string Url { get; set; }
-    public HttpResponseMessage InnerResponse { get; set; }
-    public string RawResponse { get; set; }
-    
-    public string CurlRequest => GetCurlCommand();
 
+    /// <summary>
+    /// Gets or sets the underlying <see cref="HttpResponseMessage"/>.
+    /// </summary>
+    public HttpResponseMessage InnerResponse { get; set; }
+
+    /// <summary>
+    /// Gets or sets the raw response string representation.
+    /// </summary>
+    public string RawResponse { get; set; }
+
+    /// <summary>
+    /// Gets the response headers.
+    /// </summary>
     public HttpResponseHeaders Headers
     {
         get
@@ -48,24 +62,42 @@ public class HttpResponse
         }
     }
 
+    /// <summary>
+    /// Gets the response body as a string.
+    /// </summary>
     public string Body
     {
         get;
         private set;
     }
 
+    /// <summary>
+    /// Gets the cookies received in the response.
+    /// </summary>
     public List<Cookie> Cookies
     {
         get { return _cookies; }
     }
 
+    /// <summary>
+    /// Gets the HTTP status code of the response.
+    /// </summary>
     public HttpStatusCode StatusCode
     {
         get { return InnerResponse.StatusCode; }
     }
 
+    /// <summary>
+    /// Gets a value indicating whether the response was successful (status code 2xx).
+    /// </summary>
     public bool Ok => InnerResponse.IsSuccessStatusCode;
 
+    /// <summary>
+    /// Deserializes the response body into the specified type.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize the body into.</typeparam>
+    /// <returns>The deserialized object.</returns>
+    /// <exception cref="Exception">Thrown when the body is empty, null, or cannot be deserialized.</exception>
     public T BodyAs<T>()
         where T : class
     {
@@ -85,6 +117,11 @@ public class HttpResponse
         }
     }
 
+    /// <summary>
+    /// Parses the response body as a dynamic JSON object.
+    /// </summary>
+    /// <returns>A dynamic object representing the JSON response, or null if the body is null.</returns>
+    /// <exception cref="Exception">Thrown when the body is not valid JSON.</exception>
     public dynamic BodyAsJson()
     {
         if (Body == null)
@@ -104,8 +141,11 @@ public class HttpResponse
         return json;
     }
 
-    // Generates a curl command that reproduces the current HTTP request
-    private string GetCurlCommand()
+    /// <summary>
+    /// Generates a curl command that replicates the original HTTP request.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the curl command string.</returns>
+    public async Task<string> GetCurlCommand()
     {
         var request = _request;
         var curl = new System.Text.StringBuilder();
@@ -138,8 +178,7 @@ public class HttpResponse
                 }
             }
 
-            // TODO, get rid of GetAwaiter?
-            var content = request.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var content = await request.Content.ReadAsStringAsync();
             if (!string.IsNullOrEmpty(content))
             {
                 // Escape double quotes in content

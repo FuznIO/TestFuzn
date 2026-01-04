@@ -17,6 +17,13 @@ public class TestFuznConfiguration
     /// Gets or sets the test suite information including name, ID, and metadata.
     /// </summary>
     public SuiteInfo Suite { get; set; }
+    /// <summary>
+    /// Gets or sets the level of detail to include in log output. Defaults to <see cref="LoggingVerbosity.Normal"/>.
+    /// </summary>
+    /// <remarks>Use this property to control how much information is written to the logs. Higher verbosity
+    /// levels provide more detailed diagnostic information, which can be useful for troubleshooting but may produce
+    /// larger log files.</remarks>
+    public LoggingVerbosity LoggingVerbosity { get; set; } = LoggingVerbosity.Normal;
 
     internal List<IContextPlugin> ContextPlugins { get; set; } = new();
     internal List<IStandardReport> StandardReports { get; set; } = new();

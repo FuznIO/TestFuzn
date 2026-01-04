@@ -36,6 +36,7 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
                 { "OwnerID", "123" },
             }
         };
+        configuration.LoggingVerbosity = LoggingVerbosity.Normal;
         configuration.UsePlaywright(c =>
         {
             c.BrowserTypes = new List<string> { "chromium" };

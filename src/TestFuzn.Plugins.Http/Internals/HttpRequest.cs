@@ -1,50 +1,34 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text;
-using Fuzn.TestFuzn.Plugins.Http.Internals;
 using Fuzn.TestFuzn.Contracts.Providers;
 
-namespace Fuzn.TestFuzn.Plugins.Http;
+namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
-public class HttpRequest
+internal class HttpRequest
 {
-    private readonly ContentTypes _contentType;
-    private readonly string _url;
-    private LoggingVerbosity _loggingVerbosity = Http.LoggingVerbosity.Full;
-    private HttpMethod _method;
-    private Context _context;
-
-    public Authentication Auth { get; set; } = new();
-    public object? Body { get; set; }
-    public AcceptTypes AcceptTypes { get; set; } = AcceptTypes.Json;
-    public List<Cookie> Cookies { get; set; } = new();
-    public Dictionary<string, string> Headers { get; private set; } = new();
-    public Action<HttpRequest>? BeforeSend { get; set; }
-    public string UserAgent { get; set; } = "TestFuzn.Http/1.0";
-    public TimeSpan Timeout { get; set; } = HttpGlobalState.Configuration.DefaultRequestTimeout;
+    internal ContentTypes ContentType { get; set; }
+    internal string Url { get; set; }
+    internal LoggingVerbosity LoggingVerbosity { get; set; }
+    internal HttpMethod Method { get; set; }
+    internal Context Context { get; set; }
+    internal Authentication Auth { get; set; }
+    internal object? Body { get; set; }
+    internal AcceptTypes AcceptTypes { get; set; }
+    internal List<Cookie> Cookies { get; set; }
+    internal Dictionary<string, string> Headers { get; set; }
+    internal Action<HttpRequestMessage>? BeforeSend { get; set; }
+    internal string UserAgent { get; set; }
+    internal TimeSpan Timeout { get; set; }
     internal ISerializerProvider SerializerProvider { get; set; }
 
-    internal HttpRequest(Context context, HttpMethod method, string url, ContentTypes contentType = ContentTypes.Json)
+    internal async Task<HttpResponse> Send()
     {
-        _context = context;
-        _method = method;
-        _contentType = contentType;
-        _url = url;
-    }
-
-    public HttpRequest LoggingVerbosity(LoggingVerbosity loggingVerbosity)
-    {
-        _loggingVerbosity = loggingVerbosity;
-        return this;
-    }
-
-    public async Task<HttpResponse> Send()
-    {
-        var uri = new Uri(_url);
+        var uri = new Uri(Url);
         var baseUri = new UriBuilder(uri.Scheme, uri.Host, uri.IsDefaultPort ? -1 : uri.Port).Uri;
         var relativeUri = uri.PathAndQuery;
 
-        var request = new HttpRequestMessage(_method, relativeUri);
+        var request = new HttpRequestMessage(Method, relativeUri);
 
         if (AcceptTypes == AcceptTypes.Json)
             request.Headers.Add("Accept", "application/json");
@@ -70,9 +54,7 @@ public class HttpRequest
                 request.Headers.Add("Cookie", cookieHeader);
         }
 
-        BeforeSend?.Invoke(this);
-
-        if (_contentType == ContentTypes.Json && Body != null)
+        if (ContentType == ContentTypes.Json && Body != null)
         {
             if (Body is string rawJson)
             {
@@ -84,7 +66,7 @@ public class HttpRequest
                 request.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
             }
         }
-        else if (_contentType == ContentTypes.XFormUrlEncoded && Body is Dictionary<string, string> dictBody)
+        else if (ContentType == ContentTypes.XFormUrlEncoded && Body is Dictionary<string, string> dictBody)
         {
             request.Content = new FormUrlEncodedContent(dictBody);
         }
@@ -109,26 +91,29 @@ public class HttpRequest
 
         try
         {
-            var httpClientFactory = HttpGlobalState.Configuration.CustomHttpClientFactory ?? _context.Internals.Plugins.GetState<IHttpClientFactory>(typeof(HttpPlugin));
+            var httpClientFactory = HttpGlobalState.Configuration.CustomHttpClientFactory ?? Context.Internals.Plugins.GetState<IHttpClientFactory>(typeof(HttpPlugin));
             var client = httpClientFactory.CreateClient("TestFuzn");
             client.BaseAddress = baseUri;
 
             var cts = new CancellationTokenSource(Timeout);
 
-            _context.Logger.LogInformation($"Step {_context.StepInfo.Name} - HTTP Request: {request.Method} {request.RequestUri} - CorrelationId: {_context.Info.CorrelationId}");
+            Context.Logger.LogInformation($"Step {Context.StepInfo.Name} - HTTP Request: {request.Method} {request.RequestUri} - CorrelationId: {Context.Info.CorrelationId}");
 
             if (request.Content != null)
             {
                 var requestBody = await request.Content.ReadAsStringAsync(cts.Token);
-                _context.Logger.LogInformation($"Step {_context.StepInfo.Name} - Request Body: {requestBody} - CorrelationId: {_context.Info.CorrelationId}");
+                Context.Logger.LogInformation($"Step {Context.StepInfo.Name} - Request Body: {requestBody} - CorrelationId: {Context.Info.CorrelationId}");
             }
+
+            if (BeforeSend != null)
+                BeforeSend?.Invoke(request);
 
             response = await client.SendAsync(request, cts.Token);
             responseBody = await response.Content.ReadAsStringAsync(cts.Token);
 
-            _context.Logger.LogInformation($"Step {_context.StepInfo.Name} - HTTP Response: {(int)response.StatusCode} {response.ReasonPhrase} - CorrelationId: {_context.Info.CorrelationId}");
+            Context.Logger.LogInformation($"Step {Context.StepInfo.Name} - HTTP Response: {(int)response.StatusCode} {response.ReasonPhrase} - CorrelationId: {Context.Info.CorrelationId}");
             if (responseBody != null)
-                _context.Logger.LogInformation($"Step {_context.StepInfo.Name} - Response Body: {responseBody} - CorrelationId: {_context.Info.CorrelationId}");
+                Context.Logger.LogInformation($"Step {Context.StepInfo.Name} - Response Body: {responseBody} - CorrelationId: {Context.Info.CorrelationId}");
 
             responseCookies = ExtractResponseCookies(response, uri);
 
@@ -137,8 +122,8 @@ public class HttpRequest
         }
         catch (Exception ex)
         {
-            if (_loggingVerbosity > TestFuzn.Plugins.Http.LoggingVerbosity.None)
-                _context.Logger.LogError(ex, $"Step {_context.StepInfo.Name} - HTTP Request failed - CorrelationId: {_context.Info.CorrelationId}");
+            if (LoggingVerbosity > TestFuzn.LoggingVerbosity.None)
+                Context.Logger.LogError(ex, $"Step {Context.StepInfo.Name} - HTTP Request failed - CorrelationId: {Context.Info.CorrelationId}");
 
             outputRequestResponse = true;
             throw;
@@ -147,14 +132,14 @@ public class HttpRequest
         {
             if (outputRequestResponse && HttpGlobalState.Configuration.LogFailedRequestsToTestConsole)
             {
-                if (_loggingVerbosity == TestFuzn.Plugins.Http.LoggingVerbosity.Full)
+                if (LoggingVerbosity == TestFuzn.LoggingVerbosity.Full)
                 {
-                    _context.Logger.LogError($"Step {_context.StepInfo.Name} - Request returned an error:\n{request} - CorrelationId: {_context.Info.CorrelationId}");
+                    Context.Logger.LogError($"Step {Context.StepInfo.Name} - Request returned an error:\n{request} - CorrelationId: {Context.Info.CorrelationId}");
                     Console.WriteLine("Request returned an error:\n" + request.ToString());
                     if (response != null)
                     {
-                        _context.Logger.LogError($"Step {_context.StepInfo.Name} - Response:\n{response} - CorrelationId: {_context.Info.CorrelationId}");
-                        _context.Logger.LogError($"Step {_context.StepInfo.Name} - Response.Body:\n{responseBody} - CorrelationId: {_context.Info.CorrelationId}");
+                        Context.Logger.LogError($"Step {Context.StepInfo.Name} - Response:\n{response} - CorrelationId: {Context.Info.CorrelationId}");
+                        Context.Logger.LogError($"Step {Context.StepInfo.Name} - Response.Body:\n{responseBody} - CorrelationId: {Context.Info.CorrelationId}");
                     }
                 }
             }
