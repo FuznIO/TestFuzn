@@ -45,12 +45,12 @@ internal class StandardXmlReportWriter : IStandardReport
                 writer.WriteElementString("ExecutionEnvironment", GlobalState.ExecutionEnvironment);
                 writer.WriteElementString("TargetEnvironment", GlobalState.TargetEnvironment);
 
-                foreach (var featureResult in reportData.GroupResults.Values)
+                foreach (var standardResult in reportData.GroupResults.Values)
                 {
-                    WriteGroup(writer, featureResult);
+                    WriteGroup(writer, standardResult);
                 }
 
-                writer.WriteEndElement(); // TestRunResults
+                writer.WriteEndElement();
                 writer.WriteEndDocument();
             }
 

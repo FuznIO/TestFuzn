@@ -23,8 +23,8 @@ internal class ReportManager
         data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
         data.GroupResults = groupResults.GroupResults;
         
-        foreach (var featureReport in GlobalState.Configuration.StandardReports)
-            await featureReport.WriteReport(data);
+        foreach (var standardReport in GlobalState.Configuration.StandardReports)
+            await standardReport.WriteReport(data);
     }
 
     public async Task WriteLoadReports(SharedExecutionState sharedExecutionState)

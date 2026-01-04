@@ -35,7 +35,7 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine("<head>");
         b.AppendLine("<meta charset='UTF-8'>");
         b.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        b.AppendLine("<title>TestFuzn - Feature Test Report</title>");
+        b.AppendLine("<title>TestFuzn - Test Report</title>");
         b.AppendLine("<link rel='stylesheet' href='assets/styles/testfuzn.css'>");
         b.AppendLine("<script>");
         b.AppendLine("</script>");
@@ -46,7 +46,7 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine(@"<div class=""page-container"">");
 
         // Header
-        b.AppendLine($"<h1>{reportData.Suite.Name} - Feature Test Report</h1>");
+        b.AppendLine($"<h1>{reportData.Suite.Name} - Test Report</h1>");
 
         WriteTestInfo(reportData, b);
 
@@ -125,7 +125,8 @@ internal class StandardHtmlReportWriter : IStandardReport
     private void WriteGroupResults(StandardReportData reportData, StringBuilder b)
     {
         b.AppendLine($"<h2>Test Results</h2>");
-        // Features
+        
+        // Groups
         b.Append(@"<table class=""group-results"">");
         b.AppendLine($"<tr>");
         b.AppendLine($"<th>Details</th>");

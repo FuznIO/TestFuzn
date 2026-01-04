@@ -10,7 +10,7 @@ internal class StandaloneRunnerAdapter : BaseStandaloneRunnerAdapter
         var testContextProperty = test.GetType().GetProperty("TestContext");
 
         if (testContextProperty == null)
-            throw new InvalidOperationException("The feature test does not have a TestContext property.");
+            throw new InvalidOperationException("The test class does not have a TestContext property.");
 
         var testContext = new BasicMsTestContext(methodInfo.Name);
         testContextProperty.SetValue(test, testContext);

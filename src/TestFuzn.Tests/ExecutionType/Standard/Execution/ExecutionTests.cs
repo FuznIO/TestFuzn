@@ -8,7 +8,7 @@ public class ExecutionTests : Test
     {
         var executionCount = 0;
 
-        await Scenario("Verify that a feature scenario without simulations is run only once")
+        await Scenario("Verify that a standard test scenario is run only once")
             .Step("Step 1", (context) => 
             {
                 Interlocked.Increment(ref executionCount);

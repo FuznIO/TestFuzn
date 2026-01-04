@@ -17,11 +17,11 @@ internal class SharedExecutionState
 
     public bool IsConsumingCompleted { get; private set; }
 
-    public SharedExecutionState(ITest featureTest, params Scenario[] scenarios)
+    public SharedExecutionState(ITest test, params Scenario[] scenarios)
     {
         TestRunState.StartTime = DateTime.UtcNow;
         TestRunState.ExecutionStatus = ExecutionStatus.Running;
-        TestClassInstance = featureTest;
+        TestClassInstance = test;
         Scenarios.AddRange(scenarios);
         TestType = scenarios.First().TestType;
 
