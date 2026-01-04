@@ -17,6 +17,10 @@ public class MultipleScenariosTests : Test
             {
                 scenario2Executed = true;
             })
+            .Step("Step 2", async (context) =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2));
+            })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(30));
 
         await Scenario("First scenario")

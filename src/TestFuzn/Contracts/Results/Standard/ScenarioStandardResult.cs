@@ -7,6 +7,7 @@ internal class ScenarioStandardResult
     private bool _skipped = false;
 
     public string Name { get; set; }
+    public string Description { get; set; }
     public string FullName { get; set; }
     public string Id { get; set; }
     public Dictionary<string, string> Metadata { get; set; }
@@ -40,8 +41,7 @@ internal class ScenarioStandardResult
     {
         Name = scenario.Name;
         Id = scenario.Id;
-        Tags = scenario.TagsInternal;
-        Metadata = scenario.MetadataInternal;
+        Description = scenario.Description;
         HasInputData = scenario.InputDataInfo.HasInputData;
         TestType = scenario.TestType;
     }

@@ -27,13 +27,13 @@ public class StandardReportTests : Test
 
     [Test]
     [Tags("Tag1", "Tag2", "Tag2")]
+    [Metadata("MetaKey1", "MetaValue1")]
+    [Metadata("MetaKey2", "MetaValue2")]
     public async Task WithSubStepsAndMetadata()
     {
         await Scenario()
             .Id("ID-1234")
             .InputData("user1", "user2", "user")
-            .Metadata("ScenarioKey1", "Value1")
-            .Metadata("ScenarioKey2", "Value2")
             .Step("Test Step 1", (context) =>
             {
                 context.Comment("Comment 1 Sub step 1");

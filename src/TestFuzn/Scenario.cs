@@ -18,9 +18,6 @@ internal class Scenario
             return TestType.Load;
         }
     }
-    internal List<string> Environments { get; set; }
-    internal List<string> TagsInternal { get; set; }
-    internal Dictionary<string, string> MetadataInternal { get; set; }
     internal Type ContextType { get; set; }
     internal Func<ScenarioContext, Task> BeforeScenario { get; set; }
     internal Func<IterationContext, Task> BeforeIterationAction { get; set; }

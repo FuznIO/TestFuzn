@@ -43,35 +43,6 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
-    internal ScenarioBuilder<TModel> Tags(params string[] tags)
-    {
-        if (tags == null || tags.Length == 0)
-            throw new ArgumentException("Tags cannot be null or empty.", nameof(tags));
-
-        if (Scenario.TagsInternal == null)
-            Scenario.TagsInternal = new();
-
-        foreach (var tag in tags)
-        {
-            if (string.IsNullOrWhiteSpace(tag))
-                throw new ArgumentException("Tag cannot be null or empty.", nameof(tags));
-            if (Scenario.TagsInternal.Contains(tag))
-                throw new ArgumentException($"Tag '{tag}' already exists in the scenario. Tags must be unique.", nameof(tags));
-            Scenario.TagsInternal.Add(tag);
-        }
-        return this;
-    }
-
-    internal ScenarioBuilder<TModel> Metadata(string key, string value)
-    {
-        if (Scenario.MetadataInternal == null)
-            Scenario.MetadataInternal = new();
-        if (Scenario.MetadataInternal.ContainsKey(key))
-            throw new ArgumentException($"Meta key '{key}' already exists in the scenario. Meta keys must be unique.", nameof(key));
-        Scenario.MetadataInternal.Add(key, value);
-        return this;
-    }
-
     /// <summary>
     /// Registers an action to execute before the scenario starts.
     /// </summary>
@@ -354,17 +325,17 @@ public class ScenarioBuilder<TModel>
     private void InheritValuesFromTest(List<Scenario> scenarios)
     {
         var firstScenario = scenarios.First();
-        firstScenario.Name = _test.TestInfo.Name;
-        firstScenario.Id = _test.TestInfo.Id;
-        firstScenario.Description = _test.TestInfo.Description;
+        if (string.IsNullOrEmpty(firstScenario.Id))
+            firstScenario.Id = _test.TestInfo.Id;
+        if (string.IsNullOrEmpty(firstScenario.Name))
+            firstScenario.Name = _test.TestInfo.Name;
+        if (string.IsNullOrEmpty(firstScenario.Description))
+            firstScenario.Description = _test.TestInfo.Description;
 
         foreach (var scenario in scenarios)
         {
             if (string.IsNullOrEmpty(scenario.Name))
                 throw new Exception("Scenario name cannot be null or empty.");
-
-            scenario.MetadataInternal = _test.TestInfo.Metadata;
-            scenario.TagsInternal = _test.TestInfo.Tags;
         }
     }
 }

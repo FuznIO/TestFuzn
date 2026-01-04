@@ -4,6 +4,7 @@ internal class ScenarioLoadResult
 {
     public string ScenarioName { get; internal set; }
     public string Id { get; internal set; }
+    public string Description { get; internal set; }
     public List<string> Tags { get; internal set; }
     public Dictionary<string, string> Metadata { get; internal set; }
     public List<string> Simulations { get; internal set; }

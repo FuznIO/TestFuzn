@@ -5,12 +5,12 @@ public class LoadReportTests : Test
 {
     [Test]
     [Tags("Category1", "Category2", "Category3")]
+    [Metadata("MetadataKey1", "MetadataValue1")]
+    [Metadata("ClassMetaKey1", "ClassMetaValue1")]
     public async Task ShortRunning_NoErrors()
     {
         await Scenario()
             .Id("ID-1234")
-            .Metadata("MetadataScenarioKey1", "Value1")
-            .Metadata("MetadataScenarioKey2", "Value2")
             .Step("Test Step 1", (context) =>
             {
             })
@@ -31,11 +31,11 @@ public class LoadReportTests : Test
     }
 
     [Test]
+    [Metadata("MetaKey", "MetaValue")]
     public async Task ShortRunning_WithErrors_NoAssert()
     {
         await Scenario()
             .Id("ScenarioId-1234")
-            .Metadata("Scenario-Meta1", "Value1")
             .Step("Step 1", "Test-1234", (context) =>
             {
                 return Task.CompletedTask;
@@ -50,6 +50,7 @@ public class LoadReportTests : Test
     }
 
     [Test]
+    [Metadata("MetaKey", "MetaValue")]
     public async Task ShouldFail_ShortRunning_WithErrors_WithFailingAssertWhenDone()
     {
         bool catchWasRun = false;
@@ -58,7 +59,6 @@ public class LoadReportTests : Test
         {
             await Scenario("Short running report with errors and failing assert")
                 .Id("ScenarioId-1234")
-                .Metadata("Scenario-Meta1", "Value1")
                 .Step("Step 1", "Test-1234", (context) =>
                 {
                 })

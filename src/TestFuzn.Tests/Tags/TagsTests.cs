@@ -14,7 +14,7 @@ public class TagsTests : Test
             })
             .AssertInternalState(state => 
             {
-                var tags = state.SharedExecutionState.Scenarios.First().TagsInternal;
+                var tags = state.SharedExecutionState.TestClassInstance.TestInfo.Tags;
                 Assert.Contains("Category1", tags);
             })
             .Run();
@@ -31,7 +31,7 @@ public class TagsTests : Test
             })
             .AssertInternalState(state => 
             {
-                var tags = state.SharedExecutionState.Scenarios.First().TagsInternal;
+                var tags = state.SharedExecutionState.TestClassInstance.TestInfo.Tags;
                 Assert.Contains("Category1", tags);
                 Assert.Contains("Category2", tags);
             })

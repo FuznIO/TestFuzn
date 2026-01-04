@@ -130,7 +130,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
     private void WriteScenarioSection(LoadReportData loadReportData, ScenarioLoadResult scenarioResult, StringBuilder b, int scenarioIndex)
     {
-        b.AppendLine($"<h2>Scenario {scenarioIndex}: {scenarioResult.ScenarioName}</h2>");
+        b.AppendLine($"<h2>Scenario {scenarioIndex} - {scenarioResult.ScenarioName}</h2>");
 
         WriteScenarioInfo(scenarioResult, b);
         WriteTestStatus(scenarioResult, b);

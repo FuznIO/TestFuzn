@@ -52,7 +52,6 @@ public class SubStepsTests : Test
     public async Task SubSteps_Async()
     {
         await Scenario()
-            .Tags("CategoryA", "CategoryB")
             .Step("Step 1", async (context) =>
             {
                 Assert.AreEqual("Step 1", context.StepInfo.Name);

@@ -89,17 +89,13 @@ internal class StandardHtmlReportWriter : IStandardReport
 
     private static void WriteStatus(StandardReportData featureReportData, StringBuilder b)
     {
-        var featuresTotal = featureReportData.GroupResults.Count;
-        var featuresPassed = featureReportData.GroupResults.Count(x => x.Value.Status == TestStatus.Passed);
-        var featuresFailed = featureReportData.GroupResults.Count(x => x.Value.Status == TestStatus.Failed);
-        var featuresSkipped = featureReportData.GroupResults.Count(x => x.Value.Status == TestStatus.Skipped);
-        var scenariosTotal = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count);
-        var scenariosPassed = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Passed));
-        var scenariosSkipped = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Skipped));
-        var scenariosFailed = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Failed));
+        var testsTotal = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count);
+        var testsPassed = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Passed));
+        var testsSkipped = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Skipped));
+        var testsFailed = featureReportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Failed));
 
         b.AppendLine($"<h2>Test Status</h2>");
-        if (featuresFailed == 0)
+        if (testsTotal == 0)
         {
             b.AppendLine(@$"<div class=""status-panel passed"">");
             b.AppendLine(@$"<div class=""title"">✅ All tests passed</div>");
@@ -107,7 +103,7 @@ internal class StandardHtmlReportWriter : IStandardReport
         else
         {
             b.AppendLine(@$"<div class=""status-panel failed"">");
-            b.AppendLine(@$"<div class=""title"">❌ {scenariosFailed} tests failed</div>");
+            b.AppendLine(@$"<div class=""title"">❌ {testsFailed} tests failed</div>");
         }
 
         b.AppendLine($@"<div class=""details"">");
@@ -117,18 +113,11 @@ internal class StandardHtmlReportWriter : IStandardReport
 
         b.AppendLine("<table>");
         b.AppendLine("<tr>");
-        b.AppendLine(@"<th class=""vertical"" style=""width:1%;white-space:nowrap"">Features Tested</th>");
-        b.AppendLine(@$"<td style=""width:1%;white-space:nowrap"">🔢 Total: {featuresTotal}</td>");
-        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">✅ Passed: {featuresPassed}</td>");
-        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">❌ Failed: {featuresFailed}</td>");
-        b.AppendLine($"<td>⚠️ Skipped: {featuresSkipped}</td>");
-        b.AppendLine("</tr>");
-        b.AppendLine("<tr>");
         b.AppendLine(@"<th class=""vertical"" style=""width:1%;white-space:nowrap"">Tests</th>");
-        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">🔢 Total: {scenariosTotal}</td>");
-        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">✅ Passed: {scenariosPassed}</td>");
-        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">❌ Failed: {scenariosFailed}</td>");
-        b.AppendLine($"<td>⚠️ Skipped: {scenariosSkipped}</td>");
+        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">🔢 Total: {testsTotal}</td>");
+        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">✅ Passed: {testsPassed}</td>");
+        b.AppendLine($"<td style=\"width:1%;white-space:nowrap\">❌ Failed: {testsFailed}</td>");
+        b.AppendLine($"<td>⚠️ Skipped: {testsSkipped}</td>");
         b.AppendLine("</tr>");
         b.AppendLine("</table>");
     }
