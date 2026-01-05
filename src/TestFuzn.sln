@@ -38,7 +38,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFuzn.Tests.Failing", "T
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{B29058A8-7CF2-4CBF-A20C-EFB54B7B9914}"
 	ProjectSection(SolutionItems) = preProject
+		..\docs\api-reference.md = ..\docs\api-reference.md
+		..\docs\configuration.md = ..\docs\configuration.md
+		..\docs\core-concepts.md = ..\docs\core-concepts.md
+		..\docs\getting-started.md = ..\docs\getting-started.md
+		..\docs\http-testing.md = ..\docs\http-testing.md
+		..\docs\influxdb.md = ..\docs\influxdb.md
+		..\docs\load-testing.md = ..\docs\load-testing.md
+		..\docs\playwright-testing.md = ..\docs\playwright-testing.md
 		..\docs\README.md = ..\docs\README.md
+		..\docs\test-reports.md = ..\docs\test-reports.md
+		..\docs\writing-tests.md = ..\docs\writing-tests.md
 	EndProjectSection
 EndProject
 Global

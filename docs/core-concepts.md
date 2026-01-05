@@ -1,4 +1,4 @@
-# Core Concepts
+﻿# Core Concepts
 
 ## Test Class Structure
 
@@ -12,33 +12,33 @@ All test classes must:
 ## Execution Flow
 
 ```
-1. Startup.cs � IBeforeSuite.BeforeSuite() (if implemented)
-    ?
-2. Test class � IBeforeTest.BeforeTest() (if implemented)
-    ?
+1. Startup.cs - IBeforeSuite.BeforeSuite() (if implemented)
+    ↓
+2. Test class - IBeforeTest.BeforeTest() (if implemented)
+    ↓
 3. Test method execution
-    ?
+    ↓
 4. Scenario execution  
    - Standard test: exactly one scenario per test
    - Load test: multiple scenarios can be included and executed in parallel
-    ?
-5. Scenario � BeforeScenario() (if configured)
-    ?
-6. Scenario � InputDataFromList() (if configured)
-    ?
+    ↓
+5. Scenario - BeforeScenario() (if configured)
+    ↓
+6. Scenario - InputDataFromList() (if configured)
+    ↓
 7. For each iteration:
-    ?? BeforeIteration() (if configured)
-    ?? Execute steps (in order)
-    ?? AfterIteration() (if configured)
-    ?? AssertWhileRunning() (load tests only, optimized execution)
-    ?
-8. Scenario � AfterScenario() (if configured)
-    ?
+    ├─ BeforeIteration() (if configured)
+    ├─ Execute steps (in order)
+    ├─ AfterIteration() (if configured)
+    ├─ AssertWhileRunning() (load tests only, optimized execution)
+    ↓
+8. Scenario - AfterScenario() (if configured)
+    ↓
 9. AssertWhenDone() (load tests only, if configured)
-    ?
-10. Test class � IAfterTest.AfterTest() (if implemented)
-    ?
-11. Startup.cs � IAfterSuite.AfterSuite() (if implemented)
+    ↓
+10. Test class - IAfterTest.AfterTest() (if implemented)
+    ↓
+11. Startup.cs - IAfterSuite.AfterSuite() (if implemented)
 ```
 
 ---
@@ -173,4 +173,4 @@ public async Task Test_that_should_not_run_in_production() { ... }
 
 ---
 
-[? Back to Table of Contents](README.md)
+[← Back to Table of Contents](README.md)

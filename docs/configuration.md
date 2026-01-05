@@ -1,4 +1,4 @@
-# Configuration Management
+﻿# Configuration Management
 
 TestFuzn provides a flexible configuration system that allows you to manage test settings through `appsettings.json` files with support for environment-specific overrides.
 
@@ -240,4 +240,4 @@ configuration.UseInfluxDB();
 
 ---
 
-[? Back to Table of Contents](README.md)
+[← Back to Table of Contents](README.md)

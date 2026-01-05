@@ -1,4 +1,4 @@
-# Getting Started
+ï»¿# Getting Started
 
 ## Overview
 
@@ -6,20 +6,20 @@
 
 Built on top of **MSTest v4**, TestFuzn provides a fluent, scenario-based approach to writing tests.
 
-### ? Key Features
+### âœ¨ Key Features
 
-- ?? **One framework for all test types** — Write and run unit, end-to-end, and load tests using the same framework — no need to mix and match tools.
-- ?? **Readable and useful reports** — Get clear HTML and XML test results that are easy to understand for both developers and testers.
-- ?? **Slim and clean by design** — Built to be lightweight and focused — includes just the right features to stay easy to use and maintain.
-- ?? **Test any system over HTTP** — End-to-end and load tests support HTTP-based systems, regardless of the underlying technology stack.
-- ?? **Web UI testing with Microsoft Playwright** — Automate and validate browser-based applications using Playwright — works with any web app, no matter what language or framework it's built in.
-- ?? **C# / .NET first** — Write all your tests in C#. Leverages the power of .NET to keep things fast and flexible.
-- ? **MSTest compatible** — Built-in support for the widely used MSTest framework — reuse what you already know and love.
-- ?? **Real-time statistics** — Stream load test metrics to InfluxDB/Grafana for live monitoring.
+- ğŸ§ª **One framework for all test types** â€” Write and run unit, end-to-end, and load tests using the same framework â€” no need to mix and match tools.
+- ğŸ“Š **Readable and useful reports** â€” Get clear HTML and XML test results that are easy to understand for both developers and testers.
+- ğŸ§¼ **Slim and clean by design** â€” Built to be lightweight and focused â€” includes just the right features to stay easy to use and maintain.
+- ğŸ’¬ **Test any system over HTTP** â€” End-to-end and load tests support HTTP-based systems, regardless of the underlying technology stack.
+- ğŸŒ **Web UI testing with Microsoft Playwright** â€” Automate and validate browser-based applications using Playwright â€” works with any web app, no matter what language or framework it's built in.
+- ğŸ’» **C# / .NET first** â€” Write all your tests in C#. Leverages the power of .NET to keep things fast and flexible.
+- âœ… **MSTest compatible** â€” Built-in support for the widely used MSTest framework â€” reuse what you already know and love.
+- ğŸ“ˆ **Real-time statistics** â€” Stream load test metrics to InfluxDB/Grafana for live monitoring.
 
-### ?? License & Usage
+### ğŸ’¸ License & Usage
 
-TestFuzn is **100% free** — for personal, organizational, and commercial use.
+TestFuzn is **100% free** â€” for personal, organizational, and commercial use.
 
 ---
 
@@ -149,4 +149,4 @@ public class MyFirstTests : Test
 
 ---
 
-[? Back to Table of Contents](README.md)
+[â† Back to Table of Contents](README.md)

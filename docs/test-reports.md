@@ -1,4 +1,4 @@
-# Test Reports
+﻿# Test Reports
 
 TestFuzn automatically generates HTML and XML reports for both standard tests and load tests.
 
@@ -36,13 +36,13 @@ Reports are saved to the MSTest results directory:
 
 ```
 TestResults/{run-guid}/
-??? TestReport.html
-??? TestReport.xml
-??? LoadTestReport-*.html
-??? LoadTestReport-*.xml
-??? Attachments/
+├──  TestReport.html
+├──  TestReport.xml
+├──  LoadTestReport-*.html
+├──  LoadTestReport-*.xml
+├──  Attachments/
 ```
 
 ---
 
-[? Back to Table of Contents](README.md)
+[← Back to Table of Contents](README.md)

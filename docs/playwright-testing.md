@@ -1,4 +1,4 @@
-# Web UI Testing with Playwright
+﻿# Web UI Testing with Playwright
 
 TestFuzn integrates with Microsoft Playwright for browser automation.
 
@@ -89,4 +89,4 @@ public async Task UI_load_test()
 
 ---
 
-[? Back to Table of Contents](README.md)
+[← Back to Table of Contents](README.md)

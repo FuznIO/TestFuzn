@@ -1,4 +1,4 @@
-# Load Testing
+﻿# Load Testing
 
 Load tests are defined by adding `Load().Simulations()` to a scenario. This changes the test from a standard test to a load test.
 
@@ -201,4 +201,4 @@ stats.Ok.ResponseTimeMean    // Average response time for successful requests
 
 ---
 
-[? Back to Table of Contents](README.md)
+[← Back to Table of Contents](README.md)

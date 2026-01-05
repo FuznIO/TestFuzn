@@ -1,4 +1,4 @@
-# Real-Time Statistics with InfluxDB
+﻿# Real-Time Statistics with InfluxDB
 
 TestFuzn supports streaming load test statistics to InfluxDB for real-time visualization with Grafana.
 
@@ -66,4 +66,4 @@ Create a Grafana dashboard to visualize:
 
 ---
 
-[? Back to Table of Contents](README.md)
+[← Back to Table of Contents](README.md)

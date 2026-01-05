@@ -1,4 +1,4 @@
-# Writing Tests
+﻿# Writing Tests
 
 ## Basic Scenario
 
@@ -415,4 +415,4 @@ Use the built-in logger for structured logging:
 
 ---
 
-[? Back to Table of Contents](README.md)
+[← Back to Table of Contents](README.md)
