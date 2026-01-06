@@ -161,43 +161,28 @@ Control how input data is consumed:
 ```
 
 ---
+## Share Data Between Steps
 
-## Custom Context
-
-Share typed data between steps using custom context models:
+In **standard tests**, you can use method-scoped variables to share data between steps since iterations
+run sequentially:
 
 ```csharp
-public class LoginContext
-{
-    public string Username { get; set; }
-    public string Token { get; set; }
-    public DateTime LoginTime { get; set; }
-}
-
 [Test]
-public async Task Custom_context_example()
+public async Task Standard_test_with_variables()
 {
-    await Scenario<LoginContext>()
-        .Step("Login", context =>
-        {
-            context.Model.Username = "testuser";
-            context.Model.Token = "abc123";
-            context.Model.LoginTime = DateTime.UtcNow;
-        })
-        .Step("Verify Session", context =>
-        {
-            Assert.IsNotNull(context.Model.Token);
-            Assert.AreEqual("testuser", context.Model.Username);
-        })
+     string token = null; // Method variable works for standard tests
+
+    await Scenario()
+        .Step("Login", context => { token = "abc123"; })
+        .Step("Use Token", context => { Console.WriteLine(token); })
         .Run();
 }
 ```
 
----
+In **load tests**, iterations run in parallel across multiple threads. Method-scoped variables are **not thread-safe** and will cause race conditions. Instead, use one of these approaches:
 
-## Shared Data
-
-Share untyped data between steps within the same iteration:
+### SetSharedData / GetSharedData
+Share untyped data between steps within the same iteration. Data is isolated per iteration and is safe to use in parallel load tests and reusable steps.
 
 ```csharp
 .Step("Set Data", context =>
@@ -212,42 +197,36 @@ Share untyped data between steps within the same iteration:
 })
 ```
 
-> ** Important for Load Tests:**
-> 
-> In **standard tests**, you can use method-scoped variables to share data between steps since iterations run sequentially:
-> 
-> ```csharp
-> [Test]
-> public async Task Standard_test_with_variables()
-> {
->     string token = null; // Method variable works for standard tests
->     
->     await Scenario()
->         .Step("Login", context => { token = "abc123"; })
->         .Step("Use Token", context => { Console.WriteLine(token); })
->         .Run();
-> }
-> ```
-> 
-> However, in **load tests**, iterations run in parallel across multiple threads. Method-scoped variables are **not thread-safe** and will cause race conditions. Instead, use one of these approaches:
-> 
-> 1. **Custom Context Model** (recommended for type safety):
->    ```csharp
->    await Scenario<MyContext>()
->        .Step("Login", context => { context.Model.Token = "abc123"; })
->        .Step("Use Token", context => { Console.WriteLine(context.Model.Token); })
->        .Load().Simulations(...)
->        .Run();
->    ```
-> 
-> 2. **Shared Data Methods**:
->    ```csharp
->    await Scenario()
->        .Step("Login", context => { context.SetSharedData("token", "abc123"); })
->        .Step("Use Token", context => { var token = context.GetSharedData<string>("token"); })
->        .Load().Simulations(...)
->        .Run();
->    ```
+### Custom Context Models
+
+Share typed data between steps using custom context models. The context is iteration-scoped and safe to use in parallel load tests and reusable steps.
+
+```csharp
+public class LoginModel
+{
+    public string Username { get; set; }
+    public string Token { get; set; }
+    public DateTime LoginTime { get; set; }
+}
+
+[Test]
+public async Task Custom_context_example()
+{
+    await Scenario<LoginModel>()
+        .Step("Login", context =>
+        {
+            context.Model.Username = "testuser";
+            context.Model.Token = "abc123";
+            context.Model.LoginTime = DateTime.UtcNow;
+        })
+        .Step("Verify Session", context =>
+        {
+            Assert.IsNotNull(context.Model.Token);
+            Assert.AreEqual("testuser", context.Model.Username);
+        })
+        .Run();
+}
+```
 
 ---
 
