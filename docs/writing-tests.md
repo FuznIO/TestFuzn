@@ -69,11 +69,39 @@ Steps are the building blocks of scenarios. They execute in order, and if one fa
 })
 ```
 
+### Sub-Steps
+
+Create nested step hierarchies for better organization:
+
+```csharp
+.Step("Parent Step", context =>
+{
+    context.Step("Child Step 1", subContext =>
+    {
+        subContext.Step("Grandchild Step", grandContext =>
+        {
+            // Deeply nested logic
+        });
+    });
+    
+    context.Step("Child Step 2", async subContext =>
+    {
+        // Async sub-step
+        await Task.CompletedTask;
+    });
+})
+```
+
 ---
 
 ## Input Data
 
-Input data is used to drive multiple iterations of the same scenario.
+Input data provides per-iteration values for a scenario. 
+Standard tests use input data to determine how many times the scenario runs 
+(once if no input data is defined, otherwise once per input item), 
+while load tests run the number of iterations defined by their simulations. 
+For load tests, input data is reused and fed multiple times when the number of iterations 
+exceeds the number of input data items.
 
 Both simple types (e.g. `string`, `int`) and complex types (custom classes, records, DTOs) are supported.
 
@@ -184,7 +212,7 @@ Share untyped data between steps within the same iteration:
 })
 ```
 
-> **?? Important for Load Tests:**
+> ** Important for Load Tests:**
 > 
 > In **standard tests**, you can use method-scoped variables to share data between steps since iterations run sequentially:
 > 
@@ -230,11 +258,11 @@ Share untyped data between steps within the same iteration:
 ```csharp
 .BeforeScenario((context) =>
 {
-    // Runs once before any iterations
+    // Runs once per scenario, before any iterations
 })
 .AfterScenario((context) =>
 {
-    // Runs once after all iterations
+    // Runs once per scenario, after all iterations
 })
 ```
 
@@ -294,31 +322,6 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
     
     // ... Configure method
 }
-```
-
----
-
-## Sub-Steps
-
-Create nested step hierarchies for better organization:
-
-```csharp
-.Step("Parent Step", context =>
-{
-    context.Step("Child Step 1", subContext =>
-    {
-        subContext.Step("Grandchild Step", grandContext =>
-        {
-            // Deeply nested logic
-        });
-    });
-    
-    context.Step("Child Step 2", async subContext =>
-    {
-        // Async sub-step
-        await Task.CompletedTask;
-    });
-})
 ```
 
 ---

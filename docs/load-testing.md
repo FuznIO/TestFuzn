@@ -6,19 +6,63 @@ Standard tests run once by default or once per input data item, while load tests
 
 ---
 
-## Multiple Scenarios
+## Single Scenario
 
-Load tests can include multiple scenarios that execute in parallel:
+A single scenario load test executes one scenario with a defined sequence of steps. 
+Use this approach when you want to test a specific user journey or workflow under load. 
+The scenario runs according to the simulations you configure, allowing you to measure performance metrics for that isolated flow.
 
 ```csharp
 [Test]
-public async Task Mixed_workload_load_test()
+public async Task Single_scenario_load_test()
+{
+    await Scenario()
+        .Id("Scenario-1")
+        .Step("Step 1", async (context) =>
+        {
+        })
+        .Step("Step 2", async (context) =>
+        {
+        })
+        .Load().Simulations((context, simulations) =>
+        {
+            // Define load simulations here.
+            simulations.GradualLoadIncrease(1, 10, TimeSpan.FromSeconds(5));
+            simulations.FixedLoad(10, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(100));
+            simulations.OneTimeLoad(100);
+            simulations.Pause(TimeSpan.FromSeconds(5));
+            simulations.FixedConcurrentLoad(1000, TimeSpan.FromSeconds(100));
+            simulations.RandomLoadPerSecond(10, 50, TimeSpan.FromSeconds(100));
+        })
+        .Run();
+}
+```
+
+---
+
+## Multiple Scenarios
+
+Multiple scenario load tests allow you to run several scenarios concurrently, simulating diverse user behaviors happening at the same time. 
+This is useful for testing realistic traffic patterns where different users perform different actions simultaneously (e.g., some users browsing while others checkout).
+
+```csharp
+[Test]
+public async Task Multiple_scenarios_load_test()
 {
     var scenario2 = Scenario("Second scenario")
         .Step("Step 1", (context) =>
         {
         })
-        .Load().Simulations((context, simulations) => simulations.OneTimeLoad(30));
+        .Load().Simulations((context, simulations) =>
+        {
+            // Define load simulations here. First and second scenario can have different simulations.
+            simulations.FixedLoad(10, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(100));
+            simulations.GradualLoadIncrease(1, 10, TimeSpan.FromSeconds(5));
+            simulations.OneTimeLoad(100);
+            simulations.Pause(TimeSpan.FromSeconds(5));
+            simulations.FixedConcurrentLoad(1000, TimeSpan.FromSeconds(100));
+            simulations.RandomLoadPerSecond(10, 50, TimeSpan.FromSeconds(100));
+        });
 
     await Scenario("First scenario")
         .Id("Scenario-1")
@@ -28,7 +72,16 @@ public async Task Mixed_workload_load_test()
         .Step("Step 2", async (context) =>
         {
         })
-        .Load().Simulations((context, simulations) => simulations.OneTimeLoad(20))
+        .Load().Simulations((context, simulations) =>
+        {
+            // Define load simulations here. First and second scenario can have different simulations.
+            simulations.GradualLoadIncrease(1, 10, TimeSpan.FromSeconds(5));
+            simulations.FixedLoad(10, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(100));
+            simulations.OneTimeLoad(100);
+            simulations.Pause(TimeSpan.FromSeconds(5));
+            simulations.FixedConcurrentLoad(1000, TimeSpan.FromSeconds(100));
+            simulations.RandomLoadPerSecond(10, 50, TimeSpan.FromSeconds(100));
+        })
         .Load().IncludeScenario(scenario2)
         .Run();
 }
@@ -38,7 +91,9 @@ public async Task Mixed_workload_load_test()
 
 ## Warmup
 
-Run warmup simulations before actual load tests. No statistics are recorded during warmup:
+Before a load test starts, warmup simulations can be executed to stabilize performance.
+This is important because .NET performs runtime optimizations (JIT compilation, caching, thread pool ramp-up) during initial execution.
+No metrics or statistics are collected during the warmup phase, only the actual load test is measured.
 
 ```csharp
 .Load().Warmup((context, simulations) =>
