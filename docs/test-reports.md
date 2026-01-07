@@ -32,10 +32,10 @@ The load test reports include:
 
 ## Report Location
 
-Reports are saved to the MSTest results directory:
+Reports are saved to the same root folder as the MSTest results directory:
 
 ```
-TestResults/{run-guid}/
+TestFuznResults\{run-id}/
 ├──  TestReport.html
 ├──  TestReport.xml
 ├──  LoadTestReport-*.html

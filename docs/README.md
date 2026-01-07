@@ -13,17 +13,10 @@
 - [Quick Start](getting-started.md#quick-start)
 
 ### [Core Concepts](core-concepts.md)
+- [Test Types](core-concepts.md#test-types)
 - [Test Class Structure](core-concepts.md#test-class-structure)
 - [Execution Flow](core-concepts.md#execution-flow)
-- [Test Types](core-concepts.md#test-types)
 - [Test Attributes](core-concepts.md#test-attributes)
-
-### [Configuration](configuration.md)
-- [Basic Configuration](configuration.md#basic-configuration)
-- [Accessing Configuration Values](configuration.md#accessing-configuration-values)
-- [Environment-Specific Overrides](configuration.md#environment-specific-overrides)
-- [Using Configuration in Tests](configuration.md#using-configuration-in-tests)
-- [Plugin Configuration](configuration.md#plugin-configuration)
 
 ### [Writing Tests](writing-tests.md)
 - [Basic Scenario](writing-tests.md#basic-scenario)
@@ -44,6 +37,12 @@
 - [Simulations](load-testing.md#simulations)
 - [Assertions](load-testing.md#assertions)
 - [Statistics](load-testing.md#statistics)
+
+### [Configuration](configuration.md)
+- [Basic Configuration](configuration.md#basic-configuration)
+- [Accessing Configuration Values](configuration.md#accessing-configuration-values)
+- [Environment-Specific Overrides](configuration.md#environment-specific-overrides)
+- [Using Configuration in Tests](configuration.md#using-configuration-in-tests)
 
 ### [HTTP Testing](http-testing.md)
 - [Basic HTTP Requests](http-testing.md#basic-http-requests)

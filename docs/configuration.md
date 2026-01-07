@@ -186,12 +186,12 @@ public class ApiTests : Test
     [Test]
     public async Task Call_api_with_configured_settings()
     {
-        var baseUrl = ConfigurationManager.GetRequiredValue<string>("BaseUrl");
-        var timeout = ConfigurationManager.GetRequiredValue<int>("Timeout");
-
         await Scenario()
             .Step("Call API", async context =>
             {
+                var baseUrl = ConfigurationManager.GetRequiredValue<string>("BaseUrl");
+                var timeout = ConfigurationManager.GetRequiredValue<int>("Timeout");
+
                 var response = await context.CreateHttpRequest($"{baseUrl}/health")
                     .Timeout(TimeSpan.FromSeconds(timeout))
                     .Get();
@@ -202,31 +202,6 @@ public class ApiTests : Test
     }
 }
 ```
-
----
-
-## Plugin Configuration
-
-Many TestFuzn plugins also read from `appsettings.json`. For example, the InfluxDB sink:
-
-```json
-{
-  "TestFuzn": {
-    "InfluxDB": {
-      "Url": "http://localhost:8086",
-      "Token": "your-token",
-      "Org": "your-org",
-      "Bucket": "testfuzn"
-    }
-  }
-}
-```
-
-```csharp
-// In Startup.cs - reads from appsettings.json automatically
-configuration.UseInfluxDB();
-```
-
 ---
 
 ## API Reference

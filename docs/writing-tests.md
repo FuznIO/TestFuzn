@@ -2,26 +2,59 @@
 
 ## Basic Scenario
 
-Create a scenario using the fluent `Scenario` builder:
+Create a scenario using the fluent `Scenario` builder.
+By default, a scenario is executed **once** as a **standard test**:
 
 ```csharp
 [Test]
-public async Task Basic_scenario()
+public async Task Basic_standard_test()
 {
     await Scenario()
         .Step("First Step", context =>
         {
-            // Synchronous test logic
+            // Synchronous test logic, e.g., calculations, assertions etc.
+            var result = 2 + 2;
+
+            Assert.AreEqual(4, result);
         })
         .Step("Second Step", async context =>
         {
-            // Async test logic
+            // Async test logic - e.g., calling an API, database, assertions etc.
             await Task.CompletedTask;
         })
         .Run();
 }
 ```
 
+## Load Scenario
+
+The same scenario can be turned into a **load test** by adding one or more simulations.
+In a load test, the scenario is executed **with multiple iterations running in parallel** according to the defined simulations:
+
+```csharp
+[Test]
+public async Task Basic_load_test()
+{
+    await Scenario()
+        .Step("First Step", context =>
+        {
+            // Synchronous test logic, e.g., calculations etc.
+            var result = 2 + 2;
+
+            Assert.AreEqual(4, result);
+        })
+        .Step("Second Step", async context =>
+        {
+            // Async test logic - e.g., calling an API, database etc.
+            await Task.CompletedTask;
+        })
+        .Load().Simulations((context, simulations) =>
+        {
+            simulations.FixedLoad(10, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(100));
+        })
+        .Run();
+}
+```
 ---
 
 ## Scenario Configuration

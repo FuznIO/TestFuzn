@@ -1,62 +1,18 @@
 ﻿# Core Concepts
 
-## Test Class Structure
-
-All test classes must:
-1. Inherit from `Test`
-2. Be decorated with `[TestClass]` attribute (MSTest)
-3. Contain test methods decorated with `[Test]` attribute (TestFuzn)
-
----
-
-## Execution Flow
-
-```
-1. Startup.cs - IBeforeSuite.BeforeSuite() (if implemented)
-    ↓
-2. Test class - IBeforeTest.BeforeTest() (if implemented)
-    ↓
-3. Test method execution
-    ↓
-4. Scenario execution  
-   - Standard test: exactly one scenario per test
-   - Load test: multiple scenarios can be included and executed in parallel
-    ↓
-5. Scenario - BeforeScenario() (if configured)
-    ↓
-6. Scenario - InputDataFromList() (if configured)
-    ↓
-7. For each iteration:
-    ├─ BeforeIteration() (if configured)
-    ├─ Execute steps (in order)
-    ├─ AfterIteration() (if configured)
-    ├─ AssertWhileRunning() (load tests only, optimized execution)
-    ↓
-8. Scenario - AfterScenario() (if configured)
-    ↓
-9. AssertWhenDone() (load tests only, if configured)
-    ↓
-10. Test class - IAfterTest.AfterTest() (if implemented)
-    ↓
-11. Startup.cs - IAfterSuite.AfterSuite() (if implemented)
-```
-
----
-
 ## Test Types
 
 TestFuzn supports two types of tests:
 
 ### Standard Test
 
-A test that runs **one scenario** once with one set of input data, or runs multiple times sequentially with different input data. Ideal for functional testing, unit testing, and integration testing.
+A test that executes a single scenario **once**, or **multiple times** sequentially with different input data, without parallel iterations—ideal for functional, integration, and end-to-end testing.
 
 ```csharp
 [Test]
 public async Task Standard_test_example()
 {
     await Scenario()
-        .InputData("user1@example.com", "user2@example.com", "user3@example.com")
         .Step("Process user", context =>
         {
             var email = context.InputData<string>();
@@ -89,6 +45,49 @@ public async Task Load_test_example()
         })
         .Run();
 }
+```
+
+---
+
+## Test Class Structure
+
+All test classes must:
+1. Inherit from `Test`
+2. Be decorated with `[TestClass]` attribute (MSTest)
+3. Contain test methods decorated with `[Test]` attribute (TestFuzn)
+
+---
+
+## Execution Flow
+
+```
+1. Startup.cs - IBeforeSuite.BeforeSuite() (if implemented)
+    ↓
+2. Test class - IBeforeTest.BeforeTest() (if implemented)
+    ↓
+3. Test method execution
+    ↓
+4. Scenario execution  
+   - Standard test: exactly one scenario per test
+   - Load test: multiple scenarios can be included and executed in parallel
+    ↓
+5. Scenario - BeforeScenario() (if configured)
+    ↓
+6. Scenario - InputDataFromList() (if configured)
+    ↓
+7. For each iteration:
+    ├─ BeforeIteration() (if configured)
+    ├─ Execute steps (in order)
+    ├─ AfterIteration() (if configured)
+    ├─ AssertWhileRunning() (load tests only, optimized execution, runs every x-iteration/seconds)
+    ↓
+8. Scenario - AfterScenario() (if configured)
+    ↓
+9. AssertWhenDone() (load tests only, if configured)
+    ↓
+10. Test class - IAfterTest.AfterTest() (if implemented)
+    ↓
+11. Startup.cs - IAfterSuite.AfterSuite() (if implemented)
 ```
 
 ---
