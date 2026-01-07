@@ -42,8 +42,10 @@ public async Task Single_scenario_load_test()
 
 ## Multiple Scenarios
 
-Multiple scenario load tests allow you to run several scenarios concurrently, simulating diverse user behaviors happening at the same time. 
-This is useful for testing realistic traffic patterns where different users perform different actions simultaneously (e.g., some users browsing while others checkout).
+Multiple-scenario load tests let you run several scenarios concurrently to simulate different user behaviors happening at the same time (for example, some users browsing while others checking out).
+
+Each scenario runs **independently** with its own load simulations and statistics.
+TestFuzn does **not** merge or aggregate load, timing, or metrics across scenarios—results are reported **per scenario only**.
 
 ```csharp
 [Test]
