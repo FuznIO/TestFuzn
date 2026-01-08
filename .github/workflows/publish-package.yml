@@ -3,10 +3,6 @@ name: Build and Publish NuGet Packages
 on:
   workflow_dispatch:
 
-permissions:
-  contents: write
-  packages: write
-
 env:
   NUGET_SOURCE: "https://api.nuget.org/v3/index.json"
 
@@ -69,14 +65,6 @@ jobs:
         dotnet nuget push src/TestFuzn.Plugins.Http/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFuzn.Adapters.MSTest/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFuzn.Sinks.InfluxDB/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-
-    - name: Push to Github
-      run: |
-        dotnet nuget push src/TestFuzn/bin/Release/*.nupkg --skip-duplicate --source https://nuget.pkg.github.com/FuznLabs/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
-        dotnet nuget push src/TestFuzn.Plugins.Playwright/bin/Release/*.nupkg --skip-duplicate --source https://nuget.pkg.github.com/FuznLabs/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
-        dotnet nuget push src/TestFuzn.Plugins.Http/bin/Release/*.nupkg --skip-duplicate --source https://nuget.pkg.github.com/FuznLabs/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
-        dotnet nuget push src/TestFuzn.Adapters.MSTest/bin/Release/*.nupkg --skip-duplicate --source https://nuget.pkg.github.com/FuznLabs/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
-        dotnet nuget push src/TestFuzn.Sinks.InfluxDB/bin/Release/*.nupkg --skip-duplicate --source https://nuget.pkg.github.com/FuznLabs/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
