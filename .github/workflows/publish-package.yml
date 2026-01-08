@@ -3,6 +3,10 @@ name: Build and Publish NuGet Packages
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+
 env:
   NUGET_SOURCE: "https://api.nuget.org/v3/index.json"
 
