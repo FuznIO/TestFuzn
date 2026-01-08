@@ -229,7 +229,7 @@ public class HttpRequestBuilder
             Headers = _headers
         };
 
-        request.Headers.Add(HttpGlobalState.Configuration.CorrelationIdHeaderName, _context.Info.CorrelationId);
+        request.Headers.TryAdd(HttpGlobalState.Configuration.CorrelationIdHeaderName, _context.Info.CorrelationId);
 
         return request;
     }
