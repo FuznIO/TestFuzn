@@ -126,11 +126,9 @@ using Fuzn.TestFuzn;
 namespace MyTests;
 
 [TestClass]
-[Group("My Test Group")]
 public class MyFirstTests : Test
 {
-    [Test(Name = "My first TestFuzn test")]
-    [Tags("Smoke")]
+    [Test]
     public async Task My_first_test()
     {
         await Scenario()

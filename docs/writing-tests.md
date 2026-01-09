@@ -6,23 +6,31 @@ Create a scenario using the fluent `Scenario` builder.
 By default, a scenario is executed **once** as a **standard test**:
 
 ```csharp
-[Test]
-public async Task Basic_standard_test()
-{
-    await Scenario()
-        .Step("First Step", context =>
-        {
-            // Synchronous test logic, e.g., calculations, assertions etc.
-            var result = 2 + 2;
+using Fuzn.TestFuzn;
 
-            Assert.AreEqual(4, result);
-        })
-        .Step("Second Step", async context =>
-        {
-            // Async test logic - e.g., calling an API, database, assertions etc.
-            await Task.CompletedTask;
-        })
-        .Run();
+namespace MyTests;
+
+[TestClass]
+public class MyFirstTests : Test
+{
+    [Test]
+    public async Task Basic_standard_test()
+    {
+        await Scenario()
+            .Step("First Step", context =>
+            {
+                // Synchronous test logic, e.g., calculations, assertions etc.
+                var result = 2 + 2;
+
+                Assert.AreEqual(4, result);
+            })
+            .Step("Second Step", async context =>
+            {
+                // Async test logic - e.g., calling an API, database, assertions etc.
+                await Task.CompletedTask;
+            })
+            .Run();
+    }
 }
 ```
 
@@ -32,27 +40,31 @@ The same scenario can be turned into a **load test** by adding one or more simul
 In a load test, the scenario is executed **with multiple iterations running in parallel** according to the defined simulations:
 
 ```csharp
-[Test]
-public async Task Basic_load_test()
+[TestClass]
+public class MyFirstTests : Test
 {
-    await Scenario()
-        .Step("First Step", context =>
-        {
-            // Synchronous test logic, e.g., calculations etc.
-            var result = 2 + 2;
+    [Test]
+    public async Task Basic_load_test()
+    {
+        await Scenario()
+            .Step("First Step", context =>
+            {
+                // Synchronous test logic, e.g., calculations etc.
+                var result = 2 + 2;
 
-            Assert.AreEqual(4, result);
-        })
-        .Step("Second Step", async context =>
-        {
-            // Async test logic - e.g., calling an API, database etc.
-            await Task.CompletedTask;
-        })
-        .Load().Simulations((context, simulations) =>
-        {
-            simulations.FixedLoad(10, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(100));
-        })
-        .Run();
+                Assert.AreEqual(4, result);
+            })
+            .Step("Second Step", async context =>
+            {
+                // Async test logic - e.g., calling an API, database etc.
+                await Task.CompletedTask;
+            })
+            .Load().Simulations((context, simulations) =>
+            {
+                simulations.FixedLoad(10, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(100));
+            })
+            .Run();
+    }
 }
 ```
 ---
@@ -122,6 +134,57 @@ Create nested step hierarchies for better organization:
         // Async sub-step
         await Task.CompletedTask;
     });
+})
+```
+
+### Comments
+
+Add contextual information to step:
+
+```csharp
+.Step("Process", context =>
+{
+    context.Comment("Starting data processing");
+    // Process data
+    context.Comment("Processing complete");
+})
+```
+
+- **Standard tests**: Comments output to console and reports
+- **Load tests**: Comments output to log files
+
+### Attachments
+
+Attach files to steps for attachments and debugging:
+
+```csharp
+.Step("Capture Evidence", async context =>
+{
+    // Attach text content
+    await context.Attach("log.txt", "Log content here");
+    
+    // Attach byte array
+    var screenshot = await CaptureScreenshot();
+    await context.Attach("screenshot.png", screenshot);
+    
+    // Attach stream
+    using var fileStream = File.OpenRead("data.json");
+    await context.Attach("data.json", fileStream);
+})
+```
+
+
+### Logging
+
+Use the built-in logger for structured logging:
+
+```csharp
+.Step("Logged Step", context =>
+{
+    context.Logger.LogInformation("Informational message");
+    context.Logger.LogWarning("Warning message");
+    context.Logger.LogError("Error message");
+    context.Logger.LogDebug("Debug: {Details}", detailsObject);
 })
 ```
 
@@ -370,62 +433,6 @@ await Scenario()
         // Use token...
     })
     .Run();
-```
-
----
-
-## Comments and Attachments
-
-### Comments
-
-Add contextual information to test execution:
-
-```csharp
-.Step("Process", context =>
-{
-    context.Comment("Starting data processing");
-    // Process data
-    context.Comment("Processing complete");
-})
-```
-
-- **Standard tests**: Comments output to console and reports
-- **Load tests**: Comments output to log files
-
-### Attachments
-
-Attach files to steps for evidence and debugging:
-
-```csharp
-.Step("Capture Evidence", async context =>
-{
-    // Attach text content
-    await context.Attach("log.txt", "Log content here");
-    
-    // Attach byte array
-    var screenshot = await CaptureScreenshot();
-    await context.Attach("screenshot.png", screenshot);
-    
-    // Attach stream
-    using var fileStream = File.OpenRead("data.json");
-    await context.Attach("data.json", fileStream);
-})
-```
-
----
-
-## Logging
-
-Use the built-in logger for structured logging:
-
-```csharp
-.Step("Logged Step", context =>
-{
-    context.Logger.LogInformation("Informational message");
-    context.Logger.LogWarning("Warning message");
-    context.Logger.LogError("Error message");
-    context.Logger.LogDebug("Debug: {Details}", detailsObject);
-})
 ```
 
 ---
