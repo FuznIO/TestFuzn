@@ -4,10 +4,10 @@ namespace Fuzn.TestFuzn;
 
 internal class AssertInternalState
 {
-    public SharedExecutionState SharedExecutionState { get; }
+    public TestExecutionState TestExecutionState { get; }
 
-    public AssertInternalState(SharedExecutionState sharedExecutionState)
+    public AssertInternalState(TestExecutionState testExecutionState)
     {
-        SharedExecutionState = sharedExecutionState ?? throw new ArgumentNullException(nameof(sharedExecutionState));
+        TestExecutionState = testExecutionState ?? throw new ArgumentNullException(nameof(testExecutionState));
     }
 }

@@ -6,16 +6,16 @@ internal class InputDataFeeder
 {
     private object _lock = new();
     private Dictionary<string, InputEnumeratorInfo> _feeder = new();
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
 
-    public InputDataFeeder(SharedExecutionState sharedExecutionState)
+    public InputDataFeeder(TestExecutionState testExecutionState)
     {
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
     }
 
     public void Init()
     {
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
             var enumeratorInfo = new InputEnumeratorInfo
             {

@@ -7,16 +7,16 @@ namespace Fuzn.TestFuzn.Internals.Execution;
 
 internal class ExecuteStepHandler
 {
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
     private readonly IterationState _iterationContext;
     public TestStatus? CurrentScenarioStatus { get; set; }
     public StepStandardResult? RootStepResult { get; set; }
 
-    public ExecuteStepHandler(SharedExecutionState sharedExecutionState,
+    public ExecuteStepHandler(TestExecutionState testExecutionState,
         IterationState iterationContext,
         TestStatus? scenarioStatus)
     {
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
         _iterationContext = iterationContext;
         CurrentScenarioStatus = scenarioStatus;
     }
@@ -65,9 +65,9 @@ internal class ExecuteStepHandler
                 stepResult.Status = StepStatus.Failed;
                 CurrentScenarioStatus = TestStatus.Failed;
                 stepResult.Exception = ex;
-                if (_sharedExecutionState.TestType == TestType.Standard
-                    && _sharedExecutionState.TestRunState.FirstException == null)
-                    _sharedExecutionState.TestRunState.FirstException = ex;
+                if (_testExecutionState.TestType == TestType.Standard
+                    && _testExecutionState.TestRunState.FirstException == null)
+                    _testExecutionState.TestRunState.FirstException = ex;
             }
             finally
             {

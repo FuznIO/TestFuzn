@@ -27,9 +27,9 @@ internal class ReportManager
             await standardReport.WriteReport(data);
     }
 
-    public async Task WriteLoadReports(SharedExecutionState sharedExecutionState)
+    public async Task WriteLoadReports(TestExecutionState testExecutionState)
     {
-        if (sharedExecutionState.TestType != TestType.Load)
+        if (testExecutionState.TestType != TestType.Load)
             return;
 
         var loadReports = GlobalState.Configuration.LoadReports;
@@ -37,7 +37,7 @@ internal class ReportManager
         if (loadReports == null || loadReports.Count == 0)
             return;
 
-        var testInfo = sharedExecutionState.TestClassInstance.TestInfo;
+        var testInfo = testExecutionState.TestClassInstance.TestInfo;
 
         var data = new LoadReportData();
         data.TestSuite = new Contracts.Reports.SuiteInfo();
@@ -55,9 +55,9 @@ internal class ReportManager
         data.Test.Tags = testInfo.Tags ?? new();
         data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
 
-        foreach (var scenario in sharedExecutionState.Scenarios)
+        foreach (var scenario in testExecutionState.Scenarios)
         {
-            var scenarioResult = sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
+            var scenarioResult = testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
             data.ScenarioResults.Add(scenarioResult);
         }
 

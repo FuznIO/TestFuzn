@@ -6,16 +6,16 @@ internal class OneTimeLoadHandler : ILoadHandler
 {
     private readonly OneTimeLoadConfiguration _configuration;
     private readonly string _scenarioName;
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
 
     public OneTimeLoadHandler(
         OneTimeLoadConfiguration configuration,
         string scenarioName,
-        SharedExecutionState sharedExecutionState)
+        TestExecutionState testExecutionState)
     {
         _configuration = configuration;
         _scenarioName = scenarioName;
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
     }
 
     public Task Execute()
@@ -24,12 +24,12 @@ internal class OneTimeLoadHandler : ILoadHandler
 
         for (int i = 0; i < oneTimeLoadCount; i++)
         {
-            if (_sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+            if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
                 return Task.CompletedTask;
 
             var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
 
-            _sharedExecutionState.EnqueueScenarioExecution(message);
+            _testExecutionState.EnqueueScenarioExecution(message);
         }
 
         return Task.CompletedTask;

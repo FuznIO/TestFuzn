@@ -7,16 +7,16 @@ internal class FixedLoadHandler : ILoadHandler
 {
     private readonly FixedLoadConfiguration _configuration;
     private readonly string _scenarioName;
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
 
     public FixedLoadHandler(
         FixedLoadConfiguration configuration,
         string scenarioName,
-        SharedExecutionState sharedExecutionState)
+        TestExecutionState testExecutionState)
     {
         _configuration = configuration;
         _scenarioName = scenarioName;
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
     }
 
     public async Task Execute()
@@ -32,7 +32,7 @@ internal class FixedLoadHandler : ILoadHandler
         var currentIntervalIndex = 0;
 
         while (currentIntervalIndex < totalIntervals
-            && _sharedExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
+            && _testExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
         {
             currentIntervalIndex++;
 
@@ -42,7 +42,7 @@ internal class FixedLoadHandler : ILoadHandler
             for (int i = 0; i < rate; i++)
             {
                 var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
-                _sharedExecutionState.EnqueueScenarioExecution(message);
+                _testExecutionState.EnqueueScenarioExecution(message);
 
                 var nextEnqueueTime = delayBetweenEnqueue.Ticks * (i + 1);
                 var delay = TimeSpan.FromTicks(nextEnqueueTime - intervalStopwatch.ElapsedTicks);

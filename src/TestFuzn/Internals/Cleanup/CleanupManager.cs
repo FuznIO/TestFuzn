@@ -7,25 +7,25 @@ namespace Fuzn.TestFuzn.Internals.Cleanup;
 internal class CleanupManager
 {
     private readonly ITestFrameworkAdapter _testFramework;
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
 
-    public CleanupManager(ITestFrameworkAdapter testFramework, SharedExecutionState sharedExecutionState)
+    public CleanupManager(ITestFrameworkAdapter testFramework, TestExecutionState testExecutionState)
     {
         _testFramework = testFramework;
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
     }
 
     public async Task Run()
     {
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
-            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Cleanup);
-            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Cleanup);
+            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Cleanup);
+            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Cleanup);
         }
 
         var cleanupPerScenarioTasks = new List<Task>();
 
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
             if (scenario.AfterScenarioAction != null)
                 cleanupPerScenarioTasks.Add(ExecuteCleanupScenario(_testFramework, scenario));
@@ -35,10 +35,10 @@ internal class CleanupManager
 
         await ExecuteCleanupTestMethod();
 
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
-            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Cleanup);
-            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Cleanup);
+            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Cleanup);
+            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Cleanup);
         }
     }
 
@@ -50,7 +50,7 @@ internal class CleanupManager
 
     private async Task ExecuteCleanupTestMethod()
     {
-        if (_sharedExecutionState.TestClassInstance is IAfterTest cleanup)
+        if (_testExecutionState.TestClassInstance is IAfterTest cleanup)
         {
             Context context = ContextFactory.CreateContext(_testFramework, "AfterTest");
             await cleanup.AfterTest(context);

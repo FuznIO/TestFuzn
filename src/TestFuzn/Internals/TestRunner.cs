@@ -14,13 +14,13 @@ using System.Runtime.ExceptionServices;
 
 namespace Fuzn.TestFuzn.Internals;
 
-internal class ScenarioTestRunner
+internal class TestRunner
 {
     private readonly ITestFrameworkAdapter _testFramework;
     private readonly ITest _test;
     internal Action<AssertInternalState> _assertInternalState;
 
-    public ScenarioTestRunner(ITestFrameworkAdapter testFramework, 
+    public TestRunner(ITestFrameworkAdapter testFramework, 
         ITest test,
         Action<AssertInternalState> assertInternalState)
     {
@@ -34,16 +34,16 @@ internal class ScenarioTestRunner
 
     public async Task Run(params Scenario[] scenarios)
     {
-        var sharedExecutionState = new SharedExecutionState(_test, scenarios);
-        var consoleWriter = new ConsoleWriter(_testFramework, sharedExecutionState);
-        var consoleManager = new ConsoleManager(_testFramework, sharedExecutionState, consoleWriter);
-        var inputDataFeeder = new InputDataFeeder(sharedExecutionState);
-        var initManager = new InitManager(_testFramework, sharedExecutionState, inputDataFeeder);
-        var producerManager = new ProducerManager(sharedExecutionState);
-        var executeScenarioMessageHandler = new ExecuteScenarioMessageHandler(_testFramework, sharedExecutionState, inputDataFeeder);
-        var consumerManager = new ConsumerManager(sharedExecutionState, executeScenarioMessageHandler);
-        var executionManager = new ExecutionManager(_testFramework, sharedExecutionState, producerManager, consumerManager);
-        var cleanupManager = new CleanupManager(_testFramework, sharedExecutionState);
+        var testExecutionState = new TestExecutionState(_test, scenarios);
+        var consoleWriter = new ConsoleWriter(_testFramework, testExecutionState);
+        var consoleManager = new ConsoleManager(_testFramework, testExecutionState, consoleWriter);
+        var inputDataFeeder = new InputDataFeeder(testExecutionState);
+        var initManager = new InitManager(_testFramework, testExecutionState, inputDataFeeder);
+        var producerManager = new ProducerManager(testExecutionState);
+        var executeScenarioMessageHandler = new ExecuteScenarioMessageHandler(_testFramework, testExecutionState, inputDataFeeder);
+        var consumerManager = new ConsumerManager(testExecutionState, executeScenarioMessageHandler);
+        var executionManager = new ExecutionManager(_testFramework, testExecutionState, producerManager, consumerManager);
+        var cleanupManager = new CleanupManager(_testFramework, testExecutionState);
         var standardResultManager = new StandardResultManager();
         var reportManager = new ReportManager();
 
@@ -53,21 +53,21 @@ internal class ScenarioTestRunner
             await initManager.Run();
             await executionManager.Run();
             await cleanupManager.Run();
-            standardResultManager.AddNonSkippedTestResults(sharedExecutionState);
-            await reportManager.WriteLoadReports(sharedExecutionState);
+            standardResultManager.AddNonSkippedTestResults(testExecutionState);
+            await reportManager.WriteLoadReports(testExecutionState);
             await consoleManager.Complete();
 
             if (_assertInternalState != null)
-                _assertInternalState(new AssertInternalState(sharedExecutionState));
+                _assertInternalState(new AssertInternalState(testExecutionState));
 
-            if (sharedExecutionState.TestRunState.FirstException != null)
-                ExceptionDispatchInfo.Capture(sharedExecutionState.TestRunState.FirstException).Throw();
+            if (testExecutionState.TestRunState.FirstException != null)
+                ExceptionDispatchInfo.Capture(testExecutionState.TestRunState.FirstException).Throw();
         }
         catch (Exception)
         {
-            if (sharedExecutionState.TestRunState.ExecutionStoppedReason != null)
+            if (testExecutionState.TestRunState.ExecutionStoppedReason != null)
             {
-                throw sharedExecutionState.TestRunState.ExecutionStoppedReason;
+                throw testExecutionState.TestRunState.ExecutionStoppedReason;
             }
 
             throw;

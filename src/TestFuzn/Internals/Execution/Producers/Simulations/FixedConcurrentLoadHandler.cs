@@ -6,18 +6,18 @@ namespace Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 internal class FixedConcurrentLoadHandler : ILoadHandler
 {
     private readonly FixedConcurrentLoadConfiguration _configuration;
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
     private readonly string _scenarioName;
 
     public FixedConcurrentLoadHandler(
         FixedConcurrentLoadConfiguration configuration,
         string scenarioName,
-        SharedExecutionState sharedExecutionState
+        TestExecutionState testExecutionState
         )
     {
         _configuration = configuration;
         _scenarioName = scenarioName;
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
     }
 
     public async Task Execute()
@@ -27,7 +27,7 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
         var totalCount = _configuration.TotalCount;
         var i = 0;
 
-        while (_sharedExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
+        while (_testExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
         {
             if (totalCount > 0)
             {
@@ -39,7 +39,7 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
                 break;
             }
 
-            var addCount = _configuration.FixedCount - _sharedExecutionState.GetConstantQueueCount(_scenarioName);
+            var addCount = _configuration.FixedCount - _testExecutionState.GetConstantQueueCount(_scenarioName);
 
             while (addCount > 0)
             {
@@ -48,8 +48,8 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
 
                 var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
 
-                _sharedExecutionState.AddToConstantQueue(message);
-                _sharedExecutionState.EnqueueScenarioExecution(message);
+                _testExecutionState.AddToConstantQueue(message);
+                _testExecutionState.EnqueueScenarioExecution(message);
             }
             await Task.Delay(TimeSpan.FromMilliseconds(10));
         }

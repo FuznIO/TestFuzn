@@ -6,17 +6,17 @@ namespace Fuzn.TestFuzn.Internals.Execution.Producers;
 
 internal class ProducerManager
 {
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
     private List<Task> _producerTasks = new();
 
-    public ProducerManager(SharedExecutionState sharedExecutionState)
+    public ProducerManager(TestExecutionState testExecutionState)
     {
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
     }
 
     public void StartProducers()
     {
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
             var producerTask = Task.Run(async () => await Produce(scenario));
             _producerTasks.Add(producerTask);
@@ -25,23 +25,23 @@ internal class ProducerManager
 
     private async Task Produce(Scenario scenario)
     {
-        var standardCollector = _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name];
-        var loadCollector = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
+        var standardCollector = _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name];
+        var loadCollector = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
         var hasWarmupPhase = false;
         var measurementPhaseStarted = false;
 
         foreach (var loadSimulation in scenario.SimulationsInternal)
         {
-            if (_sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+            if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
                 break;
 
             ILoadHandler handler = loadSimulation switch
             {
-                OneTimeLoadConfiguration oneTimeLoad => new OneTimeLoadHandler(oneTimeLoad, scenario.Name, _sharedExecutionState),
-                FixedConcurrentLoadConfiguration fixedConcurrent => new FixedConcurrentLoadHandler(fixedConcurrent, scenario.Name, _sharedExecutionState),
-                FixedLoadConfiguration fixedLoad => new FixedLoadHandler(fixedLoad, scenario.Name, _sharedExecutionState),
-                RandomLoadPerSecondConfiguration randomLoadPerSecond => new RandomLoadPerSecondHandler(randomLoadPerSecond, scenario.Name, _sharedExecutionState),
-                GradualLoadIncreaseConfiguration gradualLoadIncrease => new GradualLoadIncreaseHandler(gradualLoadIncrease, scenario.Name, _sharedExecutionState),
+                OneTimeLoadConfiguration oneTimeLoad => new OneTimeLoadHandler(oneTimeLoad, scenario.Name, _testExecutionState),
+                FixedConcurrentLoadConfiguration fixedConcurrent => new FixedConcurrentLoadHandler(fixedConcurrent, scenario.Name, _testExecutionState),
+                FixedLoadConfiguration fixedLoad => new FixedLoadHandler(fixedLoad, scenario.Name, _testExecutionState),
+                RandomLoadPerSecondConfiguration randomLoadPerSecond => new RandomLoadPerSecondHandler(randomLoadPerSecond, scenario.Name, _testExecutionState),
+                GradualLoadIncreaseConfiguration gradualLoadIncrease => new GradualLoadIncreaseHandler(gradualLoadIncrease, scenario.Name, _testExecutionState),
                 PauseLoadConfiguration gradualLoadIncrease => new PauseLoadHandler(gradualLoadIncrease),
                 _ => throw new NotSupportedException($"Load simulation type {loadSimulation.GetType().Name} is not supported."),
             };
@@ -54,7 +54,7 @@ internal class ProducerManager
 
             if (hasWarmupPhase && !loadSimulation.IsWarmup)
             {
-                while (_sharedExecutionState.IsExecutionQueueEmpty(scenario.Name) == false)
+                while (_testExecutionState.IsExecutionQueueEmpty(scenario.Name) == false)
                     await Task.Delay(TimeSpan.FromMilliseconds(100));
 
                 loadCollector.MarkPhaseAsCompleted(LoadTestPhase.Warmup);
@@ -70,12 +70,12 @@ internal class ProducerManager
             await handler.Execute();
         }
 
-        _sharedExecutionState.MarkScenarioProducersCompleted(scenario.Name);
+        _testExecutionState.MarkScenarioProducersCompleted(scenario.Name);
     }
 
     public async Task WaitForProducersToComplete()
     {
         await Task.WhenAll(_producerTasks);
-        _sharedExecutionState.ExecutionState.MessageQueue.CompleteAdding();
+        _testExecutionState.ExecutionState.MessageQueue.CompleteAdding();
     }
 }

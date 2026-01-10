@@ -9,17 +9,17 @@ namespace Fuzn.TestFuzn.Internals.Execution;
 internal class ExecutionManager
 {
     private readonly ITestFrameworkAdapter _testFramework;
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
     private readonly ConsumerManager _consumerManager;
     private readonly ProducerManager _producerManager;
 
     public ExecutionManager(ITestFrameworkAdapter testFramework, 
-        SharedExecutionState sharedExecutionState,
+        TestExecutionState testExecutionState,
         ProducerManager producerManager,
         ConsumerManager consumerManager)
     {
         _testFramework = testFramework;
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
         _producerManager = producerManager;
         _consumerManager = consumerManager;
     }
@@ -35,20 +35,20 @@ internal class ExecutionManager
 
         ExecuteAssertWhenDone();
 
-        _sharedExecutionState.Complete();
+        _testExecutionState.Complete();
     }
 
     private void ExecuteAssertWhenDone()
     {
-        if (_sharedExecutionState.TestType == TestType.Standard)
+        if (_testExecutionState.TestType == TestType.Standard)
             return;
 
-        if (_sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+        if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
             return;
 
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
-            var scenarioCollector = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
+            var scenarioCollector = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
             var scenarioResult = scenarioCollector.GetCurrentResult();
             if (scenario.AssertWhenDoneAction != null)
             {
@@ -59,7 +59,7 @@ internal class ExecutionManager
                 }
                 catch (Exception e)
                 {
-                    _sharedExecutionState.TestRunState.FirstException = e;
+                    _testExecutionState.TestRunState.FirstException = e;
                     scenarioCollector.SetAssertWhenDoneException(e);
                     scenarioCollector.SetStatus(TestStatus.Failed);
                 }

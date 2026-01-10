@@ -21,15 +21,15 @@ internal class StandardResultManager
         AddResult(testInfo, startTime, startTime);
     }
 
-    public void AddNonSkippedTestResults(SharedExecutionState sharedExecutionState)
+    public void AddNonSkippedTestResults(TestExecutionState testExecutionState)
     {
-        var scenarioLoadResults = sharedExecutionState.ScenarioResultState.LoadCollectors.Select(x => x.Value.GetCurrentResult())
+        var scenarioLoadResults = testExecutionState.ScenarioResultState.LoadCollectors.Select(x => x.Value.GetCurrentResult())
                                     .ToList();
 
-        var firstScenario = sharedExecutionState.ScenarioResultState.StandardCollectors.First().Value;
-        var lastScenario = sharedExecutionState.ScenarioResultState.StandardCollectors.Last().Value;
+        var firstScenario = testExecutionState.ScenarioResultState.StandardCollectors.First().Value;
+        var lastScenario = testExecutionState.ScenarioResultState.StandardCollectors.Last().Value;
 
-        AddResult(sharedExecutionState.TestClassInstance.TestInfo,
+        AddResult(testExecutionState.TestClassInstance.TestInfo,
             firstScenario.StartTime(),
             lastScenario.EndTime(),
             firstScenario,

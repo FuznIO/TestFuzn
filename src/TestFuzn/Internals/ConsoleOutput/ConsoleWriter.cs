@@ -11,19 +11,19 @@ namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 internal class ConsoleWriter
 {
     private readonly ITestFrameworkAdapter _testFramework;
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
     private CursorPosition _cursorPosition;
 
     public ConsoleWriter(ITestFrameworkAdapter testFramework,
-        SharedExecutionState sharedExecutionState)
+        TestExecutionState testExecutionState)
     {
         _testFramework = testFramework;
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
     }
 
     public void WriteSummary()
     {
-        if (_sharedExecutionState.TestType == TestType.Standard)
+        if (_testExecutionState.TestType == TestType.Standard)
             WriteSummaryStandard();
         else
             WriteSummaryLoad();
@@ -31,8 +31,8 @@ internal class ConsoleWriter
 
     public void WriteSummaryStandard()
     {
-        var scenario = _sharedExecutionState.Scenarios.Single();
-        var scenarioResult = _sharedExecutionState.ScenarioResultState.StandardCollectors.First().Value;
+        var scenario = _testExecutionState.Scenarios.Single();
+        var scenarioResult = _testExecutionState.ScenarioResultState.StandardCollectors.First().Value;
         
         if (scenarioResult.IterationResults.Count > 0)
         {
@@ -170,29 +170,29 @@ internal class ConsoleWriter
         {
             var loadtestResults = new Dictionary<Scenario, ScenarioLoadResult>();
 
-            foreach (var scenario in _sharedExecutionState.Scenarios)
+            foreach (var scenario in _testExecutionState.Scenarios)
             {
-                loadtestResults.TryAdd(scenario, _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult());
+                loadtestResults.TryAdd(scenario, _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult());
             }
             
-            _testFramework.WriteSummary(loadtestResults.First().Value.StartTime(), _sharedExecutionState.TestRunState.TestRunDuration(), loadtestResults);
+            _testFramework.WriteSummary(loadtestResults.First().Value.StartTime(), _testExecutionState.TestRunState.TestRunDuration(), loadtestResults);
             return;
         }
 
-        var elapsed = _sharedExecutionState.TestRunState.TestRunDuration().ToString(@"hh\:mm\:ss\:ff");
+        var elapsed = _testExecutionState.TestRunState.TestRunDuration().ToString(@"hh\:mm\:ss\:ff");
 
         _testFramework.WriteMarkup($"[bold]Total elapsed Time:[/] [yellow]{elapsed}[/]");
-        if (_sharedExecutionState.IsConsumingCompleted || _sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+        if (_testExecutionState.IsConsumingCompleted || _testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
         {
-            if (_sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
-                _testFramework.WriteMarkup($"[red]Status: Stopped, reason: {_sharedExecutionState.TestRunState.ExecutionStoppedReason.Message}[/]\r\n");
+            if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+                _testFramework.WriteMarkup($"[red]Status: Stopped, reason: {_testExecutionState.TestRunState.ExecutionStoppedReason.Message}[/]\r\n");
             else
                 _testFramework.WriteMarkup("[green]Status: Completed successfully.[/]\r\n");
         }
 
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
-            var loadResult = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult();
+            var loadResult = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult();
 
             var table = new AdvancedTable
             {

@@ -6,7 +6,7 @@ namespace Fuzn.TestFuzn.Internals.Logger;
 
 internal class ConsoleManager(
     ITestFrameworkAdapter _testFramework,
-    SharedExecutionState _sharedExecutionState,
+    TestExecutionState _testExecutionState,
     ConsoleWriter _consoleWriter)
 {
     private Task _realtimeLogging;
@@ -29,11 +29,11 @@ internal class ConsoleManager(
     {
         var loadTestMetrics = new Dictionary<string, LiveMetrics>();
 
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
             loadTestMetrics.TryAdd(scenario.Name, new LiveMetrics
             {
-                ScenarioLoadResultSnapshot = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult(),
+                ScenarioLoadResultSnapshot = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult(),
                 Status = "Running"
             });
         }
@@ -44,7 +44,7 @@ internal class ConsoleManager(
         while (!_ctSource.Token.IsCancellationRequested)
         {
             UpdateMetrics(loadTestMetrics);
-            if (_sharedExecutionState.IsConsumingCompleted)
+            if (_testExecutionState.IsConsumingCompleted)
                 break;
 
             await DelayHelper.Delay(TimeSpan.FromMilliseconds(1000), _ctSource.Token);
@@ -57,15 +57,15 @@ internal class ConsoleManager(
 
     private void UpdateMetrics(Dictionary<string, LiveMetrics> loadTestMetrics)
     {
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
-            if (_sharedExecutionState.IsScenarioExecutionComplete(scenario.Name) && loadTestMetrics[scenario.Name].ConsoleCompleted)
+            if (_testExecutionState.IsScenarioExecutionComplete(scenario.Name) && loadTestMetrics[scenario.Name].ConsoleCompleted)
                 continue;
 
-            var updatedSnapshot = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult();
-            if (_sharedExecutionState.IsScenarioExecutionComplete(scenario.Name) || 
-                _sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Completed
-                || _sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+            var updatedSnapshot = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult();
+            if (_testExecutionState.IsScenarioExecutionComplete(scenario.Name) || 
+                _testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Completed
+                || _testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
             {
                 loadTestMetrics[scenario.Name].Status = updatedSnapshot.Status.ToString();
                 loadTestMetrics[scenario.Name].ConsoleCompleted = true;

@@ -6,7 +6,7 @@ using Fuzn.TestFuzn.Internals.Results.Load;
 
 namespace Fuzn.TestFuzn.Internals.State;
 
-internal class SharedExecutionState
+internal class TestExecutionState
 {
     public List<Scenario> Scenarios { get; set; } = new();
     public ITest TestClassInstance { get; set; }
@@ -16,7 +16,7 @@ internal class SharedExecutionState
     public ScenarioResultState ScenarioResultState { get; } = new();
     public bool IsConsumingCompleted { get; private set; }
 
-    public SharedExecutionState(ITest test, params Scenario[] scenarios)
+    public TestExecutionState(ITest test, params Scenario[] scenarios)
     {
         TestRunState.StartTime = DateTime.UtcNow;
         TestRunState.ExecutionStatus = ExecutionStatus.Running;

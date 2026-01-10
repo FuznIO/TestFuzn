@@ -12,17 +12,17 @@ namespace Fuzn.TestFuzn.Internals.Execution;
 internal class ExecuteScenarioMessageHandler
 {
     private readonly ITestFrameworkAdapter _testFramework;
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
     private readonly InputDataFeeder _inputDataFeeder;
     private readonly static ConcurrentDictionary<string, DateTime> _lastSinkWrite = new();
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _sinkSemaphores = new();
 
     public ExecuteScenarioMessageHandler(ITestFrameworkAdapter testFramework,
-        SharedExecutionState sharedExecutionState,
+        TestExecutionState testExecutionState,
         InputDataFeeder inputDataFeeder)
     {
         _testFramework = testFramework;
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
         _inputDataFeeder = inputDataFeeder;
     }
 
@@ -40,7 +40,7 @@ internal class ExecuteScenarioMessageHandler
         var scenarioDuration = new Stopwatch();
         scenarioDuration.Start();
 
-        var executeStepHandler = new ExecuteStepHandler(_sharedExecutionState, iterationState, null);
+        var executeStepHandler = new ExecuteStepHandler(_testExecutionState, iterationState, null);
 
         try
         {
@@ -75,17 +75,17 @@ internal class ExecuteScenarioMessageHandler
             }
         }
 
-        if (_sharedExecutionState.TestType == TestType.Standard)
+        if (_testExecutionState.TestType == TestType.Standard)
         {
             if (currentInputData != null)
                 iterationResult.InputData = PropertyHelper.GetStringFromProperties(currentInputData);
 
-            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].IterationResults.Add(iterationResult);
+            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].IterationResults.Add(iterationResult);
             await CleanupContext(iterationState);
         }
-        else if (_sharedExecutionState.TestType == TestType.Load)
+        else if (_testExecutionState.TestType == TestType.Load)
         {
-            var scenarioLoadCollector = _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
+            var scenarioLoadCollector = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
 
             if (message.IsWarmup)
             {
@@ -100,7 +100,7 @@ internal class ExecuteScenarioMessageHandler
             await CleanupContext(iterationState);
 
             if (scenario.AssertWhileRunningAction != null
-                && _sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Running)
+                && _testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Running)
             {
                 try
                 {
@@ -109,9 +109,9 @@ internal class ExecuteScenarioMessageHandler
                 }
                 catch (Exception ex)
                 {
-                    _sharedExecutionState.TestRunState.ExecutionStatus = ExecutionStatus.Stopped;
-                    _sharedExecutionState.TestRunState.ExecutionStoppedReason = ex;
-                    _sharedExecutionState.TestRunState.FirstException = ex;
+                    _testExecutionState.TestRunState.ExecutionStatus = ExecutionStatus.Stopped;
+                    _testExecutionState.TestRunState.ExecutionStoppedReason = ex;
+                    _testExecutionState.TestRunState.FirstException = ex;
                     scenarioLoadCollector.SetAssertWhileRunningException(ex);
                     scenarioLoadCollector.SetStatus(TestStatus.Failed);
                 }
@@ -158,7 +158,7 @@ internal class ExecuteScenarioMessageHandler
                     {
                         foreach (var sinkPlugin in GlobalState.Configuration.SinkPlugins)
                         {
-                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _sharedExecutionState.TestClassInstance.TestInfo.Group.Name, _sharedExecutionState.TestClassInstance.TestInfo.Name, scenarioLoadResult);
+                            await sinkPlugin.WriteStats(GlobalState.TestRunId, _testExecutionState.TestClassInstance.TestInfo.Group.Name, _testExecutionState.TestClassInstance.TestInfo.Name, scenarioLoadResult);
                         }
                     }
                     _lastSinkWrite[scenario.Name] = now;

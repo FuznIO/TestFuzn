@@ -319,7 +319,7 @@ public class ScenarioBuilder<TModel>
 
         InheritValuesFromTest(scenarios);
 
-        await new ScenarioTestRunner(_testFramework, _test, _assertInternalState).Run(scenarios.ToArray());
+        await new TestRunner(_testFramework, _test, _assertInternalState).Run(scenarios.ToArray());
     }
 
     private void InheritValuesFromTest(List<Scenario> scenarios)

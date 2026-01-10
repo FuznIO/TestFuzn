@@ -7,14 +7,14 @@ namespace Fuzn.TestFuzn.Internals.Execution.Consumers;
 internal class ConsumerManager
 {
     private Task _consumer;
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
     private readonly ExecuteScenarioMessageHandler _scenarioExecutor;
 
     public ConsumerManager(
-        SharedExecutionState sharedExecutionState,
+        TestExecutionState testExecutionState,
         ExecuteScenarioMessageHandler scenarioExecutor)
     {
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
         _scenarioExecutor = scenarioExecutor;
     }
 
@@ -25,42 +25,42 @@ internal class ConsumerManager
 
     public async Task Consume()
     {
-        var queue = _sharedExecutionState.ExecutionState.MessageQueue;
+        var queue = _testExecutionState.ExecutionState.MessageQueue;
         await Parallel.ForEachAsync(queue.GetConsumingEnumerable(), async (message, cancellationToken) =>
         {
-            if (_sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+            if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 return;
             }
 
-            var scenario = _sharedExecutionState.Scenarios.Single(s => s.Name == message.ScenarioName);
+            var scenario = _testExecutionState.Scenarios.Single(s => s.Name == message.ScenarioName);
 
             await _scenarioExecutor.Execute(message, scenario);
 
-            _sharedExecutionState.RemoveFromQueues(message);
+            _testExecutionState.RemoveFromQueues(message);
 
-            if (_sharedExecutionState.IsScenarioExecutionComplete(message.ScenarioName))
+            if (_testExecutionState.IsScenarioExecutionComplete(message.ScenarioName))
             {
-                _sharedExecutionState.ScenarioResultState.StandardCollectors[message.ScenarioName].MarkPhaseAsCompleted(StandardTestPhase.Execute);
+                _testExecutionState.ScenarioResultState.StandardCollectors[message.ScenarioName].MarkPhaseAsCompleted(StandardTestPhase.Execute);
                 
-                if (_sharedExecutionState.TestType == TestType.Load)
+                if (_testExecutionState.TestType == TestType.Load)
                 {
-                    _sharedExecutionState.ScenarioResultState.LoadCollectors[message.ScenarioName].MarkPhaseAsCompleted(LoadTestPhase.Measurement);
-                    var scenarioLoadResult = _sharedExecutionState.ScenarioResultState.LoadCollectors[message.ScenarioName].GetCurrentResult(true);
+                    _testExecutionState.ScenarioResultState.LoadCollectors[message.ScenarioName].MarkPhaseAsCompleted(LoadTestPhase.Measurement);
+                    var scenarioLoadResult = _testExecutionState.ScenarioResultState.LoadCollectors[message.ScenarioName].GetCurrentResult(true);
                     await _scenarioExecutor.WriteToSinks(scenario, scenarioLoadResult, true);
                 }
             }
         });
 
-        _sharedExecutionState.MarkConsumingCompleted();
+        _testExecutionState.MarkConsumingCompleted();
     }
 
     public async Task WaitForConsumersToFinish()
     {
         await Task.WhenAll(_consumer);
         
-        if (_sharedExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Running)
-            _sharedExecutionState.TestRunState.ExecutionStatus = ExecutionStatus.Completed;
+        if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Running)
+            _testExecutionState.TestRunState.ExecutionStatus = ExecutionStatus.Completed;
     }
 }

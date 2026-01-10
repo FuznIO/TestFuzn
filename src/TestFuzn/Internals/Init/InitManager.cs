@@ -10,31 +10,31 @@ namespace Fuzn.TestFuzn.Internals.Init;
 internal class InitManager
 {
     private readonly ITestFrameworkAdapter _testFramework;
-    private readonly SharedExecutionState _sharedExecutionState;
+    private readonly TestExecutionState _testExecutionState;
     private readonly InputDataFeeder _inputDataFeeder;
 
     public InitManager(ITestFrameworkAdapter testFramework, 
-        SharedExecutionState sharedExecutionState,
+        TestExecutionState testExecutionState,
         InputDataFeeder inputDataFeeder)
     {
         _testFramework = testFramework;
-        _sharedExecutionState = sharedExecutionState;
+        _testExecutionState = testExecutionState;
         _inputDataFeeder = inputDataFeeder;
     }
 
     public async Task Run()
     {
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
-            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Init);
-            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init);
+            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Init);
+            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init);
         }
 
         await ExecuteInitTestMethod();
         
         var initPerScenarioTasks = new List<Task>();
 
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
             initPerScenarioTasks.Add(ExecuteInitMethodsOnScenario(scenario));
         
         await Task.WhenAll(initPerScenarioTasks);
@@ -43,16 +43,16 @@ internal class InitManager
 
         await SetupSimulations();
 
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
-            _sharedExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Init);
-            _sharedExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init);
+            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Init);
+            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init);
         }
     }
 
     private async Task ExecuteInitTestMethod()
     {
-        if (_sharedExecutionState.TestClassInstance is IBeforeTest init)
+        if (_testExecutionState.TestClassInstance is IBeforeTest init)
         {
             var context = ContextFactory.CreateContext(_testFramework, "BeforeTest");
             await init.BeforeTest(context);
@@ -79,9 +79,9 @@ internal class InitManager
 
     private async Task SetupSimulations()
     {
-        foreach (var scenario in _sharedExecutionState.Scenarios)
+        foreach (var scenario in _testExecutionState.Scenarios)
         {
-            if (_sharedExecutionState.TestType == TestType.Standard)
+            if (_testExecutionState.TestType == TestType.Standard)
             {
                 var totalExecutions = 1;
                 if (scenario.InputDataInfo.HasInputData)
@@ -89,7 +89,7 @@ internal class InitManager
 
                 scenario.SimulationsInternal.Add(new FixedConcurrentLoadConfiguration(1, totalExecutions));
             }
-            else if (_sharedExecutionState.TestType == TestType.Load)
+            else if (_testExecutionState.TestType == TestType.Load)
             {
                 if (scenario.WarmupAction != null)
                 {
