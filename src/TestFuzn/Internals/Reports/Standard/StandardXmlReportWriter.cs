@@ -18,7 +18,7 @@ internal class StandardXmlReportWriter : IStandardReport
             {
                 writer.WriteStartDocument();
                 writer.WriteStartElement("TestRun");
-                writer.WriteAttributeString("Type", "Standard");
+                writer.WriteElementString("Type", "Standard");
                 writer.WriteElementString("Version", "1.0");
                 writer.WriteElementString("ToolName", "TestFuzn");
                 writer.WriteElementString("ToolVersion", typeof(StandardXmlReportWriter).Assembly.GetName().Version?.ToString() ?? "Unknown");
