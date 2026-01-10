@@ -97,8 +97,13 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine($"<h2>Test Status</h2>");
         if (testsTotal == 0)
         {
+            b.AppendLine(@$"<div class=""status-panel info"">");
+            b.AppendLine(@$"<div class=""title"">ℹ️ No tests executed</div>");
+        }
+        else if (testsFailed == 0)
+        {
             b.AppendLine(@$"<div class=""status-panel passed"">");
-            b.AppendLine(@$"<div class=""title"">✅ All tests passed</div>");
+            b.AppendLine(@$"<div class=""title"">✅ All {testsPassed} tests passed</div>");
         }
         else
         {

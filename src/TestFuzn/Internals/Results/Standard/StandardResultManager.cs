@@ -16,7 +16,9 @@ internal class StandardResultManager
 
     public void AddSkippedTestResult(TestInfo testInfo)
     {
-        AddResult(testInfo);
+        var startTime = DateTime.UtcNow;
+
+        AddResult(testInfo, startTime, startTime);
     }
 
     public void AddNonSkippedTestResults(SharedExecutionState sharedExecutionState)
@@ -24,12 +26,19 @@ internal class StandardResultManager
         var scenarioLoadResults = sharedExecutionState.ScenarioResultState.LoadCollectors.Select(x => x.Value.GetCurrentResult())
                                     .ToList();
 
-        AddResult(sharedExecutionState.TestClassInstance.TestInfo, 
-            sharedExecutionState.ScenarioResultState.StandardCollectors.First().Value,
+        var firstScenario = sharedExecutionState.ScenarioResultState.StandardCollectors.First().Value;
+        var lastScenario = sharedExecutionState.ScenarioResultState.StandardCollectors.Last().Value;
+
+        AddResult(sharedExecutionState.TestClassInstance.TestInfo,
+            firstScenario.StartTime(),
+            lastScenario.EndTime(),
+            firstScenario,
             scenarioLoadResults);
     }    
 
     private void AddResult(TestInfo testInfo, 
+        DateTime testStartTime,
+        DateTime testEndTime,
         ScenarioStandardResult scenarioStandardResult = null,
         List<ScenarioLoadResult> scenarioLoadResults = null)
     {
@@ -37,6 +46,7 @@ internal class StandardResultManager
                                 (key) => new GroupResult(testInfo.Group.Name));
 
         var testResult = new TestResult();
+
         testResult.Name = testInfo.Name;
         testResult.FullName = testInfo.FullName;
         testResult.Id = testInfo.Id;
@@ -52,6 +62,8 @@ internal class StandardResultManager
             {
                 testResult.Status = scenarioStandardResult.Status;
                 testResult.ScenarioResult = scenarioStandardResult;
+                testResult.StartTime = testStartTime;
+                testResult.EndTime = testEndTime;
                 testResult.Duration = scenarioStandardResult.TestRunTotalDuration();
             }
             else

@@ -14,7 +14,6 @@ internal class SharedExecutionState
     public TestRunState TestRunState { get; } = new();
     public ScenarioExecutionState ExecutionState { get; } = new();
     public ScenarioResultState ScenarioResultState { get; } = new();
-
     public bool IsConsumingCompleted { get; private set; }
 
     public SharedExecutionState(ITest test, params Scenario[] scenarios)

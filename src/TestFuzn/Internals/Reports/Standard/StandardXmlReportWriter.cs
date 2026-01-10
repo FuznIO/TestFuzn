@@ -17,9 +17,17 @@ internal class StandardXmlReportWriter : IStandardReport
             using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))
             {
                 writer.WriteStartDocument();
-                writer.WriteStartElement("TestRunResults");
-
+                writer.WriteStartElement("TestRun");
+                writer.WriteAttributeString("Type", "Standard");
                 writer.WriteElementString("Version", "1.0");
+                writer.WriteElementString("ToolName", "TestFuzn");
+                writer.WriteElementString("ToolVersion", typeof(StandardXmlReportWriter).Assembly.GetName().Version?.ToString() ?? "Unknown");
+                writer.WriteElementString("GeneratedOn", DateTime.UtcNow.ToString("o"));
+                writer.WriteElementString("TestRunId", reportData.TestRunId);
+                writer.WriteElementString("ExecutionEnvironment", GlobalState.ExecutionEnvironment);
+                writer.WriteElementString("TargetEnvironment", GlobalState.TargetEnvironment);
+                writer.WriteElementString("StartTime", reportData.TestRunStartTime.ToString("o"));
+                writer.WriteElementString("EndTime", reportData.TestRunEndTime.ToString("o"));
 
                 writer.WriteStartElement("Suite");
                 {
@@ -38,19 +46,17 @@ internal class StandardXmlReportWriter : IStandardReport
                         }
                         writer.WriteEndElement();
                     }
+
+                    writer.WriteStartElement("Groups");
+                    foreach (var standardResult in reportData.GroupResults.Values)
+                    {
+                        WriteGroup(writer, standardResult);
+                    }
+                    writer.WriteEndElement(); // Groups
                 }
-                writer.WriteEndElement();
+                writer.WriteEndElement(); // Suite
 
-                writer.WriteElementString("TestRunId", reportData.TestRunId);
-                writer.WriteElementString("ExecutionEnvironment", GlobalState.ExecutionEnvironment);
-                writer.WriteElementString("TargetEnvironment", GlobalState.TargetEnvironment);
-
-                foreach (var standardResult in reportData.GroupResults.Values)
-                {
-                    WriteGroup(writer, standardResult);
-                }
-
-                writer.WriteEndElement();
+                writer.WriteEndElement(); // TestRun
                 writer.WriteEndDocument();
             }
 
@@ -68,14 +74,14 @@ internal class StandardXmlReportWriter : IStandardReport
 
         writer.WriteElementString("Name", groupResult.Name);
 
+        writer.WriteStartElement("Tests");
         foreach (var testResult in groupResult.TestResults)
         {
             WriteTest(writer, testResult.Value);
-
-            
         }
+        writer.WriteEndElement(); // Tests
 
-        writer.WriteEndElement();
+        writer.WriteEndElement(); // Group
     }
 
     private void WriteTest(XmlWriter writer, TestResult testResult)
@@ -107,6 +113,9 @@ internal class StandardXmlReportWriter : IStandardReport
             writer.WriteEndElement();
         }
 
+        writer.WriteElementString("StartTime", testResult.StartTime.ToString("o"));
+        writer.WriteElementString("EndTime", testResult.EndTime.ToString("o"));
+        writer.WriteElementString("Status", testResult.Status.ToString());
         writer.WriteElementString("Duration", testResult.Duration.ToString(@"hh\:mm\:ss\.fff"));
 
         if (testResult.ScenarioResult != null)
@@ -123,27 +132,21 @@ internal class StandardXmlReportWriter : IStandardReport
 
         writer.WriteElementString("Status", status);
 
-        if (scenarioResult.HasInputData)
+        writer.WriteStartElement("Iterations");
+        for (int i = 0; i < scenarioResult.IterationResults.Count; i++)
         {
-            foreach (var iterationResult in scenarioResult.IterationResults)
-            {
-                WriteIteration(writer, iterationResult);
-            }
+            WriteIteration(writer, scenarioResult.IterationResults[i], i);
         }
-        else
-        {
-            var iterationResult = scenarioResult.IterationResults.FirstOrDefault();
-            if (iterationResult != null)
-                WriteSteps(writer, iterationResult.StepResults.Values.ToList());
-        }
+        writer.WriteEndElement(); // Iterations
 
         writer.WriteEndElement();
     }
 
-    private void WriteIteration(XmlWriter writer, IterationResult iterationResult)
+    private void WriteIteration(XmlWriter writer, IterationResult iterationResult, int index)
     {
         writer.WriteStartElement("Iteration");
 
+        writer.WriteElementString("Index", index.ToString());
         writer.WriteElementString("Status", iterationResult.Passed ? "Passed" : "Failed");
 
         if (iterationResult.InputData is not null)

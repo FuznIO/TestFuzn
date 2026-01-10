@@ -7,6 +7,8 @@ internal class TestResult
     public string Id { get; set; }
     public Dictionary<string, string> Metadata { get; set; }
     public List<string> Tags { get; set; }
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
     public TimeSpan Duration { get; set; }
     public ScenarioStandardResult ScenarioResult { get; set; }
     public TestStatus Status 

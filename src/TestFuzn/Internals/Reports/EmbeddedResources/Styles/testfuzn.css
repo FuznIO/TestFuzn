@@ -193,6 +193,12 @@ details[open] > summary::before {
     background-color: var(--danger-bg);
     color: var(--danger-text);
 }
+.status-panel.info
+{
+    border-color: var(--info-border);
+    background-color: var(--info-bg);
+    color: var(--info-text);
+}
 .status-panel .title
 {
     font-weight: bold;
