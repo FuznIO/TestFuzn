@@ -56,7 +56,7 @@ internal static class TestFuznIntegrationCore
 
         var configuration = new TestFuznConfiguration();
         configuration.Suite = new SuiteInfo();
-        configuration.Suite.Name = Assembly.GetExecutingAssembly().GetName().Name;
+        configuration.Suite.Name = testAssemblyName;
         _startupInstance.Configure(configuration);            
 
         GlobalState.Configuration = configuration;

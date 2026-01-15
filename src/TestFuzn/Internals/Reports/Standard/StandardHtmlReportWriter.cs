@@ -199,7 +199,11 @@ internal class StandardHtmlReportWriter : IStandardReport
 
     private static void WriteTestInfo(StandardReportData reportData, StringBuilder b)
     {
-        b.AppendLine($"<h2>Test Info</h2>");
+        b.AppendLine(@"<details class=""run-details"">");
+        b.AppendLine(@"<summary>");
+        b.AppendLine("<h2>Run Details</h2>");
+        b.AppendLine(@"<span class=""details-toggle""></span>");
+        b.AppendLine("</summary>");
         b.AppendLine("<table>");
         b.AppendLine(@"<tr><th class=""vertical"">Suite - Name</th><td>" + reportData.Suite.Name + "</td></tr>");
         b.AppendLine(@"<tr><th class=""vertical"">Suite - ID</th><td>" + reportData.Suite.Id + "</td></tr>");
@@ -211,7 +215,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             {
                 b.AppendLine(@$"<li>{metadata.Key}: {metadata.Value}</li>");
             }
-            b.AppendLine(@$"</tr>");
+            b.AppendLine("</ul></td></tr>");
         }
 
         b.AppendLine(@$"<tr><th class=""vertical"">Run ID</th><td>{reportData.TestRunId}</td></tr>");
@@ -221,6 +225,7 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine(@$"<tr><th class=""vertical"">End Time</th><td>{reportData.TestRunEndTime.ToLocalTime()}</td></tr>");
         b.AppendLine(@$"<tr><th class=""vertical"">Duration</th><td>{reportData.TestRunDuration.ToTestFuznReadableString()}</td></tr>");
         b.AppendLine("</table>");
+        b.AppendLine("</details>");
     }
 
     private void WriteGroupResults(StandardReportData reportData, StringBuilder b)

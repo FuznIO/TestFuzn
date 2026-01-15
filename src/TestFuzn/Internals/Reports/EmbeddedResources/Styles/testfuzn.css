@@ -164,11 +164,11 @@ th.vertical
 details {
     margin: 8px 50px 8px 50px;
 }
-summary::before {
+details.results summary::before {
     content: "Show Details";
 }
 
-details[open] > summary::before {
+details.results[open] > summary::before {
     content: "Hide Details";
 }
 .status-panel
@@ -389,4 +389,40 @@ details[open] > summary::before {
     font-size: 14px;
     color: var(--gray-500);
     margin-top: 4px;
+}
+
+/* ────────────────
+   Run Details (collapsible)
+──────────────── */
+.run-details {
+    margin: 24px 0;
+}
+
+.run-details summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.run-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.run-details summary h2 {
+    margin: 0;
+}
+
+.run-details .details-toggle::before {
+    content: "Show Details";
+    font-size: 13px;
+    color: var(--link-color);
+    display: block;
+    margin-top: 4px;
+}
+
+.run-details[open] .details-toggle::before {
+    content: "Hide Details";
+}
+
+.run-details table {
+    margin-top: 16px;
 }
