@@ -29,12 +29,12 @@ internal static class DynamicHelper
         }
     }
 
-    private static dynamic ConvertJsonElementToDynamic(JsonElement element)
+    private static dynamic? ConvertJsonElementToDynamic(JsonElement element)
     {
         if (element.ValueKind == JsonValueKind.Object)
         {
             var expando = new ExpandoObject();
-            var expandoDict = (IDictionary<string, object>) expando;
+            var expandoDict = (IDictionary<string, object?>) expando;
 
             foreach (JsonProperty property in element.EnumerateObject())
             {

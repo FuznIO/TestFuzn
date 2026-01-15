@@ -212,10 +212,10 @@ public class WebSocketSubStepsTests : Test
                     await connection.Close();
 
                     var hooks = subContext.GetSharedData<List<string>>("HooksCalled");
-                    Assert.IsTrue(hooks.Count >= 4, $"Expected at least 4 hooks, got {hooks.Count}");
-                    Assert.IsTrue(hooks.Contains("PreConnect"));
-                    Assert.IsTrue(hooks.Contains("PostConnect"));
-                    Assert.IsTrue(hooks.Contains("OnDisconnect"));
+                    Assert.IsGreaterThanOrEqualTo(hooks.Count, 4, $"Expected at least 4 hooks, got {hooks.Count}");
+                    Assert.Contains("PreConnect", hooks);
+                    Assert.Contains("PostConnect", hooks);
+                    Assert.Contains("OnDisconnect", hooks);
                     
                     subContext.Comment($"All hooks called successfully: {string.Join(", ", hooks)}");
                 });

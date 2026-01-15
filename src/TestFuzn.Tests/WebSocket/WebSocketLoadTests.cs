@@ -136,7 +136,7 @@ public class WebSocketLoadTests : Test
 
                 var receivedMessages = connection.GetReceivedMessages();
 
-                Assert.AreEqual(messageCount, receivedMessages.Count, 
+                Assert.HasCount(messageCount, receivedMessages, 
                     $"Should receive all {messageCount} messages, but got {receivedMessages.Count}");
 
                 await connection.Close();
@@ -217,8 +217,8 @@ public class WebSocketLoadTests : Test
                 context.Comment($"Message round-trip took {roundTripTime.TotalMilliseconds:F2}ms");
 
                 Assert.IsNotNull(response);
-                Assert.IsTrue(connectionTime.TotalSeconds < 5, "Connection should establish quickly");
-                Assert.IsTrue(roundTripTime.TotalSeconds < 3, "Message round-trip should be fast");
+                Assert.IsLessThan(5, connectionTime.TotalSeconds, "Connection should establish quickly");
+                Assert.IsLessThan(3, roundTripTime.TotalSeconds, "Message round-trip should be fast");
 
                 await connection.Close();
             })

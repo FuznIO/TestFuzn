@@ -18,6 +18,6 @@ public class GradualLoadIncreaseTests : Test
             .Load().Simulations((context, simulations) => simulations.GradualLoadIncrease(5, 50, TimeSpan.FromSeconds(5)))
             .Run();
 
-        Assert.IsTrue(stepExecutionCounter > 0);
+        Assert.IsGreaterThan(0, stepExecutionCounter);
     }
 }

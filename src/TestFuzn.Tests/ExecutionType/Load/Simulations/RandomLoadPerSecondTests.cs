@@ -3,8 +3,6 @@
 [TestClass]
 public class RandomLoadPerSecondTests : Test
 {
-    private int _testExecutionCount = 0;
-
     [Test]
     public async Task Test()
     {
@@ -20,7 +18,7 @@ public class RandomLoadPerSecondTests : Test
             .Load().Simulations((context, simulations) => simulations.RandomLoadPerSecond(1, 10, TimeSpan.FromSeconds(3)))
             .Run();
 
-        Assert.IsTrue(stepExecutionCount > 0);
+        Assert.IsGreaterThan(0, stepExecutionCount);
     }
 }
 

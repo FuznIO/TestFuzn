@@ -26,6 +26,8 @@ internal class PlaywrightPlugin : IContextPlugin
     public async Task CleanupContext(object state)
     {
         var playwrightManager = state as PlaywrightManager;
+        if (playwrightManager == null)
+            throw new InvalidOperationException("PlaywrightManager state is null in CleanupContext.");
 
         await playwrightManager.CleanupContext();
     }
@@ -33,6 +35,8 @@ internal class PlaywrightPlugin : IContextPlugin
     public async Task HandleStepException(object state, IterationContext context, Exception exception)
     {
         var playwrightManager = state as PlaywrightManager;
+        if (playwrightManager == null)
+            throw new InvalidOperationException("PlaywrightManager state is null in HandleStepException.");
 
         await playwrightManager.AddOrLogPageMetadata(context);
     }

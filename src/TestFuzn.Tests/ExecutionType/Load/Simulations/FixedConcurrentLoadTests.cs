@@ -22,7 +22,7 @@ public class FixedConcurrentLoadTests : Test
             })
             .Run();
 
-        Assert.IsTrue(stepExecutionCount > 0);
+        Assert.IsGreaterThan(0, stepExecutionCount);
     }
 }
 

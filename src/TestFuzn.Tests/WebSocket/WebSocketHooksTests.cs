@@ -115,7 +115,7 @@ public class WebSocketHooksTests : Test
 
                 await connection.Close();
 
-                Assert.AreEqual(4, hooksCalled.Count, "All 4 hooks should have been called");
+                Assert.HasCount(4, hooksCalled, "All 4 hooks should have been called");
                 Assert.AreEqual("PreConnect", hooksCalled[0]);
                 Assert.AreEqual("PostConnect", hooksCalled[1]);
                 Assert.AreEqual("OnMessageReceived", hooksCalled[2]);

@@ -10,9 +10,9 @@ public class ProductHttpTests : Test
     [Test]
     public async Task Verify_product_crud_operations()
     {
-        Product newProduct = null;
-        Product updatedProduct = null;
-        string authToken = null;
+        Product? newProduct = null!;
+        Product? updatedProduct = null!;
+        string authToken = null!;
 
         await Scenario()
             .Step("Authenticate and retrieve JWT token", async (context) =>

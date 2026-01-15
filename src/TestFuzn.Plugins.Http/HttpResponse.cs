@@ -98,7 +98,7 @@ public class HttpResponse
     /// <typeparam name="T">The type to deserialize the body into.</typeparam>
     /// <returns>The deserialized object.</returns>
     /// <exception cref="Exception">Thrown when the body is empty, null, or cannot be deserialized.</exception>
-    public T BodyAs<T>()
+    public T? BodyAs<T>()
         where T : class
     {
         if (string.IsNullOrEmpty(Body))
@@ -127,13 +127,13 @@ public class HttpResponse
         if (Body == null)
             return null;
 
-        dynamic json = null;
+        dynamic json;
 
         try
         {
             json = DynamicHelper.ParseJsonToDynamic(Body);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             throw new Exception($"The response body was not a valid JSON. \nURL: {_request.RequestUri} \nResponse body: \n{Body}");
         }

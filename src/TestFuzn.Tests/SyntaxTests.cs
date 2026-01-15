@@ -154,24 +154,24 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
             })
             .Load().AssertWhileRunning((context, stats) =>
             {
-                Assert.IsTrue(stats.RequestCount < 1000);
+                Assert.IsLessThan(1000, stats.RequestCount);
                 Assert.AreEqual(0, stats.Ok.RequestCount);
                 Assert.AreEqual(0, stats.Failed.RequestCount);
-                Assert.IsTrue(stats.Ok.ResponseTimeMean > TimeSpan.FromSeconds(0.1));
-                Assert.IsTrue(stats.Failed.ResponseTimeMean > TimeSpan.FromSeconds(0.1));
-                Assert.IsTrue(stats.Ok.ResponseTimeMean < TimeSpan.FromSeconds(0.8));
-                Assert.IsTrue(stats.Failed.ResponseTimeMean < TimeSpan.FromSeconds(0.8));
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.1), stats.Ok.ResponseTimeMean);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.1), stats.Failed.ResponseTimeMean);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.8), stats.Ok.ResponseTimeMean);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.8), stats.Failed.ResponseTimeMean);
             })
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.IsTrue(stats.RequestCount == 100);
-                Assert.IsTrue(stats.Ok.RequestCount == 100);
-                Assert.IsTrue(stats.Failed.RequestCount == 0);
-                Assert.IsTrue(stats.Ok.ResponseTimeStandardDeviation < TimeSpan.FromSeconds(0.5));
-                Assert.IsTrue(stats.Ok.ResponseTimeMean > TimeSpan.FromSeconds(0.5));
-                Assert.IsTrue(stats.Ok.ResponseTimeMean < TimeSpan.FromSeconds(0.8));
+                Assert.AreEqual(100, stats.RequestCount);
+                Assert.AreEqual(100, stats.Ok.RequestCount);
+                Assert.AreEqual(0, stats.Failed.RequestCount);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.5), stats.Ok.ResponseTimeStandardDeviation);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.5), stats.Ok.ResponseTimeMean);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.8), stats.Ok.ResponseTimeMean);
 
-                Assert.IsTrue(3 == stats.GetStep("Sub step 1.1").Ok.RequestCount);
+                Assert.AreEqual(3, stats.GetStep("Sub step 1.1").Ok.RequestCount);
             })
             .Load().IncludeScenario(scenario2)
             .AfterIteration((context) =>
@@ -217,7 +217,7 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
 
 public class CustomModel
 {
-    public string CustomProperty { get; set; }
+    public string? CustomProperty { get; set; }
 }
 
 public static class SharedSteps

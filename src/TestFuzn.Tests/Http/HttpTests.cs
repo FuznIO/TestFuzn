@@ -30,7 +30,7 @@ public class HttpTests : Test
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
-                Assert.IsTrue(products.Count > 0, "Expected more than one product to be returned.");
+                Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
             })
             .Run();
     }
@@ -50,7 +50,7 @@ public class HttpTests : Test
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
-                Assert.IsTrue(products.Count > 0, "Expected more than one product to be returned.");
+                Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
             })
             .Run();
     }
@@ -69,7 +69,7 @@ public class HttpTests : Test
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
-                Assert.IsTrue(products.Count > 0, "Expected more than one product to be returned.");
+                Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
             })
             .Run();
     }
@@ -107,7 +107,7 @@ public class HttpTests : Test
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
-                Assert.IsTrue(products.Count > 0, "Expected more than one product to be returned.");
+                Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
             })
             .Load().Simulations((context, simulations) => simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
             .Run();
@@ -122,7 +122,7 @@ public class HttpTests : Test
                 var response = await context.CreateHttpRequest("https://localhost:44316/api/Ping").Get();
 
                 Assert.IsTrue(response.Ok);
-                Assert.IsTrue(response.BodyAs<string>() == "Pong");
+                Assert.AreEqual("Pong", response.BodyAs<string>());
             })
             .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
             .Run();

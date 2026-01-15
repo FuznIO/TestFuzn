@@ -49,7 +49,7 @@ public class WebSocketMessagingTests : Test
 
                 var receivedMessages = connection.GetReceivedMessages();
 
-                Assert.AreEqual(messages.Length, receivedMessages.Count, "Should receive all sent messages");
+                Assert.HasCount(messages.Length, receivedMessages, "Should receive all sent messages");
 
                 for (int i = 0; i < messages.Length; i++)
                 {
@@ -107,7 +107,7 @@ public class WebSocketMessagingTests : Test
 
                 var messages = connection.GetReceivedMessages();
 
-                Assert.IsTrue(messages.Count >= 2, "Should have received at least 2 messages");
+                Assert.IsGreaterThanOrEqualTo(messages.Count, 2, "Should have received at least 2 messages");
 
                 await connection.Close();
             })
@@ -127,12 +127,12 @@ public class WebSocketMessagingTests : Test
                 await Task.Delay(TimeSpan.FromSeconds(1));
 
                 var messagesBefore = connection.GetReceivedMessages();
-                Assert.IsTrue(messagesBefore.Count > 0, "Should have messages before clearing");
+                Assert.IsNotEmpty(messagesBefore, "Should have messages before clearing");
 
                 connection.ClearReceivedMessages();
 
                 var messagesAfter = connection.GetReceivedMessages();
-                Assert.AreEqual(0, messagesAfter.Count, "Message buffer should be empty after clearing");
+                Assert.IsEmpty(messagesAfter, "Message buffer should be empty after clearing");
 
                 // Add delay before closing to ensure connection is stable
                 await Task.Delay(TimeSpan.FromMilliseconds(200));
@@ -164,7 +164,7 @@ public class WebSocketMessagingTests : Test
                 }
                 catch (TimeoutException ex)
                 {
-                    Assert.IsTrue(ex.Message.Contains("No message received"), "Exception should indicate timeout");
+                    Assert.Contains("No message received", ex.Message, "Exception should indicate timeout");
                 }
 
                 await Task.Delay(TimeSpan.FromMilliseconds(200));
@@ -190,8 +190,8 @@ public class WebSocketMessagingTests : Test
                 var elapsed = DateTime.UtcNow - startTime;
 
                 Assert.IsNotNull(message);
-                Assert.IsTrue(elapsed.TotalSeconds < 2, "Should return immediately, not wait for timeout");
-
+                Assert.IsLessThan(2, elapsed.TotalSeconds, "Should return immediately, not wait for timeout");
+                
                 await connection.Close();
             })
             .Run();
@@ -234,7 +234,7 @@ public class WebSocketMessagingTests : Test
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Assert.IsTrue(ex.Message.Contains("not connected"), "Exception should indicate no connection");
+                    Assert.Contains("not connected", ex.Message, "Exception should indicate no connection");
                 }
             })
             .Run();

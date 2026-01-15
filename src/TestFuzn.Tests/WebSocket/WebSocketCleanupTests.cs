@@ -50,12 +50,12 @@ public class WebSocketCleanupTests : Test
                 }
 
                 // Intentionally NOT closing any connections
-                Assert.AreEqual(3, connections.Count);
+                Assert.HasCount(3, connections);
             })
             .Run();
 
         // All connections should have been tracked and auto-closed
-        Assert.AreEqual(3, connections.Count, "All connections should have been created");
+        Assert.HasCount(3, connections, "All connections should have been created");
     }
 
     [Test]
@@ -79,7 +79,6 @@ public class WebSocketCleanupTests : Test
             .Run();
 
         // If we reach here, cleanup handled the already-closed connection correctly
-        Assert.IsTrue(true, "Test completed successfully");
     }
 
     [Test]
@@ -116,7 +115,7 @@ public class WebSocketCleanupTests : Test
             })
             .Run();
 
-        Assert.IsTrue(true, "Test completed with mixed connection states");
+        // Test completed with mixed connection states
     }
 
     [Test]
@@ -153,7 +152,7 @@ public class WebSocketCleanupTests : Test
             })
             .Run();
 
-        Assert.IsTrue(true, "Sub-step connections cleaned up successfully");
+        // Sub-step connections cleaned up successfully
     }
 
     [Test]
@@ -177,7 +176,7 @@ public class WebSocketCleanupTests : Test
             .Simulations((context, simulations) => simulations.OneTimeLoad(15))
             .Run();
 
-        Assert.IsTrue(true, "Load test iterations completed with auto-cleanup");
+        // Load test iterations completed with auto-cleanup
     }
 
     [Test]
@@ -209,6 +208,6 @@ public class WebSocketCleanupTests : Test
             })
             .Run();
 
-        Assert.IsTrue(true, "Connection with error was handled correctly");
+        // Connection with error was handled correctly
     }
 }

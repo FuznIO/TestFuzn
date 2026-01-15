@@ -10,7 +10,7 @@ public class LoginUITests : Test
     [Test]
     public async Task Verify_that_login_works()
     {
-        IPage page = null;
+        IPage page = null!;
 
         await Scenario()
             .Step("Enter login data", async (context) =>

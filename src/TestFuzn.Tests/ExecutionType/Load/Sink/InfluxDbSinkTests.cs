@@ -1,7 +1,4 @@
-﻿using Fuzn.TestFuzn.Plugins.Http;
-using Fuzn.TestFuzn.Tests.Http;
-
-namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Sink;
+﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Sink;
 
 [TestClass]
 public class InfluxDbSinkTests : Test
@@ -9,8 +6,6 @@ public class InfluxDbSinkTests : Test
     [Test]
     public async Task Test()
     {
-        var stepExecutionCounter = 0;
-
         await Scenario("Test Influx DB")
             //.Step("Test", async context =>
             //{

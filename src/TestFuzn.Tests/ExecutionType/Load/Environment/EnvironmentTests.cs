@@ -14,8 +14,8 @@ public class EnvironmentTests : Test
             {
                 return context.Info.TargetEnvironment switch
                 {
-                    "" => new List<object> { new User("userId_9"), new User("user_19") },
                     "test" => await InputDataFileHelper.LoadFromCsv<User>($"users_{context.Info.TargetEnvironment}"),
+                    _ => new List<object> { new User("userId_9"), new User("user_19") },
                 };
             })
             .Step("Step 1", async (context) =>

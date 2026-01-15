@@ -34,7 +34,7 @@ internal class PlaywrightManager
         _isBrowserInitialized = true;
     }
 
-    public async Task<IPage> CreatePage(string browserType = null)
+    public async Task<IPage> CreatePage(string? browserType = null)
     {
         if (browserType == null)
             browserType = PlaywrightGlobalState.Configuration.BrowserTypes.First();
