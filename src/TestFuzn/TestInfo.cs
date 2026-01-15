@@ -19,7 +19,7 @@ public class TestInfo
     /// Gets or sets the unique identifier for the test.
     /// Used to correlate results across different test runs if Name changes.
     /// </summary>
-    internal string Id { get; set; }
+    internal string? Id { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the test is skipped.
@@ -29,7 +29,7 @@ public class TestInfo
     /// <summary>
     /// Gets or sets the reason the test was skipped.
     /// </summary>
-    public string SkipReason { get; set; }
+    public string? SkipReason { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the test has a Skip attribute.

@@ -13,6 +13,7 @@ public static class TokenHelper
 
         Assert.IsTrue(response.Ok, $"Authentication failed: {response.StatusCode}");
         var tokenResponse = response.BodyAs<TokenResponse>();
+        Assert.IsNotNull(tokenResponse);
         Assert.IsFalse(string.IsNullOrEmpty(tokenResponse.Token), "Token should not be empty");
         return tokenResponse.Token;
     }

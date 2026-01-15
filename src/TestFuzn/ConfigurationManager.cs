@@ -7,7 +7,7 @@ namespace Fuzn.TestFuzn;
 /// </summary>
 public class ConfigurationManager
 {
-    private static IConfigurationRoot _configRoot;
+    private static IConfigurationRoot? _configRoot;
     private static readonly object _locker = new();
 
     /// <summary>
@@ -94,7 +94,8 @@ public class ConfigurationManager
         try
         {
             var value = section.Get<T>();
-
+            if (value is null)
+                throw new InvalidOperationException($"Configuration key 'TestFuzn:Values:{key}' could not be converted to type {typeof(T).Name}.");
             return value;
         }
         catch

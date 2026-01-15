@@ -69,7 +69,7 @@ public abstract class Test : ITest
     /// </summary>
     /// <param name="scenarioName">The name of the scenario. Defaults to the test name for tests with a single scenario.</param>
     /// <returns>A <see cref="ScenarioBuilder{TModel}"/> instance for configuring and running the scenario.</returns>
-    public ScenarioBuilder<EmptyModel> Scenario([CallerMemberName] string scenarioName = null)
+    public ScenarioBuilder<EmptyModel> Scenario([CallerMemberName] string? scenarioName = null)
     {
         return Scenario<EmptyModel>(scenarioName);
     }

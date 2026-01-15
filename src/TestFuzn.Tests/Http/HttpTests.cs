@@ -13,6 +13,7 @@ public class HttpTests : Test
 
         Assert.IsTrue(response.Ok, $"Authentication failed: {response.StatusCode}");
         var tokenResponse = response.BodyAs<TokenResponse>();
+        Assert.IsNotNull(tokenResponse);
         Assert.IsFalse(string.IsNullOrEmpty(tokenResponse.Token), "Token should not be empty");
         return tokenResponse.Token;
     }
@@ -30,6 +31,7 @@ public class HttpTests : Test
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
+                Assert.IsNotNull(products);
                 Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
             })
             .Run();
@@ -107,6 +109,7 @@ public class HttpTests : Test
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
+                Assert.IsNotNull(products);
                 Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
             })
             .Load().Simulations((context, simulations) => simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
@@ -157,6 +160,7 @@ public class HttpTests : Test
 
                 Assert.IsTrue(getResponse.Ok);
                 var product = getResponse.BodyAsJson();
+                Assert.IsNotNull(product);
                 Assert.AreEqual(productId.ToString(), product.id.ToString());
                 Assert.AreEqual(name, product.name);
                 Assert.AreEqual(price, product.price);

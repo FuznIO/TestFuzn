@@ -8,11 +8,22 @@ namespace Fuzn.TestFuzn.Sinks.InfluxDB.Internals;
 
 internal class InfluxDbSink : ISinkPlugin
 {
-    private InfluxDBClient _client;
+    private InfluxDBClient? _client;
     private InfluxDbSinkConfiguration _config;
 
     public InfluxDbSink(InfluxDbSinkConfiguration config)
     {
+        if (config == null)
+            throw new ArgumentNullException(nameof(config));
+        if (string.IsNullOrWhiteSpace(config.Url))
+            throw new ArgumentException("InfluxDB URL cannot be null or empty.", nameof(config.Url));
+        if (string.IsNullOrWhiteSpace(config.Token))
+            throw new ArgumentException("InfluxDB Token cannot be null or empty.", nameof(config.Token));
+        if (string.IsNullOrWhiteSpace(config.Bucket))
+            throw new ArgumentException("InfluxDB Bucket cannot be null or empty.", nameof(config.Bucket));
+        if (string.IsNullOrWhiteSpace(config.Org))
+            throw new ArgumentException("InfluxDB Org cannot be null or empty.", nameof(config.Org));
+
         _config = config;
     }
 
@@ -122,13 +133,15 @@ internal class InfluxDbSink : ISinkPlugin
             }
         }
 
+        if (_client == null)
+            throw new InvalidOperationException("InfluxDB client is not initialized.");
         var writeApi = _client.GetWriteApiAsync();
         await writeApi.WritePointsAsync(points, _config.Bucket, _config.Org);
     }
 
     public Task CleanupSuite()
     {
-        _client.Dispose();
+        _client?.Dispose();
         return Task.CompletedTask;
     }
 }

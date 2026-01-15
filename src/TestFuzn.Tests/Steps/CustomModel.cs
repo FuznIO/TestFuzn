@@ -2,5 +2,5 @@
 
 public class CustomModel
 {
-    public string CustomProperty { get; set; }
+    public string? CustomProperty { get; set; }
 }   

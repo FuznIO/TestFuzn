@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Contracts.Providers;
 using Fuzn.TestFuzn.Internals.Execution;
 
 namespace Fuzn.TestFuzn.Internals;
@@ -11,7 +10,7 @@ internal class IterationState
     public ContextInternals Internals { get; set; }
     public ILogger Logger { get; set; }
     public ITestFrameworkAdapter TestFramework { get; internal set; }
-
+    
     // Scenario / StepContext
     public Scenario Scenario { get; internal set; }
     public Dictionary<string, object> SharedData { get; set; }

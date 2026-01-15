@@ -30,13 +30,3 @@ public class ConfigurationManagerTests : Test
             .Run();
     }
 }
-
-public class CustomSectionThatExists
-{
-    public string CustomKeyThatExists { get; set; }
-}
-
-public class CustomSectionThatDoesNotExist
-{
-    public string CustomKeyThatDoesNotExist { get; set; }
-}

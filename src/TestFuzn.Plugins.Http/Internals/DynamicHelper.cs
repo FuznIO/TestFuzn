@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
 internal static class DynamicHelper
 {
-    public static dynamic ParseJsonToDynamic(string jsonString)
+    public static dynamic? ParseJsonToDynamic(string jsonString)
     {
         using JsonDocument doc = JsonDocument.Parse(jsonString);
         JsonElement root = doc.RootElement;

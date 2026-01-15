@@ -32,10 +32,10 @@ internal class ContextFactory
         return context;
     }
 
-    public static IterationContext CreateIterationContext(IterationState iterationState, string stepName, string stepId, string parentName)
+    public static IterationContext CreateIterationContext(IterationState iterationState, string stepName, string? stepId, string? parentName)
     {
-        var context = (IterationContext) Activator.CreateInstance(iterationState.Scenario.ContextType);
-        if (context == null)
+        var contextObj = Activator.CreateInstance(iterationState.Scenario.ContextType);
+        if (contextObj is not IterationContext context)
             throw new InvalidOperationException($"Failed to create instance of {iterationState.Scenario.ContextType}");
 
         context.IterationState = iterationState;

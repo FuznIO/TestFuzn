@@ -9,8 +9,8 @@ internal class EvenlySpreadSnapshots
     private readonly TimeSpan[] _offsets;
     private DateTime _startTime;
     private DateTime _endTime;
-    private ScenarioLoadResult _first;
-    private ScenarioLoadResult _last;
+    private ScenarioLoadResult? _first;
+    private ScenarioLoadResult? _last;
 
     public EvenlySpreadSnapshots(int maxSnapshots)
     {

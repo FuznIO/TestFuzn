@@ -33,5 +33,5 @@ public class EnvironmentTests : Test
 
 public class CustomConfigSection
 {
-    public string Value1 { get; set; }
+    public string? Value1 { get; set; }
 }

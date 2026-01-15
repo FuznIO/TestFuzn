@@ -42,6 +42,7 @@ public class ProductHttpTests : Test
                     .Get();
                 Assert.IsTrue(response.Ok);
                 var createdProduct = response.BodyAs<Product>();
+                Assert.IsNotNull(createdProduct);
                 Assert.AreEqual(newProduct.Name, createdProduct.Name);
                 Assert.AreEqual(newProduct.Price, createdProduct.Price);
             })
@@ -67,6 +68,7 @@ public class ProductHttpTests : Test
                     .Get();
                 Assert.IsTrue(response.Ok);
                 var product = response.BodyAs<Product>();
+                Assert.IsNotNull(product);
                 Assert.AreEqual(updatedProduct.Name, product.Name);
                 Assert.AreEqual(updatedProduct.Price, product.Price);
             })

@@ -8,10 +8,10 @@ public class Authentication
     /// <summary>
     /// Gets or sets the Bearer token for Bearer authentication.
     /// </summary>
-    public string BearerToken { get; set; }
+    public string? BearerToken { get; set; }
 
     /// <summary>
     /// Gets or sets the Base64-encoded credentials for Basic authentication.
     /// </summary>
-    public string Basic { get; set; }
+    public string? Basic { get; set; }
 }

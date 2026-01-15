@@ -8,7 +8,7 @@ internal class DelayHelper
         {
             await Task.Delay(delay, cancellationToken);
         }
-        catch (TaskCanceledException e)
+        catch (TaskCanceledException)
         {
         }
     }

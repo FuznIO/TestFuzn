@@ -19,6 +19,7 @@ public class SerializerProviderTests : Test
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
+                Assert.IsNotNull(products);
                 Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
             })
             .Run();
@@ -40,6 +41,7 @@ public class SerializerProviderTests : Test
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
+                Assert.IsNotNull(products);
                 Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
             })
             .Run();
@@ -61,6 +63,7 @@ public class SerializerProviderTests : Test
 
                 Assert.IsTrue(response.Ok);
                 var products = response.BodyAs<List<Product>>();
+                Assert.IsNotNull(products);
                 Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
             })
             .Run();

@@ -39,8 +39,8 @@ internal class StandardResultManager
     private void AddResult(TestInfo testInfo, 
         DateTime testStartTime,
         DateTime testEndTime,
-        ScenarioStandardResult scenarioStandardResult = null,
-        List<ScenarioLoadResult> scenarioLoadResults = null)
+        ScenarioStandardResult? scenarioStandardResult = null,
+        List<ScenarioLoadResult>? scenarioLoadResults = null)
     {
         var groupResult = _suiteResult.GroupResults.GetOrAdd(testInfo.Group.Name,
                                 (key) => new GroupResult(testInfo.Group.Name));
@@ -58,7 +58,7 @@ internal class StandardResultManager
         }
         else
         { 
-            if (scenarioStandardResult.TestType == Contracts.TestType.Standard)
+            if (scenarioStandardResult!.TestType == Contracts.TestType.Standard)
             {
                 testResult.Status = scenarioStandardResult.Status;
                 testResult.ScenarioResult = scenarioStandardResult;
@@ -70,7 +70,7 @@ internal class StandardResultManager
             {
                 bool passed = false;
                 TimeSpan duration = TimeSpan.Zero;
-                foreach (var scenario in scenarioLoadResults)
+                foreach (var scenario in scenarioLoadResults!)
                 {
                     if (!passed && scenario.Status == TestStatus.Failed)
                     {

@@ -122,23 +122,20 @@ public class HttpResponse
     /// </summary>
     /// <returns>A dynamic object representing the JSON response, or null if the body is null.</returns>
     /// <exception cref="Exception">Thrown when the body is not valid JSON.</exception>
-    public dynamic BodyAsJson()
+    public dynamic? BodyAsJson()
     {
         if (Body == null)
             return null;
 
-        dynamic json;
-
         try
         {
-            json = DynamicHelper.ParseJsonToDynamic(Body);
+            dynamic? json = DynamicHelper.ParseJsonToDynamic(Body);
+            return json;
         }
         catch (Exception)
         {
             throw new Exception($"The response body was not a valid JSON. \nURL: {_request.RequestUri} \nResponse body: \n{Body}");
         }
-
-        return json;
     }
 
     /// <summary>

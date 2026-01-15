@@ -10,7 +10,7 @@ namespace Fuzn.TestFuzn.Plugins.Http;
 public class HttpRequestBuilder
 {
     private static readonly string DefaultUserAgent = 
-        $"TestFuzn.Http/{typeof(HttpRequestBuilder).Assembly.GetName().Version.ToString(3)}";
+        $"TestFuzn.Http/{typeof(HttpRequestBuilder).Assembly.GetName().Version!.ToString(3)}";
     private string _userAgent = DefaultUserAgent;
     private readonly Context _context;
     private readonly string _url;

@@ -6,7 +6,7 @@ internal sealed class Step
 {
     public string Name { get; set; }
     public string Id { get; set; }
-    public string ParentName { get; set; }
+    public string? ParentName { get; set; }
     public Func<IterationContext, Task> Action { get; set; }
     public Type ContextType { get; set; }
     public List<Step> Steps { get; set; }
