@@ -50,9 +50,9 @@ internal class StandardHtmlReportWriter : IStandardReport
 
         b.AppendLine($"<h1>{reportData.Suite.Name} - Test Report</h1>");
 
-        WriteDashboard(reportData, b, testsTotal, testsPassed, testsFailed, testsSkipped, passRate);
+        WriteRunInfo(reportData, b);
 
-        WriteTestInfo(reportData, b);
+        WriteDashboard(b, testsTotal, testsPassed, testsFailed, testsSkipped, passRate);
 
         WriteGroupResults(reportData, b);
 
@@ -65,18 +65,15 @@ internal class StandardHtmlReportWriter : IStandardReport
         return b.ToString();
     }
 
-    private static void WriteDashboard(StandardReportData reportData, StringBuilder b, 
+    private static void WriteDashboard(StringBuilder b, 
         int testsTotal, int testsPassed, int testsFailed, int testsSkipped, double passRate)
     {
-        b.AppendLine("<h2>Test Summary</h2>");
-
         if (testsTotal == 0)
         {
             b.AppendLine(@"<div class=""overall-status no-tests"">");
             b.AppendLine(@"<div class=""icon"">ℹ️</div>");
             b.AppendLine(@"<div class=""message"">");
             b.AppendLine(@"<div class=""title"">No Tests Executed</div>");
-            b.AppendLine(@"<div class=""subtitle"">No test results were found in this run</div>");
             b.AppendLine("</div></div>");
             return;
         }
@@ -87,7 +84,6 @@ internal class StandardHtmlReportWriter : IStandardReport
             b.AppendLine(@"<div class=""icon"">✅</div>");
             b.AppendLine(@"<div class=""message"">");
             b.AppendLine($@"<div class=""title"">All Tests Passed</div>");
-            b.AppendLine($@"<div class=""subtitle"">{testsPassed} of {testsTotal} tests completed successfully</div>");
             b.AppendLine("</div></div>");
         }
         else
@@ -96,8 +92,6 @@ internal class StandardHtmlReportWriter : IStandardReport
             b.AppendLine(@"<div class=""icon"">❌</div>");
             b.AppendLine(@"<div class=""message"">");
             b.AppendLine($@"<div class=""title"">{testsFailed} Test{(testsFailed > 1 ? "s" : "")} Failed</div>");
-            var testsExecuted = testsPassed + testsFailed;
-            b.AppendLine($@"<div class=""subtitle"">{testsPassed} of {testsExecuted} executed tests passed ({passRate}% pass rate){(testsSkipped > 0 ? $", {testsSkipped} skipped" : "")}</div>");
             b.AppendLine("</div></div>");
         }
 
@@ -105,7 +99,7 @@ internal class StandardHtmlReportWriter : IStandardReport
 
         // Donut Chart
         b.AppendLine(@"<div class=""chart-container"">");
-        b.AppendLine(@"<h3>Test Results Distribution</h3>");
+        b.AppendLine(@"<div class=""chart-title"">Results Distribution</div>");
         b.AppendLine(@"<div class=""chart-wrapper"">");
         b.AppendLine(@"<canvas id=""statusChart""></canvas>");
         b.AppendLine($@"<div class=""chart-center-text"">");
@@ -126,28 +120,27 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine(@"<div class=""stat-card total"">");
         b.AppendLine($@"<div class=""value"">{testsTotal}</div>");
         b.AppendLine(@"<div class=""label"">Total Tests</div>");
-        b.AppendLine($@"<div class=""percentage"">Duration: {reportData.TestRunDuration.ToTestFuznReadableString()}</div>");
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""stat-card passed"">");
         b.AppendLine($@"<div class=""value"">{testsPassed}</div>");
         b.AppendLine(@"<div class=""label"">Passed</div>");
         var passedPct = testsTotal > 0 ? Math.Round((double)testsPassed / testsTotal * 100, 1) : 0;
-        b.AppendLine($@"<div class=""percentage"">{passedPct}% of total</div>");
+        b.AppendLine($@"<div class=""percentage"">{passedPct}%</div>");
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""stat-card failed"">");
         b.AppendLine($@"<div class=""value"">{testsFailed}</div>");
         b.AppendLine(@"<div class=""label"">Failed</div>");
         var failedPct = testsTotal > 0 ? Math.Round((double)testsFailed / testsTotal * 100, 1) : 0;
-        b.AppendLine($@"<div class=""percentage"">{failedPct}% of total</div>");
+        b.AppendLine($@"<div class=""percentage"">{failedPct}%</div>");
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""stat-card skipped"">");
         b.AppendLine($@"<div class=""value"">{testsSkipped}</div>");
         b.AppendLine(@"<div class=""label"">Skipped</div>");
         var skippedPct = testsTotal > 0 ? Math.Round((double)testsSkipped / testsTotal * 100, 1) : 0;
-        b.AppendLine($@"<div class=""percentage"">{skippedPct}% of total</div>");
+        b.AppendLine($@"<div class=""percentage"">{skippedPct}%</div>");
         b.AppendLine("</div>");
 
         b.AppendLine("</div>"); // stats-grid
@@ -197,44 +190,38 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine("</script>");
     }
 
-    private static void WriteTestInfo(StandardReportData reportData, StringBuilder b)
+    private static void WriteRunInfo(StandardReportData reportData, StringBuilder b)
     {
-        b.AppendLine(@"<details class=""run-details"">");
-        b.AppendLine(@"<summary>");
-        b.AppendLine("<h2>Run Details</h2>");
-        b.AppendLine(@"<span class=""details-toggle""></span>");
-        b.AppendLine("</summary>");
-        b.AppendLine("<table>");
-        b.AppendLine(@"<tr><th class=""vertical"">Suite - Name</th><td>" + reportData.Suite.Name + "</td></tr>");
-        b.AppendLine(@"<tr><th class=""vertical"">Suite - ID</th><td>" + reportData.Suite.Id + "</td></tr>");
+        b.AppendLine(@"<div class=""run-info"">");
+        
+        b.AppendLine(@"<div class=""run-info-row"">");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Run ID</span><span class=""info-value"">" + reportData.TestRunId + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Duration</span><span class=""info-value"">" + reportData.TestRunDuration.ToTestFuznReadableString() + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Started</span><span class=""info-value"">" + reportData.TestRunStartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Completed</span><span class=""info-value"">" + reportData.TestRunEndTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
+        b.AppendLine("</div>");
 
-        if (reportData.Suite.Metadata != null)
+        b.AppendLine(@"<div class=""run-info-row"">");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.ExecutionEnvironment) ? "-" : GlobalState.ExecutionEnvironment) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.TargetEnvironment) ? "-" : GlobalState.TargetEnvironment) + "</span></div>");
+
+        if (reportData.Suite.Metadata != null && reportData.Suite.Metadata.Count > 0)
         {
-            b.AppendLine(@$"<tr><th class=""vertical"">Suite - Metadata</th><td><ul>");
             foreach (var metadata in reportData.Suite.Metadata)
             {
-                b.AppendLine(@$"<li>{metadata.Key}: {metadata.Value}</li>");
+                b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{metadata.Key}</span><span class=""info-value"">{metadata.Value}</span></div>");
             }
-            b.AppendLine("</ul></td></tr>");
         }
+        b.AppendLine("</div>");
 
-        b.AppendLine(@$"<tr><th class=""vertical"">Run ID</th><td>{reportData.TestRunId}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Execution Environment</th><td>{(string.IsNullOrEmpty(GlobalState.ExecutionEnvironment) ? "-" : GlobalState.ExecutionEnvironment)}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Target Environment</th><td>{(string.IsNullOrEmpty(GlobalState.TargetEnvironment) ? "-" : GlobalState.TargetEnvironment)}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Start Time</th><td>{reportData.TestRunStartTime.ToLocalTime()}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">End Time</th><td>{reportData.TestRunEndTime.ToLocalTime()}</td></tr>");
-        b.AppendLine(@$"<tr><th class=""vertical"">Duration</th><td>{reportData.TestRunDuration.ToTestFuznReadableString()}</td></tr>");
-        b.AppendLine("</table>");
-        b.AppendLine("</details>");
+        b.AppendLine("</div>");
     }
 
     private void WriteGroupResults(StandardReportData reportData, StringBuilder b)
     {
-        b.AppendLine($"<h2>Test Results</h2>");
-        
         b.Append(@"<table class=""group-results"">");
         b.AppendLine($"<tr>");
-        b.AppendLine($"<th>Details</th>");
+        b.AppendLine($"<th>Test</th>");
         b.AppendLine(@$"<th>Status</th>");
         b.AppendLine(@$"<th>Duration</th>");
         b.AppendLine(@$"<th>Tags</th>");
