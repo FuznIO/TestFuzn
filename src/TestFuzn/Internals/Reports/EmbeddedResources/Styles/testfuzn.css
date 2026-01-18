@@ -124,14 +124,8 @@ th, td
     color: var(--text-primary);
     vertical-align: top;
 }
-th 
-{
-    background-color: #FFF;
-    color: var(--text-primary);
-    font-weight: 600;
-    border-bottom: 2px solid var(--gray-300);
-}
-tr:last-child td {
+
+tr:last-child th,tr:last-child td {
     border-bottom: none;
 }
 td.ok 

@@ -46,7 +46,8 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<body>");
         b.AppendLine(@"<div class=""page-container"">");
 
-        b.AppendLine($"<h1>{loadReportData.TestSuite.Name} - Load Test Report</h1>");
+        b.AppendLine($"<h1>{loadReportData.Test.Name} - Load Test Report</h1>");
+        b.AppendLine($@"<div class=""test-name"">{loadReportData.Group.Name}</div>");
 
         WriteRunInfo(loadReportData, b);
 
@@ -82,30 +83,32 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine(@"<div class=""run-info-row"">");
         b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.ExecutionEnvironment) ? "-" : GlobalState.ExecutionEnvironment) + "</span></div>");
         b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.TargetEnvironment) ? "-" : GlobalState.TargetEnvironment) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Group</span><span class=""info-value"">" + loadReportData.Group.Name + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Test</span><span class=""info-value"">" + loadReportData.Test.Name + "</span></div>");
         b.AppendLine("</div>");
 
-        b.AppendLine(@"<div class=""run-info-row"">");
         if (loadReportData.Test.Tags != null && loadReportData.Test.Tags.Count > 0)
         {
+            b.AppendLine(@"<div class=""run-info-row"">");
             b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Tags</span><span class=""info-value"">" + string.Join(", ", loadReportData.Test.Tags) + "</span></div>");
+            b.AppendLine("</div>");
         }
         if (loadReportData.TestSuite.Metadata != null && loadReportData.TestSuite.Metadata.Count > 0)
         {
+            b.AppendLine(@"<div class=""run-info-row"">");
             foreach (var metadata in loadReportData.TestSuite.Metadata)
             {
                 b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{metadata.Key}</span><span class=""info-value"">{metadata.Value}</span></div>");
             }
+            b.AppendLine("</div>");
         }
         if (loadReportData.Test.Metadata != null && loadReportData.Test.Metadata.Count > 0)
         {
+            b.AppendLine(@"<div class=""run-info-row"">");
             foreach (var metadata in loadReportData.Test.Metadata)
             {
                 b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{metadata.Key}</span><span class=""info-value"">{metadata.Value}</span></div>");
             }
+            b.AppendLine("</div>");
         }
-        b.AppendLine("</div>");
 
         b.AppendLine("</div>");
     }
@@ -124,6 +127,9 @@ internal class LoadHtmlReportWriter : ILoadReport
             return;
         }
 
+        if (scenariosTotal == 1)
+            return;
+
         var allPassed = loadReportData.ScenarioResults.All(s => s.Status == TestStatus.Passed);
         var failedCount = loadReportData.ScenarioResults.Count(s => s.Status == TestStatus.Failed);
         var passedCount = loadReportData.ScenarioResults.Count(s => s.Status == TestStatus.Passed);
@@ -133,10 +139,7 @@ internal class LoadHtmlReportWriter : ILoadReport
             b.AppendLine(@"<div class=""overall-status passed"">");
             b.AppendLine(@"<div class=""icon"">✅</div>");
             b.AppendLine(@"<div class=""message"">");
-            if (scenariosTotal == 1)
-                b.AppendLine($@"<div class=""title"">Scenario Passed</div>");
-            else
-                b.AppendLine($@"<div class=""title"">All Scenarios Passed ({passedCount}/{scenariosTotal})</div>");
+            b.AppendLine($@"<div class=""title"">Test Passed</div>");
             b.AppendLine("</div></div>");
         }
         else
@@ -151,17 +154,33 @@ internal class LoadHtmlReportWriter : ILoadReport
 
     private void WriteScenarioSection(LoadReportData loadReportData, ScenarioLoadResult scenarioResult, StringBuilder b, int scenarioIndex)
     {
-        b.AppendLine($"<h2>Scenario {scenarioIndex} -  {scenarioResult.ScenarioName}</h2>");
+        if (loadReportData.ScenarioResults.Count == 1)
+            b.AppendLine($"<h2>Scenario -  {scenarioResult.ScenarioName}</h2>");
+        else
+            b.AppendLine($"<h2>Scenario {scenarioIndex} -  {scenarioResult.ScenarioName}</h2>");
 
         WriteScenarioInfo(scenarioResult, b);                                    // 1
-        WriteScenarioStatus(loadReportData, scenarioResult, b);                                  // 2
+        b.AppendLine(@"<div style=""margin-top: 32px;""></div>");
+        WriteScenarioStatus(loadReportData, scenarioResult, b);                  // 2
+        
+        b.AppendLine(@"<div style=""margin-top: 32px;""></div>");
+        
         WriteDashboard(scenarioResult, b, scenarioIndex);                        // 3
+        
         WriteSnapshotTimelineChart(loadReportData, b, scenarioResult, scenarioIndex); // 3.5 - Timeline chart
+        
+        b.AppendLine(@"<div style=""margin-top: 32px;""></div>");
+        
         WriteResponseTimeChart(scenarioResult, b, scenarioIndex);                // 4
+        
+        b.AppendLine("<h3>Test Phases</h3>");
         WritePhaseTimings(scenarioResult, b);                                    // 5
+        
+        b.AppendLine("<h3>Step Performance</h3>");
         WriteSteps(b, scenarioResult);                                           // 6
-        WriteSnapshotTable(loadReportData, b, scenarioResult);                   // 7 - Snapshot table
-        WriteFailureDetails(scenarioResult, b);                                  // 8
+        
+        WriteSnapshotTable(loadReportData, b, scenarioResult);                   // 7 - Snapshot table (has its own h3)
+        WriteFailureDetails(scenarioResult, b);                                  // 8 (has its own h3)
     }
 
     private static void WriteScenarioInfo(ScenarioLoadResult scenarioResult, StringBuilder b)
@@ -183,9 +202,6 @@ internal class LoadHtmlReportWriter : ILoadReport
 
     private static void WriteScenarioStatus(LoadReportData loadReportData, ScenarioLoadResult scenarioResult, StringBuilder b)
     {
-        if (loadReportData.ScenarioResults.Count <= 1)
-            return;
-
         if (scenarioResult.Status == TestStatus.Passed)
         {
             b.AppendLine(@"<div class=""overall-status passed"">");
@@ -303,7 +319,6 @@ internal class LoadHtmlReportWriter : ILoadReport
 
     private static void WritePhaseTimings(ScenarioLoadResult scenarioResult, StringBuilder b)
     {
-
         b.AppendLine("<table>");
         b.AppendLine("<tr>");
         b.AppendLine("<th>Phase</th>");
@@ -376,9 +391,14 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine(@"<tr class=""summary"">");
         Cols(b, "All Steps (Summary)", true, scenario.Ok, scenario.Failed, 1);
         b.AppendLine("</tr>");
-        b.AppendLine(@"<tr class=""summary"">");
-        Cols(b, "", false, scenario.Ok, scenario.Failed, 1);
-        b.AppendLine("</tr>");
+        
+        // Only show Failed summary row if there are failures
+        if (scenario.Failed.RequestCount > 0)
+        {
+            b.AppendLine(@"<tr class=""summary"">");
+            Cols(b, "", false, scenario.Ok, scenario.Failed, 1);
+            b.AppendLine("</tr>");
+        }
 
         foreach (var step in scenario.Steps)
         {
@@ -396,10 +416,13 @@ internal class LoadHtmlReportWriter : ILoadReport
         Cols(b, step.Name, true, step.Ok, step.Failed, level);
         b.AppendLine("</tr>");
         
-        // Failed row
-        b.AppendLine(@"<tr>");
-        Cols(b, "", false, step.Ok, step.Failed, level);
-        b.AppendLine("</tr>");
+        // Failed row - only if there are failures
+        if (step.Failed.RequestCount > 0)
+        {
+            b.AppendLine(@"<tr>");
+            Cols(b, "", false, step.Ok, step.Failed, level);
+            b.AppendLine("</tr>");
+        }
 
         // Show errors if present
         if (step.Errors != null && step.Errors.Count > 0)
@@ -461,11 +484,14 @@ internal class LoadHtmlReportWriter : ILoadReport
             Cols(b, "All Steps (Summary)", true, snapshot.Ok, snapshot.Failed, 1);
             b.AppendLine("</tr>");
 
-            // Summary Failed row
-            b.AppendLine(@"<tr class=""summary"">");
-            b.AppendLine($"<td></td>");
-            Cols(b, "", false, snapshot.Ok, snapshot.Failed, 1);
-            b.AppendLine("</tr>");
+            // Summary Failed row - only if there are failures
+            if (snapshot.Failed.RequestCount > 0)
+            {
+                b.AppendLine(@"<tr class=""summary"">");
+                b.AppendLine($"<td></td>");
+                Cols(b, "", false, snapshot.Ok, snapshot.Failed, 1);
+                b.AppendLine("</tr>");
+            }
 
             // Step rows
             foreach (var step in snapshot.Steps)
@@ -486,11 +512,14 @@ internal class LoadHtmlReportWriter : ILoadReport
         Cols(b, stepResult.Name, true, stepResult.Ok, stepResult.Failed, 1);
         b.AppendLine("</tr>");
 
-        // Failed row
-        b.AppendLine(@"<tr>");
-        b.AppendLine($"<td></td>"); // Empty timestamp column
-        Cols(b, "", false, stepResult.Ok, stepResult.Failed, 1);
-        b.AppendLine("</tr>");
+        // Failed row - only if there are failures
+        if (stepResult.Failed.RequestCount > 0)
+        {
+            b.AppendLine(@"<tr>");
+            b.AppendLine($"<td></td>"); // Empty timestamp column
+            Cols(b, "", false, stepResult.Ok, stepResult.Failed, 1);
+            b.AppendLine("</tr>");
+        }
 
         if (stepResult.Steps == null || stepResult.Steps.Count == 0)
             return;
