@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Load;
-using Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Load;
 
@@ -15,8 +14,6 @@ internal class LoadHtmlReportWriter : ILoadReport
     {
         try
         {
-            await IncludeEmbeddedResources(loadReportData);
-
             var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Group.Name}-{loadReportData.Test.Name}");
             var filePath = Path.Combine(loadReportData.TestsOutputDirectory, $"LoadTestReport-{reportName}.html");
 
@@ -47,7 +44,6 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine(@"<div class=""page-container"">");
 
         b.AppendLine($"<h1>{loadReportData.Test.Name} - Load Test Report</h1>");
-        b.AppendLine($@"<div class=""test-name"">{loadReportData.Group.Name}</div>");
 
         WriteRunInfo(loadReportData, b);
 
@@ -74,6 +70,12 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine(@"<div class=""run-info"">");
 
         b.AppendLine(@"<div class=""run-info-row"">");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Suite</span><span class=""info-value"">" + loadReportData.Suite.Name + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Group</span><span class=""info-value"">" + loadReportData.Group.Name + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Test</span><span class=""info-value"">" + loadReportData.Test.Name + "</span></div>");
+        b.AppendLine("</div>");
+
+        b.AppendLine(@"<div class=""run-info-row"">");
         b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Run ID</span><span class=""info-value"">" + loadReportData.TestRunId + "</span></div>");
         b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Duration</span><span class=""info-value"">" + loadReportData.TestRunDuration.ToTestFuznReadableString() + "</span></div>");
         b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Started</span><span class=""info-value"">" + loadReportData.TestRunStartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
@@ -91,10 +93,10 @@ internal class LoadHtmlReportWriter : ILoadReport
             b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Tags</span><span class=""info-value"">" + string.Join(", ", loadReportData.Test.Tags) + "</span></div>");
             b.AppendLine("</div>");
         }
-        if (loadReportData.TestSuite.Metadata != null && loadReportData.TestSuite.Metadata.Count > 0)
+        if (loadReportData.Suite.Metadata != null && loadReportData.Suite.Metadata.Count > 0)
         {
             b.AppendLine(@"<div class=""run-info-row"">");
-            foreach (var metadata in loadReportData.TestSuite.Metadata)
+            foreach (var metadata in loadReportData.Suite.Metadata)
             {
                 b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{metadata.Key}</span><span class=""info-value"">{metadata.Value}</span></div>");
             }
@@ -745,16 +747,5 @@ internal class LoadHtmlReportWriter : ILoadReport
 
         b.AppendLine("});");
         b.AppendLine("</script>");
-    }
-
-    private async Task IncludeEmbeddedResources(LoadReportData loadReportData)
-    {
-        await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
-            "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
-            Path.Combine(loadReportData.TestsOutputDirectory, "assets/styles/testfuzn.css"));
-
-        await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
-            "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
-            Path.Combine(loadReportData.TestsOutputDirectory, "assets/scripts/chart.js"));
     }
 }
