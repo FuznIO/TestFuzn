@@ -40,11 +40,14 @@ internal class ReportManager
         var testInfo = testExecutionState.TestClassInstance.TestInfo;
 
         var data = new LoadReportData();
-        data.TestSuite = new Contracts.Reports.SuiteInfo();
-        data.TestSuite.Name = GlobalState.Configuration.Suite.Name;
-        data.TestSuite.Id = GlobalState.Configuration.Suite.Id;
-        data.TestSuite.Metadata = GlobalState.Configuration.Suite.Metadata;
+        data.Suite = new Contracts.Reports.SuiteInfo();
+        data.Suite.Name = GlobalState.Configuration.Suite.Name;
+        data.Suite.Id = GlobalState.Configuration.Suite.Id;
+        data.Suite.Metadata = GlobalState.Configuration.Suite.Metadata;
         data.TestRunId = GlobalState.TestRunId;
+        data.TestRunStartTime = GlobalState.TestRunStartTime;
+        data.TestRunEndTime = GlobalState.TestRunEndTime;
+        data.TestRunDuration = data.TestRunEndTime - data.TestRunStartTime;
         data.Group = new Contracts.Reports.GroupInfo();
         data.Group.Name = testInfo.Group.Name;
         data.Test = new Contracts.Reports.TestInfo();

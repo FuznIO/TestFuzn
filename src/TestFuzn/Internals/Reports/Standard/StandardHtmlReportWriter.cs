@@ -1,6 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
-using Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
 using System.Text;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Standard;
@@ -11,8 +10,6 @@ internal class StandardHtmlReportWriter : IStandardReport
     {
         try
         {
-            await IncludeEmbeddedResources(reportData);
-
             var filePath = Path.Combine(reportData.TestsOutputDirectory, "TestReport.html");
 
             var htmlContent = GenerateHtmlReport(reportData);
@@ -421,16 +418,5 @@ internal class StandardHtmlReportWriter : IStandardReport
                 WriteStepResult(b, subStep, level + 1);
             }
         }
-    }
-
-    private async Task IncludeEmbeddedResources(StandardReportData reportData)
-    {
-        await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
-            "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
-            Path.Combine(reportData.TestsOutputDirectory, "assets/styles/testfuzn.css"));
-
-        await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(
-            "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
-            Path.Combine(reportData.TestsOutputDirectory, "assets/scripts/chart.js"));
     }
 }

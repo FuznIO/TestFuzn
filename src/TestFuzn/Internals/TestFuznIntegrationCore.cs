@@ -1,5 +1,7 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Internals.Reports;
+using Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
 using Fuzn.TestFuzn.Internals.Results.Standard;
 using System.Reflection;
 
@@ -46,6 +48,12 @@ internal static class TestFuznIntegrationCore
         var testAssemblyName = startupType.Assembly.GetName().Name;
         GlobalState.TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, "TestFuznResults", testAssemblyName, $"{GlobalState.TestRunId}");
         Directory.CreateDirectory(GlobalState.TestsOutputDirectory);
+
+        await EmbeddedResourceHelper.WriteEmbeddedResourceToFile("Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
+                                        Path.Combine(GlobalState.TestsOutputDirectory, "assets/styles/testfuzn.css"));
+
+        await EmbeddedResourceHelper.WriteEmbeddedResourceToFile("Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
+                                        Path.Combine(GlobalState.TestsOutputDirectory, "assets/scripts/chart.js"));
 
         GlobalState.Logger = Internals.Logging.LoggerFactory.CreateLogger();
         GlobalState.Logger.LogInformation("Logging initialized");
