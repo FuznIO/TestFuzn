@@ -93,7 +93,6 @@ public class LoadReportTests : Test
     }
 
     [Test]
-    [Skip]
     public async Task ZLongRunning()
     {
         int i = 0;

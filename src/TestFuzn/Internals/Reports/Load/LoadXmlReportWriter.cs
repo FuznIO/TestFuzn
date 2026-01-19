@@ -27,13 +27,13 @@ internal class LoadXmlReportWriter : ILoadReport
 
                 writer.WriteStartElement("Suite");
                 {
-                    writer.WriteElementString("Name", loadReportData.TestSuite.Name);
-                    writer.WriteElementString("Id", loadReportData.TestSuite.Id);
+                    writer.WriteElementString("Name", loadReportData.Suite.Name);
+                    writer.WriteElementString("Id", loadReportData.Suite.Id);
 
-                    if (loadReportData.TestSuite.Metadata != null)
+                    if (loadReportData.Suite.Metadata != null)
                     {
                         writer.WriteStartElement("Metadata");
-                        foreach (var metadata in loadReportData.TestSuite.Metadata)
+                        foreach (var metadata in loadReportData.Suite.Metadata)
                         {
                             writer.WriteStartElement("Property");
                             writer.WriteElementString("Key", metadata.Key);

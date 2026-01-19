@@ -28,7 +28,7 @@ public class Startup : IStartup
             c.ConfigureBrowserLaunchOptions = (browserType, launchOptions) =>
             {
                 launchOptions.Timeout = 5000;
-                launchOptions.Headless = false;
+                launchOptions.Headless = true;
             };
         });
     }
