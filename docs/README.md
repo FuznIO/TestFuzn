@@ -58,11 +58,11 @@
 - [Basic Browser Testing](playwright-testing.md#basic-browser-testing)
 - [UI Load Testing](playwright-testing.md#ui-load-testing)
 
-### [Real-Time Statistics with InfluxDB](influxdb.md)
-- [Configuration](influxdb.md#configuration)
-- [Using appsettings.json](influxdb.md#using-appsettingsjson)
-- [Available Metrics](influxdb.md#available-metrics)
-- [Grafana Dashboard](influxdb.md#grafana-dashboard)
+### [Real-Time Statistics with InfluxDB and Grafana](influxdb-grafana.md)
+- [Configuration](influxdb-grafana.md#configuration)
+- [Using appsettings.json](influxdb-grafana.md#using-appsettingsjson)
+- [Available Metrics](influxdb-grafana.md#available-metrics)
+- [Grafana Dashboard](influxdb-grafana.md#grafana-dashboard)
 
 ### [Test Reports](test-reports.md)
 - [Standard Test Reports](test-reports.md#standard-test-reports)
