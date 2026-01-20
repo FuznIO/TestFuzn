@@ -1,0 +1,1086 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "TestFuzn_InfluxDB",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 14,
+      "panels": [],
+      "title": "Request Counts",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "locale"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^Request Count$/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "query": "from(bucket: \"TestFuzn\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\n  |> filter(fn: (r) => r._field == \"request_count\")\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\n  |> last()\n  |> keep(columns: [\"_value\"])\n  |> rename(columns: {_value: \"Request Count\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Requests",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "locale"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^OK Request Count$/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "query": "from(bucket: \"TestFuzn\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\n  |> filter(fn: (r) => r._field == \"ok_request_count\")\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\n  |> last()\n  |> keep(columns: [\"_value\"])\n  |> rename(columns: {_value: \"OK Request Count\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Successful Requests",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "locale"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dennjp7mu34lce"
+          },
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"failed_request_count\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n    |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"Failed Request Count\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Failed Requests",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "Total Requests per Second",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "locale"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 12,
+        "y": 1
+      },
+      "id": 17,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dennjp7mu34lce"
+          },
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n    |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"Total Requests per Second\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Total RPS",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "Successful Requests per Second",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "locale"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 14,
+        "y": 1
+      },
+      "id": 18,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dennjp7mu34lce"
+          },
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"ok_requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n    |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"Successful RPS\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Successful RPS",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "Failed Requests per Second",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "locale"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 16,
+        "y": 1
+      },
+      "id": 19,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dennjp7mu34lce"
+          },
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"failed_requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n    |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"Failed RPS\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Failed RPS",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 15,
+      "panels": [],
+      "title": "Throughput (Requests per Second)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ok_requests_per_second"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failed_requests_per_second"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 18,
+        "x": 0,
+        "y": 6
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dennjp7mu34lce"
+          },
+          "hide": false,
+          "query": "testStart = from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> first()\r\n  |> findRecord(fn: (key) => true, idx: 0)\r\n\r\n  from(bucket: \"TestFuzn\")\r\n  |> range(start: testStart._time)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")",
+          "refId": "C"
+        },
+        {
+          "query": "testStart = from(bucket: \"TestFuzn\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\n  |> filter(fn: (r) => r._field == \"ok_requests_per_second\")\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\n  |> first()\n  |> findRecord(fn: (key) => true, idx: 0)\n\nfrom(bucket: \"TestFuzn\")\n  |> range(start: testStart._time)\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\n  |> filter(fn: (r) => r._field == \"ok_requests_per_second\")\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dennjp7mu34lce"
+          },
+          "hide": false,
+          "query": "testStart = from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"failed_requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> first()\r\n  |> findRecord(fn: (key) => true, idx: 0)\r\n\r\n  from(bucket: \"TestFuzn\")\r\n  |> range(start: testStart._time)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"failed_requests_per_second\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")",
+          "refId": "B"
+        }
+      ],
+      "title": "Requests Per Second (OK)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 13,
+      "panels": [],
+      "title": "Response Time Metrics",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "OK - Mean Response Time (ms)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 0,
+        "y": 22
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"ok_response_time_mean_ms\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n  |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"Mean\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Mean (ms)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "OK - Median Response Time (ms)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 2,
+        "y": 22
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"ok_response_time_median_ms\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n  |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"Median\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Median (ms)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "OK - 95 Percentile Response Time (ms)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 4,
+        "y": 22
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"ok_response_time_percentile_75_ms\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n  |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"P75\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "P75 (ms)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "OK - 95 Percentile Response Time (ms)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 6,
+        "y": 22
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"ok_response_time_percentile_95_ms\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n  |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"P95\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "P95 (ms)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "OK - 99 Percentile Response Time (ms)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 8,
+        "y": 22
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"ok_response_time_percentile_99_ms\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n  |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"P99\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "P99 (ms)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "OK - Min Response Time (ms)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 10,
+        "y": 22
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"ok_response_time_min_ms\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n  |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"Min\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Min (ms)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "OK - Max Response Time (ms)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 12,
+        "y": 22
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"ok_response_time_max_ms\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n  |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"Max\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Max (ms)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dennjp7mu34lce"
+      },
+      "description": "OK - Standard Devation (ms)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 14,
+        "y": 22
+      },
+      "id": 16,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "query": "from(bucket: \"TestFuzn\")\r\n  |> range(start: -24h)\r\n  |> filter(fn: (r) => r._measurement == \"scenario_metrics\")\r\n  |> filter(fn: (r) => r._field == \"ok_response_time_stddev_ms\")\r\n  |> filter(fn: (r) => r.test_run_id == \"${test_run_id}\")\r\n  |> last()\r\n  |> keep(columns: [\"_value\"])\r\n  |> rename(columns: {_value: \"StdDev\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "StdDev (ms)",
+      "type": "stat"
+    }
+  ],
+  "preload": false,
+  "refresh": "5s",
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "2025-06-22_22-20__11a035",
+          "value": "2025-06-22_22-20__11a035"
+        },
+        "definition": "    import \"influxdata/influxdb/schema\"\r\n    schema.tagValues(\r\n      bucket: \"TestFuzn\",\r\n      tag: \"test_run_id\",\r\n      start: -30d\r\n    )",
+        "name": "test_run_id",
+        "options": [],
+        "query": {
+          "query": "    import \"influxdata/influxdb/schema\"\r\n    schema.tagValues(\r\n      bucket: \"TestFuzn\",\r\n      tag: \"test_run_id\",\r\n      start: -30d\r\n    )"
+        },
+        "refresh": 1,
+        "regex": "",
+        "sort": 2,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "TestFuzn – Load Test Dashboard",
+  "uid": "185cc6b3-8987-4402-b394-e4c0e4a84baf",
+  "version": 85
+}

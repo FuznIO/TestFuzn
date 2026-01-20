@@ -149,11 +149,7 @@ You can create files that apply only when both execution and target environments
 
 ### Node-Specific Overrides
 
-For distributed test execution, you can have node-specific configuration:
-
-Set via:
-- Environment variable: `TESTFUZN_NODE_NAME`
-- Command line: `--node-name <value>`
+You can have node-specific configuration. The **node name** comes from **Environment.MachineName**
 
 Example: `appsettings.node-worker-01.json`
 

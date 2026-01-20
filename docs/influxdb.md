@@ -31,11 +31,13 @@ configuration.UseInfluxDB(); // Reads from appsettings.json
 ```json
 // appsettings.json
 {
-  "InfluxDB": {
-    "Url": "http://localhost:8086",
-    "Token": "your-influxdb-token",
-    "Org": "your-org",
-    "Bucket": "testfuzn"
+  "TestFuzn": {
+    "InfluxDB": {
+        "Url": "http://localhost:8086",
+        "Token": "your-influxdb-token",
+        "Org": "your-org",
+        "Bucket": "testfuzn"
+    }
   }
 }
 ```
@@ -58,11 +60,26 @@ When using InfluxDB, the following metrics are streamed in real-time:
 
 ## Grafana Dashboard
 
-Create a Grafana dashboard to visualize:
+A pre-configured Docker Compose setup is available in the [examples/influxdb-grafana](../examples/influxdb-grafana) folder that includes both InfluxDB and Grafana with a ready-to-use dashboard.
+
+To get started quickly:
+
+```bash
+cd examples/influxdb-grafana
+docker-compose up -d
+```
+
+This will start:
+- **InfluxDB** on `http://localhost:8086`
+- **Grafana** on `http://localhost:3000` (default credentials: admin/admin)
+
+The Grafana dashboard includes visualizations for:
 - Requests per second over time
 - Response time percentiles
 - Error rate trends
 - Concurrent user counts
+
+You can also create custom Grafana dashboards to visualize additional metrics as needed.
 
 ---
 

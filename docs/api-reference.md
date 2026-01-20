@@ -44,7 +44,7 @@
 | `Simulations(Action/Func)` | Configure load simulations |
 | `AssertWhileRunning(Action)` | Add runtime assertions |
 | `AssertWhenDone(Action)` | Add post-execution assertions |
-| `IncludeScenario(ScenarioBuilder)` | Include another scenario |
+| `IncludeScenario(ScenarioBuilder)` | Include an additional scenario to execute in parallel with the main scenario. Multiple calls add multiple scenarios. |
 
 ---
 

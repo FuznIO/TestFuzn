@@ -115,7 +115,8 @@ public async Task Verify_product_creation() { ... }
 
 ### `[Group]` Attribute
 
-Specifies the group name for a test class. Tests in the same group are reported together.
+Specifies the group name for a test class. Tests in the same group are reported together.  
+If not specified, the fully qualified class name (namespace + class name) is used.
 
 ```csharp
 [TestClass]
