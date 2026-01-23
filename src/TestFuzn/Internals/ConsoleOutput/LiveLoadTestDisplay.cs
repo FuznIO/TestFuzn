@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 
 internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, CancellationToken stoppingToken)
 {
-    private Dictionary<string, LiveMetrics> _stats = stats;
+    private readonly Dictionary<string, LiveMetrics> _stats = stats;
     public bool KeepRunning { get; set; } = true;
 
     public Task Show()
@@ -13,16 +13,17 @@ internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, Cancel
         AnsiConsole.Clear();
         var metaTable = BuildMetaDataTable();
         var statsTable = BuildStatsTable();
+        var stepsTable = BuildStepsTable();
 
-        var grid = new Grid().AddColumn().AddColumn();
+        var grid = new Grid().AddColumn().AddColumn().AddColumn();
         grid.AddRow(new Panel(metaTable)
-                .Header("[bold white on blue] Metadata [/]")
-                //.Expand()
-            )
-            .AddRow(new Panel(statsTable)
-                .Header("[bold white on green] Global Stats [/]")
-                .Expand());
-        
+            .Header("[bold white on blue] Metadata [/]"))
+        .AddRow(new Panel(statsTable)
+            .Header("[bold white on green] Global Stats [/]")
+            .Expand())
+        .AddRow(new Panel(stepsTable)
+            .Header("[bold white on green] Steps Stats [/]")
+            .Expand());
 
         return AnsiConsole.Live(grid)
             .AutoClear(false)
@@ -35,6 +36,7 @@ internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, Cancel
                     await DelayHelper.Delay(TimeSpan.FromMilliseconds(100), stoppingToken);
                     UpdateMetaDataTable(metaTable);
                     UpdateStatsTable(statsTable);
+                    UpdateStepsTables(stepsTable);
                     ctx.Refresh();
                 }
 
@@ -42,11 +44,6 @@ internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, Cancel
                 
                 return Task.CompletedTask;
             });
-    }
-
-    public void UpdateStats(Dictionary<string, LiveMetrics> updatedStats)
-    {
-        _stats = updatedStats;
     }
 
     private Table BuildMetaDataTable()
@@ -84,7 +81,6 @@ internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, Cancel
         foreach (var scenarioStats in _stats)
         {
             table.AddRow($"{scenarioStats.Key}", "Total", $"{scenarioStats.Value.ScenarioLoadResultSnapshot.RequestCount}");
-            //table.AddRow("");
             table.AddRow("", "[green]OK[/]", $"{scenarioStats.Value.ScenarioLoadResultSnapshot.Ok.RequestCount}");
             table.AddRow("", "[red]Failed[/]", $"{scenarioStats.Value.ScenarioLoadResultSnapshot.Failed.RequestCount}", "—");
         }
@@ -94,8 +90,6 @@ internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, Cancel
 
     private void UpdateMetaDataTable(Table table)
     {
-        int GetRowIndex(int tableRow, int index) => index * 1 + tableRow;
-        
         foreach (var (stats, index) in _stats.Select((s, i) => (s, i)))
         {
             var duration = $"{(int)stats.Value.Duration.TotalHours:00}:{stats.Value.Duration.Minutes:00}:{stats.Value.Duration.Seconds:00}";
@@ -103,7 +97,6 @@ internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, Cancel
             table.UpdateCell(index, 1, duration);
             table.UpdateCell(index, 2, GetStatusMarkup(stats.Value.Status));
         }
-        
     }
 
     private void UpdateStatsTable(Table table)
@@ -124,7 +117,7 @@ internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, Cancel
             table.UpdateCell(GetRowIndex(1, index), 9, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimePercentile75.ToTestFuznResponseTime()}");
             table.UpdateCell(GetRowIndex(1, index), 10, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimePercentile95.ToTestFuznResponseTime()}");
             table.UpdateCell(GetRowIndex(1, index), 11, $"{stats.Value.ScenarioLoadResultSnapshot.Ok.ResponseTimePercentile99.ToTestFuznResponseTime()}");
-            
+
             table.UpdateCell(GetRowIndex(2, index), 2, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.RequestCount}");
             table.UpdateCell(GetRowIndex(2, index), 3, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.RequestsPerSecond}");
             table.UpdateCell(GetRowIndex(2, index), 4, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimeMin.ToTestFuznResponseTime()}");
@@ -135,6 +128,48 @@ internal class LiveLoadTestDisplay(Dictionary<string, LiveMetrics> stats, Cancel
             table.UpdateCell(GetRowIndex(2, index), 9, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimePercentile75.ToTestFuznResponseTime()}");
             table.UpdateCell(GetRowIndex(2, index), 10, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimePercentile95.ToTestFuznResponseTime()}");
             table.UpdateCell(GetRowIndex(2, index), 11, $"{stats.Value.ScenarioLoadResultSnapshot.Failed.ResponseTimePercentile99.ToTestFuznResponseTime()}");
+        }
+    }
+
+    private Table BuildStepsTable()
+    {
+        var table = new Table { Border = TableBorder.Minimal };
+        table.AddColumn("[u]Step[/]");
+        table.AddColumn("[u]Total[/]");
+        table.AddColumn("[u]Ok[/]");
+        table.AddColumn("[u]Failed[/]");
+
+        foreach (var scenarioStats in _stats)
+        {
+            foreach (var step in scenarioStats.Value.ScenarioLoadResultSnapshot.Steps)
+                table.AddRow(
+                    $"{step.Key}",
+                    $"{step.Value.RequestCount}",
+                    $"{step.Value.Ok.RequestCount}",
+                    $"{step.Value.Failed.RequestCount}"
+                );
+        }
+
+        return table;
+    }
+
+    private void UpdateStepsTables(Table stepTable)
+    {
+        try
+        {
+            foreach (var scenarioStats in _stats)
+            {
+                foreach (var (step, index) in scenarioStats.Value.ScenarioLoadResultSnapshot.Steps.Select((s, i) => (s, i)))
+                {
+                    stepTable.UpdateCell(index, 1, $"{step.Value.RequestCount}");
+                    stepTable.UpdateCell(index, 2, $"{step.Value.Ok.RequestCount}");
+                    stepTable.UpdateCell(index, 3, $"{step.Value.Failed.RequestCount}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
         }
     }
 
