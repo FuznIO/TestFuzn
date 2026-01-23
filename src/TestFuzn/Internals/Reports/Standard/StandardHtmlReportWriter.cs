@@ -30,8 +30,8 @@ internal class StandardHtmlReportWriter : IStandardReport
         var testsPassed = reportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Passed));
         var testsSkipped = reportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Skipped));
         var testsFailed = reportData.GroupResults.Sum(f => f.Value.TestResults.Count(s => s.Value.Status == TestStatus.Failed));
-        var testsExecuted = testsPassed + testsFailed;
-        var passRate = testsExecuted > 0 ? Math.Round((double)testsPassed / testsExecuted * 100, 1) : 0;
+        var testsExecuted = testsPassed + testsFailed + testsSkipped;
+        var passRate = testsExecuted > 0 ? Math.Round((double) (testsPassed + testsSkipped) / testsExecuted * 100, 1) : 0;
 
         b.AppendLine("<!DOCTYPE html>");
         b.AppendLine("<html lang='en'>");
