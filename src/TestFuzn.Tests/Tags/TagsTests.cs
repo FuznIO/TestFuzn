@@ -3,9 +3,9 @@
 [TestClass]
 public class TagsTests : Test
 {
-    [Tags("Category1", "Category2", "Category3")]
+    [Tags("Category1")]
     [Test]
-    public async Task VerifySingleTestCategoryIsTurnedIntoTag()
+    public async Task VerifySingleTags()
     {
         await Scenario()
             .Step("Step 1", async (context) =>
@@ -22,7 +22,7 @@ public class TagsTests : Test
 
     [Test]
     [Tags("Category1", "Category2", "Category3")]
-    public async Task VerifyMultipleTestCategoriesAreTurnedIntoTags()
+    public async Task VerifyMultipleTags()
     {
         await Scenario()
             .Step("Step 1", async (context) =>
