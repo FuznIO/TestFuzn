@@ -1,9 +1,10 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
+[Tags("Tag1_Class")]
 public class TagsTests : Test
 {
-    [Tags("Category1")]
+    [Tags("Tag1")]
     [Test]
     public async Task VerifySingleTags()
     {
@@ -15,7 +16,8 @@ public class TagsTests : Test
             .AssertInternalState(state => 
             {
                 var tags = state.TestExecutionState.TestClassInstance.TestInfo.Tags;
-                Assert.Contains("Category1", tags);
+                Assert.Contains("Tag1_Class", tags);
+                Assert.Contains("Tag1", tags);
             })
             .Run();
     }
