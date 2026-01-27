@@ -80,6 +80,9 @@ public class TestAttribute : TestMethodAttribute
     private static (bool HasSkipAttribute, string Reason) GetSkipAttributeInfo(MethodInfo testMethod)
     {
         var skipAttribute = testMethod.GetCustomAttributes<SkipAttribute>(inherit: true)
+                                      .FirstOrDefault()
+                           ?? testMethod.DeclaringType?
+                                      .GetCustomAttributes<SkipAttribute>(inherit: true)
                                       .FirstOrDefault();
         if (skipAttribute != null)
         {
@@ -90,8 +93,11 @@ public class TestAttribute : TestMethodAttribute
 
     private static List<string>? GetTags(MethodInfo testMethod)
     {
-        var tagsAttributes = testMethod.GetCustomAttributes<TagsAttribute>(inherit: true)
-                                               .ToList();
+        var methodTags = testMethod.GetCustomAttributes<TagsAttribute>(inherit: true);
+        var classTags = testMethod.DeclaringType?
+            .GetCustomAttributes<TagsAttribute>(inherit: true) ?? [];
+
+        var tagsAttributes = methodTags.Concat(classTags).ToList();
 
         return tagsAttributes.Any() 
             ? tagsAttributes.SelectMany(t => t.Tags ?? []).ToList() 
@@ -100,8 +106,11 @@ public class TestAttribute : TestMethodAttribute
 
     private static Dictionary<string, string>? GetMetadata(MethodInfo testMethod)
     {
-        var metadataAttributes = testMethod.GetCustomAttributes<MetadataAttribute>(inherit: true)
-                                                      .ToList();
+        var methodMetadata = testMethod.GetCustomAttributes<MetadataAttribute>(inherit: true);
+        var classMetadata = testMethod.DeclaringType?
+            .GetCustomAttributes<MetadataAttribute>(inherit: true) ?? [];
+
+        var metadataAttributes = methodMetadata.Concat(classMetadata).ToList();
 
         return metadataAttributes.Any()
             ? metadataAttributes.ToDictionary(m => m.Key, m => m.Value)
@@ -110,8 +119,11 @@ public class TestAttribute : TestMethodAttribute
 
     private static List<string> GetTargetEnvironments(MethodInfo methodInfo)
     {
-        var targetEnvAttributes = methodInfo.GetCustomAttributes<TargetEnvironmentsAttribute>(inherit: true)
-                                     .ToList();
+        var methodEnvs = methodInfo.GetCustomAttributes<TargetEnvironmentsAttribute>(inherit: true);
+        var classEnvs = methodInfo.DeclaringType?
+            .GetCustomAttributes<TargetEnvironmentsAttribute>(inherit: true) ?? [];
+
+        var targetEnvAttributes = methodEnvs.Concat(classEnvs).ToList();
 
         return targetEnvAttributes.Any()
             ? targetEnvAttributes.SelectMany(e => e.Environments ?? []).ToList()
