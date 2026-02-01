@@ -6,3 +6,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Fuzn.TestFuzn.Sinks.InfluxDB")]
 [assembly: InternalsVisibleTo("Fuzn.TestFuzn.Tests")]
 [assembly: InternalsVisibleTo("Fuzn.TestFuzn.Tests.Failing")]
+[assembly: InternalsVisibleTo("Fuzn.TestFuzn.Tests.Attributes")]

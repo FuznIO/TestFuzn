@@ -1,4 +1,4 @@
-﻿<Project Sdk="MSTest.Sdk/4.0.0">
+<Project Sdk="MSTest.Sdk/4.0.0">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,15 +8,15 @@
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
     <RunSettingsFilePath>$(MSBuildProjectDirectory)\.runsettings</RunSettingsFilePath>
-    <RootNamespace>Fuzn.TestFuzn.Tests</RootNamespace>
-    <AssemblyName>Fuzn.TestFuzn.Tests</AssemblyName>
+    <RootNamespace>Fuzn.TestFuzn.Tests.Attributes</RootNamespace>
+    <AssemblyName>Fuzn.TestFuzn.Tests.Attributes</AssemblyName>
     <Authors>Fuzn</Authors>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="TestFuznResults\**" />
-    <EmbeddedResource Remove="TestFuznResults\**" />
-    <None Remove="TestFuznResults\**" />
+    <Compile Remove="InputData\**" />
+    <EmbeddedResource Remove="InputData\**" />
+    <None Remove="InputData\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,6 +36,9 @@
     <None Update="appsettings.*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="appsettings.exec-dev.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="appsettings.target-test.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -43,12 +46,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="InputData\users.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="InputData\users.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -52,20 +52,33 @@ internal class SkipHandler
             return (false, null);
 
         if (test.Tags == null || test.Tags.Count == 0)
-            return (false, null);
-
-        if (GlobalState.TagsFilterInclude.Count > 0 &&
-            !test.Tags.Any(t => GlobalState.TagsFilterInclude.Contains(t, StringComparer.OrdinalIgnoreCase)))
         {
-            return (true,
-                $"Test skipped due to missing include tags. Test tags: [{string.Join(", ", test.Tags)}], Include tags: [{string.Join(", ", GlobalState.TagsFilterInclude)}]");
+            if (GlobalState.TagsFilterInclude.Count > 0)
+            {
+                return (true, $"Test is skipped. Reason: no tags found. Requires all of [{string.Join(", ", GlobalState.TagsFilterInclude)}].");
+            }
+            
+            return (false, null);
         }
 
         if (GlobalState.TagsFilterExclude.Count > 0 &&
             test.Tags.Any(t => GlobalState.TagsFilterExclude.Contains(t, StringComparer.OrdinalIgnoreCase)))
         {
             return (true,
-                $"Test skipped due to matching exclude tags. Test tags: [{string.Join(", ", test.Tags)}], Exclude tags: [{string.Join(", ", GlobalState.TagsFilterExclude)}]");
+                $"Test is skipped. Reason: matching exclude tags. Test tags: [{string.Join(", ", test.Tags)}], Exclude tags: [{string.Join(", ", GlobalState.TagsFilterExclude)}]");
+        }
+
+        if (GlobalState.TagsFilterInclude.Count > 0)
+        {
+            var missingTags = GlobalState.TagsFilterInclude
+                .Where(filterTag => !test.Tags.Contains(filterTag, StringComparer.OrdinalIgnoreCase))
+                .ToList();
+
+            if (missingTags.Count > 0)
+            {
+                return (true,
+                    $"Test is skipped. Reason: tag mismatch. Test has [{string.Join(", ", test.Tags)}], requires all of [{string.Join(", ", GlobalState.TagsFilterInclude)}]. Missing: [{string.Join(", ", missingTags)}].");
+            }
         }
 
         return (false, null);
@@ -81,7 +94,7 @@ internal class SkipHandler
                 return (false, null);
             
             return (true, 
-                $"Test skipped: test has no target environment specified, but runtime target is [{currentTargetEnv}].");
+                $"Test is skipped. Reason: test has no target environment specified, but runtime target is [{currentTargetEnv}].");
         }
 
         if (string.IsNullOrEmpty(currentTargetEnv))
@@ -89,14 +102,14 @@ internal class SkipHandler
             if (!testTargetEnvs.Any(x => x == ""))
             {
                 return (true,
-                    $"Test skipped: requires target environment [{string.Join(", ", testTargetEnvs)}] but none specified at runtime.");
+                    $"Test is skipped. Reason: requires target environment [{string.Join(", ", testTargetEnvs)}] but none specified at runtime.");
             }
         }
 
         if (!testTargetEnvs.Any(x => string.Equals(x, currentTargetEnv, StringComparison.OrdinalIgnoreCase)))
         {
             return (true, 
-                $"Test skipped: target environment mismatch. Test allows [{string.Join(", ", testTargetEnvs)}], current is [{currentTargetEnv}].");
+                $"Test is skipped. Reason: target environment mismatch. Test allows [{string.Join(", ", testTargetEnvs)}], current is [{currentTargetEnv}].");
         }
 
         return (false, null);

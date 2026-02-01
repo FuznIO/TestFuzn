@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<RunSettings>
+  <RunConfiguration>
+    <EnvironmentVariables>
+		<TESTFUZN_TARGET_ENVIRONMENT>test</TESTFUZN_TARGET_ENVIRONMENT>
+		<TESTFUZN_EXECUTION_ENVIRONMENT>dev</TESTFUZN_EXECUTION_ENVIRONMENT>
+		<TESTFUZN_TAGS_FILTER_INCLUDE>TagInclude1</TESTFUZN_TAGS_FILTER_INCLUDE>
+		<TESTFUZN_TAGS_FILTER_EXCLUDE>TagExclude1</TESTFUZN_TAGS_FILTER_EXCLUDE>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>
