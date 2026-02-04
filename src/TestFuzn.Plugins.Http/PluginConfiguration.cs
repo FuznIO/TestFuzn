@@ -25,4 +25,9 @@ public class PluginConfiguration
     /// Gets or sets the header name used for correlation IDs. Defaults to "X-Correlation-ID".
     /// </summary>
     public string CorrelationIdHeaderName { get; set; } = "X-Correlation-ID";
+
+    /// <summary>
+    /// Gets or sets the logging verbosity level. Defaults to <see cref="LoggingVerbosity.Normal"/>.
+    /// </summary>
+    public LoggingVerbosity LoggingVerbosity { get; set; } = LoggingVerbosity.Normal;
 }

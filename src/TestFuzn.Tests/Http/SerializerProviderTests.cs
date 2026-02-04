@@ -1,4 +1,5 @@
-﻿using Fuzn.TestFuzn.Plugins.Http;
+﻿using Fuzn.FluentHttp;
+using Fuzn.TestFuzn.Plugins.Http;
 
 namespace Fuzn.TestFuzn.Tests.Http;
 
@@ -6,65 +7,44 @@ namespace Fuzn.TestFuzn.Tests.Http;
 public class SerializerProviderTests : Test
 {
     [Test]
-    public async Task Verify_Using_SystemText_Set_During_Startup()
+    public async Task Verify_Default_Serialization()
     {
         await Scenario()
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
                 var token = await HttpTests.GetAuthToken(context);
 
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
-                                .AuthBearer(token)
-                                .Get();
+                var response = await context.CreateRequest("https://localhost:44316/api/Products")
+                                .WithAuthBearer(token)
+                                .Get<List<Product>>();
 
-                Assert.IsTrue(response.Ok);
-                var products = response.BodyAs<List<Product>>();
-                Assert.IsNotNull(products);
-                Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
+                Assert.IsTrue(response.IsSuccessful);
+                Assert.IsNotNull(response.Data);
+                Assert.IsNotEmpty(response.Data, "Expected more than one product to be returned.");
             })
             .Run();
     }
 
     [Test]
-    public async Task Verify_Using_SystemText_Override()
+    public async Task Verify_Custom_JsonOptions()
     {
         await Scenario()
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
                 var token = await HttpTests.GetAuthToken(context);
 
-                var systemTextJsonSerializer = new SystemTextJsonSerializerProvider();
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
-                                        .AuthBearer(token)
-                                        .SerializerProvider(systemTextJsonSerializer)
-                                        .Get();
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                var response = await context.CreateRequest("https://localhost:44316/api/Products")
+                                        .WithAuthBearer(token)
+                                        .WithJsonOptions(options)
+                                        .Get<List<Product>>();
 
-                Assert.IsTrue(response.Ok);
-                var products = response.BodyAs<List<Product>>();
-                Assert.IsNotNull(products);
-                Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
-            })
-            .Run();
-    }
-
-    [Test]
-    public async Task Verify_Using_Newtonsoft()
-    {
-        await Scenario()
-            .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
-            {
-                var token = await HttpTests.GetAuthToken(context);
-
-                var newtonsoftSerializer = new NewtonsoftSerializerProvider();
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
-                                        .AuthBearer(token)
-                                        .SerializerProvider(newtonsoftSerializer)
-                                        .Get();
-
-                Assert.IsTrue(response.Ok);
-                var products = response.BodyAs<List<Product>>();
-                Assert.IsNotNull(products);
-                Assert.IsNotEmpty(products, "Expected more than one product to be returned.");
+                Assert.IsTrue(response.IsSuccessful);
+                Assert.IsNotNull(response.Data);
+                Assert.IsNotEmpty(response.Data, "Expected more than one product to be returned.");
             })
             .Run();
     }
