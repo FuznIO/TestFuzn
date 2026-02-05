@@ -1,4 +1,5 @@
-﻿using Fuzn.TestFuzn.Plugins.Http;
+﻿using Fuzn.FluentHttp;
+using Fuzn.TestFuzn.Plugins.Http;
 using Fuzn.TestFuzn.Plugins.Playwright;
 using Fuzn.TestFuzn.Plugins.WebSocket;
 using Fuzn.TestFuzn.Sinks.InfluxDB;
@@ -66,8 +67,13 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             };
         });
 
+        configuration.Services.AddHttpClient("TestFuzn", configureClient =>
+        {
+            configureClient.Timeout = TimeSpan.FromSeconds(10);
+            // Additional HttpClient configuration can be done here
+        });
         configuration.UseHttp(x =>
-        {          
+        {        
         });
         configuration.UseWebSocket(config =>
         {
