@@ -66,11 +66,8 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             };
         });
 
-
-
         configuration.UseHttp(x =>
-        {
-            x.            
+        {          
         });
         configuration.UseWebSocket(config =>
         {
