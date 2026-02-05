@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Contracts.Providers;
 
 namespace Fuzn.TestFuzn;
 
@@ -19,7 +18,6 @@ public static class GlobalState
     internal static DateTime TestRunEndTime { get; set; }
     internal static TimeSpan SinkWriteFrequency { get; set; } = TimeSpan.FromSeconds(3);
     internal static string NodeName { get; set; }
-    internal static ISerializerProvider SerializerProvider => Configuration.SerializerProvider;
     internal static LoggingVerbosity LoggingVerbosity => Configuration.LoggingVerbosity;
     
     /// <summary>

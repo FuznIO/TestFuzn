@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Contracts.Plugins;
-using Fuzn.TestFuzn.Contracts.Providers;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Sinks;
 using Fuzn.TestFuzn.Internals.Reports.Standard;
@@ -36,7 +35,6 @@ public class TestFuznConfiguration
     internal List<IStandardReport> StandardReports { get; set; } = new();
     internal List<ILoadReport> LoadReports { get; set; } = new();
     internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
-    internal ISerializerProvider SerializerProvider { get; set; }
     internal IServiceProvider ServiceProvider { get; private set; }
 
     /// <summary>
@@ -50,8 +48,6 @@ public class TestFuznConfiguration
         AddSinkPlugin(new InMemorySnapshotCollectorSinkPlugin());
         AddLoadReport(new LoadHtmlReportWriter());
         AddLoadReport(new LoadXmlReportWriter());
-
-        SetSerializerProvider(new SystemTextJsonSerializerProvider());
     }
 
     /// <summary>
@@ -88,20 +84,6 @@ public class TestFuznConfiguration
         if (plugin == null)
             throw new ArgumentNullException(nameof(plugin), "Sink plugin cannot be null");
         SinkPlugins.Add(plugin);
-    }
-
-    /// <summary>
-    /// Sets the serializer provider for JSON serialization and deserialization.
-    /// Default serializer if not set is <see cref="SystemTextJsonSerializerProvider"/>.
-    /// </summary>
-    /// <param name="serializerProvider">The serializer provider to use.</param>
-    /// <exception cref="ArgumentNullException">Thrown when the serializer provider is null.</exception>
-    public void SetSerializerProvider(ISerializerProvider serializerProvider)
-    {
-        if (serializerProvider == null)
-            throw new ArgumentNullException(nameof(serializerProvider), "SerializerProvider cannot be null");
-
-        SerializerProvider = serializerProvider;
     }
 
     /// <summary>

@@ -249,7 +249,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
         if (data == null)
             throw new ArgumentNullException(nameof(data));
 
-        var json = GlobalState.SerializerProvider.Serialize(data);
+        var json = WebSocketGlobalState.Configuration.Serializer.Serialize(data);
         await SendText(json);
     }
 
@@ -315,7 +315,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
     public async Task<T> WaitForMessageAs<T>(TimeSpan? timeout = null) where T : class
     {
         var message = await WaitForMessage(timeout);
-        return GlobalState.SerializerProvider.Deserialize<T>(message);
+        return WebSocketGlobalState.Configuration.Serializer.Deserialize<T>(message);
     }
 
     /// <summary>

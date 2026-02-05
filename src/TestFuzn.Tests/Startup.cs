@@ -80,11 +80,10 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             config.DefaultConnectionTimeout = TimeSpan.FromSeconds(10);
             config.DefaultKeepAliveInterval = TimeSpan.FromSeconds(30);
             config.LogFailedConnectionsToTestConsole = true;
+            // Configure custom serializer for WebSocket JSON messages
+            // config.SerializerProvider = new NewtonsoftSerializerProvider();
         });
         configuration.UseInfluxDB();
-        // Only one serializer can be used, last one set wins, have these 2 lines just to show both options.
-        configuration.SerializerProvider = new NewtonsoftSerializerProvider();
-        configuration.SerializerProvider = new SystemTextJsonSerializerProvider();
     }
 
     public Task BeforeSuite(Context context)
