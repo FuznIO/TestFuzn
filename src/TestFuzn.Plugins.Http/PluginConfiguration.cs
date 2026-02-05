@@ -16,12 +16,6 @@ public class PluginConfiguration
     public bool LogFailedRequestsToTestConsole { get; set; }
 
     /// <summary>
-    /// Gets or sets a custom <see cref="IHttpClientFactory"/> for creating HTTP clients.
-    /// When null, the default factory is used.
-    /// </summary>
-    public IHttpClientFactory? CustomHttpClientFactory { get; set; }
-
-    /// <summary>
     /// Gets or sets the header name used for correlation IDs. Defaults to "X-Correlation-ID".
     /// </summary>
     public string CorrelationIdHeaderName { get; set; } = "X-Correlation-ID";

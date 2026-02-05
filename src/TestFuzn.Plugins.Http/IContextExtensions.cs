@@ -1,5 +1,6 @@
 ﻿using Fuzn.FluentHttp;
 using Fuzn.TestFuzn.Plugins.Http.Internals;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Plugins.Http;
 
@@ -9,50 +10,35 @@ namespace Fuzn.TestFuzn.Plugins.Http;
 public static class ContextExtensions
 {
     /// <summary>
-    /// Creates an HTTP client configured with TestFuzn logging and correlation ID injection.
-    /// Use FluentHttp's fluent API to build and send requests.
+    /// Creates an HTTP request builder for the specified URL using a named HTTP client.
     /// </summary>
     /// <param name="context">The step context.</param>
-    /// <returns>An <see cref="HttpClient"/> configured for TestFuzn.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the HTTP plugin has not been initialized.</exception>
+    /// <param name="url">The target URL for the HTTP request.</param>
+    /// <param name="httpClientName">The name of the HTTP client to use. Defaults to "TestFuzn".</param>
+    /// <returns>A <see cref="HttpRequestBuilder"/> for building and executing the HTTP request.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the HTTP plugin has not been initialized. Call <c>configuration.UseHttp()</c> in the startup.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="httpClientName"/> is null or whitespace.</exception>
     /// <example>
     /// <code>
-    /// var response = await context.CreateHttpClient()
-    ///     .Url("https://api.example.com/users")
-    ///     .WithContent(new { Name = "John" })
-    ///     .Post&lt;User&gt;();
+    /// var response = await context.CreateHttpRequest("https://api.example.com/users/1")
+    ///     .Get&lt;User&gt;();
     /// </code>
     /// </example>
-    public static HttpClient CreateHttpClient(this Context context)
+    public static FluentHttpRequest CreateHttpRequest(this Context context, string url, string httpClientName = "TestFuzn")
     {
         if (!HttpGlobalState.HasBeenInitialized)
             throw new InvalidOperationException("TestFuzn.Plugins.HTTP has not been initialized. Please call configuration.UseHttp() in the Startup.");
 
-        // Set context for the current async flow so the logging handler can access it
-        TestFuznHttpContext.Current = context;
+        if (string.IsNullOrWhiteSpace(httpClientName))
+            throw new ArgumentException("HTTP client name must be provided. Default is 'TestFuzn'.", nameof(httpClientName));
 
-        var httpClientFactory = HttpGlobalState.Configuration.CustomHttpClientFactory 
-            ?? context.Internals.Plugins.GetState<IHttpClientFactory>(typeof(HttpPlugin));
-        
-        return httpClientFactory.CreateClient(HttpClientNames.TestFuzn);
-    }
+        var httpClientFactory = context.Services.GetRequiredService<IHttpClientFactory>();
+        var httpClient = httpClientFactory.CreateClient(httpClientName);
 
-    /// <summary>
-    /// Creates an HTTP client and starts building a request for the specified URL.
-    /// This is a convenience method combining CreateHttpClient() and Url().
-    /// </summary>
-    /// <param name="context">The step context.</param>
-    /// <param name="url">The target URL for the HTTP request.</param>
-    /// <returns>A FluentHttp request builder.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the HTTP plugin has not been initialized.</exception>
-    /// <example>
-    /// <code>
-    /// var response = await context.CreateRequest("https://api.example.com/users/1")
-    ///     .Get&lt;User&gt;();
-    /// </code>
-    /// </example>
-    public static Fuzn.FluentHttp.HttpRequestBuilder CreateRequest(this Context context, string url)
-    {
-        return context.CreateHttpClient().Url(url);
+        var fluentHttpRequest = httpClient
+            .Url(url)
+            .WithOption("TestFuznContext", context);
+
+        return fluentHttpRequest;
     }
 }

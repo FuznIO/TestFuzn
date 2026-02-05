@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Sinks;
 using Fuzn.TestFuzn.Internals.Reports.Standard;
 using Fuzn.TestFuzn.Internals.Reports.Load;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn;
 
@@ -25,11 +26,18 @@ public class TestFuznConfiguration
     /// larger log files.</remarks>
     public LoggingVerbosity LoggingVerbosity { get; set; } = LoggingVerbosity.Normal;
 
+    /// <summary>
+    /// Gets the service collection for registering dependencies.
+    /// Plugins and user code can add services here during configuration.
+    /// </summary>
+    public IServiceCollection Services { get; } = new ServiceCollection();
+
     internal List<IContextPlugin> ContextPlugins { get; set; } = new();
     internal List<IStandardReport> StandardReports { get; set; } = new();
     internal List<ILoadReport> LoadReports { get; set; } = new();
     internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
     internal ISerializerProvider SerializerProvider { get; set; }
+    internal IServiceProvider ServiceProvider { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TestFuznConfiguration"/> class with default settings.
@@ -56,6 +64,8 @@ public class TestFuznConfiguration
     {
         if (plugin == null)
             throw new ArgumentNullException(nameof(plugin), "Context plugin cannot be null");
+        
+        plugin.ConfigureServices(Services);
         ContextPlugins.Add(plugin);
     }
 
@@ -92,6 +102,15 @@ public class TestFuznConfiguration
             throw new ArgumentNullException(nameof(serializerProvider), "SerializerProvider cannot be null");
 
         SerializerProvider = serializerProvider;
+    }
+
+    /// <summary>
+    /// Builds the service provider from the configured services.
+    /// Called internally after all plugins have registered their services.
+    /// </summary>
+    internal void BuildServiceProvider()
+    {
+        ServiceProvider = Services.BuildServiceProvider();
     }
 
     internal void ClearReports()

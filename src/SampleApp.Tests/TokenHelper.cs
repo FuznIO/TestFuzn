@@ -8,7 +8,7 @@ public static class TokenHelper
 {
     public static async Task<string> GetAuthToken(IterationContext context)
     {
-        var response = await context.CreateRequest($"https://localhost:44316/api/Auth/token")
+        var response = await context.CreateHttpRequest($"https://localhost:44316/api/Auth/token")
             .WithContent(new { Username = "admin", Password = "admin123" })
             .Post<TokenResponse>();
 

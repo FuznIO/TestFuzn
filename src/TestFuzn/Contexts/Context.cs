@@ -12,4 +12,9 @@ public class Context
     public ILogger Logger => IterationState.Logger; 
     internal ITestFrameworkAdapter TestFramework => IterationState.TestFramework;
     public StepInfo StepInfo { get; internal set; }
+    
+    /// <summary>
+    /// Gets the service provider for resolving dependencies from the IoC container.
+    /// </summary>
+    public IServiceProvider Services => GlobalState.Configuration.ServiceProvider;
 }

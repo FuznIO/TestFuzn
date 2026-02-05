@@ -1,0 +1,12 @@
+﻿namespace Fuzn.TestFuzn.Plugins.Http;
+
+public static class HttpRequestOptionsExtensions
+{
+    public static Context GetTestFuznContext(this HttpRequestOptions options)
+    {
+        if (!options.TryGetValue(HttpPluginConstants.ContextOptionName, out var context))
+            throw new InvalidOperationException("TestFuzn context is not available in the HttpRequestOptions. Ensure that the HttpRequestMessage was created using the TestFuzn HttpPlugin.");
+
+        return context;
+    }
+}

@@ -2,6 +2,7 @@
 using Fuzn.TestFuzn.Plugins.Playwright;
 using Fuzn.TestFuzn.Plugins.WebSocket;
 using Fuzn.TestFuzn.Sinks.InfluxDB;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Tests;
 
@@ -37,6 +38,11 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             }
         };
         configuration.LoggingVerbosity = LoggingVerbosity.Normal;
+        
+        // Register custom services in the IoC container
+        // Example: configuration.Services.AddSingleton<IMyService, MyService>();
+        // Example: configuration.Services.AddScoped<ITestDataProvider, TestDataProvider>();
+        
         configuration.UsePlaywright(c =>
         {
             c.BrowserTypes = new List<string> { "chromium" };
@@ -59,7 +65,13 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
                 return Task.CompletedTask;
             };
         });
-        configuration.UseHttp();
+
+
+
+        configuration.UseHttp(x =>
+        {
+            x.            
+        });
         configuration.UseWebSocket(config =>
         {
             config.DefaultConnectionTimeout = TimeSpan.FromSeconds(10);

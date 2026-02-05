@@ -29,7 +29,7 @@ public class ProductHttpTests : Test
                     Price = 100
                 };
 
-                var response = await context.CreateRequest("https://localhost:44316/api/Products")
+                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
                     .WithAuthBearer(authToken)
                     .WithContent(newProduct)
                     .Post();
@@ -38,7 +38,7 @@ public class ProductHttpTests : Test
             })
             .Step("Call GET /Products to verify the product was created", async (context) =>
             {
-                var response = await context.CreateRequest($"https://localhost:44316/api/Products/{newProduct.Id}")
+                var response = await context.CreateHttpRequest($"https://localhost:44316/api/Products/{newProduct.Id}")
                     .WithAuthBearer(authToken)
                     .Get<Product>();
 
@@ -55,7 +55,7 @@ public class ProductHttpTests : Test
                     Name = "Updated Test Product",
                     Price = 150
                 };
-                var response = await context.CreateRequest("https://localhost:44316/api/Products/")
+                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products/")
                     .WithAuthBearer(authToken)
                     .WithContent(updatedProduct)
                     .Put();
@@ -64,7 +64,7 @@ public class ProductHttpTests : Test
             })
             .Step("Call GET /Products to verify the product was updated", async (context) =>
             {
-                var response = await context.CreateRequest($"https://localhost:44316/api/Products/{newProduct.Id}")
+                var response = await context.CreateHttpRequest($"https://localhost:44316/api/Products/{newProduct.Id}")
                     .WithAuthBearer(authToken)
                     .Get<Product>();
 
@@ -75,7 +75,7 @@ public class ProductHttpTests : Test
             })
             .Step("Call DELETE /Products to delete the product", async (context) =>
             {
-                var response = await context.CreateRequest($"https://localhost:44316/api/Products/{newProduct.Id}")
+                var response = await context.CreateHttpRequest($"https://localhost:44316/api/Products/{newProduct.Id}")
                     .WithAuthBearer(authToken)
                     .Delete();
 
@@ -83,7 +83,7 @@ public class ProductHttpTests : Test
             })
             .Step("Call GET /Products to verify the product was deleted", async (context) =>
             {
-                var response = await context.CreateRequest($"https://localhost:44316/api/Products/{newProduct.Id}")
+                var response = await context.CreateHttpRequest($"https://localhost:44316/api/Products/{newProduct.Id}")
                     .WithAuthBearer(authToken)
                     .Get();
 
@@ -99,7 +99,7 @@ public class ProductHttpTests : Test
         await Scenario()
             .Step("Call GET /Products without authentication", async (context) =>
             {
-                var response = await context.CreateRequest("https://localhost:44316/api/Products")
+                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
                     .Get();
 
                 Assert.IsFalse(response.IsSuccessful);

@@ -5,15 +5,14 @@ namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
 internal class HttpPlugin : IContextPlugin
 {
-    private readonly IServiceProvider _serviceProvider;
+    public bool RequireState => false;
+    public bool RequireStepExceptionHandling => false;
 
-    public HttpPlugin()
+    public void ConfigureServices(IServiceCollection services)
     {
-        var serviceCollection = new ServiceCollection();
-        
-        serviceCollection.AddTransient<TestFuznLoggingHandler>();
-        
-        serviceCollection.AddHttpClient(HttpClientNames.TestFuzn, client =>
+        services.AddTransient<TestFuznLoggingHandler>();
+
+        services.AddHttpClient(HttpPluginConstants.DefaultHttpClientName, client =>
         {
             var timeout = HttpGlobalState.Configuration?.DefaultRequestTimeout ?? TimeSpan.FromSeconds(100);
             client.Timeout = timeout;
@@ -23,26 +22,21 @@ internal class HttpPlugin : IContextPlugin
             AllowAutoRedirect = false
         })
         .AddHttpMessageHandler<TestFuznLoggingHandler>();
-
-        _serviceProvider = serviceCollection.BuildServiceProvider();
     }
-
-    public bool RequireState => true;
-    public bool RequireStepExceptionHandling => false;
 
     public Task InitSuite()
     {
         return Task.CompletedTask;
     }
 
-    public async Task CleanupSuite()
+    public Task CleanupSuite()
     {
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     public object InitContext()
     {
-        return _serviceProvider.GetRequiredService<IHttpClientFactory>();
+        return null!;
     }
 
     public Task CleanupContext(object state)
@@ -54,12 +48,4 @@ internal class HttpPlugin : IContextPlugin
     {
         throw new NotImplementedException();
     }
-}
-
-/// <summary>
-/// Named HttpClient constants.
-/// </summary>
-internal static class HttpClientNames
-{
-    public const string TestFuzn = "TestFuzn";
 }
