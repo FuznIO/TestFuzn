@@ -7,7 +7,7 @@ namespace Fuzn.TestFuzn.Tests.WebSocket;
 public class WebSocketConnectionTests : Test
 {
     // Use local SampleApp WebSocket server
-    private const string WebSocketServerUrl = "wss://localhost:44316/ws";
+    private const string WebSocketServerUrl = "wss://localhost:49830/ws";
 
     [Test]
     public async Task Connect_And_Disconnect_Successfully()

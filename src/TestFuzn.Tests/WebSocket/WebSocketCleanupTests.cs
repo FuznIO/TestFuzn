@@ -6,7 +6,7 @@ namespace Fuzn.TestFuzn.Tests.WebSocket;
 [TestClass]
 public class WebSocketCleanupTests : Test
 {
-    private static readonly string EchoServerUrl = "wss://localhost:44316/ws";
+    private static readonly string EchoServerUrl = "wss://localhost:49830/ws";
 
     [Test]
     public async Task Connection_Is_Auto_Closed_When_Test_Completes_Without_Explicit_Close()

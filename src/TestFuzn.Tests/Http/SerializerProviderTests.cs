@@ -14,7 +14,7 @@ public class SerializerProviderTests : Test
             {
                 var token = await HttpTests.GetAuthToken(context);
 
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                var response = await context.CreateHttpRequest("/api/Products")
                                 .WithAuthBearer(token)
                                 .Get<List<Product>>();
 
@@ -37,7 +37,7 @@ public class SerializerProviderTests : Test
                 {
                     PropertyNameCaseInsensitive = true
                 };
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                var response = await context.CreateHttpRequest("/api/Products")
                                         .WithAuthBearer(token)
                                         .WithJsonOptions(options)
                                         .Get<List<Product>>();

@@ -9,7 +9,7 @@ public class HttpTests : Test
 {
     public static async Task<string> GetAuthToken(Context context)
     {
-        var response = await context.CreateHttpRequest($"https://localhost:44316/api/Auth/token")
+        var response = await context.CreateHttpRequest("/api/Auth/token")
             .WithContent(new { Username = "admin", Password = "admin123" })
             .Post<TokenResponse>();
 
@@ -26,7 +26,7 @@ public class HttpTests : Test
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
                 var token = await GetAuthToken(context);
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                var response = await context.CreateHttpRequest("/api/Products")
                                 .WithAuthBearer(token)
                                 .Get<List<Product>>();
 
@@ -44,7 +44,7 @@ public class HttpTests : Test
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
                 var token = await GetAuthToken(context);
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                var response = await context.CreateHttpRequest("/api/Products")
                     .WithAuthBearer(token)
                     .WithJsonOptions(new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                     .Get<List<Product>>();
@@ -62,7 +62,7 @@ public class HttpTests : Test
         await Scenario()
             .Step("Verify ping returns pong", async (context) =>
             {
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Ping").Get<string>();
+                var response = await context.CreateHttpRequest("/api/Ping").Get<string>();
 
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.AreEqual("Pong", response.Data);
@@ -83,7 +83,7 @@ public class HttpTests : Test
             })
             .Step("Call a http endpoint and verify that response is successful and body mapping is OK", async (context) =>
             {
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                var response = await context.CreateHttpRequest("/api/Products")
                                 .WithAuthBearer(token)
                                 .Get<List<Product>>();
 
@@ -101,7 +101,7 @@ public class HttpTests : Test
         await Scenario()
             .Step("Call ping and expect pong", async (context) =>
             {
-                var response = await context.CreateHttpRequest("https://localhost:44316/api/Ping").Get<string>();
+                var response = await context.CreateHttpRequest("/api/Ping").Get<string>();
 
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.AreEqual("Pong", response.Data);
@@ -121,7 +121,7 @@ public class HttpTests : Test
                 var price = RandomNumberGenerator.GetInt32(10, 2000);
 
                 var token = await GetAuthToken(context);
-                var postResponse = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                var postResponse = await context.CreateHttpRequest("/api/Products")
                     .WithAuthBearer(token)
                     .WithContent($@"
                         {{
@@ -133,7 +133,7 @@ public class HttpTests : Test
 
                 Assert.IsTrue(postResponse.IsSuccessful);
 
-                var getResponse = await context.CreateHttpRequest($"https://localhost:44316/api/Products/{productId}")
+                var getResponse = await context.CreateHttpRequest($"/api/Products/{productId}")
                                     .WithAuthBearer(token)
                                     .Get<Product>();
 

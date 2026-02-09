@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Tests.WebSocket;
 [TestClass]
 public class WebSocketLoadTests : Test
 {
-    private const string WebSocketServerUrl = "wss://localhost:44316/ws";
+    private const string WebSocketServerUrl = "wss://localhost:49830/ws";
 
     [Test]
     public async Task Concurrent_Connections_OneTime_Load()

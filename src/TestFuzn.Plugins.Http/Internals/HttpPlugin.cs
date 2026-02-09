@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Fuzn.TestFuzn.Contracts.Plugins;
+﻿using Fuzn.TestFuzn.Contracts.Plugins;
 
 namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
@@ -7,22 +6,6 @@ internal class HttpPlugin : IContextPlugin
 {
     public bool RequireState => false;
     public bool RequireStepExceptionHandling => false;
-
-    public void ConfigureServices(IServiceCollection services)
-    {
-        services.AddTransient<TestFuznLoggingHandler>();
-
-        services.AddHttpClient(HttpPluginConstants.DefaultHttpClientName, client =>
-        {
-            var timeout = HttpGlobalState.Configuration?.DefaultRequestTimeout ?? TimeSpan.FromSeconds(100);
-            client.Timeout = timeout;
-        })
-        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-        {
-            AllowAutoRedirect = false
-        })
-        .AddHttpMessageHandler<TestFuznLoggingHandler>();
-    }
 
     public Task InitSuite()
     {

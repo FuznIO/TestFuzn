@@ -67,13 +67,11 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             };
         });
 
-        configuration.Services.AddHttpClient("TestFuzn", configureClient =>
+        configuration.UseHttp(httpConfig =>
         {
-            configureClient.Timeout = TimeSpan.FromSeconds(10);
-            // Additional HttpClient configuration can be done here
-        });
-        configuration.UseHttp(x =>
-        {        
+            httpConfig.DefaultBaseAddress = new Uri("https://localhost:49830/");
+            httpConfig.DefaultRequestTimeout = TimeSpan.FromSeconds(5);
+            httpConfig.DefaultAllowAutoRedirect = false;
         });
         configuration.UseWebSocket(config =>
         {

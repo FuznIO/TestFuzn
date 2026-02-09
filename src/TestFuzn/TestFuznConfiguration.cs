@@ -61,7 +61,6 @@ public class TestFuznConfiguration
         if (plugin == null)
             throw new ArgumentNullException(nameof(plugin), "Context plugin cannot be null");
         
-        plugin.ConfigureServices(Services);
         ContextPlugins.Add(plugin);
     }
 

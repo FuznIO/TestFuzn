@@ -24,20 +24,37 @@ public static class ContextExtensions
     ///     .Get&lt;User&gt;();
     /// </code>
     /// </example>
-    public static FluentHttpRequest CreateHttpRequest(this Context context, string url, string httpClientName = "TestFuzn")
+    public static FluentHttpRequest CreateHttpRequest(this Context context, string url)
+    {
+        return CreateHttpRequest(HttpGlobalState.Configuration.DefaultHttpClient, context, url);
+    }
+
+    /// <summary>
+    /// Creates a new fluent HTTP request for the specified URL using the given HTTP client type.
+    /// </summary>
+    /// <typeparam name="THttpClient">The type of HTTP client to use for the request. Must implement the IHttpClient interface.</typeparam>
+    /// <param name="context">The context in which to create the HTTP request. Cannot be null.</param>
+    /// <param name="url">The URL to which the HTTP request will be sent. Cannot be null or empty.</param>
+    /// <returns>A FluentHttpRequest instance configured for the specified URL and HTTP client type.</returns>
+    public static FluentHttpRequest CreateHttpRequest<THttpClient>(this Context context, string url)
+        where THttpClient : IHttpClient
+    {
+        return CreateHttpRequest(typeof(THttpClient), context, url);
+    }
+
+    private static FluentHttpRequest CreateHttpRequest(Type httpClient, Context context, string url)
     {
         if (!HttpGlobalState.HasBeenInitialized)
             throw new InvalidOperationException("TestFuzn.Plugins.HTTP has not been initialized. Please call configuration.UseHttp() in the Startup.");
 
-        if (string.IsNullOrWhiteSpace(httpClientName))
-            throw new ArgumentException("HTTP client name must be provided. Default is 'TestFuzn'.", nameof(httpClientName));
-
-        var httpClientFactory = context.Services.GetRequiredService<IHttpClientFactory>();
-        var httpClient = httpClientFactory.CreateClient(httpClientName);
-
-        var fluentHttpRequest = httpClient
-            .Url(url)
-            .WithOption("TestFuznContext", context);
+        var httpClientObj = context.Services.GetRequiredService(httpClient);
+        if (httpClientObj is not IHttpClient fluentHttpClient)
+            throw new InvalidOperationException($"The specified HTTP client type '{httpClient.FullName}' does not implement IHttpClient.");
+        
+        var fluentHttpRequest = fluentHttpClient
+                                    .CreateHttpRequest()
+                                    .WithUrl(url)
+                                    .WithOption("TestFuznContext", context);
 
         return fluentHttpRequest;
     }
