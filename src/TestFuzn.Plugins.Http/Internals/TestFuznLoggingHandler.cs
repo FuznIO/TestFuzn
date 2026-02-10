@@ -17,7 +17,7 @@ internal class TestFuznLoggingHandler : DelegatingHandler
 
         // Inject correlation ID header
         var correlationId = context.Info.CorrelationId;
-        var correlationHeaderName = HttpGlobalState.Configuration?.CorrelationIdHeaderName;
+        var correlationHeaderName = HttpGlobalState.Configuration.CorrelationIdHeaderName;
         if (!request.Headers.Contains(correlationHeaderName))
         {
             request.Headers.TryAddWithoutValidation(correlationHeaderName, correlationId);

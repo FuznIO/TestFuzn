@@ -11,25 +11,9 @@ internal class HttpRequestLog
     public string? ReasonPhrase { get; set; }
     public string? ResponseHeaders { get; set; }
     public string? ResponseBody { get; set; }
-
-    /// <summary>
-    /// Gets or sets the duration of the request in milliseconds.
-    /// </summary>
     public long DurationMs { get; set; }
-
-    /// <summary>
-    /// Gets or sets the correlation ID associated with this request.
-    /// </summary>
     public string? CorrelationId { get; set; }
-
-    /// <summary>
-    /// Gets or sets any exception message if the request failed.
-    /// </summary>
     public string? ExceptionMessage { get; set; }
-
-    /// <summary>
-    /// Formats the request details as a string suitable for logging or attachment.
-    /// </summary>
     public string FormatRequest()
     {
         var sb = new System.Text.StringBuilder();
