@@ -14,9 +14,9 @@ public static class TestFuznConfigurationExtensions
     /// </summary>
     /// <param name="configuration">The TestFuzn configuration instance.</param>
     /// <param name="configureAction">An optional action to configure the HTTP plugin settings.</param>
-    public static void UseHttp(this TestFuznConfiguration configuration, Action<PluginConfiguration>? configureAction = null)
+    public static void UseHttp(this TestFuznConfiguration configuration, Action<HttpPluginConfiguration>? configureAction = null)
     {
-        var httpConfiguration = new PluginConfiguration();
+        var httpConfiguration = new HttpPluginConfiguration();
         httpConfiguration.Services = configuration.Services;
 
         // Ensure that the logging handler is added to all HttpClient instances by default

@@ -30,6 +30,7 @@ public class HttpTests : Test
                                 .WithAuthBearer(token)
                                 .Get<List<Product>>();
 
+                Assert.Fail();
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.IsNotNull(response.Data);
                 Assert.IsNotEmpty(response.Data, "Expected more than one product to be returned.");

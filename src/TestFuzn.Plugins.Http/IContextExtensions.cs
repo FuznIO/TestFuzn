@@ -50,11 +50,20 @@ public static class ContextExtensions
         var httpClientInstance = context.Services.GetRequiredService(httpClientType);
         if (httpClientInstance is not IHttpClient httpClient)
             throw new InvalidOperationException($"The specified HTTP client type '{httpClientType.FullName}' does not implement IHttpClient.");
-        
+
+        // Get the HTTP plugin state for this context
+        var httpPluginState = context.Internals.Plugins.GetState(typeof(HttpPlugin)) as HttpPluginState;
+
         var fluentHttpRequest = httpClient
                                     .CreateHttpRequest()
                                     .WithUrl(url)
                                     .WithOption("TestFuznContext", context);
+
+        // Pass the state to the request if available
+        if (httpPluginState != null)
+        {
+            fluentHttpRequest.WithOption("TestFuznHttpPluginState", httpPluginState);
+        }
 
         return fluentHttpRequest;
     }

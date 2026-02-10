@@ -9,4 +9,12 @@ internal static class HttpRequestOptionsExtensions
 
         return context;
     }
+
+    public static HttpPluginState? GetTestFuznState(this HttpRequestOptions options)
+    {
+        if (options.TryGetValue(HttpPluginConstants.StateOptionName, out var state))
+            return state;
+
+        return null;
+    }
 }

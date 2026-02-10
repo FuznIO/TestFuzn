@@ -38,7 +38,6 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
                 { "OwnerID", "123" },
             }
         };
-        configuration.LoggingVerbosity = LoggingVerbosity.Normal;
         
         // Register custom services in the IoC container
         // Example: configuration.Services.AddSingleton<IMyService, MyService>();
