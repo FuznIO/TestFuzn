@@ -6,15 +6,11 @@
 public enum LoggingVerbosity
 {
     /// <summary>
-    /// No logging output.
-    /// </summary>
-    None = 1,
-    /// <summary>
     /// Normal logging with basic request/response information.
     /// </summary>
-    Normal = 2,
+    Normal = 1,
     /// <summary>
     /// Full logging, includes all requests, messages and detailed information.
     /// </summary>
-    Full = 3
+    Full = 2
 }

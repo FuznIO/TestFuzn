@@ -12,87 +12,51 @@ internal class TestFuznLoggingHandler : DelegatingHandler
     {
         var context = request.Options.GetTestFuznContext();
         var state = request.Options.GetTestFuznState();
-
         var verbosity = GlobalState.LoggingVerbosity;
+        var testType = context.IterationState.Scenario?.TestType ?? Contracts.TestType.Standard;
 
-        // Inject correlation ID header
         var correlationId = context.Info.CorrelationId;
-        var correlationHeaderName = HttpGlobalState.Configuration.CorrelationIdHeaderName;
-        if (!request.Headers.Contains(correlationHeaderName))
-        {
-            request.Headers.TryAddWithoutValidation(correlationHeaderName, correlationId);
-        }
-
         var stepName = context.StepInfo?.Name ?? "Unknown";
 
-        // Log request
-        if (verbosity >= LoggingVerbosity.Normal)
-        {
-            context.Logger.LogInformation($"Step {stepName} - HTTP Request: {request.Method} {request.RequestUri} - CorrelationId: {correlationId}");
-        }
+        InjectCorrelationIdHeader(request, correlationId);
 
         string? requestBody = null;
         if (verbosity == LoggingVerbosity.Full && request.Content != null)
         {
             requestBody = await request.Content.ReadAsStringAsync(cancellationToken);
-            context.Logger.LogInformation($"Step {stepName} - Request Body: {requestBody} - CorrelationId: {correlationId}");
         }
 
-        // Create request log for tracking (only when verbosity is Full)
+
+        if (verbosity >= LoggingVerbosity.Normal)
+        {
+            context.Logger.LogInformation($"Step {stepName} - HTTP Request: {request.Method} {request.RequestUri} - CorrelationId: {correlationId}");
+            
+            if (verbosity == LoggingVerbosity.Full && requestBody != null)
+            {
+                context.Logger.LogInformation($"Step {stepName} - Request Body: {requestBody} - CorrelationId: {correlationId}");
+            }
+        }
+
         HttpRequestLog? requestLog = null;
         if (verbosity == LoggingVerbosity.Full && state != null)
         {
-            requestLog = new HttpRequestLog
-            {
-                Timestamp = DateTime.UtcNow,
-                Method = request.Method.ToString(),
-                Url = request.RequestUri?.ToString() ?? string.Empty,
-                RequestHeaders = FormatHeaders(request.Headers, request.Content?.Headers),
-                RequestBody = requestBody,
-                CorrelationId = correlationId
-            };
+            requestLog = HttpRequestLog.Create(request, requestBody, correlationId);
         }
 
         var stopwatch = Stopwatch.StartNew();
-        HttpResponseMessage? response = null;
-        string? responseBody = null;
 
         try
         {
-            response = await base.SendAsync(request, cancellationToken);
+            var response = await base.SendAsync(request, cancellationToken);
             stopwatch.Stop();
-            responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            // Log response
-            if (verbosity >= LoggingVerbosity.Normal)
-            {
-                context.Logger.LogInformation($"Step {stepName} - HTTP Response: {(int)response.StatusCode} {response.ReasonPhrase} - CorrelationId: {correlationId}");
-            }
+            LogResponse(context, request, stepName, correlationId, verbosity, response, responseBody);
 
-            if (verbosity == LoggingVerbosity.Full && responseBody != null)
-            {
-                context.Logger.LogInformation($"Step {stepName} - Response Body: {responseBody} - CorrelationId: {correlationId}");
-            }
-
-            // Log errors
-            if (!response.IsSuccessStatusCode && HttpGlobalState.Configuration?.LogFailedRequestsToTestConsole == true)
-            {
-                if (verbosity == LoggingVerbosity.Full)
-                {
-                    context.Logger.LogError($"Step {stepName} - Request returned an error:\n{request} - CorrelationId: {correlationId}");
-                    context.Logger.LogError($"Step {stepName} - Response:\n{response} - CorrelationId: {correlationId}");
-                    context.Logger.LogError($"Step {stepName} - Response.Body:\n{responseBody} - CorrelationId: {correlationId}");
-                }
-            }
-
-            // Record to state for potential attachment on failure
             if (requestLog != null && state != null)
             {
-                requestLog.DurationMs = stopwatch.ElapsedMilliseconds;
-                requestLog.StatusCode = (int)response.StatusCode;
-                requestLog.ReasonPhrase = response.ReasonPhrase;
-                requestLog.ResponseHeaders = FormatHeaders(response.Headers, response.Content?.Headers);
-                requestLog.ResponseBody = responseBody;
+                requestLog.SetResponse(response, responseBody, stopwatch.ElapsedMilliseconds);
                 state.AddRequestLog(requestLog);
             }
 
@@ -102,16 +66,14 @@ internal class TestFuznLoggingHandler : DelegatingHandler
         {
             stopwatch.Stop();
 
-            if (verbosity > LoggingVerbosity.None)
+            if (verbosity  >= LoggingVerbosity.Normal)
             {
                 context.Logger.LogError(ex, $"Step {stepName} - HTTP Request failed - CorrelationId: {correlationId}");
             }
 
-            // Record failed request to state
             if (requestLog != null && state != null)
             {
-                requestLog.DurationMs = stopwatch.ElapsedMilliseconds;
-                requestLog.ExceptionMessage = ex.Message;
+                requestLog.SetException(ex, stopwatch.ElapsedMilliseconds);
                 state.AddRequestLog(requestLog);
             }
 
@@ -119,26 +81,32 @@ internal class TestFuznLoggingHandler : DelegatingHandler
         }
     }
 
-    private static string FormatHeaders(System.Net.Http.Headers.HttpHeaders? headers, System.Net.Http.Headers.HttpContentHeaders? contentHeaders)
+    private static void InjectCorrelationIdHeader(HttpRequestMessage request, string correlationId)
     {
-        var sb = new System.Text.StringBuilder();
-
-        if (headers != null)
+        var correlationHeaderName = HttpGlobalState.Configuration.CorrelationIdHeaderName;
+        if (!request.Headers.Contains(correlationHeaderName))
         {
-            foreach (var header in headers)
+            request.Headers.TryAddWithoutValidation(correlationHeaderName, correlationId);
+        }
+    }
+
+    private static void LogResponse(Context context, HttpRequestMessage request, string stepName, string correlationId, LoggingVerbosity verbosity, HttpResponseMessage response, string? responseBody)
+    {
+        if (verbosity >= LoggingVerbosity.Normal)
+        {
+            context.Logger.LogInformation($"Step {stepName} - HTTP Response: {(int)response.StatusCode} {response.ReasonPhrase} - CorrelationId: {correlationId}");
+
+            if (verbosity == LoggingVerbosity.Full && responseBody != null)
             {
-                sb.AppendLine($"{header.Key}: {string.Join(", ", header.Value)}");
+                context.Logger.LogInformation($"Step {stepName} - Response Body: {responseBody} - CorrelationId: {correlationId}");
             }
         }
 
-        if (contentHeaders != null)
+        if (!response.IsSuccessStatusCode && HttpGlobalState.Configuration?.LogFailedRequestsToTestConsole == true && verbosity == LoggingVerbosity.Full)
         {
-            foreach (var header in contentHeaders)
-            {
-                sb.AppendLine($"{header.Key}: {string.Join(", ", header.Value)}");
-            }
+            context.Logger.LogError($"Step {stepName} - Request returned an error:\n{request} - CorrelationId: {correlationId}");
+            context.Logger.LogError($"Step {stepName} - Response:\n{response} - CorrelationId: {correlationId}");
+            context.Logger.LogError($"Step {stepName} - Response.Body:\n{responseBody} - CorrelationId: {correlationId}");
         }
-
-        return sb.ToString().TrimEnd();
     }
 }

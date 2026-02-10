@@ -178,7 +178,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            if (_verbosity > LoggingVerbosity.None)
+            if (_verbosity >= LoggingVerbosity.Normal)
                 _context.Logger.LogError(ex, $"WebSocket connection failed: {_url}");
 
             if (WebSocketGlobalState.Configuration.LogFailedConnectionsToTestConsole)
@@ -348,7 +348,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
             }
             catch (Exception ex)
             {
-                if (_verbosity > LoggingVerbosity.None)
+                if (_verbosity >= LoggingVerbosity.Normal)
                     _context.Logger.LogWarning(ex, $"Step {_context.StepInfo?.Name} - Error during WebSocket close - CorrelationId: {_context.Info.CorrelationId}");
             }
             finally
@@ -429,12 +429,12 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
             ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely ||
             ex.WebSocketErrorCode == WebSocketError.InvalidState)
         {
-            if (_verbosity > LoggingVerbosity.None)
+            if (_verbosity >= LoggingVerbosity.Normal)
                 _context.Logger.LogInformation($"WebSocket connection closed: {ex.Message}");
         }
         catch (Exception ex)
         {
-            if (_verbosity > LoggingVerbosity.None)
+            if (_verbosity >= LoggingVerbosity.Normal)
                 _context.Logger.LogError(ex, "Error in WebSocket receive loop");
         }
     }

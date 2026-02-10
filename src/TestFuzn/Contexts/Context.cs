@@ -27,8 +27,6 @@ public class Context
     /// </summary>
     public ILogger Logger => IterationState.Logger; 
     
-    
-    
     /// <summary>
     /// Gets information about the currently executing step, including its name and hierarchy.
     /// </summary>

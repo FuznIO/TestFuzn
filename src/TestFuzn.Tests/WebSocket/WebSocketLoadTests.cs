@@ -178,7 +178,7 @@ public class WebSocketLoadTests : Test
             .Step("Stress test with high concurrency", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.None)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .ConnectionTimeout(TimeSpan.FromSeconds(30))
                     .Connect();
 
