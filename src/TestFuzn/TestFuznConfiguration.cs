@@ -18,12 +18,12 @@ public class TestFuznConfiguration
     /// </summary>
     public SuiteInfo Suite { get; set; }
     /// <summary>
-    /// Gets or sets the level of detail to include in log output. Defaults to <see cref="LoggingVerbosity.Normal"/>.
+    /// Gets or sets the level of detail to include in log output. Defaults to <see cref="LoggingVerbosity.Full"/>.
     /// </summary>
     /// <remarks>Use this property to control how much information is written to the logs. Higher verbosity
     /// levels provide more detailed diagnostic information, which can be useful for troubleshooting but may produce
     /// larger log files.</remarks>
-    public LoggingVerbosity LoggingVerbosity { get; set; } = LoggingVerbosity.Normal;
+    public LoggingVerbosity LoggingVerbosity { get; set; } = LoggingVerbosity.Full;
 
     /// <summary>
     /// Gets the service collection for registering dependencies.
