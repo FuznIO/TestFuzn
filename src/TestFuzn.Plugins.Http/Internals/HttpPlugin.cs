@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Contracts.Plugins;
-using Microsoft.Extensions.Logging;
 
 namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
@@ -39,11 +38,13 @@ internal class HttpPlugin : IContextPlugin
 
         var verbosity = GlobalState.LoggingVerbosity;
 
-        // Only attach HTTP logs when verbosity is Full
         if (verbosity != LoggingVerbosity.Full)
             return;
 
-        var requestLogs = httpState.GetAndClearRequestLogs();
+        if (context.IterationState.Scenario?.TestType == Contracts.TestType.Load)
+            return;
+
+        var requestLogs = httpState.GetLogs();
         if (requestLogs.Count == 0)
             return;
 
@@ -53,19 +54,9 @@ internal class HttpPlugin : IContextPlugin
         {
             var log = requestLogs[i];
             var index = i + 1;
+            var fileName = $"http-log-{index}.txt";
 
-            // Output summary to console
-            context.Logger.LogError($"HTTP Request {index}/{requestLogs.Count}: {log.Method} {log.Url} -> {log.StatusCode} {log.ReasonPhrase} ({log.DurationMs}ms)");
-
-            // Output full details to console
-            context.Logger.LogError(log.FormatFull());
-
-            // Attach as files
-            var requestFileName = $"http-request-{index}.txt";
-            var responseFileName = $"http-response-{index}.txt";
-
-            await context.Attach(requestFileName, log.FormatRequest());
-            await context.Attach(responseFileName, log.FormatResponse());
+            await context.Attach(fileName, log);
         }
     }
 }
