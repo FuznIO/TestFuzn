@@ -413,11 +413,11 @@ Extract step logic into a helper method and call it inline:
 private async Task<string> PerformLogin(Context context)
 {
     var response = await context.CreateHttpRequest("https://localhost:44316/api/Auth/token")
-        .Body(new { Username = "admin", Password = "admin123" })
-        .Post();
+        .WithContent(new { Username = "admin", Password = "admin123" })
+        .Post<TokenResponse>();
     
-    Assert.IsTrue(response.Ok);
-    return response.BodyAs<TokenResponse>().Token;
+    Assert.IsTrue(response.IsSuccessful);
+    return response.Data.Token;
 }
 
 // Usage
@@ -444,11 +444,11 @@ Define step logic as a separate function and pass it by reference:
 private async Task LoginStep(Context context)
 {
     var response = await context.CreateHttpRequest("https://localhost:44316/api/Auth/token")
-        .Body(new { Username = "admin", Password = "admin123" })
-        .Post();
+        .WithContent(new { Username = "admin", Password = "admin123" })
+        .Post<TokenResponse>();
     
-    Assert.IsTrue(response.Ok);
-    var token = response.BodyAs<TokenResponse>().Token;
+    Assert.IsTrue(response.IsSuccessful);
+    var token = response.Data.Token;
     context.SetSharedData("authToken", token);
 }
 
@@ -476,11 +476,11 @@ public static class SharedSteps
         return builder.Step("Authenticate", async context =>
         {
             var response = await context.CreateHttpRequest($"{baseUrl}/api/Auth/token")
-                .Body(new { Username = "admin", Password = "admin123" })
-                .Post();
+                .WithContent(new { Username = "admin", Password = "admin123" })
+                .Post<TokenResponse>();
             
-            Assert.IsTrue(response.Ok);
-            var token = response.BodyAs<TokenResponse>().Token;
+            Assert.IsTrue(response.IsSuccessful);
+            var token = response.Data.Token;
             context.SetSharedData("authToken", token);
         });
     }
