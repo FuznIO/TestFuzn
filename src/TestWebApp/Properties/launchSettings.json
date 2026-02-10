@@ -3,10 +3,11 @@
     "TestWebApp": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:49830;http://localhost:49831"
+      "applicationUrl": "https://localhost:7058;http://localhost:7059"
     }
   }
 }

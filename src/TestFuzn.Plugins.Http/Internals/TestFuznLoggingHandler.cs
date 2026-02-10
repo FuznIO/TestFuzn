@@ -26,7 +26,6 @@ internal class TestFuznLoggingHandler : DelegatingHandler
             requestBody = await request.Content.ReadAsStringAsync(cancellationToken);
         }
 
-
         if (verbosity >= LoggingVerbosity.Normal)
         {
             context.Logger.LogInformation($"Step {stepName} - HTTP Request: {request.Method} {request.RequestUri} - CorrelationId: {correlationId}");

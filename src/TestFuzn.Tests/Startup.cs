@@ -68,7 +68,7 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
 
         configuration.UseHttp(httpConfig =>
         {
-            httpConfig.DefaultBaseAddress = new Uri("https://localhost:49830/");
+            httpConfig.DefaultBaseAddress = new Uri("https://localhost:7058");
             httpConfig.DefaultRequestTimeout = TimeSpan.FromSeconds(5);
             httpConfig.DefaultAllowAutoRedirect = false;
         });
