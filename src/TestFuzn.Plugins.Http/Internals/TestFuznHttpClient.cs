@@ -1,8 +1,8 @@
 ﻿using Fuzn.FluentHttp;
 
-namespace Fuzn.TestFuzn.Plugins.Http;
+namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
-public class TestFuznHttpClient : IHttpClient 
+internal class TestFuznHttpClient : IHttpClient 
 {
     public HttpClient HttpClient { get; }
 

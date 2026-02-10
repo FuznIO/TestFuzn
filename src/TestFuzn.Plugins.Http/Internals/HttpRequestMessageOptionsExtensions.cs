@@ -1,6 +1,6 @@
-﻿namespace Fuzn.TestFuzn.Plugins.Http;
+﻿namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
-public static class HttpRequestOptionsExtensions
+internal static class HttpRequestOptionsExtensions
 {
     public static Context GetTestFuznContext(this HttpRequestOptions options)
     {

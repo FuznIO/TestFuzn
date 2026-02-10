@@ -1,6 +1,6 @@
-﻿namespace Fuzn.TestFuzn.Plugins.Http;
+﻿namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
-public class HttpPluginConstants
+internal class HttpPluginConstants
 {
     public static readonly HttpRequestOptionsKey<Context> ContextOptionName = new("TestFuznContext");
 }

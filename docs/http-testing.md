@@ -114,6 +114,8 @@ public class Startup : IStartup
 }
 ```
 
+> **⚠️ Important**: Custom HTTP clients must be registered using `httpConfig.Services.AddHttpClient<T>()` **within** the `UseHttp()` configuration block. Registering the client outside of `UseHttp()` will prevent TestFuzn's HTTP logging and request tracking from working correctly.
+
 ---
 
 ## HTTP Plugin Configuration

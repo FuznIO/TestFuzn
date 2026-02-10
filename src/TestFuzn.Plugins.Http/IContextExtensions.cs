@@ -42,16 +42,16 @@ public static class ContextExtensions
         return CreateHttpRequest(typeof(THttpClient), context, url);
     }
 
-    private static FluentHttpRequest CreateHttpRequest(Type httpClient, Context context, string url)
+    private static FluentHttpRequest CreateHttpRequest(Type httpClientType, Context context, string url)
     {
         if (!HttpGlobalState.HasBeenInitialized)
             throw new InvalidOperationException("TestFuzn.Plugins.HTTP has not been initialized. Please call configuration.UseHttp() in the Startup.");
 
-        var httpClientObj = context.Services.GetRequiredService(httpClient);
-        if (httpClientObj is not IHttpClient fluentHttpClient)
-            throw new InvalidOperationException($"The specified HTTP client type '{httpClient.FullName}' does not implement IHttpClient.");
+        var httpClientInstance = context.Services.GetRequiredService(httpClientType);
+        if (httpClientInstance is not IHttpClient httpClient)
+            throw new InvalidOperationException($"The specified HTTP client type '{httpClientType.FullName}' does not implement IHttpClient.");
         
-        var fluentHttpRequest = fluentHttpClient
+        var fluentHttpRequest = httpClient
                                     .CreateHttpRequest()
                                     .WithUrl(url)
                                     .WithOption("TestFuznContext", context);
