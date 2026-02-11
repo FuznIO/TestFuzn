@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Tests.WebSocket;
 [TestClass]
 public class WebSocketSubStepsTests : Test
 {
-    private const string WebSocketServerUrl = "wss://localhost:44316/ws";
+    private const string WebSocketServerUrl = "wss://localhost:7058/ws";
 
     [Test]
     public async Task WebSocket_With_Nested_Steps()

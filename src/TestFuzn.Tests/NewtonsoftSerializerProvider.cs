@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using Fuzn.TestFuzn.Contracts.Providers;
+using Fuzn.TestFuzn.Plugins.WebSocket;
 
 namespace Fuzn.TestFuzn.Tests;
 

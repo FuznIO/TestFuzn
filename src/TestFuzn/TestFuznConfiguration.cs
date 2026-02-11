@@ -1,9 +1,9 @@
 ﻿using Fuzn.TestFuzn.Contracts.Plugins;
-using Fuzn.TestFuzn.Contracts.Providers;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Sinks;
 using Fuzn.TestFuzn.Internals.Reports.Standard;
 using Fuzn.TestFuzn.Internals.Reports.Load;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn;
 
@@ -18,18 +18,24 @@ public class TestFuznConfiguration
     /// </summary>
     public SuiteInfo Suite { get; set; }
     /// <summary>
-    /// Gets or sets the level of detail to include in log output. Defaults to <see cref="LoggingVerbosity.Normal"/>.
+    /// Gets or sets the level of detail to include in log output. Defaults to <see cref="LoggingVerbosity.Full"/>.
     /// </summary>
     /// <remarks>Use this property to control how much information is written to the logs. Higher verbosity
     /// levels provide more detailed diagnostic information, which can be useful for troubleshooting but may produce
     /// larger log files.</remarks>
-    public LoggingVerbosity LoggingVerbosity { get; set; } = LoggingVerbosity.Normal;
+    public LoggingVerbosity LoggingVerbosity { get; set; } = LoggingVerbosity.Full;
+
+    /// <summary>
+    /// Gets the service collection for registering dependencies.
+    /// Plugins and user code can add services here during configuration.
+    /// </summary>
+    public IServiceCollection Services { get; } = new ServiceCollection();
 
     internal List<IContextPlugin> ContextPlugins { get; set; } = new();
     internal List<IStandardReport> StandardReports { get; set; } = new();
     internal List<ILoadReport> LoadReports { get; set; } = new();
     internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
-    internal ISerializerProvider SerializerProvider { get; set; }
+    internal IServiceProvider ServiceProvider { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TestFuznConfiguration"/> class with default settings.
@@ -42,8 +48,6 @@ public class TestFuznConfiguration
         AddSinkPlugin(new InMemorySnapshotCollectorSinkPlugin());
         AddLoadReport(new LoadHtmlReportWriter());
         AddLoadReport(new LoadXmlReportWriter());
-
-        SetSerializerProvider(new SystemTextJsonSerializerProvider());
     }
 
     /// <summary>
@@ -56,6 +60,7 @@ public class TestFuznConfiguration
     {
         if (plugin == null)
             throw new ArgumentNullException(nameof(plugin), "Context plugin cannot be null");
+        
         ContextPlugins.Add(plugin);
     }
 
@@ -81,17 +86,12 @@ public class TestFuznConfiguration
     }
 
     /// <summary>
-    /// Sets the serializer provider for JSON serialization and deserialization.
-    /// Default serializer if not set is <see cref="SystemTextJsonSerializerProvider"/>.
+    /// Builds the service provider from the configured services.
+    /// Called internally after all plugins have registered their services.
     /// </summary>
-    /// <param name="serializerProvider">The serializer provider to use.</param>
-    /// <exception cref="ArgumentNullException">Thrown when the serializer provider is null.</exception>
-    public void SetSerializerProvider(ISerializerProvider serializerProvider)
+    internal void BuildServiceProvider()
     {
-        if (serializerProvider == null)
-            throw new ArgumentNullException(nameof(serializerProvider), "SerializerProvider cannot be null");
-
-        SerializerProvider = serializerProvider;
+        ServiceProvider = Services.BuildServiceProvider();
     }
 
     internal void ClearReports()

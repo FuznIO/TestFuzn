@@ -1,10 +1,12 @@
 ﻿# HTTP Testing
 
-TestFuzn provides a fluent HTTP client plugin for testing REST APIs.
+TestFuzn provides HTTP testing capabilities through the [Fuzn.FluentHttp](https://github.com/FuznIO/FluentHttp) NuGet package, which offers a clean, chainable API for building and sending HTTP requests.
+
+> **📚 Full FluentHttp Documentation**: For complete details on all request options, response handling, streaming, custom serialization, and more, see the [FluentHttp documentation](https://github.com/FuznIO/FluentHttp).
 
 ---
 
-## Basic HTTP Requests
+## Quick Start
 
 ```csharp
 using Fuzn.TestFuzn.Plugins.Http;
@@ -16,11 +18,11 @@ public async Task Get_products_from_api()
         .Step("Call API and verify response", async context =>
         {
             var response = await context.CreateHttpRequest("https://api.example.com/products")
-                .Get();
+                .Get<List<Product>>();
             
-            Assert.IsTrue(response.Ok);
-            var products = response.BodyAs<List<Product>>();
-            Assert.IsTrue(products.Count > 0);
+            Assert.IsTrue(response.IsSuccessful);
+            Assert.IsNotNull(response.Data);
+            Assert.IsNotEmpty(response.Data);
         })
         .Run();
 }
@@ -28,143 +30,121 @@ public async Task Get_products_from_api()
 
 ---
 
-## Request Methods
+## Basic Usage
+
+TestFuzn extends `Context` with `CreateHttpRequest()` which returns a `FluentHttpRequest` builder:
 
 ```csharp
-// GET
-var response = await context.CreateHttpRequest(url).Get();
+// GET with typed response
+var response = await context.CreateHttpRequest(url).Get<Product>();
+var product = response.Data;
 
-// POST with body
+// POST with content
 var response = await context.CreateHttpRequest(url)
-    .Body(new { Name = "Product", Price = 99.99 })
+    .WithContent(new { Name = "Product", Price = 99.99 })
     .Post();
 
-// PUT
+// Authentication
 var response = await context.CreateHttpRequest(url)
-    .Body(updatedProduct)
-    .Put();
-
-// DELETE
-var response = await context.CreateHttpRequest(url).Delete();
-
-// PATCH
-var response = await context.CreateHttpRequest(url)
-    .Body(patchData)
-    .Patch();
-```
-
----
-
-## Authentication
-
-```csharp
-// Bearer token
-var response = await context.CreateHttpRequest(url)
-    .AuthBearer("your-jwt-token")
+    .WithAuthBearer("your-jwt-token")
     .Get();
 
-// Basic authentication
-var response = await context.CreateHttpRequest(url)
-    .AuthBasic("username", "password")
-    .Get();
-```
-
----
-
-## Additional Request Options
-
-```csharp
-var response = await context.CreateHttpRequest(url)
-    .Header("X-Custom-Header", "value")
-    .Headers(new Dictionary<string, string> { { "Key", "Value" } })
-    .Cookie("session", "abc123")
-    .ContentType(ContentTypes.Json)
-    .Accept(AcceptTypes.Json)
-    .Timeout(TimeSpan.FromSeconds(30))
-    .UserAgent("MyTestAgent/1.0")
-    .Get();
-```
-
----
-
-## Response Handling
-
-```csharp
-// Check if successful
-Assert.IsTrue(response.Ok);
-
-// Get status code
+// Check response
+Assert.IsTrue(response.IsSuccessful);
 Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-
-// Deserialize to type
-var product = response.BodyAs<Product>();
-
-// Parse as dynamic JSON
-var json = response.BodyAsJson();
-var name = json.name;
-
-// Access raw body
-var rawBody = response.Body;
-
-// Access headers
-var contentType = response.Headers.ContentType;
-
-// Access cookies
-var cookies = response.Cookies;
-
-// Generate curl command for debugging
-var curl = await response.GetCurlCommand();
 ```
+
+For all available request methods (`.WithHeader()`, `.WithQueryParam()`, `.WithTimeout()`, etc.) and response handling options, see the [FluentHttp documentation](https://github.com/FuznIO/FluentHttp).
 
 ---
 
-## JSON Serialization
+## Custom HTTP Client
 
-TestFuzn uses System.Text.Json by default but supports custom serializers:
+You can create a custom HTTP client by implementing the `IHttpClient` interface:
 
 ```csharp
-.Step("Use custom serializer", async context =>
+using Fuzn.FluentHttp;
+using Fuzn.TestFuzn.Plugins.Http;
+
+public class CustomHttpClient : IHttpClient
 {
-    var serializer = new NewtonsoftSerializerProvider(); // If using Newtonsoft
-    
-    var response = await context.CreateHttpRequest(url)
-        .SerializerProvider(serializer)
-        .Get();
-})
+    public HttpClient HttpClient { get; }
 
-public class NewtonsoftSerializerProvider : ISerializerProvider
+    public CustomHttpClient(HttpClient httpClient)
+    {
+        HttpClient = httpClient;
+    }
+
+    public FluentHttpRequest CreateHttpRequest()
+    {
+        // Add custom logic here (logging, metrics, etc.)
+        return HttpClient.Request();
+    }
+}
+```
+
+### Using a Custom HTTP Client Per Request
+
+```csharp
+var response = await context.CreateHttpRequest<CustomHttpClient>("https://api.example.com/products")
+    .Get<Product>();
+```
+
+### Setting a Custom HTTP Client as Default
+
+Configure a custom HTTP client as the default in your `Startup`:
+
+```csharp
+public class Startup : IStartup
 {
-    private readonly JsonSerializerSettings _jsonSerializerSettings;
-
-    public NewtonsoftSerializerProvider()
+    public void Configure(TestFuznConfiguration configuration)
     {
-        _jsonSerializerSettings = new JsonSerializerSettings();
-    }
+        configuration.UseHttp(httpConfig =>
+        {
+            // Register the custom HTTP client with HttpClientFactory
+            httpConfig.Services.AddHttpClient<CustomHttpClient>(client =>
+            {
+                // Configure the HttpClient as needed
+            });
 
-    public NewtonsoftSerializerProvider(JsonSerializerSettings jsonSerializerSettings)
+            // Set as the default HTTP client for all requests
+            httpConfig.UseDefaultHttpClient<CustomHttpClient>();
+        });
+    }
+}
+```
+
+> **⚠️ Important**: Custom HTTP clients must be registered using `httpConfig.Services.AddHttpClient<T>()` **within** the `UseHttp()` configuration block. Registering the client outside of `UseHttp()` will prevent TestFuzn's HTTP logging and request tracking from working correctly.
+
+---
+
+## HTTP Plugin Configuration
+
+Configure the HTTP plugin in your `Startup` class:
+
+```csharp
+public void Configure(TestFuznConfiguration configuration)
+{
+    configuration.UseHttp(httpConfig =>
     {
-        _jsonSerializerSettings = jsonSerializerSettings;
-    }
-
-    public string Serialize<T>(T obj) where T : class
-    {
-        if (obj == null)
-            throw new ArgumentNullException(nameof(obj));
-
-        var json = JsonConvert.SerializeObject(obj, _jsonSerializerSettings);
-        return json;
-    }
-
-    public T Deserialize<T>(string json) where T : class
-    {
-        if (json == null)
-            throw new ArgumentNullException(nameof(json));
-
-        var obj = JsonConvert.DeserializeObject<T>(json, _jsonSerializerSettings);
-        if (obj == null)
-            throw new Exception($"Could not deserialize {typeof(T).Name} from JSON: {json}");
-        return obj;
-    }
+        // Set a default base address for all requests
+        httpConfig.DefaultBaseAddress = new Uri("https://api.example.com");
+        
+        // Set default request timeout (default: 10 seconds)
+        httpConfig.DefaultRequestTimeout = TimeSpan.FromSeconds(30);
+        
+        // Configure auto-redirect behavior (default: false)
+        httpConfig.DefaultAllowAutoRedirect = true;
+        
+        // Enable logging of failed requests to test console
+        httpConfig.LogFailedRequestsToTestConsole = true;
+        
+        // Configure correlation ID header name (default: "X-Correlation-ID")
+        httpConfig.CorrelationIdHeaderName = "X-Request-ID";
+        
+        // Set logging verbosity
+        httpConfig.LoggingVerbosity = LoggingVerbosity.Verbose;
+    });
 }
 ```
 
@@ -182,7 +162,7 @@ public async Task API_load_test()
             var response = await context.CreateHttpRequest("https://api.example.com/health")
                 .Get();
             
-            Assert.IsTrue(response.Ok);
+            Assert.IsTrue(response.IsSuccessful);
         })
         .Load().Simulations((context, simulations) =>
         {

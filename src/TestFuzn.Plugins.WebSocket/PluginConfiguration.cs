@@ -35,4 +35,10 @@ public class PluginConfiguration
     /// Default value is 1000.
     /// </summary>
     public int MaxMessageBufferSize { get; set; } = 1000;
+
+    /// <summary>
+    /// Gets or sets the serializer provider for JSON serialization and deserialization.
+    /// Default value is <see cref="SystemTextJsonSerializerProvider"/>.
+    /// </summary>
+    public ISerializerProvider Serializer { get; set; } = new SystemTextJsonSerializerProvider();
 }

@@ -1,7 +1,6 @@
-﻿using System.Text.Json;
-using Fuzn.TestFuzn.Contracts.Providers;
+using System.Text.Json;
 
-namespace Fuzn.TestFuzn;
+namespace Fuzn.TestFuzn.Plugins.WebSocket;
 
 /// <summary>
 /// Default serializer provider using System.Text.Json for JSON serialization and deserialization.

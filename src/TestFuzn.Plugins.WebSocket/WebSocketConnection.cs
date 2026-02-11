@@ -178,7 +178,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            if (_verbosity > LoggingVerbosity.None)
+            if (_verbosity >= LoggingVerbosity.Normal)
                 _context.Logger.LogError(ex, $"WebSocket connection failed: {_url}");
 
             if (WebSocketGlobalState.Configuration.LogFailedConnectionsToTestConsole)
@@ -231,7 +231,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
 
         var buffer = new ArraySegment<byte>(data);
 
-        if (_verbosity >= LoggingVerbosity.Normal)
+        if (_verbosity == LoggingVerbosity.Full)
             _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Sending binary data ({data.Length} bytes) - CorrelationId: {_context.Info.CorrelationId}");
 
         await _webSocket!.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
@@ -249,7 +249,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
         if (data == null)
             throw new ArgumentNullException(nameof(data));
 
-        var json = GlobalState.SerializerProvider.Serialize(data);
+        var json = WebSocketGlobalState.Configuration.Serializer.Serialize(data);
         await SendText(json);
     }
 
@@ -315,7 +315,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
     public async Task<T> WaitForMessageAs<T>(TimeSpan? timeout = null) where T : class
     {
         var message = await WaitForMessage(timeout);
-        return GlobalState.SerializerProvider.Deserialize<T>(message);
+        return WebSocketGlobalState.Configuration.Serializer.Deserialize<T>(message);
     }
 
     /// <summary>
@@ -348,7 +348,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
             }
             catch (Exception ex)
             {
-                if (_verbosity > LoggingVerbosity.None)
+                if (_verbosity >= LoggingVerbosity.Normal)
                     _context.Logger.LogWarning(ex, $"Step {_context.StepInfo?.Name} - Error during WebSocket close - CorrelationId: {_context.Info.CorrelationId}");
             }
             finally
@@ -417,7 +417,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
                 }
                 else if (result.MessageType == WebSocketMessageType.Binary)
                 {
-                    if (_verbosity >= LoggingVerbosity.Normal)
+                    if (_verbosity == LoggingVerbosity.Full)
                         _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Received binary message ({result.Count} bytes) - CorrelationId: {_context.Info.CorrelationId}");
                 }
             }
@@ -429,12 +429,12 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
             ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely ||
             ex.WebSocketErrorCode == WebSocketError.InvalidState)
         {
-            if (_verbosity > LoggingVerbosity.None)
+            if (_verbosity >= LoggingVerbosity.Normal)
                 _context.Logger.LogInformation($"WebSocket connection closed: {ex.Message}");
         }
         catch (Exception ex)
         {
-            if (_verbosity > LoggingVerbosity.None)
+            if (_verbosity >= LoggingVerbosity.Normal)
                 _context.Logger.LogError(ex, "Error in WebSocket receive loop");
         }
     }

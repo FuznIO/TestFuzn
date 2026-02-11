@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Tests.WebSocket;
 [TestClass]
 public class WebSocketLoadTests : Test
 {
-    private const string WebSocketServerUrl = "wss://localhost:44316/ws";
+    private const string WebSocketServerUrl = "wss://localhost:7058/ws";
 
     [Test]
     public async Task Concurrent_Connections_OneTime_Load()
@@ -178,7 +178,7 @@ public class WebSocketLoadTests : Test
             .Step("Stress test with high concurrency", async (context) =>
             {
                 var connection = await context.CreateWebSocketConnection(WebSocketServerUrl)
-                    .Verbosity(LoggingVerbosity.None)
+                    .Verbosity(LoggingVerbosity.Normal)
                     .ConnectionTimeout(TimeSpan.FromSeconds(30))
                     .Connect();
 

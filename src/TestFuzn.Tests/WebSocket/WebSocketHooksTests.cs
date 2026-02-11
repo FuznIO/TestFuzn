@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Tests.WebSocket;
 [TestClass]
 public class WebSocketHooksTests : Test
 {
-    private const string WebSocketServerUrl = "wss://localhost:44316/ws";
+    private const string WebSocketServerUrl = "wss://localhost:7058/ws";
 
     [Test]
     public async Task PreConnect_Hook_Is_Called()

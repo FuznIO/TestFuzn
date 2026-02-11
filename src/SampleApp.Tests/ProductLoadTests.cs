@@ -1,4 +1,5 @@
-﻿using Fuzn.TestFuzn;
+﻿using Fuzn.FluentHttp;
+using Fuzn.TestFuzn;
 using Fuzn.TestFuzn.Plugins.Http;
 using SampleApp.WebApp.Models;
 
@@ -25,22 +26,22 @@ public partial class ProductLoadTests : Test
                 };
 
                 var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
-                    .AuthBearer(context.Model.AuthToken)
-                    .Body(context.Model.NewProduct)
+                    .WithAuthBearer(context.Model.AuthToken)
+                    .WithContent(context.Model.NewProduct)
                     .Post();
 
-                Assert.IsTrue(response.Ok);
+                Assert.IsTrue(response.IsSuccessful);
             })
             .Step("Call GET /Products to verify the product was created", async (context) =>
             {
                 var response = await context.CreateHttpRequest($"https://localhost:44316/api/Products/{context.Model.NewProduct!.Id}")
-                    .AuthBearer(context.Model.AuthToken)
-                    .Get();
-                Assert.IsTrue(response.Ok);
-                var createdProduct = response.BodyAs<Product>();
-                Assert.IsNotNull(createdProduct);
-                Assert.AreEqual(context.Model.NewProduct.Name, createdProduct.Name);
-                Assert.AreEqual(context.Model.NewProduct.Price, createdProduct.Price);
+                    .WithAuthBearer(context.Model.AuthToken)
+                    .Get<Product>();
+
+                Assert.IsTrue(response.IsSuccessful);
+                Assert.IsNotNull(response.Data);
+                Assert.AreEqual(context.Model.NewProduct.Name, response.Data.Name);
+                Assert.AreEqual(context.Model.NewProduct.Price, response.Data.Price);
             })
             .Step("Call PUT /Products to update the product", async (context) =>
             {
@@ -51,36 +52,38 @@ public partial class ProductLoadTests : Test
                     Price = 150
                 };
                 var response = await context.CreateHttpRequest("https://localhost:44316/api/Products/")
-                    .AuthBearer(context.Model.AuthToken)
-                    .Body(context.Model.UpdatedProduct)
+                    .WithAuthBearer(context.Model.AuthToken)
+                    .WithContent(context.Model.UpdatedProduct)
                     .Put();
 
-                Assert.IsTrue(response.Ok);
+                Assert.IsTrue(response.IsSuccessful);
             })
             .Step("Call GET /Products to verify the product was updated", async (context) =>
             {
                 var response = await context.CreateHttpRequest($"https://localhost:44316/api/Products/{context.Model.NewProduct!.Id}")
-                    .AuthBearer(context.Model.AuthToken)
-                    .Get();
-                Assert.IsTrue(response.Ok);
-                var product = response.BodyAs<Product>();
-                Assert.IsNotNull(product);
-                Assert.AreEqual(context.Model.UpdatedProduct!.Name, product.Name);
-                Assert.AreEqual(context.Model.UpdatedProduct.Price, product.Price);
+                    .WithAuthBearer(context.Model.AuthToken)
+                    .Get<Product>();
+
+                Assert.IsTrue(response.IsSuccessful);
+                Assert.IsNotNull(response.Data);
+                Assert.AreEqual(context.Model.UpdatedProduct!.Name, response.Data.Name);
+                Assert.AreEqual(context.Model.UpdatedProduct.Price, response.Data.Price);
             })
             .Step("Call DELETE /Products to delete the product", async (context) =>
             {
                 var response = await context.CreateHttpRequest($"https://localhost:44316/api/Products/{context.Model.NewProduct!.Id}")
-                    .AuthBearer(context.Model.AuthToken)
+                    .WithAuthBearer(context.Model.AuthToken)
                     .Delete();
-                Assert.IsTrue(response.Ok);
+
+                Assert.IsTrue(response.IsSuccessful);
             })
             .Step("Call GET /Products to verify the product was deleted", async (context) =>
             {
                 var response = await context.CreateHttpRequest($"https://localhost:44316/api/Products/{context.Model.NewProduct!.Id}")
-                    .AuthBearer(context.Model.AuthToken)
+                    .WithAuthBearer(context.Model.AuthToken)
                     .Get();
-                Assert.IsFalse(response.Ok);
+
+                Assert.IsFalse(response.IsSuccessful);
                 Assert.AreEqual(System.Net.HttpStatusCode.NotFound, response.StatusCode);
             })
             .Load().Simulations((context, simulations) => simulations.FixedLoad(100, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))

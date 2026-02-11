@@ -1,9 +1,12 @@
-﻿namespace Fuzn.TestFuzn.Contracts.Plugins;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace Fuzn.TestFuzn.Contracts.Plugins;
 
 public interface IContextPlugin
 {
     bool RequireState { get; }
     bool RequireStepExceptionHandling { get; }
+    
     Task InitSuite();
     Task CleanupSuite();
     object InitContext();

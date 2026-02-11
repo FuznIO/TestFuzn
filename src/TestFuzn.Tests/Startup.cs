@@ -1,7 +1,9 @@
-﻿using Fuzn.TestFuzn.Plugins.Http;
+﻿using Fuzn.FluentHttp;
+using Fuzn.TestFuzn.Plugins.Http;
 using Fuzn.TestFuzn.Plugins.Playwright;
 using Fuzn.TestFuzn.Plugins.WebSocket;
 using Fuzn.TestFuzn.Sinks.InfluxDB;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Tests;
 
@@ -36,7 +38,11 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
                 { "OwnerID", "123" },
             }
         };
-        configuration.LoggingVerbosity = LoggingVerbosity.Normal;
+        
+        // Register custom services in the IoC container
+        // Example: configuration.Services.AddSingleton<IMyService, MyService>();
+        // Example: configuration.Services.AddScoped<ITestDataProvider, TestDataProvider>();
+        
         configuration.UsePlaywright(c =>
         {
             c.BrowserTypes = new List<string> { "chromium" };
@@ -59,17 +65,22 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
                 return Task.CompletedTask;
             };
         });
-        configuration.UseHttp();
+
+        configuration.UseHttp(httpConfig =>
+        {
+            httpConfig.DefaultBaseAddress = new Uri("https://localhost:7058");
+            httpConfig.DefaultRequestTimeout = TimeSpan.FromSeconds(5);
+            httpConfig.DefaultAllowAutoRedirect = false;
+        });
         configuration.UseWebSocket(config =>
         {
             config.DefaultConnectionTimeout = TimeSpan.FromSeconds(10);
             config.DefaultKeepAliveInterval = TimeSpan.FromSeconds(30);
             config.LogFailedConnectionsToTestConsole = true;
+            // Configure custom serializer for WebSocket JSON messages
+            // config.SerializerProvider = new NewtonsoftSerializerProvider();
         });
         configuration.UseInfluxDB();
-        // Only one serializer can be used, last one set wins, have these 2 lines just to show both options.
-        configuration.SerializerProvider = new NewtonsoftSerializerProvider();
-        configuration.SerializerProvider = new SystemTextJsonSerializerProvider();
     }
 
     public Task BeforeSuite(Context context)

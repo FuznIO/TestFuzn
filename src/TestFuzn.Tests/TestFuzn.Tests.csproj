@@ -30,6 +30,7 @@
     <ProjectReference Include="..\TestFuzn.Plugins.WebSocket\TestFuzn.Plugins.WebSocket.csproj" />
     <ProjectReference Include="..\TestFuzn.Sinks.InfluxDB\TestFuzn.Sinks.InfluxDB.csproj" />
     <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
+    <ProjectReference Include="..\TestWebApp\TestWebApp.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,49 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_Layout";
+}
+
+<div style="max-width: 400px; margin: 4rem auto;">
+    <div class="card">
+        <h2 class="card-title" style="text-align: center;">Login to TestWebApp</h2>
+        
+        <form asp-action="Login" asp-controller="Account" method="post" id="login-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ReturnUrl" />
+            
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger" id="login-error">
+                    @Html.ValidationSummary(false)
+                </div>
+            }
+            
+            <div class="form-group">
+                <label asp-for="Username" class="form-label"></label>
+                <input asp-for="Username" class="form-control" id="username" placeholder="Enter username" autofocus />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" id="password" placeholder="Enter password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="login-btn">Login</button>
+            </div>
+        </form>
+        
+        <div style="margin-top: 1.5rem; padding: 1rem; background-color: #f8f9fa; border-radius: 4px;">
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;"><strong>Test Credentials:</strong></p>
+            <ul style="font-size: 0.85rem; color: #666; padding-left: 1.5rem; margin: 0;">
+                <li>admin / admin123</li>
+                <li>user1 / password1</li>
+                <li>user2 / password2</li>
+                <li>demo / demo</li>
+            </ul>
+        </div>
+    </div>
+</div>

@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Plugins;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Internals.Reports;
 using Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
@@ -66,6 +67,9 @@ internal static class TestFuznIntegrationCore
         configuration.Suite = new SuiteInfo();
         configuration.Suite.Name = testAssemblyName;
         _startupInstance.Configure(configuration);            
+
+        // Build the service provider after all plugins have registered their services
+        configuration.BuildServiceProvider();
 
         GlobalState.Configuration = configuration;
 

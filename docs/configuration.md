@@ -189,10 +189,10 @@ public class ApiTests : Test
                 var timeout = ConfigurationManager.GetRequiredValue<int>("Timeout");
 
                 var response = await context.CreateHttpRequest($"{baseUrl}/health")
-                    .Timeout(TimeSpan.FromSeconds(timeout))
+                    .WithTimeout(TimeSpan.FromSeconds(timeout))
                     .Get();
 
-                Assert.IsTrue(response.Ok);
+                Assert.IsTrue(response.IsSuccessful);
             })
             .Run();
     }

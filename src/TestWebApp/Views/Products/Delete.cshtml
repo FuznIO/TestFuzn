@@ -1,0 +1,26 @@
+@model ProductViewModel
+@{
+    ViewData["Title"] = "Delete Product";
+}
+
+<div class="card" style="max-width: 500px;">
+    <h1 class="card-title" style="color: #e74c3c;">Delete Product</h1>
+    
+    <div class="alert alert-danger" id="delete-warning">
+        <strong>Warning!</strong> You are about to delete this product. This action cannot be undone.
+    </div>
+    
+    <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+        <p style="margin: 0;"><strong>Product Name:</strong> <span id="product-name">@Model.Name</span></p>
+        <p style="margin: 0.5rem 0 0 0;"><strong>Price:</strong> <span id="product-price">$@Model.Price.ToString("F2")</span></p>
+    </div>
+    
+    <form asp-action="DeleteConfirmed" asp-controller="Products" asp-route-id="@Model.Id" method="post" id="delete-product-form">
+        @Html.AntiForgeryToken()
+        
+        <div class="form-group" style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-danger" id="confirm-delete-btn">Yes, Delete Product</button>
+            <a href="/Products" class="btn btn-secondary" id="cancel-btn">Cancel</a>
+        </div>
+    </form>
+</div>
