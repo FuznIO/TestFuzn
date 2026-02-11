@@ -39,10 +39,6 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             }
         };
         
-        // Register custom services in the IoC container
-        // Example: configuration.Services.AddSingleton<IMyService, MyService>();
-        // Example: configuration.Services.AddScoped<ITestDataProvider, TestDataProvider>();
-        
         configuration.UsePlaywright(c =>
         {
             c.BrowserTypes = new List<string> { "chromium" };

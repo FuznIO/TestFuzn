@@ -1,5 +1,6 @@
 ﻿using Fuzn.FluentHttp;
 using Fuzn.TestFuzn.Plugins.Http;
+using Microsoft.AspNetCore.Components;
 using System.Security.Cryptography;
 
 namespace Fuzn.TestFuzn.Tests.Http;
@@ -29,7 +30,7 @@ public class HttpTests : Test
                 var response = await context.CreateHttpRequest("/api/Products")
                                 .WithAuthBearer(token)
                                 .Get<List<Product>>();
-
+                
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.IsNotNull(response.Data);
                 Assert.IsNotEmpty(response.Data, "Expected more than one product to be returned.");

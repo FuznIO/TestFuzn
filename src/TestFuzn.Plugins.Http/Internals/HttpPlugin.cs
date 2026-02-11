@@ -37,26 +37,43 @@ internal class HttpPlugin : IContextPlugin
             return;
 
         var verbosity = GlobalState.LoggingVerbosity;
+        var testType = context.IterationState.Scenario?.TestType ?? Contracts.TestType.Standard;
+        var writeHttpDetailsOnStepFailure = HttpGlobalState.Configuration?.WriteHttpDetailsToConsoleOnStepFailure ?? false;
 
-        if (verbosity != LoggingVerbosity.Full)
-            return;
-
-        if (context.IterationState.Scenario?.TestType == Contracts.TestType.Load)
+        // Only process for standard tests, not load tests
+        if (testType == Contracts.TestType.Load)
             return;
 
         var requestLogs = httpState.GetLogs();
         if (requestLogs.Count == 0)
             return;
 
-        context.Comment($"HTTP Plugin: {requestLogs.Count} HTTP request(s) captured during this step");
-
-        for (int i = 0; i < requestLogs.Count; i++)
+        // Write HTTP details to console if enabled (happens when step fails)
+        if (writeHttpDetailsOnStepFailure)
         {
-            var log = requestLogs[i];
-            var index = i + 1;
-            var fileName = $"http-log-{index}.txt";
+            context.TestFramework.WriteMarkup($"[red]HTTP Plugin: {requestLogs.Count} HTTP request(s) captured during failed step[/]");
+            context.TestFramework.WriteMarkup("");
+            
+            foreach (var log in requestLogs)
+            {
+                context.TestFramework.WriteMarkup("[grey]" + log.Replace("[", "[[") + "[/]");
+                context.TestFramework.WriteMarkup("");
+            }
+        }
 
-            await context.Attach(fileName, log);
+        // Attach logs as files if verbosity is Full
+        if (verbosity == LoggingVerbosity.Full)
+        {
+            context.Comment($"HTTP Plugin: {requestLogs.Count} HTTP request(s) captured during this step");
+
+            for (int i = 0; i < requestLogs.Count; i++)
+            {
+                var log = requestLogs[i];
+                var index = i + 1;
+                var fileName = $"http-log-{index}.txt";
+
+                await context.Attach(fileName, log);
+            }
         }
     }
 }
