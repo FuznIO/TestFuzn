@@ -114,6 +114,14 @@ public class Startup : IStartup
 }
 ```
 
+Once configured as default, you can use `context.CreateHttpRequest()` without specifying the type:
+
+```csharp
+// Uses CustomHttpClient automatically
+var response = await context.CreateHttpRequest("https://api.example.com/products")
+    .Get<Product>();
+```
+
 > **⚠️ Important**: Custom HTTP clients must be registered using `httpConfig.Services.AddHttpClient<T>()` **within** the `UseHttp()` configuration block. Registering the client outside of `UseHttp()` will prevent TestFuzn's HTTP logging and request tracking from working correctly.
 
 ---
@@ -141,9 +149,6 @@ public void Configure(TestFuznConfiguration configuration)
         
         // Configure correlation ID header name (default: "X-Correlation-ID")
         httpConfig.CorrelationIdHeaderName = "X-Request-ID";
-        
-        // Set logging verbosity
-        httpConfig.LoggingVerbosity = LoggingVerbosity.Verbose;
     });
 }
 ```

@@ -10,14 +10,12 @@ namespace Fuzn.TestFuzn.Plugins.Http;
 public static class ContextExtensions
 {
     /// <summary>
-    /// Creates an HTTP request builder for the specified URL using a named HTTP client.
+    /// Creates an HTTP request builder for the specified URL using the default HTTP client.
     /// </summary>
     /// <param name="context">The step context.</param>
     /// <param name="url">The target URL for the HTTP request.</param>
-    /// <param name="httpClientName">The name of the HTTP client to use. Defaults to "TestFuzn".</param>
-    /// <returns>A <see cref="HttpRequestBuilder"/> for building and executing the HTTP request.</returns>
+    /// <returns>A <see cref="FluentHttpRequest"/> for building and executing the HTTP request.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the HTTP plugin has not been initialized. Call <c>configuration.UseHttp()</c> in the startup.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="httpClientName"/> is null or whitespace.</exception>
     /// <example>
     /// <code>
     /// var response = await context.CreateHttpRequest("https://api.example.com/users/1")

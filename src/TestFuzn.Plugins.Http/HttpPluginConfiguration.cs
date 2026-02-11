@@ -31,9 +31,11 @@ public class HttpPluginConfiguration
     public bool DefaultAllowAutoRedirect { get; set; } = false;
 
     /// <summary>
-    /// Gets or sets a value indicating whether failed requests should be logged to the test console.
+    /// Gets or sets a value indicating whether HTTP request/response details should be written to the test console when a step fails.
+    /// This is useful for debugging failed tests, regardless of whether the HTTP response was successful.
+    /// Only applies to standard tests, not load tests. Defaults to true.
     /// </summary>
-    public bool LogFailedRequestsToTestConsole { get; set; }
+    public bool WriteHttpDetailsToConsoleOnStepFailure { get; set; } = true;
 
     /// <summary>
     /// Gets or sets the header name used for correlation IDs. Defaults to "X-Correlation-ID".

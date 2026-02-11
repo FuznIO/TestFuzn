@@ -14,6 +14,7 @@ internal class TestFuznLoggingHandler : DelegatingHandler
         var state = request.Options.GetTestFuznState();
         var verbosity = GlobalState.LoggingVerbosity;
         var testType = context.IterationState.Scenario?.TestType ?? Contracts.TestType.Standard;
+        var writeHttpDetailsOnStepFailure = HttpGlobalState.Configuration?.WriteHttpDetailsToConsoleOnStepFailure ?? false;
 
         var correlationId = context.Info.CorrelationId;
         var stepName = context.StepInfo?.Name ?? "Unknown";
@@ -21,7 +22,7 @@ internal class TestFuznLoggingHandler : DelegatingHandler
         InjectCorrelationIdHeader(request, correlationId);
 
         string? requestBody = null;
-        if (verbosity == LoggingVerbosity.Full && request.Content != null)
+        if ((verbosity == LoggingVerbosity.Full || writeHttpDetailsOnStepFailure) && request.Content != null)
         {
             requestBody = await request.Content.ReadAsStringAsync(cancellationToken);
         }
@@ -37,7 +38,7 @@ internal class TestFuznLoggingHandler : DelegatingHandler
         }
 
         StringBuilder? logBuilder = null;
-        if (verbosity == LoggingVerbosity.Full && state != null && testType == Contracts.TestType.Standard)
+        if ((verbosity == LoggingVerbosity.Full || writeHttpDetailsOnStepFailure) && state != null && testType == Contracts.TestType.Standard)
         {
             logBuilder = new StringBuilder();
             AppendRequest(logBuilder, request, requestBody, correlationId);
@@ -49,12 +50,17 @@ internal class TestFuznLoggingHandler : DelegatingHandler
             
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            LogResponse(context, request, stepName, correlationId, verbosity, response, responseBody);
+            LogResponse(context, verbosity, response, responseBody);
 
             if (logBuilder != null && state != null)
             {
                 AppendResponse(logBuilder, response, responseBody);
-                state.AddLog(logBuilder.ToString());
+                
+                // Add to logs if verbosity is Full, OR if console output on step failure is enabled
+                if (verbosity == LoggingVerbosity.Full || writeHttpDetailsOnStepFailure)
+                {
+                    state.AddLog(logBuilder.ToString());
+                }
             }
 
             return response;
@@ -85,8 +91,11 @@ internal class TestFuznLoggingHandler : DelegatingHandler
         }
     }
 
-    private static void LogResponse(Context context, HttpRequestMessage request, string stepName, string correlationId, LoggingVerbosity verbosity, HttpResponseMessage response, string? responseBody)
+    private static void LogResponse(Context context, LoggingVerbosity verbosity, HttpResponseMessage response, string? responseBody)
     {
+        var stepName = context.StepInfo?.Name ?? "Unknown";
+        var correlationId = context.Info.CorrelationId;
+
         if (verbosity >= LoggingVerbosity.Normal)
         {
             context.Logger.LogInformation($"Step {stepName} - HTTP Response: {(int)response.StatusCode} {response.ReasonPhrase} - CorrelationId: {correlationId}");
@@ -95,13 +104,6 @@ internal class TestFuznLoggingHandler : DelegatingHandler
             {
                 context.Logger.LogInformation($"Step {stepName} - Response Body: {responseBody} - CorrelationId: {correlationId}");
             }
-        }
-
-        if (!response.IsSuccessStatusCode && HttpGlobalState.Configuration?.LogFailedRequestsToTestConsole == true && verbosity == LoggingVerbosity.Full)
-        {
-            context.Logger.LogError($"Step {stepName} - Request returned an error:\n{request} - CorrelationId: {correlationId}");
-            context.Logger.LogError($"Step {stepName} - Response:\n{response} - CorrelationId: {correlationId}");
-            context.Logger.LogError($"Step {stepName} - Response.Body:\n{responseBody} - CorrelationId: {correlationId}");
         }
     }
 
