@@ -231,7 +231,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
 
         var buffer = new ArraySegment<byte>(data);
 
-        if (_verbosity >= LoggingVerbosity.Normal)
+        if (_verbosity == LoggingVerbosity.Full)
             _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Sending binary data ({data.Length} bytes) - CorrelationId: {_context.Info.CorrelationId}");
 
         await _webSocket!.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
@@ -417,7 +417,7 @@ public class WebSocketConnection : IDisposable, IAsyncDisposable
                 }
                 else if (result.MessageType == WebSocketMessageType.Binary)
                 {
-                    if (_verbosity >= LoggingVerbosity.Normal)
+                    if (_verbosity == LoggingVerbosity.Full)
                         _context.Logger.LogInformation($"Step {_context.StepInfo?.Name} - WebSocket Received binary message ({result.Count} bytes) - CorrelationId: {_context.Info.CorrelationId}");
                 }
             }
