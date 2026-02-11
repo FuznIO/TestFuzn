@@ -5,6 +5,7 @@ using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Results.Standard;
 
 namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 
@@ -90,8 +91,6 @@ internal class ConsoleWriter
                 {
                     var stepNumber = index + 1;
                     var stepDisplayName = $"Step {stepNumber}: {stepResult.Key}";
-                    if (stepResult.Value.Comments is { Count: > 0 })
-                        stepDisplayName += $" ({string.Join(", ", stepResult.Value.Comments.Select(c => c.Text))})";
 
                     table.Rows.Add(new AdvancedTableRow
                     {
@@ -102,13 +101,13 @@ internal class ConsoleWriter
                         }
                     });
 
+                    AddCommentsAndAttachmentsRows(table, stepResult.Value, "  ");
+
                     var subStepResults = SubStepHelper.GetSubStepResults(stepResult.Value, [stepNumber]);
                     foreach (var sub in subStepResults)
                     {
                         var indent = new string(' ', sub.Level * 2 - 2);
                         var subStepDisplayName = $"{indent}↳ Step {sub.StepNumber}: {sub.Name}";
-                        if (sub.Comments is { Count: > 0 })
-                            subStepDisplayName += $" ({string.Join(", ", sub.Comments.Select(c => c.Text))})";
                         
                         table.Rows.Add(new AdvancedTableRow
                         {
@@ -118,6 +117,8 @@ internal class ConsoleWriter
                                 new KeyValueCell($"{sub.Status}", $"{sub.Duration.ToTestFuznResponseTime()}", 1)
                             }
                         });
+
+                        AddCommentsAndAttachmentsRows(table, sub, $"{indent}  ");
                     }
 
                     if (iterationResult.InputData != null && stepNumber == iterationResult.StepResults.Count && iterationIndex + 1 < scenarioResult.IterationResults.Count)
@@ -138,25 +139,43 @@ internal class ConsoleWriter
             _testFramework.Write(Environment.NewLine);
             _testFramework.WriteAdvancedTable(table);
 
-            // Errors
-            // TODO LEK
             var errorSection = new StringBuilder();
-            //foreach (var step in scenario.Steps)
-            //{
-            //    var stepResult = loadResult.Steps[step.Name];
-            //    if (stepResult.Errors?.Count > 0)
-            //    {
-            //        if (errorSection.Length == 0)
-            //            errorSection.AppendLine("[red]Errors by Step:[/]");
-            //        errorSection.AppendLine($"[red]{step.Name}:[/]");
-            //        foreach (var error in stepResult.Errors)
-            //            errorSection.AppendLine($"  [red]{error.Key} (Count: {error.Value.Count})[/]");
-            //    }
-            //}
+
             if (errorSection.Length > 0)
             {
                 _testFramework.Write(Environment.NewLine);
                 _testFramework.WriteMarkup(errorSection.ToString());
+            }
+        }
+    }
+
+    private static void AddCommentsAndAttachmentsRows(AdvancedTable table, StepStandardResult stepResult, string indent)
+    {
+        if (stepResult.Comments is { Count: > 0 })
+        {
+            foreach (var comment in stepResult.Comments)
+            {
+                table.Rows.Add(new AdvancedTableRow
+                {
+                    Cells =
+                    {
+                        new AdvancedTableCell($"{indent}// {comment.Text}", 5)
+                    }
+                });
+            }
+        }
+
+        if (stepResult.Attachments is { Count: > 0 })
+        {
+            foreach (var attachment in stepResult.Attachments)
+            {
+                table.Rows.Add(new AdvancedTableRow
+                {
+                    Cells =
+                    {
+                        new AdvancedTableCell($"{indent}📎 {attachment.Path}", 5)
+                    }
+                });
             }
         }
     }
