@@ -59,7 +59,7 @@ internal class TestFuznLoggingHandler : DelegatingHandler
                 // Add to logs if verbosity is Full, OR if console output on step failure is enabled
                 if (verbosity == LoggingVerbosity.Full || writeHttpDetailsOnStepFailure)
                 {
-                    state.AddLog(logBuilder.ToString());
+                    state.LatestRequest = logBuilder.ToString();
                 }
             }
 
@@ -75,7 +75,7 @@ internal class TestFuznLoggingHandler : DelegatingHandler
             if (logBuilder != null && state != null)
             {
                 AppendException(logBuilder, ex);
-                state.AddLog(logBuilder.ToString());
+                state.LatestRequest = logBuilder.ToString();
             }
 
             throw;

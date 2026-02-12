@@ -26,7 +26,7 @@ internal class HttpPlugin : IContextPlugin
     {
         if (state is HttpPluginState httpState)
         {
-            httpState.Clear();
+            httpState.LatestRequest = null;
         }
         return Task.CompletedTask;
     }
@@ -44,36 +44,24 @@ internal class HttpPlugin : IContextPlugin
         if (testType == Contracts.TestType.Load)
             return;
 
-        var requestLogs = httpState.GetLogs();
-        if (requestLogs.Count == 0)
+        var latestRequest = httpState.LatestRequest;
+        if (latestRequest == null)
             return;
 
         // Write HTTP details to console if enabled (happens when step fails)
         if (writeHttpDetailsOnStepFailure)
         {
-            context.TestFramework.WriteMarkup($"[red]HTTP Plugin: {requestLogs.Count} HTTP request(s) captured during failed step[/]");
+            context.TestFramework.WriteMarkup($"[red]HTTP Plugin: Latest HTTP request captured during failed step[/]");
             context.TestFramework.WriteMarkup("");
-            
-            foreach (var log in requestLogs)
-            {
-                context.TestFramework.WriteMarkup("[grey]" + log.Replace("[", "[[") + "[/]");
-                context.TestFramework.WriteMarkup("");
-            }
+            context.TestFramework.WriteMarkup("[grey]" + latestRequest.Replace("[", "[[") + "[/]");
+            context.TestFramework.WriteMarkup("");
         }
 
         // Attach logs as files if verbosity is Full
         if (verbosity == LoggingVerbosity.Full)
         {
-            context.Comment($"HTTP Plugin: {requestLogs.Count} HTTP request(s) captured during this step");
-
-            for (int i = 0; i < requestLogs.Count; i++)
-            {
-                var log = requestLogs[i];
-                var index = i + 1;
-                var fileName = $"http-log-{index}.txt";
-
-                await context.Attach(fileName, log);
-            }
+            context.Comment("HTTP Plugin: Latest HTTP request captured during this step");
+            await context.Attach("http-request-response.txt", latestRequest);
         }
     }
 }
