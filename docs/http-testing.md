@@ -6,18 +6,149 @@ TestFuzn provides HTTP testing capabilities through the [Fuzn.FluentHttp](https:
 
 ---
 
-## Quick Start
+## Installation
+
+Install the HTTP plugin via NuGet:
+
+```bash
+dotnet add package Fuzn.TestFuzn.Plugins.Http
+```
+
+---
+
+## HTTP Client Setup
+
+### Creating an HTTP Client
+
+Create a class that implements `IHttpClient`:
 
 ```csharp
+using Fuzn.FluentHttp;
+using Fuzn.TestFuzn.Plugins.Http;
+
+public class MyHttpClient : IHttpClient
+{
+    public HttpClient HttpClient { get; }
+
+    public MyHttpClient(HttpClient httpClient)
+    {
+        HttpClient = httpClient;
+    }
+
+    public FluentHttpRequest CreateHttpRequest()
+    {
+        // Configure common settings for all requests (e.g., serializer, default headers)
+        return HttpClient.Request();
+    }
+}
+```
+
+### Registering the HTTP Client
+
+Register your HTTP client in the `Startup` class using `AddHttpClient<T>()` and chain `.AddTestFuznHandlers()`:
+
+```csharp
+public class Startup : IStartup
+{
+    public void Configure(TestFuznConfiguration configuration)
+    {
+        configuration.UseHttp(httpConfig =>
+        {
+            // Register the HTTP client with HttpClientFactory
+            httpConfig.Services.AddHttpClient<MyHttpClient>(client =>
+            {
+                client.BaseAddress = new Uri("https://api.example.com");
+                client.Timeout = TimeSpan.FromSeconds(30);
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                AllowAutoRedirect = false
+            })
+            .AddTestFuznHandlers(); // Required for TestFuzn logging and correlation ID injection
+
+            // Set as the default HTTP client for context.CreateHttpRequest() calls
+            httpConfig.UseDefaultHttpClient<MyHttpClient>();
+        });
+    }
+}
+```
+
+> **⚠️ Important**: Always call `.AddTestFuznHandlers()` when registering HTTP clients for use with TestFuzn. This enables:
+> - Automatic correlation ID injection
+> - Request/response logging based on verbosity settings
+> - HTTP details capture for failed step diagnostics
+
+> **💡 Tip**: Setting a `BaseAddress` on the HttpClient allows you to use relative URLs in your tests (e.g., `/api/products`). Without a base address, you must use absolute URLs (e.g., `https://api.example.com/api/products`).
+
+### Minimal Setup (No Configuration)
+
+If you don't need to customize the HTTP plugin settings, you can simply call `UseHttp()` without parameters:
+
+```csharp
+public void Configure(TestFuznConfiguration configuration)
+{
+    configuration.UseHttp();
+}
+```
+
+However, you'll still need to register at least one HTTP client in your service collection separately.
+
+### Using Multiple HTTP Clients
+
+You can register multiple HTTP clients and use them explicitly. **One** can be set as the default:
+
+```csharp
+configuration.UseHttp(httpConfig =>
+{
+    // Register multiple clients
+    httpConfig.Services.AddHttpClient<InternalApiClient>(client =>
+    {
+        client.BaseAddress = new Uri("https://internal-api.example.com");
+    })
+    .AddTestFuznHandlers();
+
+    httpConfig.Services.AddHttpClient<ExternalApiClient>(client =>
+    {
+        client.BaseAddress = new Uri("https://external-api.example.com");
+    })
+    .AddTestFuznHandlers();
+
+    // Set one as the default (optional)
+    httpConfig.UseDefaultHttpClient<InternalApiClient>();
+});
+```
+
+**Using in Tests**:
+
+```csharp
+// If you set a default client, you can use the parameterless overload:
+var response = await context.CreateHttpRequest("/users").Get<User>();
+
+// Or explicitly specify which client to use:
+var response = await context.CreateHttpRequest<ExternalApiClient>("/data").Get<Data>();
+```
+
+> **⚠️ Note**: If you don't call `UseDefaultHttpClient<T>()`, you **must** use the generic `CreateHttpRequest<THttpClient>(url)` overload to specify which client to use.
+
+---
+
+## Basic HTTP Requests
+
+Once you've [configured an HTTP client](#http-client-setup), use it in your tests via `context.CreateHttpRequest()`:
+
+### GET Request
+
+```csharp
+using Fuzn.TestFuzn;
 using Fuzn.TestFuzn.Plugins.Http;
 
 [Test]
 public async Task Get_products_from_api()
 {
     await Scenario()
-        .Step("Call API and verify response", async context =>
+        .Step("Get products and verify response", async context =>
         {
-            var response = await context.CreateHttpRequest("https://api.example.com/products")
+            var response = await context.CreateHttpRequest("/api/products")
                 .Get<List<Product>>();
             
             Assert.IsTrue(response.IsSuccessful);
@@ -28,105 +159,178 @@ public async Task Get_products_from_api()
 }
 ```
 
----
-
-## Basic Usage
-
-TestFuzn extends `Context` with `CreateHttpRequest()` which returns a `FluentHttpRequest` builder:
+### POST Request
 
 ```csharp
-// GET with typed response
-var response = await context.CreateHttpRequest(url).Get<Product>();
-var product = response.Data;
-
-// POST with content
-var response = await context.CreateHttpRequest(url)
-    .WithContent(new { Name = "Product", Price = 99.99 })
-    .Post();
-
-// Authentication
-var response = await context.CreateHttpRequest(url)
-    .WithAuthBearer("your-jwt-token")
-    .Get();
-
-// Check response
-Assert.IsTrue(response.IsSuccessful);
-Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-```
-
-For all available request methods (`.WithHeader()`, `.WithQueryParam()`, `.WithTimeout()`, etc.) and response handling options, see the [FluentHttp documentation](https://github.com/FuznIO/FluentHttp).
-
----
-
-## Custom HTTP Client
-
-You can create a custom HTTP client by implementing the `IHttpClient` interface:
-
-```csharp
-using Fuzn.FluentHttp;
-using Fuzn.TestFuzn.Plugins.Http;
-
-public class CustomHttpClient : IHttpClient
+[Test]
+public async Task Create_product()
 {
-    public HttpClient HttpClient { get; }
-
-    public CustomHttpClient(HttpClient httpClient)
-    {
-        HttpClient = httpClient;
-    }
-
-    public FluentHttpRequest CreateHttpRequest()
-    {
-        // Add custom logic here (logging, metrics, etc.)
-        return HttpClient.Request();
-    }
-}
-```
-
-### Using a Custom HTTP Client Per Request
-
-```csharp
-var response = await context.CreateHttpRequest<CustomHttpClient>("https://api.example.com/products")
-    .Get<Product>();
-```
-
-### Setting a Custom HTTP Client as Default
-
-Configure a custom HTTP client as the default in your `Startup`:
-
-```csharp
-public class Startup : IStartup
-{
-    public void Configure(TestFuznConfiguration configuration)
-    {
-        configuration.UseHttp(httpConfig =>
+    await Scenario()
+        .Step("Create new product", async context =>
         {
-            // Register the custom HTTP client with HttpClientFactory
-            httpConfig.Services.AddHttpClient<CustomHttpClient>(client =>
-            {
-                // Configure the HttpClient as needed
-            });
-
-            // Set as the default HTTP client for all requests
-            httpConfig.UseDefaultHttpClient<CustomHttpClient>();
-        });
-    }
+            var newProduct = new { Name = "Widget", Price = 99.99 };
+            
+            var response = await context.CreateHttpRequest("/api/products")
+                .WithContent(newProduct)
+                .Post<Product>();
+            
+            Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+            Assert.IsNotNull(response.Data);
+        })
+        .Run();
 }
 ```
 
-Once configured as default, you can use `context.CreateHttpRequest()` without specifying the type:
+### PUT Request
 
 ```csharp
-// Uses CustomHttpClient automatically
-var response = await context.CreateHttpRequest("https://api.example.com/products")
-    .Get<Product>();
+[Test]
+public async Task Update_product()
+{
+    await Scenario()
+        .Step("Update existing product", async context =>
+        {
+            var updatedProduct = new { Id = 123, Name = "Updated Widget", Price = 149.99 };
+            
+            var response = await context.CreateHttpRequest("/api/products/123")
+                .WithContent(updatedProduct)
+                .Put<Product>();
+            
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        })
+        .Run();
+}
 ```
 
-> **⚠️ Important**: Custom HTTP clients must be registered using `httpConfig.Services.AddHttpClient<T>()` **within** the `UseHttp()` configuration block. Registering the client outside of `UseHttp()` will prevent TestFuzn's HTTP logging and request tracking from working correctly.
+### DELETE Request
+
+```csharp
+[Test]
+public async Task Delete_product()
+{
+    await Scenario()
+        .Step("Delete product", async context =>
+        {
+            var response = await context.CreateHttpRequest("/api/products/123")
+                .Delete();
+            
+            Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+        })
+        .Run();
+}
+```
 
 ---
 
-## HTTP Plugin Configuration
+## Authentication
+
+### Bearer Token Authentication
+
+```csharp
+[Test]
+public async Task Call_authenticated_endpoint()
+{
+    await Scenario()
+        .Step("Get user profile", async context =>
+        {
+            var response = await context.CreateHttpRequest("/api/user/profile")
+                .WithAuthBearer("your-jwt-token")
+                .Get<UserProfile>();
+            
+            Assert.IsTrue(response.IsSuccessful);
+        })
+        .Run();
+}
+```
+
+### Basic Authentication
+
+```csharp
+[Test]
+public async Task Call_with_basic_auth()
+{
+    await Scenario()
+        .Step("Get protected resource", async context =>
+        {
+            var response = await context.CreateHttpRequest("/api/protected/resource")
+                .WithAuthBasic("username", "password")
+                .Get<Resource>();
+            
+            Assert.IsTrue(response.IsSuccessful);
+        })
+        .Run();
+}
+```
+
+---
+
+## Request Options
+
+### Headers
+
+```csharp
+var response = await context.CreateHttpRequest("/api/data")
+    .WithHeader("X-Custom-Header", "value")
+    .WithHeader("Accept-Language", "en-US")
+    .Get<Data>();
+```
+
+### Query Parameters
+
+```csharp
+var response = await context.CreateHttpRequest("/api/products")
+    .WithQueryParam("category", "electronics")
+    .WithQueryParam("maxPrice", "1000")
+    .Get<List<Product>>();
+```
+
+### Timeout
+
+```csharp
+var response = await context.CreateHttpRequest("/api/slow-endpoint")
+    .WithTimeout(TimeSpan.FromSeconds(60))
+    .Get<Result>();
+```
+
+---
+
+## Response Handling
+
+### Status Code Checks
+
+```csharp
+var response = await context.CreateHttpRequest("/api/endpoint")
+    .Get<Data>();
+
+Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+Assert.IsTrue(response.IsSuccessful);
+```
+
+### Accessing Response Headers
+
+```csharp
+var response = await context.CreateHttpRequest("/api/endpoint")
+    .Get<Data>();
+
+var contentType = response.Headers.GetValues("Content-Type").FirstOrDefault();
+```
+
+### Error Handling
+
+```csharp
+var response = await context.CreateHttpRequest("/api/endpoint")
+    .Get<Data>();
+
+if (!response.IsSuccessful)
+{
+    context.Logger.LogError($"Request failed: {response.StatusCode}");
+    context.Logger.LogError($"Error content: {response.Content}");
+}
+```
+
+---
+
+## Configuration
 
 Configure the HTTP plugin in your `Startup` class:
 
@@ -135,17 +339,23 @@ public void Configure(TestFuznConfiguration configuration)
 {
     configuration.UseHttp(httpConfig =>
     {
-        // Set a default base address for all requests
-        httpConfig.DefaultBaseAddress = new Uri("https://api.example.com");
-        
-        // Set default request timeout (default: 10 seconds)
-        httpConfig.DefaultRequestTimeout = TimeSpan.FromSeconds(30);
-        
-        // Configure auto-redirect behavior (default: false)
-        httpConfig.DefaultAllowAutoRedirect = true;
-        
-        // Enable logging of failed requests to test console
-        httpConfig.LogFailedRequestsToTestConsole = true;
+        // Register and configure your HTTP client
+        httpConfig.Services.AddHttpClient<MyHttpClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.example.com");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = true
+        })
+        .AddTestFuznHandlers();
+
+        httpConfig.UseDefaultHttpClient<MyHttpClient>();
+
+        // Enable logging of HTTP details to test console when a step fails (default: true)
+        // Only applies to standard tests, not load tests
+        httpConfig.WriteHttpDetailsToConsoleOnStepFailure = true;
         
         // Configure correlation ID header name (default: "X-Correlation-ID")
         httpConfig.CorrelationIdHeaderName = "X-Request-ID";
@@ -153,9 +363,20 @@ public void Configure(TestFuznConfiguration configuration)
 }
 ```
 
+### Configuration Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `WriteHttpDetailsToConsoleOnStepFailure` | `true` | Write HTTP request/response details to console when a step fails. **Only applies to standard tests, not load tests.** |
+| `CorrelationIdHeaderName` | `"X-Correlation-ID"` | Name of the header used for correlation ID injection |
+
+> **📝 Note**: When `WriteHttpDetailsToConsoleOnStepFailure` is enabled, the most recent HTTP request/response details are automatically written to the test console if a step fails. This helps with debugging without requiring full verbosity logging.
+
 ---
 
 ## HTTP Load Testing
+
+HTTP requests can be used in load tests to simulate concurrent API traffic:
 
 ```csharp
 [Test]
@@ -164,7 +385,7 @@ public async Task API_load_test()
     await Scenario()
         .Step("Call API endpoint", async context =>
         {
-            var response = await context.CreateHttpRequest("https://api.example.com/health")
+            var response = await context.CreateHttpRequest("/api/health")
                 .Get();
             
             Assert.IsTrue(response.IsSuccessful);
@@ -181,6 +402,8 @@ public async Task API_load_test()
         .Run();
 }
 ```
+
+See the [Load Testing](load-testing.md) documentation for more details on load test configuration and assertions.
 
 ---
 
