@@ -77,6 +77,15 @@ internal class ConsoleWriter
             table.Rows.Add(new AdvancedTableRow { IsDivider = true });
             foreach (var (iterationResult, iterationIndex) in scenarioResult.IterationResults.Select((ir, i) => (ir, i)))
             {
+                table.Rows.Add(new AdvancedTableRow
+                {
+                    Cells =
+                    {
+                        new AdvancedTableCell("CorrelationId", 1),
+                        new AdvancedTableCell($"{iterationResult.CorrelationId}", 4),
+                    }
+                });
+
                 if (iterationResult.InputData != null)
                     table.Rows.Add(new AdvancedTableRow
                     {

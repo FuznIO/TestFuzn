@@ -348,6 +348,15 @@ internal class StandardHtmlReportWriter : IStandardReport
                 b.AppendLine($"<th></th>");
                 b.AppendLine($"</tr>");
             }
+            else
+            {
+                b.AppendLine($"<tr>");
+                b.AppendLine($"<th>CorrelationId: {iteration.CorrelationId}");
+                b.AppendLine($"</th>");
+                b.AppendLine($"<th></th>");
+                b.AppendLine($"<th></th>");
+                b.AppendLine($"</tr>");
+            }
 
             foreach (var stepResult in iteration.StepResults)
             {
