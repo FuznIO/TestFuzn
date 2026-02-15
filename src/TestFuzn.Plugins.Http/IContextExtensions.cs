@@ -15,7 +15,10 @@ public static class ContextExtensions
     /// <param name="context">The step context.</param>
     /// <param name="url">The target URL for the HTTP request.</param>
     /// <returns>A <see cref="FluentHttpRequest"/> for building and executing the HTTP request.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the HTTP plugin has not been initialized. Call <c>configuration.UseHttp()</c> in the startup.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the HTTP plugin has not been initialized (call <c>configuration.UseHttp()</c> in the startup),
+    /// or when no default HTTP client has been configured (call <c>httpConfig.UseDefaultHttpClient&lt;THttpClient&gt;()</c>).
+    /// </exception>
     /// <example>
     /// <code>
     /// var response = await context.CreateHttpRequest("https://api.example.com/users/1")
@@ -24,6 +27,15 @@ public static class ContextExtensions
     /// </example>
     public static FluentHttpRequest CreateHttpRequest(this Context context, string url)
     {
+        if (!HttpGlobalState.HasBeenInitialized)
+            throw new InvalidOperationException("TestFuzn.Plugins.HTTP has not been initialized. Please call configuration.UseHttp() in the Startup.");
+
+        if (HttpGlobalState.Configuration.DefaultHttpClient == null)
+            throw new InvalidOperationException(
+                "No default HTTP client has been configured. " +
+                "Either call httpConfig.UseDefaultHttpClient<THttpClient>() in UseHttp() configuration, " +
+                "or use context.CreateHttpRequest<THttpClient>(url) to specify the HTTP client type explicitly.");
+
         return CreateHttpRequest(HttpGlobalState.Configuration.DefaultHttpClient, context, url);
     }
 

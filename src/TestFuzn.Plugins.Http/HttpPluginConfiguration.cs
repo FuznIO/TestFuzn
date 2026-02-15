@@ -1,5 +1,4 @@
-﻿using Fuzn.TestFuzn.Plugins.Http.Internals;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Plugins.Http;
 
@@ -8,27 +7,12 @@ namespace Fuzn.TestFuzn.Plugins.Http;
 /// </summary>
 public class HttpPluginConfiguration
 {
-    internal Type DefaultHttpClient { get; set; } = typeof(TestFuznHttpClient);
+    internal Type? DefaultHttpClient { get; set; } = null;
 
     /// <summary>
     /// Gets the collection of service descriptors for dependency injection configuration.
     /// </summary>
     public IServiceCollection Services { get; internal set; }
-
-    /// <summary>
-    /// Gets or sets the default base address used for HTTP requests.
-    /// </summary>
-    public Uri? DefaultBaseAddress { get; set; } = null;
-
-    /// <summary>
-    /// Gets or sets the default timeout for HTTP requests. Defaults to 10 seconds.
-    /// </summary>
-    public TimeSpan DefaultRequestTimeout { get; set; } = TimeSpan.FromSeconds(10);
-
-    /// <summary>
-    /// Gets or sets the DefaultAllowAutoRedirect property for the underlying HttpClientHandler. Defaults to false to prevent unintended redirects during testing.
-    /// </summary>
-    public bool DefaultAllowAutoRedirect { get; set; } = false;
 
     /// <summary>
     /// Gets or sets a value indicating whether HTTP request/response details should be written to the test console when a step fails.
@@ -43,9 +27,10 @@ public class HttpPluginConfiguration
     public string CorrelationIdHeaderName { get; set; } = "X-Correlation-ID";
 
     /// <summary>
-    /// Sets the default HTTP client implementation to use.
+    /// Sets the default HTTP client implementation to use for <c>context.CreateHttpRequest()</c> calls.
+    /// The HTTP client must be registered with <c>services.AddHttpClient&lt;T&gt;().AddTestFuznHandlers()</c>.
     /// </summary>
-    /// <typeparam name="THttpClient"></typeparam>
+    /// <typeparam name="THttpClient">The type of HTTP client to use as the default.</typeparam>
     public void UseDefaultHttpClient<THttpClient>()
         where THttpClient : IHttpClient
     {
