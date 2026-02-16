@@ -24,10 +24,9 @@ public class Startup : IStartup
     {
         configuration.UseHttp(httpConfig =>
         {
-            httpConfig.Services.AddHttpClient<SampleAppHttpClient>()
-                .AddTestFuznHandlers();
+            httpConfig.Services.AddHttpClient<SampleAppHttpClient>();
 
-            httpConfig.UseDefaultHttpClient<SampleAppHttpClient>();
+            httpConfig.DefaultHttpClient<SampleAppHttpClient>();
         });
         configuration.UsePlaywright(c =>
         {

@@ -16,11 +16,12 @@ public static class TestFuznConfigurationExtensions
     /// <remarks>
     /// <para>
     /// After calling this method, you must register at least one HTTP client using 
-    /// <c>services.AddHttpClient&lt;THttpClient&gt;().AddTestFuznHandlers()</c> to enable HTTP testing.
+    /// <c>services.AddHttpClient&lt;THttpClient&gt;()</c> to enable HTTP testing.
+    /// The TestFuzn handlers are automatically added to all HTTP clients.
     /// </para>
     /// <para>
     /// To use the parameterless <c>context.CreateHttpRequest(url)</c> overload, you must also call
-    /// <c>httpConfig.UseDefaultHttpClient&lt;THttpClient&gt;()</c> to specify which client to use by default.
+    /// <c>httpConfig.DefaultHttpClient&lt;THttpClient&gt;()</c> to specify which client to use by default.
     /// </para>
     /// </remarks>
     public static void UseHttp(this TestFuznConfiguration configuration, Action<HttpPluginConfiguration>? configureAction = null)
@@ -28,8 +29,14 @@ public static class TestFuznConfigurationExtensions
         var httpConfiguration = new HttpPluginConfiguration();
         httpConfiguration.Services = configuration.Services;
 
-        // Register the logging handler so it can be added via AddTestFuznHandlers()
+        // Register the logging handler
         configuration.Services.AddTransient<TestFuznLoggingHandler>();
+
+        // Automatically add the TestFuzn handler to all HTTP clients
+        configuration.Services.ConfigureHttpClientDefaults(builder =>
+        {
+            builder.AddHttpMessageHandler<TestFuznLoggingHandler>();
+        });
 
         // Apply user-provided configuration if available
         configureAction?.Invoke(httpConfiguration);

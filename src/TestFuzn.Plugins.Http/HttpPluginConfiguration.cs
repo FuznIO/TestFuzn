@@ -7,7 +7,7 @@ namespace Fuzn.TestFuzn.Plugins.Http;
 /// </summary>
 public class HttpPluginConfiguration
 {
-    internal Type? DefaultHttpClient { get; set; } = null;
+    internal Type? DefaultHttpClientInternal { get; set; } = null;
 
     /// <summary>
     /// Gets the collection of service descriptors for dependency injection configuration.
@@ -27,13 +27,13 @@ public class HttpPluginConfiguration
     public string CorrelationIdHeaderName { get; set; } = "X-Correlation-ID";
 
     /// <summary>
-    /// Sets the default HTTP client implementation to use for <c>context.CreateHttpRequest()</c> calls.
+    /// Configures the default HTTP client implementation to use for <c>context.CreateHttpRequest()</c> calls.
     /// The HTTP client must be registered with <c>services.AddHttpClient&lt;T&gt;().AddTestFuznHandlers()</c>.
     /// </summary>
     /// <typeparam name="THttpClient">The type of HTTP client to use as the default.</typeparam>
-    public void UseDefaultHttpClient<THttpClient>()
+    public void DefaultHttpClient<THttpClient>()
         where THttpClient : IHttpClient
     {
-        DefaultHttpClient = typeof(THttpClient);
+        DefaultHttpClientInternal = typeof(THttpClient);
     }
 }

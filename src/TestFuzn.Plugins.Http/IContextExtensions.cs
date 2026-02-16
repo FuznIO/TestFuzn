@@ -30,13 +30,13 @@ public static class ContextExtensions
         if (!HttpGlobalState.HasBeenInitialized)
             throw new InvalidOperationException("TestFuzn.Plugins.HTTP has not been initialized. Please call configuration.UseHttp() in the Startup.");
 
-        if (HttpGlobalState.Configuration.DefaultHttpClient == null)
+        if (HttpGlobalState.Configuration.DefaultHttpClientInternal == null)
             throw new InvalidOperationException(
                 "No default HTTP client has been configured. " +
-                "Either call httpConfig.UseDefaultHttpClient<THttpClient>() in UseHttp() configuration, " +
+                "Either call httpConfig.DefaultHttpClient<THttpClient>() in UseHttp() configuration, " +
                 "or use context.CreateHttpRequest<THttpClient>(url) to specify the HTTP client type explicitly.");
 
-        return CreateHttpRequest(HttpGlobalState.Configuration.DefaultHttpClient, context, url);
+        return CreateHttpRequest(HttpGlobalState.Configuration.DefaultHttpClientInternal, context, url);
     }
 
     /// <summary>
