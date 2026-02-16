@@ -69,18 +69,12 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             {
                 client.BaseAddress = new Uri("https://localhost:7058");
                 client.Timeout = TimeSpan.FromSeconds(5);
-            })
-            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-            {
-                AllowAutoRedirect = false
-            })
-            .AddTestFuznHandlers();
+            });
 
             // Register typed HTTP client with usage tracking for testing
-            httpConfig.Services.AddHttpClient<TestHttpClient>()
-                .AddTestFuznHandlers();
+            httpConfig.Services.AddHttpClient<TestHttpClient>();
 
-            httpConfig.UseDefaultHttpClient<DefaultHttpClient>();
+            httpConfig.DefaultHttpClient<DefaultHttpClient>();
         });
         configuration.UseWebSocket(config =>
         {

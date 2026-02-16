@@ -45,7 +45,7 @@ public class MyHttpClient : IHttpClient
 
 ### Registering the HTTP Client
 
-Register your HTTP client in the `Startup` class using `AddHttpClient<T>()` and chain `.AddTestFuznHandlers()`:
+Register your HTTP client in the `Startup` class using `AddHttpClient<T>()`:
 
 ```csharp
 public class Startup : IStartup
@@ -59,24 +59,14 @@ public class Startup : IStartup
             {
                 client.BaseAddress = new Uri("https://api.example.com");
                 client.Timeout = TimeSpan.FromSeconds(30);
-            })
-            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-            {
-                AllowAutoRedirect = false
-            })
-            .AddTestFuznHandlers(); // Required for TestFuzn logging and correlation ID injection
+            });
 
-            // Set as the default HTTP client for context.CreateHttpRequest() calls
-            httpConfig.UseDefaultHttpClient<MyHttpClient>();
+            // Configure the default HTTP client for context.CreateHttpRequest() calls
+            httpConfig.DefaultHttpClient<MyHttpClient>();
         });
     }
 }
 ```
-
-> **⚠️ Important**: Always call `.AddTestFuznHandlers()` when registering HTTP clients for use with TestFuzn. This enables:
-> - Automatic correlation ID injection
-> - Request/response logging based on verbosity settings
-> - HTTP details capture for failed step diagnostics
 
 > **💡 Tip**: Setting a `BaseAddress` on the HttpClient allows you to use relative URLs in your tests (e.g., `/api/products`). Without a base address, you must use absolute URLs (e.g., `https://api.example.com/api/products`).
 
@@ -104,17 +94,15 @@ configuration.UseHttp(httpConfig =>
     httpConfig.Services.AddHttpClient<InternalApiClient>(client =>
     {
         client.BaseAddress = new Uri("https://internal-api.example.com");
-    })
-    .AddTestFuznHandlers();
+    });
 
     httpConfig.Services.AddHttpClient<ExternalApiClient>(client =>
     {
         client.BaseAddress = new Uri("https://external-api.example.com");
-    })
-    .AddTestFuznHandlers();
+    });
 
     // Set one as the default (optional)
-    httpConfig.UseDefaultHttpClient<InternalApiClient>();
+    httpConfig.DefaultHttpClient<InternalApiClient>();
 });
 ```
 
@@ -128,7 +116,7 @@ var response = await context.CreateHttpRequest("/users").Get<User>();
 var response = await context.CreateHttpRequest<ExternalApiClient>("/data").Get<Data>();
 ```
 
-> **⚠️ Note**: If you don't call `UseDefaultHttpClient<T>()`, you **must** use the generic `CreateHttpRequest<THttpClient>(url)` overload to specify which client to use.
+> **⚠️ Note**: If you don't call `DefaultHttpClient<T>()`, you **must** use the generic `CreateHttpRequest<THttpClient>(url)` overload to specify which client to use.
 
 ---
 
@@ -348,10 +336,9 @@ public void Configure(TestFuznConfiguration configuration)
         .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = true
-        })
-        .AddTestFuznHandlers();
+        });
 
-        httpConfig.UseDefaultHttpClient<MyHttpClient>();
+        httpConfig.DefaultHttpClient<MyHttpClient>();
 
         // Enable logging of HTTP details to test console when a step fails (default: true)
         // Only applies to standard tests, not load tests
