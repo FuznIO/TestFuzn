@@ -129,7 +129,7 @@ public class InputDataBehaviorTests : Test
                 return inputData;
             }
             )
-            .InputDataBehavior(InputDataBehavior.Random)
+            .InputDataBehavior(InputDataBehavior.LoopThenRandom)
             .Step("Verify", context =>
             {
                 var userName = context.InputData<string>();

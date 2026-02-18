@@ -119,4 +119,24 @@ public class InputDataTests : Test
             })
             .Run();
     }
+
+    [Test]
+    public async Task Verify_Params_based_InputData_Null_Property()
+    {
+        var count = 0;
+
+        await Scenario()
+            .InputData(
+                new User("user1"),
+                new User(null)
+            )
+            .Step("Verify", context =>
+            {
+                var user = context.InputData<User>();
+                Interlocked.Increment(ref count);
+            })
+            .Run();
+
+        Assert.AreEqual(2, count);
+    }
 }

@@ -256,6 +256,27 @@ Control how input data is consumed:
 })
 ```
 
+### Customizing Input Data Display
+
+For **standard tests**, input data is displayed in console output and HTML reports. Override `ToString()` to customize how it appears:
+
+```csharp
+public class User
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    
+    public override string ToString()
+    {
+        return $"User: {Name}";
+    }
+}
+```
+
+Without overriding `ToString()`, the output shows the fully qualified type name (e.g., `MyNamespace.User`).
+
+> **Note**: Load tests do not display individual input data values in reports.
+
 ---
 ## Share Data Between Steps
 

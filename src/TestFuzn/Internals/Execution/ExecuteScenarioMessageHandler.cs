@@ -78,7 +78,7 @@ internal class ExecuteScenarioMessageHandler
         if (_testExecutionState.TestType == TestType.Standard)
         {
             if (currentInputData != null)
-                iterationResult.InputData = PropertyHelper.GetStringFromProperties(currentInputData);
+                iterationResult.InputData = currentInputData.ToString();
 
             _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].IterationResults.Add(iterationResult);
             await CleanupContext(iterationState);
