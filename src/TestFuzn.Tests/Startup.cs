@@ -51,11 +51,11 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
                 ];
                 launchOptions.Headless = true;
             };
-            c.ConfigureContextOptions = (browserType, contextOptions) =>
+            c.ConfigureBrowserContextOptions = (browserType, contextOptions) =>
             {
                 contextOptions.IgnoreHTTPSErrors = true;
             };
-            c.AfterPageCreated = (browserType, page) =>
+            c.AfterBrowserPageCreated = (browserType, page) =>
             {
                 page.SetDefaultTimeout(10000);
                 return Task.CompletedTask;
