@@ -47,16 +47,6 @@ internal class PlaywrightManager
 
         var browserContext = await browser.NewContextAsync(options);
 
-        if (PlaywrightGlobalState.Configuration.EnableTracing)
-        {
-            await browserContext.Tracing.StartAsync(new TracingStartOptions
-            {
-                Screenshots = true,
-                Snapshots = true,
-                Sources = true
-            });
-        }
-
         if (PlaywrightGlobalState.Configuration.AfterBrowserContextCreated != null)
             await PlaywrightGlobalState.Configuration.AfterBrowserContextCreated(browserType, browserContext);
 
@@ -75,16 +65,10 @@ internal class PlaywrightManager
 
     public async ValueTask AddOrLogPageMetadata(IterationContext context)
     {
-        List<IBrowserContext> snapshot;
-        lock (_contextsLock)
-        {
-            snapshot = new List<IBrowserContext>(_contexts);
-        }
-
-        if (snapshot.Count == 0)
+        if (_contexts.Count == 0)
             return;
 
-        foreach (var browserContext in snapshot)
+        foreach (var browserContext in _contexts)
         {
             foreach (var page in browserContext.Pages)
             {
@@ -96,37 +80,16 @@ internal class PlaywrightManager
                 var screenshot = await page.ScreenshotAsync(new PageScreenshotOptions { FullPage = true, Type = ScreenshotType.Png });
                 await context.Attach("playwright-page-screenshot.png", screenshot);
             }
-
-            if (PlaywrightGlobalState.Configuration.EnableTracing)
-            {
-                var tracePath = Path.Combine(Path.GetTempPath(), $"playwright-trace-{Guid.NewGuid():N}.zip");
-                await browserContext.Tracing.StopAsync(new TracingStopOptions { Path = tracePath });
-                await context.Attach("playwright-trace.zip", await File.ReadAllBytesAsync(tracePath));
-            }
         }
     }
 
     public async ValueTask CleanupContext()
     {
-        List<IBrowserContext> snapshot;
-        lock (_contextsLock)
-        {
-            snapshot = new List<IBrowserContext>(_contexts);
-        }
-
-        if (snapshot.Count == 0)
+        if (_contexts.Count == 0)
             return;
 
-        foreach (var browserContext in snapshot)
+        foreach (var browserContext in _contexts)
         {
-            if (PlaywrightGlobalState.Configuration.EnableTracing)
-            {
-                await browserContext.Tracing.StopAsync(new TracingStopOptions
-                {
-                    Path = Path.Combine(Path.GetTempPath(), $"playwright-trace-{Guid.NewGuid():N}.zip")
-                });
-            }
-
             await browserContext.CloseAsync();
         }
     }

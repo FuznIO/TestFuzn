@@ -18,12 +18,6 @@ public class PluginConfiguration
     public bool InstallPlaywright { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether tracing should be enabled for browser contexts.
-    /// When enabled, traces including screenshots, snapshots, and sources are captured.
-    /// </summary>
-    public bool EnableTracing { get; set; }
-
-    /// <summary>
     /// Gets or sets a callback to configure <see cref="BrowserTypeLaunchOptions"/> for each browser type.
     /// The first parameter is the browser type name; the second is the launch options to configure.
     /// </summary>

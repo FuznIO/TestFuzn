@@ -20,7 +20,7 @@ public static class IContextExtensions
     /// Creates a new isolated browser page with its own browser context.
     /// Each call creates a new context and page — they do not share cookies, storage, or session state.
     /// The browser context is accessible via <c>page.Context</c> for setting cookies, routes, credentials, etc.
-    /// The framework automatically handles cleanup, tracing, and failure diagnostics.
+    /// The framework automatically handles cleanup and failure diagnostics.
     /// When a device is specified (e.g. "iPhone 13"), its descriptor is used as the base context options.
     /// Options are layered: device defaults → global ConfigureContextOptions → per-call configureContext.
     /// </summary>
