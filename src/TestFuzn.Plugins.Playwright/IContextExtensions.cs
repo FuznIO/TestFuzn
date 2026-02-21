@@ -3,6 +3,9 @@ using Fuzn.TestFuzn.Plugins.Playwright.Internals;
 
 namespace Fuzn.TestFuzn.Plugins.Playwright;
 
+/// <summary>
+/// Extension methods for accessing Playwright functionality from a <see cref="TestFuzn.Context"/>.
+/// </summary>
 public static class IContextExtensions
 {
     /// <summary>

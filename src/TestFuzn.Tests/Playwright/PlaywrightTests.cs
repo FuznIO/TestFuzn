@@ -13,6 +13,7 @@ public class PlaywrightTests : Test
             .Step("Open Swagger page and verify title", async (context) =>
             {
                 var page = await context.CreateBrowserPage();
+                
                 await page.GotoAsync("https://localhost:7058/");
 
                 var title = await page.TitleAsync();
