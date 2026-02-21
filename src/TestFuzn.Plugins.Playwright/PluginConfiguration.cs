@@ -35,7 +35,7 @@ public class PluginConfiguration
     /// };
     /// </code>
     /// </example>
-    public Action<string, BrowserTypeLaunchOptions> ConfigureBrowserLaunchOptions { get; set; }
+    public Action<string, BrowserTypeLaunchOptions>? ConfigureBrowserLaunchOptions { get; set; }
 
     /// <summary>
     /// Gets or sets a callback to configure <see cref="BrowserNewContextOptions"/> for each browser type.
@@ -49,7 +49,7 @@ public class PluginConfiguration
     /// };
     /// </code>
     /// </example>
-    public Action<string, BrowserNewContextOptions> ConfigureBrowserContextOptions { get; set; }
+    public Action<string, BrowserNewContextOptions>? ConfigureBrowserContextOptions { get; set; }
 
     /// <summary>
     /// Gets or sets a callback invoked after a new <see cref="IBrowserContext"/> is created.
@@ -63,7 +63,7 @@ public class PluginConfiguration
     /// };
     /// </code>
     /// </example>
-    public Func<string, IBrowserContext, Task> AfterBrowserContextCreated { get; set; }
+    public Func<string, IBrowserContext, Task>? AfterBrowserContextCreated { get; set; }
 
     /// <summary>
     /// Gets or sets a callback invoked after a new <see cref="IPage"/> is created.
@@ -78,7 +78,7 @@ public class PluginConfiguration
     /// };
     /// </code>
     /// </example>
-    public Func<string, IPage, Task> AfterBrowserPageCreated { get; set; }
+    public Func<string, IPage, Task>? AfterBrowserPageCreated { get; set; }
 
     internal PluginConfiguration()
     {

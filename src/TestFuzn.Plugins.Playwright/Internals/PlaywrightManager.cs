@@ -18,11 +18,8 @@ internal class PlaywrightManager
 
         foreach (var browserType in PlaywrightGlobalState.Configuration.BrowserTypes)
         {
-            if (PlaywrightGlobalState.Configuration.ConfigureBrowserLaunchOptions == null)
-                throw new InvalidOperationException("ConfigureBrowserLaunchOptions must be set in Playwright configuration.");
-
             var launchOptions = new BrowserTypeLaunchOptions();
-            PlaywrightGlobalState.Configuration.ConfigureBrowserLaunchOptions(browserType, launchOptions);
+            PlaywrightGlobalState.Configuration.ConfigureBrowserLaunchOptions?.Invoke(browserType, launchOptions);
             var browser = await PlaywrightGlobalState.Playwright[browserType].LaunchAsync(launchOptions);
 
             _browsers.TryAdd(browserType, browser);
