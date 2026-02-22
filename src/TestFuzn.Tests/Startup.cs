@@ -41,7 +41,8 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
         
         configuration.UsePlaywright(c =>
         {
-            c.BrowserTypes = new List<string> { "chromium" };
+            c.InstallPlaywright = false;
+            c.BrowserTypes = ["chromium"];
             c.ConfigureBrowserLaunchOptions = (browserType, launchOptions) =>
             {
                 launchOptions.Args =
