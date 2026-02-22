@@ -32,7 +32,7 @@
 | `Comment(string)` | Add comment to execution |
 | `Attach(string, content)` | Attach file to step |
 | `CreateHttpRequest(string)` | Create HTTP request (requires HTTP plugin) |
-| `CreateBrowserPage(browserType?, device?, configureContext?)` | Create Playwright browser page with optional browser type, device emulation, and context options (requires Playwright plugin) |
+| `CreateBrowserPage(browserType?, device?, configureBrowserContext?)` | Create Playwright browser page with optional browser type, device emulation, and context options (requires Playwright plugin) |
 | `GetPlaywright()` | Get the Playwright instance for direct API access such as device descriptors (requires Playwright plugin) |
 
 ---

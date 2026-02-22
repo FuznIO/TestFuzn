@@ -86,7 +86,7 @@ You can combine device emulation with per-call overrides:
 ```csharp
 var page = await context.CreateBrowserPage(
     device: "iPhone 13",
-    configureContext: options => options.Locale = "fr-FR"
+    configureBrowserContext: options => options.Locale = "fr-FR"
 );
 ```
 
@@ -94,7 +94,7 @@ var page = await context.CreateBrowserPage(
 
 ## Custom Context Options
 
-Use the `configureContext` parameter to customize the browser context for a specific page:
+Use the `configureBrowserContext` parameter to customize the browser context for a specific page:
 
 ```csharp
 [Test]
@@ -103,7 +103,7 @@ public async Task Verify_custom_viewport()
     await Scenario()
         .Step("Open page with custom viewport", async (context) =>
         {
-            var page = await context.CreateBrowserPage(configureContext: options =>
+            var page = await context.CreateBrowserPage(configureBrowserContext: options =>
             {
                 options.ViewportSize = new ViewportSize { Width = 1920, Height = 1080 };
                 options.Locale = "en-US";
@@ -120,7 +120,7 @@ When multiple option sources are used, they are applied in this order (later ove
 
 1. **Device defaults** — if `device` is specified, its descriptor provides the base options
 2. **Global `ConfigureBrowserContextOptions`** — from `PluginConfiguration`, applied to all pages
-3. **Per-call `configureContext`** — the callback passed to `CreateBrowserPage`
+3. **Per-call `configureBrowserContext`** — the callback passed to `CreateBrowserPage`
 
 ---
 
@@ -130,7 +130,7 @@ When multiple option sources are used, they are applied in this order (later ove
 Task<IPage> CreateBrowserPage(
     string? browserType = null,        // defaults to first configured browser
     string? device = null,             // Playwright device descriptor name
-    Action<BrowserNewContextOptions>? configureContext = null  // per-call overrides
+    Action<BrowserNewContextOptions>? configureBrowserContext = null  // per-call overrides
 )
 ```
 
