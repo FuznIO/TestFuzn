@@ -29,7 +29,7 @@ internal class PlaywrightManager
     public async Task<IPage> CreatePage(
         string? browserType = null,
         string? device = null,
-        Action<BrowserNewContextOptions>? configureContext = null)
+        Action<BrowserNewContextOptions>? configureBrowserContext = null)
     {
         if (browserType == null)
             browserType = PlaywrightGlobalState.Configuration.BrowserTypes.First();
@@ -43,7 +43,7 @@ internal class PlaywrightManager
 
         PlaywrightGlobalState.Configuration.ConfigureBrowserContextOptions?.Invoke(browserType, options);
 
-        configureContext?.Invoke(options);
+        configureBrowserContext?.Invoke(options);
 
         var browserContext = await browser.NewContextAsync(options);
 

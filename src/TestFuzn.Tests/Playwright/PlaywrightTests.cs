@@ -49,7 +49,7 @@ public class PlaywrightTests : Test
         await Scenario("Test UI with per-call context options")
             .Step("Open page with custom viewport", async (context) =>
             {
-                var page = await context.CreateBrowserPage(configureContext: options =>
+                var page = await context.CreateBrowserPage(configureBrowserContext: options =>
                 {
                     options.ViewportSize = new ViewportSize { Width = 1920, Height = 1080 };
                     options.Locale = "en-US";

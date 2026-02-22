@@ -22,15 +22,15 @@ public static class IContextExtensions
     /// The browser context is accessible via <c>page.Context</c> for setting cookies, routes, credentials, etc.
     /// The framework automatically handles cleanup and failure diagnostics.
     /// When a device is specified (e.g. "iPhone 13"), its descriptor is used as the base context options.
-    /// Options are layered: device defaults → global ConfigureContextOptions → per-call configureContext.
+    /// Options are layered: device defaults → global ConfigureContextOptions → per-call configureBrowserContext.
     /// </summary>
     public static async Task<IPage> CreateBrowserPage(this TestFuzn.Context context,
         string? browserType = null,
         string? device = null,
-        Action<BrowserNewContextOptions>? configureContext = null)
+        Action<BrowserNewContextOptions>? configureBrowserContext = null)
     {
         var playwrightManager = GetPlaywrightManager(context);
-        return await playwrightManager.CreatePage(browserType, device, configureContext);
+        return await playwrightManager.CreatePage(browserType, device, configureBrowserContext);
     }
 
     private static PlaywrightManager GetPlaywrightManager(TestFuzn.Context context)

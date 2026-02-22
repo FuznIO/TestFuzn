@@ -15,12 +15,12 @@ public static class TestFuznConfigurationExtensions
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="playwrightConfigAction"/> is <see langword="null"/>.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the configuration is invalid (e.g. no browser types specified or an unsupported browser type).</exception>
     public static void UsePlaywright(this TestFuznConfiguration config, 
-        Action<PluginConfiguration> playwrightConfigAction)
+        Action<PlaywrightPluginConfiguration> playwrightConfigAction)
     {
         if (playwrightConfigAction is null)
             throw new ArgumentNullException(nameof(playwrightConfigAction));
 
-        var playwrightConfiguration = new PluginConfiguration();
+        var playwrightConfiguration = new PlaywrightPluginConfiguration();
         playwrightConfigAction(playwrightConfiguration);
 
         ValidateConfiguration(playwrightConfiguration);
@@ -30,7 +30,7 @@ public static class TestFuznConfigurationExtensions
         config.AddContextPlugin(new PlaywrightPlugin());
     }
 
-    private static void ValidateConfiguration(PluginConfiguration config)
+    private static void ValidateConfiguration(PlaywrightPluginConfiguration config)
     {
         if (config.BrowserTypes == null || !config.BrowserTypes.Any())
             throw new InvalidOperationException("At least one browser type must be specified in the Playwright configuration.");

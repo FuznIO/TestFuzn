@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Plugins.Playwright;
 /// <summary>
 /// Configuration options for the Playwright plugin.
 /// </summary>
-public class PluginConfiguration
+public class PlaywrightPluginConfiguration
 {
     /// <summary>
     /// Gets or sets the list of browser types to use (e.g. "chromium", "firefox", "webkit").
@@ -74,7 +74,7 @@ public class PluginConfiguration
     /// </example>
     public Func<string, IPage, Task>? AfterBrowserPageCreated { get; set; }
 
-    internal PluginConfiguration()
+    internal PlaywrightPluginConfiguration()
     {
     }
 }
