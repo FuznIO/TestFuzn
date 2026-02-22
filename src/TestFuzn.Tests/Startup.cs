@@ -41,7 +41,8 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
         
         configuration.UsePlaywright(c =>
         {
-            c.BrowserTypes = new List<string> { "chromium" };
+            c.InstallPlaywright = false;
+            c.BrowserTypes = ["chromium"];
             c.ConfigureBrowserLaunchOptions = (browserType, launchOptions) =>
             {
                 launchOptions.Args =
@@ -51,11 +52,11 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
                 ];
                 launchOptions.Headless = true;
             };
-            c.ConfigureContextOptions = (browserType, contextOptions) =>
+            c.ConfigureBrowserContextOptions = (browserType, contextOptions) =>
             {
                 contextOptions.IgnoreHTTPSErrors = true;
             };
-            c.AfterPageCreated = (browserType, page) =>
+            c.AfterBrowserPageCreated = (browserType, page) =>
             {
                 page.SetDefaultTimeout(10000);
                 return Task.CompletedTask;

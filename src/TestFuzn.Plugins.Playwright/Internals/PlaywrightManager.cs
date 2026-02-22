@@ -1,111 +1,107 @@
-﻿using Microsoft.Playwright;
+﻿using System.Collections.Concurrent;
+using Microsoft.Playwright;
 
 namespace Fuzn.TestFuzn.Plugins.Playwright.Internals;
 
 internal class PlaywrightManager
 {
-    private static bool _isBrowserInitialized = false;
-    private static IPlaywright _playwright;
-    private static Dictionary<string, IBrowser> _browsers = new Dictionary<string, IBrowser>();
-    private IList<(IPage Page, IBrowserContext Context)> _pageContexts;
+    private static readonly ConcurrentDictionary<string, IBrowser> _browsers = new();
+    private readonly object _contextsLock = new();
+    private readonly List<IBrowserContext> _contexts = new();
 
-    public async static Task InitializeGlobalResources()
+    public static async Task InitializeGlobalResources()
     {
-        if (_isBrowserInitialized)
-            return;
-
         if (PlaywrightGlobalState.Configuration.InstallPlaywright)
-            Microsoft.Playwright.Program.Main(new[] { "install" }); // Ensures browsers are installed
+            Microsoft.Playwright.Program.Main(new[] { "install" });
 
-        _playwright = await Microsoft.Playwright.Playwright.CreateAsync();
+        PlaywrightGlobalState.Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 
         foreach (var browserType in PlaywrightGlobalState.Configuration.BrowserTypes)
         {
-            if (PlaywrightGlobalState.Configuration.ConfigureBrowserLaunchOptions == null)
-                throw new InvalidOperationException("ConfigureBrowserLaunchOptions must be set in Playwright configuration.");
-
             var launchOptions = new BrowserTypeLaunchOptions();
-            PlaywrightGlobalState.Configuration.ConfigureBrowserLaunchOptions(browserType, launchOptions);
-            var browser = await _playwright[browserType].LaunchAsync(launchOptions);
+            PlaywrightGlobalState.Configuration.ConfigureBrowserLaunchOptions?.Invoke(browserType, launchOptions);
+            var browser = await PlaywrightGlobalState.Playwright[browserType].LaunchAsync(launchOptions);
 
-            _browsers.Add(browserType, browser);
+            _browsers.TryAdd(browserType, browser);
         }
-
-        _isBrowserInitialized = true;
     }
 
-    public async Task<IPage> CreatePage(string? browserType = null)
+    public async Task<IPage> CreatePage(
+        string? browserType = null,
+        string? device = null,
+        Action<BrowserNewContextOptions>? configureBrowserContext = null)
     {
         if (browserType == null)
             browserType = PlaywrightGlobalState.Configuration.BrowserTypes.First();
 
-        if (!_isBrowserInitialized)
-            throw new InvalidOperationException("Playwright is not initialized. Call configuration.AddPlaywright() in the Startup.cs");
-
-        _pageContexts ??= new List<(IPage, IBrowserContext)>();
-
-        if (!_browsers.ContainsKey(browserType))
+        if (!_browsers.TryGetValue(browserType, out var browser))
             throw new KeyNotFoundException($"The browser type '{browserType}' is not available in the current Playwright state.");
 
-        var browser = _browsers[browserType];
+        var options = device != null
+            ? PlaywrightGlobalState.Playwright.Devices[device]
+            : new BrowserNewContextOptions();
 
-        IBrowserContext browserContext;
-        if (PlaywrightGlobalState.Configuration.ConfigureContextOptions != null)
-        {
-            var options = new BrowserNewContextOptions();
-            PlaywrightGlobalState.Configuration.ConfigureContextOptions(browserType, options);
-            browserContext = await browser.NewContextAsync(options);
-        }
-        else
-        {
-            browserContext = await browser.NewContextAsync();
-        }
+        PlaywrightGlobalState.Configuration.ConfigureBrowserContextOptions?.Invoke(browserType, options);
+
+        configureBrowserContext?.Invoke(options);
+
+        var browserContext = await browser.NewContextAsync(options);
+
+        if (PlaywrightGlobalState.Configuration.AfterBrowserContextCreated != null)
+            await PlaywrightGlobalState.Configuration.AfterBrowserContextCreated(browserType, browserContext);
 
         var page = await browserContext.NewPageAsync();
-        if (PlaywrightGlobalState.Configuration.AfterPageCreated != null)
-            await PlaywrightGlobalState.Configuration.AfterPageCreated(browserType, page);
 
-        _pageContexts.Add((page, browserContext));
-        return page;
-    }
+        if (PlaywrightGlobalState.Configuration.AfterBrowserPageCreated != null)
+            await PlaywrightGlobalState.Configuration.AfterBrowserPageCreated(browserType, page);
 
-    public async ValueTask CleanupContext()
-    {
-        if (_pageContexts == null)
-            return;
-
-        foreach (var (page, context) in _pageContexts)
+        lock (_contextsLock)
         {
-            await page.CloseAsync();
-            await context.CloseAsync();
+            _contexts.Add(browserContext);
         }
+
+        return page;
     }
 
     public async ValueTask AddOrLogPageMetadata(IterationContext context)
     {
-        if (_pageContexts == null)
+        if (_contexts.Count == 0)
             return;
 
-        foreach (var (page, _) in _pageContexts)
+        foreach (var browserContext in _contexts)
         {
-            var title = await page.TitleAsync();
-            var url = page.Url;
-            context.Comment($"Playwright Page - Title: '{title}', URL: '{url}'");
-            var html = await page.EvaluateAsync<string>("() => document.documentElement.outerHTML");
-            await context.Attach($"playwright-page-html", html);
-            var screenshot = await page.ScreenshotAsync(new PageScreenshotOptions { FullPage = true, Type = ScreenshotType.Png });
-            await context.Attach("playwright-page-screenshot.png", screenshot);
+            foreach (var page in browserContext.Pages)
+            {
+                var title = await page.TitleAsync();
+                var url = page.Url;
+                context.Comment($"Playwright Page - Title: '{title}', URL: '{url}'");
+                var html = await page.EvaluateAsync<string>("() => document.documentElement.outerHTML");
+                await context.Attach("playwright-page-html", html);
+                var screenshot = await page.ScreenshotAsync(new PageScreenshotOptions { FullPage = true, Type = ScreenshotType.Png });
+                await context.Attach("playwright-page-screenshot.png", screenshot);
+            }
         }
     }
 
-    internal static async Task CleanupGlobalResources()
+    public async ValueTask CleanupContext()
+    {
+        if (_contexts.Count == 0)
+            return;
+
+        foreach (var browserContext in _contexts)
+        {
+            await browserContext.CloseAsync();
+        }
+    }
+
+    public static async Task CleanupGlobalResources()
     {
         foreach (var browser in _browsers.Values)
         {
             await browser.CloseAsync();
         }
 
-        if (_playwright != null)
-            _playwright.Dispose();
+        if (PlaywrightGlobalState.Playwright != null)
+            PlaywrightGlobalState.Playwright.Dispose();
     }
 }

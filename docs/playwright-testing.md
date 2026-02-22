@@ -16,6 +16,12 @@ public void Configure(TestFuznConfiguration configuration)
         {
             launchOptions.Headless = false; // Set to true for CI/CD
         };
+
+        // Optional: configure default context options for all pages
+        c.ConfigureBrowserContextOptions = (browserType, options) =>
+        {
+            options.Locale = "en-US";
+        };
     });
 }
 ```
@@ -51,6 +57,84 @@ public async Task Verify_login_flow()
         .Run();
 }
 ```
+
+---
+
+## Device Emulation
+
+Use the `device` parameter to emulate a mobile or tablet device. The device name maps to Playwright's built-in [device descriptors](https://playwright.dev/dotnet/docs/emulation#devices) (e.g. `"iPhone 13"`, `"Pixel 5"`, `"iPad Pro 11"`).
+
+```csharp
+[Test]
+public async Task Verify_mobile_layout()
+{
+    await Scenario()
+        .Step("Open page as iPhone 13", async (context) =>
+        {
+            var page = await context.CreateBrowserPage(device: "iPhone 13");
+            await page.GotoAsync("https://localhost:44316/");
+
+            // The page now has iPhone 13 viewport, user agent, touch support, etc.
+            await Assertions.Expect(page.Locator(".mobile-menu")).ToBeVisibleAsync();
+        })
+        .Run();
+}
+```
+
+You can combine device emulation with per-call overrides:
+
+```csharp
+var page = await context.CreateBrowserPage(
+    device: "iPhone 13",
+    configureBrowserContext: options => options.Locale = "fr-FR"
+);
+```
+
+---
+
+## Custom Context Options
+
+Use the `configureBrowserContext` parameter to customize the browser context for a specific page:
+
+```csharp
+[Test]
+public async Task Verify_custom_viewport()
+{
+    await Scenario()
+        .Step("Open page with custom viewport", async (context) =>
+        {
+            var page = await context.CreateBrowserPage(configureBrowserContext: options =>
+            {
+                options.ViewportSize = new ViewportSize { Width = 1920, Height = 1080 };
+                options.Locale = "en-US";
+            });
+            await page.GotoAsync("https://localhost:44316/");
+        })
+        .Run();
+}
+```
+
+### Options layering
+
+When multiple option sources are used, they are applied in this order (later overrides earlier):
+
+1. **Device defaults** — if `device` is specified, its descriptor provides the base options
+2. **Global `ConfigureBrowserContextOptions`** — from `PluginConfiguration`, applied to all pages
+3. **Per-call `configureBrowserContext`** — the callback passed to `CreateBrowserPage`
+
+---
+
+## CreateBrowserPage Signature
+
+```csharp
+Task<IPage> CreateBrowserPage(
+    string? browserType = null,        // defaults to first configured browser
+    string? device = null,             // Playwright device descriptor name
+    Action<BrowserNewContextOptions>? configureBrowserContext = null  // per-call overrides
+)
+```
+
+All parameters are optional and named. Each call creates a new isolated browser context and page.
 
 ---
 
