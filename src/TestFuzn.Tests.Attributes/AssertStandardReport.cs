@@ -21,6 +21,10 @@ public class AssertStandardReport : IStandardReport
            nameof(EnvironmentAttributeOnMethodTests.TestShouldRun), TestStatus.Passed);
         AssertTestResultStatus<EnvironmentAttributeOnClassTests>(
             nameof(EnvironmentAttributeOnClassTests.TestShouldRun), TestStatus.Passed);
+        AssertTestResultStatus<EnvironmentAttributeOnClassAndMethodTests>(
+            nameof(EnvironmentAttributeOnClassAndMethodTests.TestShouldRun), TestStatus.Passed);
+        AssertTestResultStatus<EnvironmentAttributeOnClassAndMethodTests>(
+            nameof(EnvironmentAttributeOnClassAndMethodTests.TestShouldNotRun), TestStatus.Skipped);
 
         // Tags - Include.
         AssertTestResultStatus<TagsAttributeIncludeOnClassTests>(
