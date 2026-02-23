@@ -4,76 +4,39 @@
 
 ---
 
-## 📚 Table of Contents
+## Table of Contents
 
-### [Getting Started](getting-started.md)
-- [Overview](getting-started.md#overview)
-- [Requirements](getting-started.md#requirements)
-- [Installation](getting-started.md#installation)
-- [Quick Start](getting-started.md#quick-start)
+### Getting Started
+- [Getting Started](getting-started.md) — Installation, project setup, quick start
 
-### [Core Concepts](core-concepts.md)
-- [Test Types](core-concepts.md#test-types)
-- [Test Class Structure](core-concepts.md#test-class-structure)
-- [Execution Flow](core-concepts.md#execution-flow)
-- [Test Attributes](core-concepts.md#test-attributes)
+### Writing Tests
+- [Scenarios](scenarios.md) — Standard vs load tests, `[Test]` attribute, execution flow
+- [Steps](steps.md) — Steps, sub-steps, comments, attachments, logging
+- [Input Data](input-data.md) — Static data, from functions, behaviors, display customization
+- [Shared Data](shared-data.md) — Sharing data between steps, custom context models
+- [Lifecycle Hooks](lifecycle.md) — Scenario, iteration, test, and suite level hooks
+- [Shared Steps](shared-steps.md) — Helper methods, action references, extension methods
 
-### [Writing Tests](writing-tests.md)
-- [Basic Scenario](writing-tests.md#basic-scenario)
-- [Load Scenario](writing-tests.md#load-scenario)
-- [Scenario Configuration](writing-tests.md#scenario-configuration)
-- [Steps](writing-tests.md#steps)
-- [Input Data](writing-tests.md#input-data)
-- [Share Data Between Steps](writing-tests.md#share-data-between-steps)
-- [Lifecycle Hooks](writing-tests.md#lifecycle-hooks)
-- [Shared Steps](writing-tests.md#shared-steps)
+### Test Selection
+- [Filtering Tests](filtering.md) — `[Tags]`, `[Skip]`, `[TargetEnvironments]`
+- [Environments](environments.md) — Target/execution environments, config file overrides
 
-### [Load Testing](load-testing.md)
-- [Single Scenario](load-testing.md#single-scenario)
-- [Multiple Scenarios](load-testing.md#multiple-scenarios)
-- [Warmup](load-testing.md#warmup)
-- [Simulations](load-testing.md#simulations)
-- [Assertions](load-testing.md#assertions)
-- [Statistics](load-testing.md#statistics)
+### Plugins
+- [HTTP Testing](http-testing.md) — HTTP client setup, requests, authentication, response handling
+- [Web UI Testing with Playwright](playwright-testing.md) — Browser automation, device emulation, UI load testing
 
-### [Configuration](configuration.md)
-- [Basic Configuration](configuration.md#basic-configuration)
-- [Accessing Configuration Values](configuration.md#accessing-configuration-values)
-- [Environment-Specific Overrides](configuration.md#environment-specific-overrides)
-- [Configuration Precedence Example](configuration.md#configuration-precedence-example)
-- [Using Configuration in Tests](configuration.md#using-configuration-in-tests)
-- [API Reference](configuration.md#api-reference)
+### Load Testing
+- [Load Testing](load-testing.md) — Simulations, warmup, assertions, statistics
+- [InfluxDB & Grafana](influxdb-grafana.md) — Real-time metrics streaming
 
-### [HTTP Testing](http-testing.md)
-- [Basic HTTP Requests](http-testing.md#basic-http-requests)
-- [Request Methods](http-testing.md#request-methods)
-- [Authentication](http-testing.md#authentication)
-- [Additional Request Options](http-testing.md#additional-request-options)
-- [Response Handling](http-testing.md#response-handling)
-- [JSON Serialization](http-testing.md#json-serialization)
-- [HTTP Load Testing](http-testing.md#http-load-testing)
+### Configuration
+- [Configuration](configuration.md) — `appsettings.json`, `ConfigurationManager` API
 
-### [Web UI Testing with Playwright](playwright-testing.md)
-- [Configuration](playwright-testing.md#configuration)
-- [Basic Browser Testing](playwright-testing.md#basic-browser-testing)
-- [UI Load Testing](playwright-testing.md#ui-load-testing)
+### Reporting
+- [Test Reports](test-reports.md) — HTML/XML reports, `[Group]`, `[Metadata]`
 
-### [Real-Time Statistics with InfluxDB and Grafana](influxdb-grafana.md)
-- [Configuration](influxdb-grafana.md#configuration)
-- [Using appsettings.json](influxdb-grafana.md#using-appsettingsjson)
-- [Available Metrics](influxdb-grafana.md#available-metrics)
-- [Grafana Dashboard](influxdb-grafana.md#grafana-dashboard)
-
-### [Test Reports](test-reports.md)
-- [Standard Test Reports](test-reports.md#standard-test-reports)
-- [Load Test Reports](test-reports.md#load-test-reports)
-- [Report Location](test-reports.md#report-location)
-
-### [API Reference](api-reference.md)
-- [ScenarioBuilder Methods](api-reference.md#scenariobuilder-methods)
-- [IterationContext Members](api-reference.md#iterationcontext-members)
-- [Load Testing Methods](api-reference.md#load-testing-methods)
-- [Simulation Types](api-reference.md#simulation-types)
+### Reference
+- [API Reference](api-reference.md) — Quick-reference tables for all APIs
 
 ---
 

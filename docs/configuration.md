@@ -1,6 +1,8 @@
 ﻿# Configuration Management
 
-TestFuzn provides a flexible configuration system that allows you to manage test settings through `appsettings.json` files with support for environment-specific overrides.
+TestFuzn provides a flexible configuration system that allows you to manage test settings through `appsettings.json` files.
+
+For environment-specific configuration file overrides, see [Environments](environments.md).
 
 ---
 
@@ -66,109 +68,6 @@ if (ConfigurationManager.HasSection("Auth"))
     var config = ConfigurationManager.GetRequiredSection<AuthConfig>("Auth");
 }
 ```
-
----
-
-## Environment-Specific Overrides
-
-TestFuzn supports multiple configuration files that are loaded in a specific order, allowing environment-specific overrides. Later files override values from earlier ones.
-
-### Configuration File Loading Order
-
-1. `appsettings.json` (required)
-2. `appsettings.exec-{executionEnv}.json` (optional)
-3. `appsettings.target-{targetEnv}.json` (optional)
-4. `appsettings.exec-{executionEnv}.target-{targetEnv}.json` (optional)
-5. `appsettings.{nodeName}.json` (optional)
-
-### Execution Environment
-
-The **execution environment** represents where the tests are running (e.g., local machine, CI server, cloud agent).
-
-Set via:
-- Environment variable: `TESTFUZN_EXECUTION_ENVIRONMENT`
-- Command line: `--execution-environment <value>`
-
-Example files:
-- `appsettings.exec-local.json` - Settings for local development
-- `appsettings.exec-ci.json` - Settings for CI/CD pipeline
-- `appsettings.exec-cloud.json` - Settings for cloud-based test agents
-
-```json
-// appsettings.exec-ci.json
-{
-  "TestFuzn": {
-    "Values": {
-      "Timeout": 60,
-      "Headless": true
-    }
-  }
-}
-```
-
-### Target Environment
-
-The **target environment** represents the system under test (e.g., dev, staging, production).
-
-Set via:
-- Environment variable: `TESTFUZN_TARGET_ENVIRONMENT`
-- Command line: `--target-environment <value>`
-
-Example files:
-- `appsettings.target-dev.json` - Settings for testing against dev
-- `appsettings.target-staging.json` - Settings for testing against staging
-- `appsettings.target-prod.json` - Settings for testing against production
-
-```json
-// appsettings.target-staging.json
-{
-  "TestFuzn": {
-    "Values": {
-      "BaseUrl": "https://staging.example.com",
-      "ApiKey": "staging-key-12345"
-    }
-  }
-}
-```
-
-### Combined Environment Overrides
-
-You can create files that apply only when both execution and target environments match:
-
-```json
-// appsettings.exec-ci.target-staging.json
-{
-  "TestFuzn": {
-    "Values": {
-      "BaseUrl": "https://internal-staging.example.com",
-      "UseInternalNetwork": true
-    }
-  }
-}
-```
-
-### Node-Specific Overrides
-
-You can have node-specific configuration. The **node name** comes from **Environment.MachineName**
-
-Example: `appsettings.node-worker-01.json`
-
----
-
-## Configuration Precedence Example
-
-Given:
-- Execution environment: `ci`
-- Target environment: `staging`
-- Node name: `worker-01`
-
-Files are loaded in this order (later values override earlier):
-
-1. `appsettings.json`
-2. `appsettings.exec-ci.json`
-3. `appsettings.target-staging.json`
-4. `appsettings.exec-ci.target-staging.json`
-5. `appsettings.worker-01.json`
 
 ---
 
