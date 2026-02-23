@@ -12,13 +12,13 @@ Configuration is loaded from `appsettings.json` in your test project directory. 
 {
   "TestFuzn": {
     "Values": {
-      "BaseUrl": "https://api.example.com",
+      "BaseUrl": "https://localhost:44316",
       "Timeout": 30,
       "MaxRetries": 3
     },
-    "Database": {
-      "ConnectionString": "Server=localhost;Database=TestDb;",
-      "CommandTimeout": 60
+    "Auth": {
+      "Username": "admin",
+      "Password": "admin123"
     }
   }
 }
@@ -51,19 +51,19 @@ if (ConfigurationManager.HasValue("MaxRetries"))
 Use `ConfigurationManager.GetRequiredSection<T>()` to bind entire sections to strongly-typed objects:
 
 ```csharp
-public class DatabaseConfig
+public class AuthConfig
 {
-    public string ConnectionString { get; set; }
-    public int CommandTimeout { get; set; }
+    public string Username { get; set; }
+    public string Password { get; set; }
 }
 
 // Retrieve and bind the section
-var dbConfig = ConfigurationManager.GetRequiredSection<DatabaseConfig>("Database");
+var authConfig = ConfigurationManager.GetRequiredSection<AuthConfig>("Auth");
 
 // Check if a section exists
-if (ConfigurationManager.HasSection("Database"))
+if (ConfigurationManager.HasSection("Auth"))
 {
-    var config = ConfigurationManager.GetRequiredSection<DatabaseConfig>("Database");
+    var config = ConfigurationManager.GetRequiredSection<AuthConfig>("Auth");
 }
 ```
 
@@ -124,7 +124,7 @@ Example files:
 {
   "TestFuzn": {
     "Values": {
-      "BaseUrl": "https://staging-api.example.com",
+      "BaseUrl": "https://staging.example.com",
       "ApiKey": "staging-key-12345"
     }
   }
@@ -140,7 +140,7 @@ You can create files that apply only when both execution and target environments
 {
   "TestFuzn": {
     "Values": {
-      "BaseUrl": "https://internal-staging-api.example.com",
+      "BaseUrl": "https://internal-staging.example.com",
       "UseInternalNetwork": true
     }
   }
@@ -176,19 +176,19 @@ Files are loaded in this order (later values override earlier):
 
 ```csharp
 [TestClass]
-[Group("API Tests")]
-public class ApiTests : Test
+[Group("Product API Tests")]
+public class ProductHttpTests : Test
 {
     [Test]
     public async Task Call_api_with_configured_settings()
     {
         await Scenario()
-            .Step("Call API", async context =>
+            .Step("Call Products API", async context =>
             {
                 var baseUrl = ConfigurationManager.GetRequiredValue<string>("BaseUrl");
                 var timeout = ConfigurationManager.GetRequiredValue<int>("Timeout");
 
-                var response = await context.CreateHttpRequest($"{baseUrl}/health")
+                var response = await context.CreateHttpRequest($"{baseUrl}/api/Products")
                     .WithTimeout(TimeSpan.FromSeconds(timeout))
                     .Get();
 

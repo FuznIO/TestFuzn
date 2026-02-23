@@ -93,7 +93,7 @@ Every test project needs a `Startup` class to initialize TestFuzn:
 using Fuzn.TestFuzn;
 using Fuzn.TestFuzn.Plugins.Http;
 
-namespace MyTests;
+namespace SampleApp.Tests;
 
 [TestClass]
 public class Startup : IStartup
@@ -123,10 +123,10 @@ public class Startup : IStartup
 ```csharp
 using Fuzn.TestFuzn;
 
-namespace MyTests;
+namespace SampleApp.Tests;
 
 [TestClass]
-public class MyFirstTests : Test
+public class ProductHttpTests : Test
 {
     [Test]
     public async Task My_first_test()

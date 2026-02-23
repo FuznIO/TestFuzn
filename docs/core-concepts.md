@@ -13,10 +13,10 @@ A test that executes a single scenario **once**, or **multiple times** sequentia
 public async Task Standard_test_example()
 {
     await Scenario()
-        .Step("Process user", context =>
+        .Step("Process product", context =>
         {
-            var email = context.InputData<string>();
-            context.Logger.LogInformation($"Processing: {email}");
+            var productName = context.InputData<string>();
+            context.Logger.LogInformation($"Processing: {productName}");
         })
         .Run();
 }
@@ -31,9 +31,13 @@ A test that runs **one or more scenarios** in parallel to simulate load on the s
 public async Task Load_test_example()
 {
     await Scenario()
-        .Step("Call API", async context =>
+        .Step("Call GET /Products", async context =>
         {
-            // API call logic
+            var response = await context.CreateHttpRequest("https://localhost:44316/api/Products")
+                .WithAuthBearer(authToken)
+                .Get<List<Product>>();
+
+            Assert.IsTrue(response.IsSuccessful);
         })
         .Load().Simulations((context, simulations) =>
         {
@@ -107,10 +111,10 @@ Marks a method as a TestFuzn test. Extends MSTest's `[TestMethod]`.
 | `Description` (optional) | Description of what the test validates. |
 
 ```csharp
-[Test(Name = "Verify product creation works correctly",
-    Description = "Tests the complete product creation flow",
+[Test(Name = "Verify product CRUD operations",
+    Description = "Tests the complete product creation, read, update, and delete flow",
     Id = "PROD-001")]
-public async Task Verify_product_creation() { ... }
+public async Task Verify_product_crud_operations() { ... }
 ```
 
 ### `[Group]` Attribute
@@ -121,7 +125,7 @@ If not specified, the fully qualified class name (namespace + class name) is use
 ```csharp
 [TestClass]
 [Group("Product API Tests")]
-public class ProductTests : Test { ... }
+public class ProductHttpTests : Test { ... }
 ```
 
 ### `[Tags]` Attribute
@@ -130,8 +134,8 @@ Specifies tags for categorization and filtering. Can be used to run specific sub
 
 ```csharp
 [Test]
-[Tags("Unit", "Validation", "Critical")]
-public async Task Validate_product_name() { ... }
+[Tags("API", "Products", "Critical")]
+public async Task Verify_product_crud_operations() { ... }
 ```
 
 ### `[Metadata]` Attribute
@@ -143,7 +147,7 @@ Adds key-value metadata pairs to tests. Multiple attributes can be applied.
 [Metadata("Category", "API")]
 [Metadata("Priority", "High")]
 [Metadata("Owner", "Team-Backend")]
-public async Task API_test_with_metadata() { ... }
+public async Task Verify_product_crud_operations() { ... }
 ```
 
 ### `[Skip]` Attribute

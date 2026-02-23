@@ -17,12 +17,14 @@ The scenario runs according to the simulations you configure, allowing you to me
 public async Task Single_scenario_load_test()
 {
     await Scenario()
-        .Id("Scenario-1")
-        .Step("Step 1", async (context) =>
+        .Id("PROD-CRUD-001")
+        .Step("Authenticate and retrieve JWT token", async (context) =>
         {
+            // Get auth token from /api/Auth/token
         })
-        .Step("Step 2", async (context) =>
+        .Step("Call GET /Products to list all products", async (context) =>
         {
+            // Fetch product list
         })
         .Load().Simulations((context, simulations) =>
         {
@@ -42,7 +44,7 @@ public async Task Single_scenario_load_test()
 
 ## Multiple Scenarios
 
-Multiple-scenario load tests let you run several scenarios concurrently to simulate different user behaviors happening at the same time (for example, some users browsing while others checking out).
+Multiple-scenario load tests let you run several scenarios concurrently to simulate different user behaviors happening at the same time (for example, some users browsing products while others creating new products).
 
 Each scenario runs **independently** with its own load simulations and statistics.
 TestFuzn does **not** merge or aggregate load, timing, or metrics across scenarios—results are reported **per scenario only**.
@@ -51,13 +53,14 @@ TestFuzn does **not** merge or aggregate load, timing, or metrics across scenari
 [Test]
 public async Task Multiple_scenarios_load_test()
 {
-    var scenario2 = Scenario("Second scenario")
-        .Step("Step 1", (context) =>
+    var browseScenario = Scenario("Browse products")
+        .Step("Call GET /Products", (context) =>
         {
+            // Fetch product list
         })
         .Load().Simulations((context, simulations) =>
         {
-            // Define load simulations here. First and second scenario can have different simulations.
+            // Define load simulations here. Browse and create scenarios can have different simulations.
             simulations.FixedLoad(10, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(100));
             simulations.GradualLoadIncrease(1, 10, TimeSpan.FromSeconds(5));
             simulations.OneTimeLoad(100);
@@ -66,17 +69,19 @@ public async Task Multiple_scenarios_load_test()
             simulations.RandomLoadPerSecond(10, 50, TimeSpan.FromSeconds(100));
         });
 
-    await Scenario("First scenario")
-        .Id("Scenario-1")
-        .Step("Step 1", (context) =>
+    await Scenario("Create products")
+        .Id("PROD-CREATE-001")
+        .Step("Authenticate and retrieve JWT token", (context) =>
         {
+            // Get auth token
         })
-        .Step("Step 2", async (context) =>
+        .Step("Call POST /Products to create a new product", async (context) =>
         {
+            // Create product
         })
         .Load().Simulations((context, simulations) =>
         {
-            // Define load simulations here. First and second scenario can have different simulations.
+            // Define load simulations here. Browse and create scenarios can have different simulations.
             simulations.GradualLoadIncrease(1, 10, TimeSpan.FromSeconds(5));
             simulations.FixedLoad(10, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(100));
             simulations.OneTimeLoad(100);
@@ -84,7 +89,7 @@ public async Task Multiple_scenarios_load_test()
             simulations.FixedConcurrentLoad(1000, TimeSpan.FromSeconds(100));
             simulations.RandomLoadPerSecond(10, 50, TimeSpan.FromSeconds(100));
         })
-        .Load().IncludeScenario(scenario2)
+        .Load().IncludeScenario(browseScenario)
         .Run();
 }
 ```
@@ -224,8 +229,8 @@ Final validation after test completion:
     Assert.IsTrue(stats.Ok.ResponseTimePercentile99 < TimeSpan.FromSeconds(1));
     
     // Per-step assertions
-    var loginStats = stats.GetStep("Login");
-    Assert.IsTrue(loginStats.Ok.ResponseTimeMean < TimeSpan.FromMilliseconds(300));
+    var createProductStats = stats.GetStep("Call POST /Products to create a new product");
+    Assert.IsTrue(createProductStats.Ok.ResponseTimeMean < TimeSpan.FromMilliseconds(300));
 })
 ```
 

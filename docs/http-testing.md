@@ -136,7 +136,7 @@ public async Task Get_products_from_api()
     await Scenario()
         .Step("Get products and verify response", async context =>
         {
-            var response = await context.CreateHttpRequest("/api/products")
+            var response = await context.CreateHttpRequest("/api/Products")
                 .Get<List<Product>>();
             
             Assert.IsTrue(response.IsSuccessful);
@@ -156,14 +156,18 @@ public async Task Create_product()
     await Scenario()
         .Step("Create new product", async context =>
         {
-            var newProduct = new { Name = "Widget", Price = 99.99 };
+            var newProduct = new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Test Product",
+                Price = 100
+            };
             
-            var response = await context.CreateHttpRequest("/api/products")
+            var response = await context.CreateHttpRequest("/api/Products")
                 .WithContent(newProduct)
-                .Post<Product>();
+                .Post();
             
-            Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
-            Assert.IsNotNull(response.Data);
+            Assert.IsTrue(response.IsSuccessful);
         })
         .Run();
 }
@@ -178,13 +182,18 @@ public async Task Update_product()
     await Scenario()
         .Step("Update existing product", async context =>
         {
-            var updatedProduct = new { Id = 123, Name = "Updated Widget", Price = 149.99 };
+            var updatedProduct = new Product
+            {
+                Id = existingProductId,
+                Name = "Updated Test Product",
+                Price = 150
+            };
             
-            var response = await context.CreateHttpRequest("/api/products/123")
+            var response = await context.CreateHttpRequest("/api/Products")
                 .WithContent(updatedProduct)
-                .Put<Product>();
+                .Put();
             
-            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            Assert.IsTrue(response.IsSuccessful);
         })
         .Run();
 }
@@ -199,10 +208,10 @@ public async Task Delete_product()
     await Scenario()
         .Step("Delete product", async context =>
         {
-            var response = await context.CreateHttpRequest("/api/products/123")
+            var response = await context.CreateHttpRequest($"/api/Products/{productId}")
                 .Delete();
             
-            Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+            Assert.IsTrue(response.IsSuccessful);
         })
         .Run();
 }
@@ -219,11 +228,22 @@ public async Task Delete_product()
 public async Task Call_authenticated_endpoint()
 {
     await Scenario()
-        .Step("Get user profile", async context =>
+        .Step("Authenticate and retrieve JWT token", async context =>
         {
-            var response = await context.CreateHttpRequest("/api/user/profile")
-                .WithAuthBearer("your-jwt-token")
-                .Get<UserProfile>();
+            var response = await context.CreateHttpRequest("/api/Auth/token")
+                .WithContent(new { Username = "admin", Password = "admin123" })
+                .Post<TokenResponse>();
+
+            Assert.IsTrue(response.IsSuccessful);
+            context.SetSharedData("authToken", response.Data.Token);
+        })
+        .Step("Get products with auth token", async context =>
+        {
+            var authToken = context.GetSharedData<string>("authToken");
+
+            var response = await context.CreateHttpRequest("/api/Products")
+                .WithAuthBearer(authToken)
+                .Get<List<Product>>();
             
             Assert.IsTrue(response.IsSuccessful);
         })
@@ -240,9 +260,9 @@ public async Task Call_with_basic_auth()
     await Scenario()
         .Step("Get protected resource", async context =>
         {
-            var response = await context.CreateHttpRequest("/api/protected/resource")
-                .WithAuthBasic("username", "password")
-                .Get<Resource>();
+            var response = await context.CreateHttpRequest("/api/Products")
+                .WithAuthBasic("admin", "admin123")
+                .Get<List<Product>>();
             
             Assert.IsTrue(response.IsSuccessful);
         })
@@ -257,17 +277,17 @@ public async Task Call_with_basic_auth()
 ### Headers
 
 ```csharp
-var response = await context.CreateHttpRequest("/api/data")
+var response = await context.CreateHttpRequest("/api/Products")
     .WithHeader("X-Custom-Header", "value")
     .WithHeader("Accept-Language", "en-US")
-    .Get<Data>();
+    .Get<List<Product>>();
 ```
 
 ### Query Parameters
 
 ```csharp
-var response = await context.CreateHttpRequest("/api/products")
-    .WithQueryParam("category", "electronics")
+var response = await context.CreateHttpRequest("/api/Products")
+    .WithQueryParam("name", "Laptop")
     .WithQueryParam("maxPrice", "1000")
     .Get<List<Product>>();
 ```
@@ -275,9 +295,9 @@ var response = await context.CreateHttpRequest("/api/products")
 ### Timeout
 
 ```csharp
-var response = await context.CreateHttpRequest("/api/slow-endpoint")
+var response = await context.CreateHttpRequest("/api/Products")
     .WithTimeout(TimeSpan.FromSeconds(60))
-    .Get<Result>();
+    .Get<List<Product>>();
 ```
 
 ---
@@ -287,8 +307,9 @@ var response = await context.CreateHttpRequest("/api/slow-endpoint")
 ### Status Code Checks
 
 ```csharp
-var response = await context.CreateHttpRequest("/api/endpoint")
-    .Get<Data>();
+var response = await context.CreateHttpRequest("/api/Products")
+    .WithAuthBearer(authToken)
+    .Get<List<Product>>();
 
 Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 Assert.IsTrue(response.IsSuccessful);
@@ -297,8 +318,9 @@ Assert.IsTrue(response.IsSuccessful);
 ### Accessing Response Headers
 
 ```csharp
-var response = await context.CreateHttpRequest("/api/endpoint")
-    .Get<Data>();
+var response = await context.CreateHttpRequest("/api/Products")
+    .WithAuthBearer(authToken)
+    .Get<List<Product>>();
 
 var contentType = response.Headers.GetValues("Content-Type").FirstOrDefault();
 ```
@@ -306,8 +328,8 @@ var contentType = response.Headers.GetValues("Content-Type").FirstOrDefault();
 ### Error Handling
 
 ```csharp
-var response = await context.CreateHttpRequest("/api/endpoint")
-    .Get<Data>();
+var response = await context.CreateHttpRequest("/api/Products")
+    .Get<List<Product>>();
 
 if (!response.IsSuccessful)
 {
@@ -328,9 +350,9 @@ public void Configure(TestFuznConfiguration configuration)
     configuration.UseHttp(httpConfig =>
     {
         // Register and configure your HTTP client
-        httpConfig.Services.AddHttpClient<MyHttpClient>(client =>
+        httpConfig.Services.AddHttpClient<SampleAppHttpClient>(client =>
         {
-            client.BaseAddress = new Uri("https://api.example.com");
+            client.BaseAddress = new Uri("https://localhost:44316");
             client.Timeout = TimeSpan.FromSeconds(30);
         })
         .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
@@ -338,7 +360,7 @@ public void Configure(TestFuznConfiguration configuration)
             AllowAutoRedirect = true
         });
 
-        httpConfig.DefaultHttpClient<MyHttpClient>();
+        httpConfig.DefaultHttpClient<SampleAppHttpClient>();
 
         // Enable logging of HTTP details to test console when a step fails (default: true)
         // Only applies to standard tests, not load tests
@@ -367,13 +389,14 @@ HTTP requests can be used in load tests to simulate concurrent API traffic:
 
 ```csharp
 [Test]
-public async Task API_load_test()
+public async Task Product_api_load_test()
 {
     await Scenario()
-        .Step("Call API endpoint", async context =>
+        .Step("Call GET /Products", async context =>
         {
-            var response = await context.CreateHttpRequest("/api/health")
-                .Get();
+            var response = await context.CreateHttpRequest("/api/Products")
+                .WithAuthBearer(authToken)
+                .Get<List<Product>>();
             
             Assert.IsTrue(response.IsSuccessful);
         })

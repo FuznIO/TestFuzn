@@ -8,10 +8,10 @@ By default, a scenario is executed **once** as a **standard test**:
 ```csharp
 using Fuzn.TestFuzn;
 
-namespace MyTests;
+namespace SampleApp.Tests;
 
 [TestClass]
-public class MyFirstTests : Test
+public class ProductHttpTests : Test
 {
     [Test]
     public async Task Basic_standard_test()
@@ -41,7 +41,7 @@ In a load test, the scenario is executed **with multiple iterations running in p
 
 ```csharp
 [TestClass]
-public class MyFirstTests : Test
+public class ProductLoadTests : Test
 {
     [Test]
     public async Task Basic_load_test()
@@ -75,8 +75,8 @@ Scenarios can be assigned a stable identifier and an optional description.
 
 ```csharp
 await Scenario()
-    .Id("SCEN-1234")  // Optional identifier
-    .Description("Scenario description")  // Optional description
+    .Id("PROD-CRUD-001")  // Optional identifier
+    .Description("Verify product CRUD operations")  // Optional description
     .Step("Step", context => { })
     .Run();
 ```
@@ -142,11 +142,11 @@ Create nested step hierarchies for better organization:
 Add contextual information to step:
 
 ```csharp
-.Step("Process", context =>
+.Step("Call POST /Products to create a new product", context =>
 {
-    context.Comment("Starting data processing");
-    // Process data
-    context.Comment("Processing complete");
+    context.Comment("Creating product with generated ID");
+    // Create product
+    context.Comment("Product created successfully");
 })
 ```
 
@@ -204,15 +204,15 @@ Both simple types (e.g. `string`, `int`) and complex types (custom classes, reco
 ### Static Input Data
 
 ```csharp
-.InputData("user1", "user2", "user3")
+.InputData("Laptop", "Keyboard", "Monitor")
 ```
 
 ### Static Input Data (Complex Type)
 
 ```csharp
 .InputData(
-    new User { Id = 1, Name = "user1" },
-    new User { Id = 2, Name = "user2" }
+    new Product { Id = Guid.NewGuid(), Name = "Laptop", Price = 999.99m },
+    new Product { Id = Guid.NewGuid(), Name = "Keyboard", Price = 49.99m }
 )
 ```
 
@@ -221,7 +221,7 @@ Both simple types (e.g. `string`, `int`) and complex types (custom classes, reco
 ```csharp
 .InputDataFromList((context) =>
 {
-    return new List<object> { "user1", "user2", "user3" };
+    return new List<object> { "Laptop", "Keyboard", "Monitor" };
 })
 ```
 
@@ -230,8 +230,8 @@ Both simple types (e.g. `string`, `int`) and complex types (custom classes, reco
 ```csharp
 .InputDataFromList(async (context) =>
 {
-    var users = await database.GetTestUsers();
-    return users.Cast<object>().ToList();
+    var products = await productService.GetAllProducts();
+    return products.Cast<object>().ToList();
 })
 ```
 
@@ -251,8 +251,8 @@ Control how input data is consumed:
 ```csharp
 .Step("Use Input Data", context =>
 {
-    var user = context.InputData<string>();
-    context.Logger.LogInformation($"Processing user: {user}");
+    var productName = context.InputData<string>();
+    context.Logger.LogInformation($"Processing product: {productName}");
 })
 ```
 
@@ -261,19 +261,20 @@ Control how input data is consumed:
 For **standard tests**, input data is displayed in console output and HTML reports. Override `ToString()` to customize how it appears:
 
 ```csharp
-public class User
+public class Product
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string Name { get; set; }
+    public decimal Price { get; set; }
     
     public override string ToString()
     {
-        return $"User: {Name}";
+        return $"Product: {Name} (${Price})";
     }
 }
 ```
 
-Without overriding `ToString()`, the output shows the fully qualified type name (e.g., `MyNamespace.User`).
+Without overriding `ToString()`, the output shows the fully qualified type name (e.g., `SampleApp.WebApp.Models.Product`).
 
 > **Note**: Load tests do not display individual input data values in reports.
 
@@ -287,11 +288,11 @@ run sequentially:
 [Test]
 public async Task Standard_test_with_variables()
 {
-     string token = null; // Method variable works for standard tests
+    string authToken = null; // Method variable works for standard tests
 
     await Scenario()
-        .Step("Login", context => { token = "abc123"; })
-        .Step("Use Token", context => { Console.WriteLine(token); })
+        .Step("Authenticate", context => { authToken = "abc123"; })
+        .Step("Use Token", context => { Console.WriteLine(authToken); })
         .Run();
 }
 ```
@@ -304,13 +305,13 @@ Share untyped data between steps within the same iteration. Data is isolated per
 ```csharp
 .Step("Set Data", context =>
 {
-    context.SetSharedData("userId", 12345);
-    context.SetSharedData("config", new Configuration());
+    context.SetSharedData("productId", Guid.NewGuid());
+    context.SetSharedData("authToken", "abc123");
 })
 .Step("Get Data", context =>
 {
-    var userId = context.GetSharedData<int>("userId");
-    var config = context.GetSharedData<Configuration>("config");
+    var productId = context.GetSharedData<Guid>("productId");
+    var authToken = context.GetSharedData<string>("authToken");
 })
 ```
 
@@ -319,27 +320,31 @@ Share untyped data between steps within the same iteration. Data is isolated per
 Share typed data between steps using custom context models. The context is iteration-scoped and safe to use in parallel load tests and reusable steps.
 
 ```csharp
-public class LoginModel
+public class ProductCrudModel
 {
-    public string Username { get; set; }
-    public string Token { get; set; }
-    public DateTime LoginTime { get; set; }
+    public Product? NewProduct { get; set; }
+    public Product? UpdatedProduct { get; set; }
+    public string AuthToken { get; set; }
 }
 
 [Test]
 public async Task Custom_context_example()
 {
-    await Scenario<LoginModel>()
-        .Step("Login", context =>
+    await Scenario<ProductCrudModel>()
+        .Step("Authenticate and create product", context =>
         {
-            context.Model.Username = "testuser";
-            context.Model.Token = "abc123";
-            context.Model.LoginTime = DateTime.UtcNow;
+            context.Model.AuthToken = "abc123";
+            context.Model.NewProduct = new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Test Product",
+                Price = 100
+            };
         })
-        .Step("Verify Session", context =>
+        .Step("Verify product", context =>
         {
-            Assert.IsNotNull(context.Model.Token);
-            Assert.AreEqual("testuser", context.Model.Username);
+            Assert.IsNotNull(context.Model.AuthToken);
+            Assert.AreEqual("Test Product", context.Model.NewProduct?.Name);
         })
         .Run();
 }
@@ -381,7 +386,7 @@ Implement interfaces for test-level hooks:
 
 ```csharp
 [TestClass]
-public class MyTests : Test, IBeforeTest, IAfterTest
+public class ProductHttpTests : Test, IBeforeTest, IAfterTest
 {
     public Task BeforeTest(Context context)
     {
