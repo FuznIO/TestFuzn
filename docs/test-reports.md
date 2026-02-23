@@ -45,4 +45,31 @@ TestFuznResults\{run-id}/
 
 ---
 
+## `[Group]` Attribute
+
+Specifies the group name for a test class. Tests in the same group are reported together.  
+If not specified, the fully qualified class name (namespace + class name) is used.
+
+```csharp
+[TestClass]
+[Group("Product API Tests")]
+public class ProductHttpTests : Test { ... }
+```
+
+---
+
+## `[Metadata]` Attribute
+
+Adds key-value metadata pairs to tests. Multiple attributes can be applied. Metadata is displayed in test reports.
+
+```csharp
+[Test]
+[Metadata("Category", "API")]
+[Metadata("Priority", "High")]
+[Metadata("Owner", "Team-Backend")]
+public async Task Verify_product_crud_operations() { ... }
+```
+
+---
+
 [← Back to Table of Contents](README.md)

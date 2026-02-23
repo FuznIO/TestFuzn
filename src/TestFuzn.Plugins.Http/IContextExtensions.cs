@@ -67,12 +67,12 @@ public static class ContextExtensions
         var fluentHttpRequest = httpClient
                                     .CreateHttpRequest()
                                     .WithUrl(url)
-                                    .WithOption("TestFuznContext", context);
+                                    .WithOption(HttpPluginConstants.ContextOptionName.Key, context);
 
         // Pass the state to the request if available
         if (httpPluginState != null)
         {
-            fluentHttpRequest.WithOption("TestFuznHttpPluginState", httpPluginState);
+            fluentHttpRequest.WithOption(HttpPluginConstants.StateOptionName.Key, httpPluginState);
         }
 
         return fluentHttpRequest;

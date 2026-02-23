@@ -38,15 +38,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{B29058A8-7
 	ProjectSection(SolutionItems) = preProject
 		..\docs\api-reference.md = ..\docs\api-reference.md
 		..\docs\configuration.md = ..\docs\configuration.md
-		..\docs\core-concepts.md = ..\docs\core-concepts.md
+		..\docs\environments.md = ..\docs\environments.md
+		..\docs\filtering.md = ..\docs\filtering.md
 		..\docs\getting-started.md = ..\docs\getting-started.md
 		..\docs\http-testing.md = ..\docs\http-testing.md
 		..\docs\influxdb-grafana.md = ..\docs\influxdb-grafana.md
+		..\docs\input-data.md = ..\docs\input-data.md
+		..\docs\lifecycle.md = ..\docs\lifecycle.md
 		..\docs\load-testing.md = ..\docs\load-testing.md
+		..\docs\mstest.md = ..\docs\mstest.md
 		..\docs\playwright-testing.md = ..\docs\playwright-testing.md
 		..\docs\README.md = ..\docs\README.md
+		..\docs\scenarios.md = ..\docs\scenarios.md
+		..\docs\shared-data.md = ..\docs\shared-data.md
+		..\docs\shared-steps.md = ..\docs\shared-steps.md
+		..\docs\steps.md = ..\docs\steps.md
 		..\docs\test-reports.md = ..\docs\test-reports.md
-		..\docs\writing-tests.md = ..\docs\writing-tests.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFuzn.Tests.Attributes", "TestFuzn.Tests.Attributes\TestFuzn.Tests.Attributes.csproj", "{D3EAE0BA-A71D-474C-AC2E-144CFE6C16F0}"
