@@ -8,6 +8,7 @@
 
 ### Getting Started
 - [Getting Started](getting-started.md) — Installation, project setup, quick start
+- [MSTest Compatibility](mstest.md) — Attribute mapping, lifecycle, what's supported
 
 ### Writing Tests
 - [Scenarios](scenarios.md) — Standard vs load tests, `[Test]` attribute, execution flow

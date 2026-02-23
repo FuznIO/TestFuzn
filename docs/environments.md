@@ -125,4 +125,5 @@ See [Configuration](configuration.md) for details on `appsettings.json` structur
 
 ---
 
-[? Back to Table of Contents](README.md)
+```markdown
+[← Back to Table of Contents](README.md)

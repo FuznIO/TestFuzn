@@ -46,6 +46,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{B29058A8-7
 		..\docs\input-data.md = ..\docs\input-data.md
 		..\docs\lifecycle.md = ..\docs\lifecycle.md
 		..\docs\load-testing.md = ..\docs\load-testing.md
+		..\docs\mstest.md = ..\docs\mstest.md
 		..\docs\playwright-testing.md = ..\docs\playwright-testing.md
 		..\docs\README.md = ..\docs\README.md
 		..\docs\scenarios.md = ..\docs\scenarios.md

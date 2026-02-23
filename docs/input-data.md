@@ -96,4 +96,5 @@ Without overriding `ToString()`, the output shows the fully qualified type name 
 
 ---
 
-[? Back to Table of Contents](README.md)
+```markdown
+[← Back to Table of Contents](README.md)

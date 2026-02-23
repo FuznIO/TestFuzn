@@ -110,4 +110,5 @@ Use the built-in logger for structured logging:
 
 ---
 
-[? Back to Table of Contents](README.md)
+```markdown
+[← Back to Table of Contents](README.md)
