@@ -41,6 +41,18 @@ public static class TestFuznConfigurationExtensions
         // Apply user-provided configuration if available
         configureAction?.Invoke(httpConfiguration);
 
+        // Register the built-in TestFuznHttpClient if not already registered by the user
+        if (!configuration.Services.Any(s => s.ServiceType == typeof(TestFuznHttpClient)))
+        {
+            configuration.Services.AddHttpClient<TestFuznHttpClient>();
+        }
+
+        // If no default HTTP client was explicitly configured, use the built-in one
+        if (httpConfiguration.DefaultHttpClientInternal == null)
+        {
+            httpConfiguration.DefaultHttpClientInternal = typeof(TestFuznHttpClient);
+        }
+
         HttpGlobalState.Configuration = httpConfiguration;
         HttpGlobalState.HasBeenInitialized = true;
 

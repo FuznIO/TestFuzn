@@ -18,9 +18,53 @@ dotnet add package Fuzn.TestFuzn.Plugins.Http
 
 ## HTTP Client Setup
 
-### Creating an HTTP Client
+### Quick Start (Built-in Default Client)
 
-Create a class that implements `IHttpClient`:
+The simplest way to get started is to call `UseHttp()` with no configuration. The plugin provides a built-in `TestFuznHttpClient` that is automatically registered and set as the default:
+
+```csharp
+public class Startup : IStartup
+{
+    public void Configure(TestFuznConfiguration configuration)
+    {
+        configuration.UseHttp();
+    }
+}
+```
+
+You can then use full URLs in your tests:
+
+```csharp
+var response = await context.CreateHttpRequest("https://api.example.com/api/Products")
+    .Get<List<Product>>();
+```
+
+### Configuring the Default Client
+
+If you need to set a base address, timeout, or other `HttpClient` settings, you can configure the built-in `TestFuznHttpClient` using `AddHttpClient<TestFuznHttpClient>()`:
+
+```csharp
+public class Startup : IStartup
+{
+    public void Configure(TestFuznConfiguration configuration)
+    {
+        configuration.UseHttp(httpConfig =>
+        {
+            httpConfig.Services.AddHttpClient<TestFuznHttpClient>(client =>
+            {
+                client.BaseAddress = new Uri("https://api.example.com");
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
+        });
+    }
+}
+```
+
+> **💡 Tip**: Setting a `BaseAddress` on the HttpClient allows you to use relative URLs in your tests (e.g., `/api/products`). Without a base address, you must use absolute URLs (e.g., `https://api.example.com/api/products`).
+
+### Creating a Custom HTTP Client
+
+If you need custom behavior (e.g., custom serialization, default headers), create a class that implements `IHttpClient`:
 
 ```csharp
 using Fuzn.FluentHttp;
@@ -43,9 +87,7 @@ public class MyHttpClient : IHttpClient
 }
 ```
 
-### Registering the HTTP Client
-
-Register your HTTP client in the `Startup` class using `AddHttpClient<T>()`:
+Register it and set it as the default:
 
 ```csharp
 public class Startup : IStartup
@@ -54,43 +96,43 @@ public class Startup : IStartup
     {
         configuration.UseHttp(httpConfig =>
         {
-            // Register the HTTP client with HttpClientFactory
             httpConfig.Services.AddHttpClient<MyHttpClient>(client =>
             {
                 client.BaseAddress = new Uri("https://api.example.com");
                 client.Timeout = TimeSpan.FromSeconds(30);
             });
 
-            // Configure the default HTTP client for context.CreateHttpRequest() calls
             httpConfig.DefaultHttpClient<MyHttpClient>();
         });
     }
 }
 ```
 
-> **💡 Tip**: Setting a `BaseAddress` on the HttpClient allows you to use relative URLs in your tests (e.g., `/api/products`). Without a base address, you must use absolute URLs (e.g., `https://api.example.com/api/products`).
+### Using Multiple HTTP Clients
 
-### Minimal Setup (No Configuration)
-
-If you don't need to customize the HTTP plugin settings, you can simply call `UseHttp()` without parameters:
+If your test project talks to multiple APIs and you want to use base addresses, create a separate HTTP client for each API:
 
 ```csharp
-public void Configure(TestFuznConfiguration configuration)
+public class InternalApiClient : IHttpClient
 {
-    configuration.UseHttp();
+    public HttpClient HttpClient { get; }
+    public InternalApiClient(HttpClient httpClient) => HttpClient = httpClient;
+    public FluentHttpRequest CreateHttpRequest() => HttpClient.Request();
+}
+
+public class ExternalApiClient : IHttpClient
+{
+    public HttpClient HttpClient { get; }
+    public ExternalApiClient(HttpClient httpClient) => HttpClient = httpClient;
+    public FluentHttpRequest CreateHttpRequest() => HttpClient.Request();
 }
 ```
 
-However, you'll still need to register at least one HTTP client in your service collection separately.
-
-### Using Multiple HTTP Clients
-
-You can register multiple HTTP clients and use them explicitly. **One** can be set as the default:
+Register them in your startup:
 
 ```csharp
 configuration.UseHttp(httpConfig =>
 {
-    // Register multiple clients
     httpConfig.Services.AddHttpClient<InternalApiClient>(client =>
     {
         client.BaseAddress = new Uri("https://internal-api.example.com");
@@ -101,7 +143,7 @@ configuration.UseHttp(httpConfig =>
         client.BaseAddress = new Uri("https://external-api.example.com");
     });
 
-    // Set one as the default (optional)
+    // Set one as the default (optional — if not set, the built-in TestFuznHttpClient is used)
     httpConfig.DefaultHttpClient<InternalApiClient>();
 });
 ```
@@ -109,14 +151,12 @@ configuration.UseHttp(httpConfig =>
 **Using in Tests**:
 
 ```csharp
-// If you set a default client, you can use the parameterless overload:
+// Uses the default client (InternalApiClient in this example):
 var response = await context.CreateHttpRequest("/users").Get<User>();
 
-// Or explicitly specify which client to use:
+// Explicitly specify which client to use:
 var response = await context.CreateHttpRequest<ExternalApiClient>("/data").Get<Data>();
 ```
-
-> **⚠️ Note**: If you don't call `DefaultHttpClient<T>()`, you **must** use the generic `CreateHttpRequest<THttpClient>(url)` overload to specify which client to use.
 
 ---
 
