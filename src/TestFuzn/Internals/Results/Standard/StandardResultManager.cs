@@ -68,18 +68,21 @@ internal class StandardResultManager
             }
             else
             {
-                bool passed = false;
+                TestStatus status = TestStatus.Passed;
                 TimeSpan duration = TimeSpan.Zero;
                 foreach (var scenario in scenarioLoadResults!)
                 {
-                    if (!passed && scenario.Status == TestStatus.Failed)
+                    if (scenario.Status == TestStatus.Failed)
                     {
-                        passed = false;
+                        status = TestStatus.Failed;
                     }
 
                     duration += scenario.TotalExecutionDuration;
                 }
 
+                testResult.Status = status;
+                testResult.StartTime = testStartTime;
+                testResult.EndTime = testEndTime;
                 testResult.Duration = duration;
             }
         }
