@@ -4,8 +4,6 @@ namespace Fuzn.TestFuzn.Contracts.Results.Standard;
 
 internal class ScenarioStandardResult
 {
-    private bool _skipped = false;
-
     public string Name { get; set; }
     public string Description { get; set; }
     public string FullName { get; set; }
@@ -28,9 +26,6 @@ internal class ScenarioStandardResult
     {
         get
         {
-            if (_skipped)
-                return TestStatus.Skipped;
-
             if (PassedCount == TotalCount)
                 return TestStatus.Passed;
             return TestStatus.Failed;
@@ -85,11 +80,6 @@ internal class ScenarioStandardResult
             default:
                 throw new ArgumentOutOfRangeException(nameof(standardTestPhase), standardTestPhase, null);
         }
-    }
-
-    internal void MarkAsSkipped()
-    {
-        _skipped = true;
     }
 
     public DateTime StartTime()
