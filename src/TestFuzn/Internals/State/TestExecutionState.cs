@@ -1,6 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Collections.Frozen;
-using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Results.Load;
@@ -11,7 +9,6 @@ internal class TestExecutionState
 {
     public List<Scenario> Scenarios { get; set; } = new();
     public ITest TestClassInstance { get; set; }
-    public TestType TestType { get; set; }
     public TestRunState TestRunState { get; } = new();
     public ScenarioExecutionState ExecutionState { get; } = new();
     public TestResult TestResult { get; set; }
@@ -30,7 +27,6 @@ internal class TestExecutionState
         TestRunState.ExecutionStatus = ExecutionStatus.Running;
         TestClassInstance = test;
         Scenarios.AddRange(scenarios);
-        TestType = scenarios.First().TestType;
 
         foreach (var scenario in scenarios)
         {

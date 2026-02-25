@@ -40,7 +40,7 @@ internal class ExecutionManager
 
     private void ExecuteAssertWhenDone()
     {
-        if (_testExecutionState.TestType == TestType.Standard)
+        if (_testExecutionState.TestResult.TestType == TestType.Standard)
             return;
 
         if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)

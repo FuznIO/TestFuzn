@@ -44,7 +44,7 @@ internal class ConsumerManager
                 var timestamp = DateTime.UtcNow;
                 _testExecutionState.TestResult.MarkPhaseAsCompleted(StandardTestPhase.Execute, timestamp);
                 
-                if (_testExecutionState.TestType == TestType.Load)
+                if (_testExecutionState.TestResult.TestType == TestType.Load)
                 {
                     _testExecutionState.LoadCollectors[message.ScenarioName].MarkPhaseAsCompleted(LoadTestPhase.Measurement, timestamp);
                     var scenarioLoadResult = _testExecutionState.LoadCollectors[message.ScenarioName].GetCurrentResult(true);

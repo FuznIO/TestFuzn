@@ -75,7 +75,7 @@ internal class ExecuteScenarioMessageHandler
             }
         }
 
-        if (_testExecutionState.TestType == TestType.Standard)
+        if (_testExecutionState.TestResult.TestType == TestType.Standard)
         {
             if (currentInputData != null)
                 iterationResult.InputData = currentInputData.ToString();
@@ -83,7 +83,7 @@ internal class ExecuteScenarioMessageHandler
             _testExecutionState.TestResult.IterationResults.Add(iterationResult);
             await CleanupContext(iterationState);
         }
-        else if (_testExecutionState.TestType == TestType.Load)
+        else if (_testExecutionState.TestResult.TestType == TestType.Load)
         {
             var scenarioLoadCollector = _testExecutionState.LoadCollectors[scenario.Name];
 

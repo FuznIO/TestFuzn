@@ -65,7 +65,7 @@ internal class ExecuteStepHandler
                 stepResult.Status = StepStatus.Failed;
                 CurrentScenarioStatus = TestStatus.Failed;
                 stepResult.Exception = ex;
-                if (_testExecutionState.TestType == TestType.Standard
+                if (_testExecutionState.TestResult.TestType == TestType.Standard
                     && _testExecutionState.TestRunState.FirstException == null)
                     _testExecutionState.TestRunState.FirstException = ex;
             }

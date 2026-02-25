@@ -86,7 +86,7 @@ internal class InitManager
     {
         foreach (var scenario in _testExecutionState.Scenarios)
         {
-            if (_testExecutionState.TestType == TestType.Standard)
+            if (_testExecutionState.TestResult.TestType == TestType.Standard)
             {
                 var totalExecutions = 1;
                 if (scenario.InputDataInfo.HasInputData)
@@ -94,7 +94,7 @@ internal class InitManager
 
                 scenario.SimulationsInternal.Add(new FixedConcurrentLoadConfiguration(1, totalExecutions));
             }
-            else if (_testExecutionState.TestType == TestType.Load)
+            else if (_testExecutionState.TestResult.TestType == TestType.Load)
             {
                 if (scenario.WarmupAction != null)
                 {

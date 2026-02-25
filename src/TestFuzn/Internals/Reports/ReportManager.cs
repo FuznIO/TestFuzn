@@ -29,7 +29,7 @@ internal class ReportManager
 
     public async Task WriteLoadReports(TestExecutionState testExecutionState)
     {
-        if (testExecutionState.TestType != TestType.Load)
+        if (testExecutionState.TestResult.TestType != TestType.Load)
             return;
 
         var loadReports = GlobalState.Configuration.LoadReports;

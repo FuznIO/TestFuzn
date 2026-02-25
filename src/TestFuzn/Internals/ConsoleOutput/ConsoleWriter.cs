@@ -24,7 +24,7 @@ internal class ConsoleWriter
 
     public void WriteSummary()
     {
-        if (_testExecutionState.TestType == TestType.Standard)
+        if (_testExecutionState.TestResult.TestType == TestType.Standard)
             WriteSummaryStandard();
         else
             WriteSummaryLoad();
