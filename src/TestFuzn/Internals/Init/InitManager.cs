@@ -26,16 +26,17 @@ internal class InitManager
     {
         foreach (var scenario in _testExecutionState.Scenarios)
         {
-            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Init);
-            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init);
+            var timestamp = DateTime.UtcNow;
+            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Init, timestamp);
+            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init, timestamp);
         }
 
-        await ExecuteInitTestMethod();
+        await ExecuteBeforeTestMethod();
         
         var initPerScenarioTasks = new List<Task>();
 
         foreach (var scenario in _testExecutionState.Scenarios)
-            initPerScenarioTasks.Add(ExecuteInitMethodsOnScenario(scenario));
+            initPerScenarioTasks.Add(ExecuteBeforeScenarioAndInputData(scenario));
         
         await Task.WhenAll(initPerScenarioTasks);
 
@@ -45,21 +46,22 @@ internal class InitManager
 
         foreach (var scenario in _testExecutionState.Scenarios)
         {
-            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Init);
-            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init);
+            var timestamp = DateTime.UtcNow;
+            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Init, timestamp);
+            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init, timestamp);
         }
     }
 
-    private async Task ExecuteInitTestMethod()
+    private async Task ExecuteBeforeTestMethod()
     {
-        if (_testExecutionState.TestClassInstance is IBeforeTest init)
+        if (_testExecutionState.TestClassInstance is IBeforeTest testClassInstance)
         {
             var context = ContextFactory.CreateContext(_testFramework, "BeforeTest");
-            await init.BeforeTest(context);
+            await testClassInstance.BeforeTest(context);
         }
     }
 
-    private async Task ExecuteInitMethodsOnScenario(Scenario scenario)
+    private async Task ExecuteBeforeScenarioAndInputData(Scenario scenario)
     {
         if (scenario.BeforeScenario != null)
         {
@@ -72,7 +74,7 @@ internal class InitManager
 
         if (scenario.InputDataInfo.SourceType == InputDataSourceType.Action)
         {
-            var context = ContextFactory.CreateScenarioContext(_testFramework, "Inputs");
+            var context = ContextFactory.CreateScenarioContext(_testFramework, "InputData");
             scenario.InputDataInfo.InputDataList = await scenario.InputDataInfo.InputDataAction(context);
         }
     }

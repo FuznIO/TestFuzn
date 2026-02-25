@@ -49,7 +49,7 @@ internal class ProducerManager
             if (loadSimulation.IsWarmup && !hasWarmupPhase)
             {
                 hasWarmupPhase = true;
-                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Warmup);
+                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Warmup, DateTime.UtcNow);
             }
 
             if (hasWarmupPhase && !loadSimulation.IsWarmup)
@@ -57,14 +57,15 @@ internal class ProducerManager
                 while (_testExecutionState.IsExecutionQueueEmpty(scenario.Name) == false)
                     await Task.Delay(TimeSpan.FromMilliseconds(100));
 
-                loadCollector.MarkPhaseAsCompleted(LoadTestPhase.Warmup);
+                loadCollector.MarkPhaseAsCompleted(LoadTestPhase.Warmup, DateTime.UtcNow);
             }
 
             if (!loadSimulation.IsWarmup && !measurementPhaseStarted)
             {
                 measurementPhaseStarted = true;
-                standardCollector.MarkPhaseAsStarted(StandardTestPhase.Execute);
-                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Measurement);
+                var timestamp = DateTime.UtcNow;
+                standardCollector.MarkPhaseAsStarted(StandardTestPhase.Execute, timestamp);
+                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Measurement, timestamp);
             }
 
             await handler.Execute();

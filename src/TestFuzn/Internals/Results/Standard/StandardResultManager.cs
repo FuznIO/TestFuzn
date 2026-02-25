@@ -66,7 +66,7 @@ internal class StandardResultManager
                 testResult.EndTime = testEndTime;
                 testResult.Duration = scenarioStandardResult.TestRunTotalDuration();
             }
-            else
+            else if (scenarioStandardResult.TestType == Contracts.TestType.Load)
             {
                 TestStatus status = TestStatus.Passed;
                 TimeSpan duration = TimeSpan.Zero;

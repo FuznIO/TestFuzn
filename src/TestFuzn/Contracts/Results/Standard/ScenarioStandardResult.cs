@@ -51,36 +51,36 @@ internal class ScenarioStandardResult
         IterationResults.Add(iterationResult);
     }
 
-    internal void MarkPhaseAsStarted(StandardTestPhase standardTestPhase)
+    internal void MarkPhaseAsStarted(StandardTestPhase standardTestPhase, DateTime timestamp)
     {
         switch (standardTestPhase)
         {
             case StandardTestPhase.Init:
-                InitStartTime = DateTime.UtcNow;
+                InitStartTime = timestamp;
                 break;
             case StandardTestPhase.Execute:
-                ExecuteStartTime = DateTime.UtcNow;
+                ExecuteStartTime = timestamp;
                 break;
             case StandardTestPhase.Cleanup:
-                CleanupStartTime = DateTime.UtcNow;
+                CleanupStartTime = timestamp;
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(standardTestPhase), standardTestPhase, null);
         }
     }
 
-    internal void MarkPhaseAsCompleted(StandardTestPhase standardTestPhase)
+    internal void MarkPhaseAsCompleted(StandardTestPhase standardTestPhase, DateTime timestamp)
     {
         switch (standardTestPhase)
         {
             case StandardTestPhase.Init:
-                InitEndTime = DateTime.UtcNow;
+                InitEndTime = timestamp;
                 break;
             case StandardTestPhase.Execute:
-                ExecuteEndTime = DateTime.UtcNow;
+                ExecuteEndTime = timestamp;
                 break;
             case StandardTestPhase.Cleanup:
-                CleanupEndTime = DateTime.UtcNow;
+                CleanupEndTime = timestamp;
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(standardTestPhase), standardTestPhase, null);

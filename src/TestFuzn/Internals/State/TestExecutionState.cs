@@ -103,11 +103,12 @@ internal class TestExecutionState
 
     public void Complete()
     {
-        TestRunState.EndTime = DateTime.UtcNow;
+        var timestamp = DateTime.UtcNow;
+        TestRunState.EndTime = timestamp;
 
         foreach (var scenario in Scenarios)
         {
-            ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Measurement);
+            ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Measurement, timestamp);
         }
     }
 }
