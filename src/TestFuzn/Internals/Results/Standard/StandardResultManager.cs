@@ -32,7 +32,7 @@ internal class StandardResultManager
         }
     }
 
-    public void AddNonSkippedTestResults(TestResult testResult)
+    public void AddTestResults(TestResult testResult)
     {
         var groupResult = _suiteResult.GroupResults.GetOrAdd(testResult.Group, (key) => new GroupResult(testResult.Group));
 

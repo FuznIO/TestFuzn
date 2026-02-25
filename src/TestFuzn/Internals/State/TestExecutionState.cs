@@ -9,10 +9,12 @@ internal class TestExecutionState
 {
     public List<Scenario> Scenarios { get; set; } = new();
     public ITest TestClassInstance { get; set; }
-    public TestRunState TestRunState { get; } = new();
-    public ScenarioExecutionState ExecutionState { get; } = new();
     public TestResult TestResult { get; set; }
     public Dictionary<string, ScenarioLoadCollector> LoadCollectors = new();
+    public ExecutionStatus ExecutionStatus { get; set; } = ExecutionStatus.NotStarted;
+    public Exception ExecutionStoppedReason { get; set; }
+    public Exception FirstException { get; set; }
+    public ScenarioExecutionState ExecutionState { get; } = new();
     public bool IsConsumingCompleted { get; private set; }
 
     public TestExecutionState(ITest test, params Scenario[] scenarios)
@@ -23,8 +25,9 @@ internal class TestExecutionState
             throw new ArgumentException("At least one scenario must be provided.", nameof(scenarios));
 
         TestResult = new TestResult(test.TestInfo, scenarios.First());
-        TestRunState.StartTime = DateTime.UtcNow;
-        TestRunState.ExecutionStatus = ExecutionStatus.Running;
+        TestResult.MarkPhaseAsStarted(StandardTestPhase.Init, DateTime.UtcNow);
+        
+        ExecutionStatus = ExecutionStatus.Running;
         TestClassInstance = test;
         Scenarios.AddRange(scenarios);
 
@@ -104,14 +107,14 @@ internal class TestExecutionState
         IsConsumingCompleted = true;
     }
 
-    public void Complete()
+    public TimeSpan TestRunDuration()
     {
-        var timestamp = DateTime.UtcNow;
-        TestRunState.EndTime = timestamp;
+        var start = TestResult.StartTime();
+        var end = TestResult.EndTime();
 
-        foreach (var scenario in Scenarios)
-        {
-            LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Measurement, timestamp);
-        }
+        if (end == default)
+            return DateTime.UtcNow - start;
+
+        return end - start;
     }
 }

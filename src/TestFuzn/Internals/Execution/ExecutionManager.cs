@@ -35,7 +35,7 @@ internal class ExecutionManager
 
         ExecuteAssertWhenDone();
 
-        _testExecutionState.Complete();
+        _testExecutionState.TestResult.MarkPhaseAsCompleted(StandardTestPhase.Execute, DateTime.UtcNow);
     }
 
     private void ExecuteAssertWhenDone()
@@ -43,7 +43,7 @@ internal class ExecutionManager
         if (_testExecutionState.TestResult.TestType == TestType.Standard)
             return;
 
-        if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+        if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
             return;
 
         foreach (var scenario in _testExecutionState.Scenarios)
@@ -59,7 +59,7 @@ internal class ExecutionManager
                 }
                 catch (Exception e)
                 {
-                    _testExecutionState.TestRunState.FirstException = e;
+                    _testExecutionState.FirstException = e;
                     _testExecutionState.TestResult.Status = TestStatus.Failed;
                     scenarioCollector.SetAssertWhenDoneException(e);
                     scenarioCollector.SetStatus(TestStatus.Failed);

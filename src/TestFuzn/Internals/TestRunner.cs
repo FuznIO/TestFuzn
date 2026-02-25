@@ -53,21 +53,21 @@ internal class TestRunner
             await initManager.Run();
             await executionManager.Run();
             await cleanupManager.Run();
-            standardResultManager.AddNonSkippedTestResults(testExecutionState.TestResult);
+            standardResultManager.AddTestResults(testExecutionState.TestResult);
             await reportManager.WriteLoadReports(testExecutionState);
             await consoleManager.Complete();
 
             if (_assertInternalState != null)
                 _assertInternalState(new AssertInternalState(testExecutionState));
 
-            if (testExecutionState.TestRunState.FirstException != null)
-                ExceptionDispatchInfo.Capture(testExecutionState.TestRunState.FirstException).Throw();
+            if (testExecutionState.FirstException != null)
+                ExceptionDispatchInfo.Capture(testExecutionState.FirstException).Throw();
         }
         catch (Exception)
         {
-            if (testExecutionState.TestRunState.ExecutionStoppedReason != null)
+            if (testExecutionState.ExecutionStoppedReason != null)
             {
-                throw testExecutionState.TestRunState.ExecutionStoppedReason;
+                throw testExecutionState.ExecutionStoppedReason;
             }
 
             throw;

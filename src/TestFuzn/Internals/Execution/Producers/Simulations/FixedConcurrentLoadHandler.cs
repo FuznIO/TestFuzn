@@ -27,7 +27,7 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
         var totalCount = _configuration.TotalCount;
         var i = 0;
 
-        while (_testExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
+        while (_testExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
         {
             if (totalCount > 0)
             {

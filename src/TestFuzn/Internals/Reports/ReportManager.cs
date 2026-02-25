@@ -45,9 +45,9 @@ internal class ReportManager
         data.Suite.Id = GlobalState.Configuration.Suite.Id;
         data.Suite.Metadata = GlobalState.Configuration.Suite.Metadata;
         data.TestRunId = GlobalState.TestRunId;
-        data.TestRunStartTime = testExecutionState.TestRunState.StartTime;
-        data.TestRunEndTime = testExecutionState.TestRunState.EndTime;
-        data.TestRunDuration = data.TestRunEndTime - data.TestRunStartTime;
+        data.TestRunStartTime = testExecutionState.TestResult.StartTime();
+        data.TestRunEndTime = testExecutionState.TestResult.EndTime();
+        data.TestRunDuration = testExecutionState.TestResult.TestRunDuration();
         data.Group = new Contracts.Reports.GroupInfo();
         data.Group.Name = testInfo.Group.Name;
         data.Test = new Contracts.Reports.TestInfo();

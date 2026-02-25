@@ -27,7 +27,7 @@ internal class GradualLoadIncreaseHandler : ILoadHandler
         var currentRate = startRate;
 
         while (currentRate <= endRate
-            && _testExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
+            && _testExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
         {
             for (int i = 0; i < currentRate; i++)
             {

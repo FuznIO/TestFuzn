@@ -289,7 +289,7 @@ internal class StandardHtmlReportWriter : IStandardReport
 
             b.AppendLine("</td>");
             b.AppendLine($"<td>{statusText}</td>");
-            b.AppendLine($"<td>{testResult.Value.Duration.ToTestFuznReadableString()}</td>");
+            b.AppendLine($"<td>{testResult.Value.TestRunDuration().ToTestFuznReadableString()}</td>");
             b.AppendLine("<td>");
             if (testResult.Value.Tags != null && testResult.Value.Tags.Count > 0)
             {

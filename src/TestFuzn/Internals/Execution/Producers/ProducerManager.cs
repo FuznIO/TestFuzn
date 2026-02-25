@@ -31,7 +31,7 @@ internal class ProducerManager
 
         foreach (var loadSimulation in scenario.SimulationsInternal)
         {
-            if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+            if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
                 break;
 
             ILoadHandler handler = loadSimulation switch

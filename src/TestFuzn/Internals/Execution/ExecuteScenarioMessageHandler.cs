@@ -100,7 +100,7 @@ internal class ExecuteScenarioMessageHandler
             await CleanupContext(iterationState);
 
             if (scenario.AssertWhileRunningAction != null
-                && _testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Running)
+                && _testExecutionState.ExecutionStatus == ExecutionStatus.Running)
             {
                 try
                 {
@@ -109,10 +109,10 @@ internal class ExecuteScenarioMessageHandler
                 }
                 catch (Exception ex)
                 {
-                    _testExecutionState.TestRunState.ExecutionStatus = ExecutionStatus.Stopped;
-                    _testExecutionState.TestRunState.ExecutionStoppedReason = ex;
+                    _testExecutionState.ExecutionStatus = ExecutionStatus.Stopped;
+                    _testExecutionState.ExecutionStoppedReason = ex;
                     _testExecutionState.TestResult.Status = TestStatus.Failed;
-                    _testExecutionState.TestRunState.FirstException = ex;
+                    _testExecutionState.FirstException = ex;
                     scenarioLoadCollector.SetAssertWhileRunningException(ex);
                     scenarioLoadCollector.SetStatus(TestStatus.Failed);
                 }

@@ -116,7 +116,7 @@ internal class StandardXmlReportWriter : IStandardReport
         writer.WriteElementString("StartTime", testResult.StartTime().ToString("o"));
         writer.WriteElementString("EndTime", testResult.EndTime().ToString("o"));
         writer.WriteElementString("Status", testResult.Status.ToString());
-        writer.WriteElementString("Duration", testResult.Duration.ToString(@"hh\:mm\:ss\.fff"));
+        writer.WriteElementString("Duration", testResult.TestRunDuration().ToString(@"hh\:mm\:ss\.fff"));
 
         WriteScenario(writer, testResult);
 

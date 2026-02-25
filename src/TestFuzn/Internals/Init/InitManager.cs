@@ -27,8 +27,6 @@ internal class InitManager
     {
         var startedTimestamp = DateTime.UtcNow;
 
-        _testExecutionState.TestResult.MarkPhaseAsStarted(StandardTestPhase.Init, startedTimestamp);
-
         foreach (var scenario in _testExecutionState.Scenarios)
         {       
             _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init, startedTimestamp);

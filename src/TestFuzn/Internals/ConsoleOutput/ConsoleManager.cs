@@ -64,8 +64,8 @@ internal class ConsoleManager(
 
             var updatedSnapshot = _testExecutionState.LoadCollectors[scenario.Name].GetCurrentResult();
             if (_testExecutionState.IsScenarioExecutionComplete(scenario.Name) || 
-                _testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Completed
-                || _testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+                _testExecutionState.ExecutionStatus == ExecutionStatus.Completed
+                || _testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
             {
                 loadTestMetrics[scenario.Name].Status = updatedSnapshot.Status.ToString();
                 loadTestMetrics[scenario.Name].ConsoleCompleted = true;

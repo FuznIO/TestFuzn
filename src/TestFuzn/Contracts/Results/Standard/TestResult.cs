@@ -10,7 +10,6 @@ internal class TestResult
     public string Id { get; set; }
     public Dictionary<string, string> Metadata { get; set; }
     public List<string> Tags { get; set; }
-    public TimeSpan Duration { get; set; }
     //public TestStatus Status 
     //{
     //    get
@@ -131,7 +130,7 @@ internal class TestResult
         return CleanupEndTime;
     }
 
-    public TimeSpan TestRunTotalDuration()
+    public TimeSpan TestRunDuration()
     {
         return EndTime() - StartTime();
     }

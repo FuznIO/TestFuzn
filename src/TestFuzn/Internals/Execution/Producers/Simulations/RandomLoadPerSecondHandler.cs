@@ -30,7 +30,7 @@ internal class RandomLoadPerSecondHandler : ILoadHandler
         var end = DateTime.UtcNow.Add(_configuration.Duration);
 
         while (DateTime.UtcNow < end
-            && _testExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
+            && _testExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
         {
             var currentRate = random.Next(minRate, maxRate);
 

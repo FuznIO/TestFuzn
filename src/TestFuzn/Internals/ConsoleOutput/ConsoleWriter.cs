@@ -56,7 +56,7 @@ internal class ConsoleWriter
                 Cells =
                 {
                     new AdvancedTableCell($"", 4),
-                    new AdvancedTableCell($"{scenarioResult.TestRunTotalDuration().ToTestFuznFormattedDuration()}", 1)
+                    new AdvancedTableCell($"{scenarioResult.TestRunDuration().ToTestFuznFormattedDuration()}", 1)
                 }
             });
             table.Rows.Add(new AdvancedTableRow
@@ -203,17 +203,17 @@ internal class ConsoleWriter
                 loadtestResults.TryAdd(scenario, _testExecutionState.LoadCollectors[scenario.Name].GetCurrentResult());
             }
             
-            _testFramework.WriteSummary(loadtestResults.First().Value.StartTime(), _testExecutionState.TestRunState.TestRunDuration(), loadtestResults);
+            _testFramework.WriteSummary(loadtestResults.First().Value.StartTime(), _testExecutionState.TestRunDuration(), loadtestResults);
             return;
         }
 
-        var elapsed = _testExecutionState.TestRunState.TestRunDuration().ToString(@"hh\:mm\:ss\:ff");
+        var elapsed = _testExecutionState.TestRunDuration().ToString(@"hh\:mm\:ss\:ff");
 
         _testFramework.WriteMarkup($"[bold]Total elapsed Time:[/] [yellow]{elapsed}[/]");
-        if (_testExecutionState.IsConsumingCompleted || _testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+        if (_testExecutionState.IsConsumingCompleted || _testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
         {
-            if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
-                _testFramework.WriteMarkup($"[red]Status: Stopped, reason: {_testExecutionState.TestRunState.ExecutionStoppedReason.Message}[/]\r\n");
+            if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
+                _testFramework.WriteMarkup($"[red]Status: Stopped, reason: {_testExecutionState.ExecutionStoppedReason.Message}[/]\r\n");
             else
                 _testFramework.WriteMarkup("[green]Status: Completed successfully.[/]\r\n");
         }
