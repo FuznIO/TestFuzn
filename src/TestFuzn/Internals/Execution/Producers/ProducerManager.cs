@@ -25,8 +25,7 @@ internal class ProducerManager
 
     private async Task Produce(Scenario scenario)
     {
-        var standardCollector = _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name];
-        var loadCollector = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
+        var loadCollector = _testExecutionState.LoadCollectors[scenario.Name];
         var hasWarmupPhase = false;
         var measurementPhaseStarted = false;
 
@@ -64,7 +63,7 @@ internal class ProducerManager
             {
                 measurementPhaseStarted = true;
                 var timestamp = DateTime.UtcNow;
-                standardCollector.MarkPhaseAsStarted(StandardTestPhase.Execute, timestamp);
+                _testExecutionState.TestResult.MarkPhaseAsStarted(StandardTestPhase.Execute, timestamp);
                 loadCollector.MarkPhaseAsStarted(LoadTestPhase.Measurement, timestamp);
             }
 

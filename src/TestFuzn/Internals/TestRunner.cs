@@ -53,7 +53,7 @@ internal class TestRunner
             await initManager.Run();
             await executionManager.Run();
             await cleanupManager.Run();
-            standardResultManager.AddNonSkippedTestResults(testExecutionState);
+            standardResultManager.AddNonSkippedTestResults(testExecutionState.TestResult);
             await reportManager.WriteLoadReports(testExecutionState);
             await consoleManager.Complete();
 

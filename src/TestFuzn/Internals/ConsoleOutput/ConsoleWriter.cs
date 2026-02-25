@@ -33,7 +33,7 @@ internal class ConsoleWriter
     public void WriteSummaryStandard()
     {
         var scenario = _testExecutionState.Scenarios.Single();
-        var scenarioResult = _testExecutionState.ScenarioResultState.StandardCollectors.First().Value;
+        var scenarioResult = _testExecutionState.TestResult;
         
         if (scenarioResult.IterationResults.Count > 0)
         {
@@ -200,7 +200,7 @@ internal class ConsoleWriter
 
             foreach (var scenario in _testExecutionState.Scenarios)
             {
-                loadtestResults.TryAdd(scenario, _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult());
+                loadtestResults.TryAdd(scenario, _testExecutionState.LoadCollectors[scenario.Name].GetCurrentResult());
             }
             
             _testFramework.WriteSummary(loadtestResults.First().Value.StartTime(), _testExecutionState.TestRunState.TestRunDuration(), loadtestResults);
@@ -220,7 +220,7 @@ internal class ConsoleWriter
 
         foreach (var scenario in _testExecutionState.Scenarios)
         {
-            var loadResult = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult();
+            var loadResult = _testExecutionState.LoadCollectors[scenario.Name].GetCurrentResult();
 
             var table = new AdvancedTable
             {

@@ -1,9 +1,10 @@
-﻿using Fuzn.TestFuzn.Internals.InputData;
-using Fuzn.TestFuzn.Internals.State;
-using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
-using Fuzn.TestFuzn.Internals.Execution;
-using Fuzn.TestFuzn.Contracts;
+﻿using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
+using Fuzn.TestFuzn.Internals.InputData;
+using Fuzn.TestFuzn.Internals.State;
+using HdrHistogram;
 
 namespace Fuzn.TestFuzn.Internals.Init;
 
@@ -24,11 +25,13 @@ internal class InitManager
 
     public async Task Run()
     {
+        var startedTimestamp = DateTime.UtcNow;
+
+        _testExecutionState.TestResult.MarkPhaseAsStarted(StandardTestPhase.Init, startedTimestamp);
+
         foreach (var scenario in _testExecutionState.Scenarios)
-        {
-            var timestamp = DateTime.UtcNow;
-            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Init, timestamp);
-            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init, timestamp);
+        {       
+            _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init, startedTimestamp);
         }
 
         await ExecuteBeforeTestMethod();
@@ -44,12 +47,12 @@ internal class InitManager
 
         await SetupSimulations();
 
+        var timestamp = DateTime.UtcNow;
+
         foreach (var scenario in _testExecutionState.Scenarios)
-        {
-            var timestamp = DateTime.UtcNow;
-            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Init, timestamp);
-            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init, timestamp);
-        }
+            _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init, timestamp);
+
+        _testExecutionState.TestResult.MarkPhaseAsCompleted(StandardTestPhase.Init, timestamp);
     }
 
     private async Task ExecuteBeforeTestMethod()

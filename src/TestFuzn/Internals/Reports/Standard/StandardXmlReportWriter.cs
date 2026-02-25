@@ -113,18 +113,17 @@ internal class StandardXmlReportWriter : IStandardReport
             writer.WriteEndElement();
         }
 
-        writer.WriteElementString("StartTime", testResult.StartTime.ToString("o"));
-        writer.WriteElementString("EndTime", testResult.EndTime.ToString("o"));
+        writer.WriteElementString("StartTime", testResult.StartTime().ToString("o"));
+        writer.WriteElementString("EndTime", testResult.EndTime().ToString("o"));
         writer.WriteElementString("Status", testResult.Status.ToString());
         writer.WriteElementString("Duration", testResult.Duration.ToString(@"hh\:mm\:ss\.fff"));
 
-        if (testResult.ScenarioResult != null)
-            WriteScenario(writer, testResult.ScenarioResult);
+        WriteScenario(writer, testResult);
 
         writer.WriteEndElement();
     }
 
-    private void WriteScenario(XmlWriter writer, ScenarioStandardResult scenarioResult)
+    private void WriteScenario(XmlWriter writer, TestResult scenarioResult)
     {
         writer.WriteStartElement("Scenario");
 

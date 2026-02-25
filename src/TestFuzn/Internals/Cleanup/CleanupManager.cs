@@ -19,10 +19,11 @@ internal class CleanupManager
     {
         var timestampStarted = DateTime.UtcNow;
 
+        _testExecutionState.TestResult.MarkPhaseAsStarted(StandardTestPhase.Cleanup, timestampStarted);
+
         foreach (var scenario in _testExecutionState.Scenarios)
         {
-            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Cleanup, timestampStarted);
-            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Cleanup, timestampStarted);
+            _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Cleanup, timestampStarted);
         }
 
         var cleanupPerScenarioTasks = new List<Task>();
@@ -40,9 +41,10 @@ internal class CleanupManager
         var timestampCompleted = DateTime.UtcNow;
         foreach (var scenario in _testExecutionState.Scenarios)
         {
-            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Cleanup, timestampCompleted);
-            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Cleanup, timestampCompleted);
+            _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Cleanup, timestampCompleted);
         }
+
+        _testExecutionState.TestResult.MarkPhaseAsCompleted(StandardTestPhase.Cleanup, timestampCompleted);
     }
 
     private async Task ExecuteCleanupScenario(ITestFrameworkAdapter testFramework, Scenario scenario)

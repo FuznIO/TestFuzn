@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.Frozen;
 using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Internals.Execution;
@@ -13,11 +14,18 @@ internal class TestExecutionState
     public TestType TestType { get; set; }
     public TestRunState TestRunState { get; } = new();
     public ScenarioExecutionState ExecutionState { get; } = new();
-    public ScenarioResultState ScenarioResultState { get; } = new();
+    public TestResult TestResult { get; set; }
+    public Dictionary<string, ScenarioLoadCollector> LoadCollectors = new();
     public bool IsConsumingCompleted { get; private set; }
 
     public TestExecutionState(ITest test, params Scenario[] scenarios)
     {
+        if (test == null)
+            throw new ArgumentNullException(nameof(test));
+        if (scenarios == null || scenarios.Length == 0)
+            throw new ArgumentException("At least one scenario must be provided.", nameof(scenarios));
+
+        TestResult = new TestResult(test.TestInfo, scenarios.First());
         TestRunState.StartTime = DateTime.UtcNow;
         TestRunState.ExecutionStatus = ExecutionStatus.Running;
         TestClassInstance = test;
@@ -31,8 +39,7 @@ internal class TestExecutionState
 
             ExecutionState.MessageCountPerScenario[scenario.Name] = 0;
 
-            ScenarioResultState.LoadCollectors.Add(scenario.Name, new ScenarioLoadCollector(scenario));
-            ScenarioResultState.StandardCollectors.Add(scenario.Name, new ScenarioStandardResult(scenario));
+            LoadCollectors.Add(scenario.Name, new ScenarioLoadCollector(scenario));
         }
     }
 
@@ -108,7 +115,7 @@ internal class TestExecutionState
 
         foreach (var scenario in Scenarios)
         {
-            ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Measurement, timestamp);
+            LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Measurement, timestamp);
         }
     }
 }

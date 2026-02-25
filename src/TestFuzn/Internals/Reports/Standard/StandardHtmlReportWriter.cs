@@ -284,9 +284,9 @@ internal class StandardHtmlReportWriter : IStandardReport
 
             b.AppendLine($"<tr>");
             b.AppendLine(@$"<td style=""padding-left:30px"">{symbol} {E(testResult.Value.Name)}");
-            var sr = testResult.Value.ScenarioResult;
-            if (sr != null)
-                WriteScenarioDetails(b, sr);
+            
+            WriteScenarioDetails(b, testResult.Value);
+
             b.AppendLine("</td>");
             b.AppendLine($"<td>{statusText}</td>");
             b.AppendLine($"<td>{testResult.Value.Duration.ToTestFuznReadableString()}</td>");
@@ -301,7 +301,7 @@ internal class StandardHtmlReportWriter : IStandardReport
         }
     }
 
-    private void WriteScenarioDetails(StringBuilder b, ScenarioStandardResult sr)
+    private void WriteScenarioDetails(StringBuilder b, TestResult sr)
     {
         if (sr.Status != TestStatus.Skipped
             && sr.IterationResults.Count > 0)
@@ -318,7 +318,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             b.AppendLine("</details>");
     }
 
-    private void WriteStepDetails(StringBuilder b, ScenarioStandardResult sr)
+    private void WriteStepDetails(StringBuilder b, TestResult sr)
     {
         b.AppendLine(@"<table style=""margin:30px;0;30px;0;"">");
 

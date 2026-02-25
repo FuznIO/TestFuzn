@@ -80,12 +80,12 @@ internal class ExecuteScenarioMessageHandler
             if (currentInputData != null)
                 iterationResult.InputData = currentInputData.ToString();
 
-            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].IterationResults.Add(iterationResult);
+            _testExecutionState.TestResult.IterationResults.Add(iterationResult);
             await CleanupContext(iterationState);
         }
         else if (_testExecutionState.TestType == TestType.Load)
         {
-            var scenarioLoadCollector = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
+            var scenarioLoadCollector = _testExecutionState.LoadCollectors[scenario.Name];
 
             if (message.IsWarmup)
             {
@@ -111,6 +111,7 @@ internal class ExecuteScenarioMessageHandler
                 {
                     _testExecutionState.TestRunState.ExecutionStatus = ExecutionStatus.Stopped;
                     _testExecutionState.TestRunState.ExecutionStoppedReason = ex;
+                    _testExecutionState.TestResult.Status = TestStatus.Failed;
                     _testExecutionState.TestRunState.FirstException = ex;
                     scenarioLoadCollector.SetAssertWhileRunningException(ex);
                     scenarioLoadCollector.SetStatus(TestStatus.Failed);

@@ -60,7 +60,7 @@ internal class ReportManager
 
         foreach (var scenario in testExecutionState.Scenarios)
         {
-            var scenarioResult = testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
+            var scenarioResult = testExecutionState.LoadCollectors[scenario.Name].GetCurrentResult(true);
             data.ScenarioResults.Add(scenarioResult);
         }
 

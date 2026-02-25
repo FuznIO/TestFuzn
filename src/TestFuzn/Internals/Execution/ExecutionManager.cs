@@ -48,7 +48,7 @@ internal class ExecutionManager
 
         foreach (var scenario in _testExecutionState.Scenarios)
         {
-            var scenarioCollector = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
+            var scenarioCollector = _testExecutionState.LoadCollectors[scenario.Name];
             var scenarioResult = scenarioCollector.GetCurrentResult();
             if (scenario.AssertWhenDoneAction != null)
             {
@@ -60,6 +60,7 @@ internal class ExecutionManager
                 catch (Exception e)
                 {
                     _testExecutionState.TestRunState.FirstException = e;
+                    _testExecutionState.TestResult.Status = TestStatus.Failed;
                     scenarioCollector.SetAssertWhenDoneException(e);
                     scenarioCollector.SetStatus(TestStatus.Failed);
                 }
