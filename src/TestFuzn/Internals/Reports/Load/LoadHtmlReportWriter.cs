@@ -17,7 +17,7 @@ internal class LoadHtmlReportWriter : ILoadReport
     {
         try
         {
-            var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Group.Name}-{loadReportData.Test.Name}");
+            var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Test.Group.Name}-{loadReportData.Test.Name}");
             var filePath = Path.Combine(loadReportData.TestsOutputDirectory, $"LoadTestReport-{reportName}.html");
 
             var htmlContent = GenerateHtmlReport(loadReportData);
@@ -74,15 +74,15 @@ internal class LoadHtmlReportWriter : ILoadReport
 
         b.AppendLine(@"<div class=""run-info-row"">");
         b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Suite</span><span class=""info-value"">" + E(loadReportData.Suite.Name) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Group</span><span class=""info-value"">" + E(loadReportData.Group.Name) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Group</span><span class=""info-value"">" + E(loadReportData.Test.Group.Name) + "</span></div>");
         b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Test</span><span class=""info-value"">" + E(loadReportData.Test.Name) + "</span></div>");
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""run-info-row"">");
         b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Run ID</span><span class=""info-value"">" + E(loadReportData.TestRunId) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Duration</span><span class=""info-value"">" + E(loadReportData.TestRunDuration.ToTestFuznReadableString()) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Started</span><span class=""info-value"">" + loadReportData.TestRunStartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Completed</span><span class=""info-value"">" + loadReportData.TestRunEndTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Duration</span><span class=""info-value"">" + E(loadReportData.Test.TestRunDuration().ToTestFuznReadableString()) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Started</span><span class=""info-value"">" + loadReportData.Test.StartTime().ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Completed</span><span class=""info-value"">" + loadReportData.Test.EndTime().ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""run-info-row"">");
@@ -290,7 +290,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
     private void WriteSnapshotTimelineChart(LoadReportData loadReportData, StringBuilder b, ScenarioLoadResult scenario, int scenarioIndex)
     {
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
+        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Test.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
 
         if (snapshots == null || snapshots.Count == 0)
             return;
@@ -454,7 +454,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
     private void WriteSnapshotTable(LoadReportData loadReportData, StringBuilder b, ScenarioLoadResult scenario)
     {
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
+        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Test.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
 
         if (snapshots == null || snapshots.Count == 0)
             return;
@@ -668,7 +668,7 @@ internal class LoadHtmlReportWriter : ILoadReport
             b.AppendLine("}");
 
             // RPS and Timeline Charts (if snapshots exist)
-            var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
+            var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Test.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
             if (snapshots != null && snapshots.Count > 0)
             {
                 var labels = string.Join(",", snapshots.Select(s => "'" + s.Created.ToString("HH:mm:ss") + "'"));

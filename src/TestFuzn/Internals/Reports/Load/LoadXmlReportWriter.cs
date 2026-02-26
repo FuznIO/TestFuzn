@@ -2,6 +2,7 @@
 using System.Xml;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Contracts.Results.Standard;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Load;
 
@@ -15,7 +16,7 @@ internal class LoadXmlReportWriter : ILoadReport
     {
         try
         {
-            var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Group.Name}-{loadReportData.Test.Name}");
+            var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Test.Group.Name}-{loadReportData.Test.Name}");
             var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"LoadTestReport-{reportName}.xml");
 
             var stringBuilder = new StringBuilder();
@@ -46,7 +47,7 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteEndElement();
 
                 writer.WriteStartElement("Group");
-                writer.WriteElementString("Name", loadReportData.Group.Name);
+                writer.WriteElementString("Name", loadReportData.Test.Group.Name);
                 writer.WriteEndElement();
 
                 writer.WriteElementString("TestRunId", loadReportData.TestRunId);
@@ -58,7 +59,7 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteStartElement("Scenarios");
                 foreach (var scenarioResult in loadReportData.ScenarioResults)
                 {
-                    WriteScenario(writer, loadReportData.Group.Name, loadReportData.Test.Name, scenarioResult);
+                    WriteScenario(writer, loadReportData.Test.Group.Name, loadReportData.Test.Name, scenarioResult);
                 }
                 writer.WriteEndElement();
 
@@ -68,7 +69,7 @@ internal class LoadXmlReportWriter : ILoadReport
 
             foreach (var scenarioResult in loadReportData.ScenarioResults)
             {
-                InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Group.Name, loadReportData.Test.Name, scenarioResult.ScenarioName);
+                InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Test.Group.Name, loadReportData.Test.Name, scenarioResult.ScenarioName);
             }
 
             await File.WriteAllTextAsync(filePath, stringBuilder.ToString());
@@ -79,7 +80,7 @@ internal class LoadXmlReportWriter : ILoadReport
         }
     }
 
-    private void WriteTest(XmlWriter writer, Contracts.Reports.TestInfo test)
+    private void WriteTest(XmlWriter writer, TestResult test)
     {
         writer.WriteStartElement("Test");
         writer.WriteElementString("Name", test.Name);

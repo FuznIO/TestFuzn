@@ -45,16 +45,7 @@ internal class ReportManager
         data.Suite.Id = GlobalState.Configuration.Suite.Id;
         data.Suite.Metadata = GlobalState.Configuration.Suite.Metadata;
         data.TestRunId = GlobalState.TestRunId;
-        data.TestRunStartTime = testExecutionState.TestResult.StartTime();
-        data.TestRunEndTime = testExecutionState.TestResult.EndTime();
-        data.TestRunDuration = testExecutionState.TestResult.TestRunDuration();
-        data.Group = testInfo.Group;
-        data.Test = new Contracts.Reports.TestInfo();
-        data.Test.Name = testInfo.Name;
-        data.Test.FullName = testInfo.FullName;
-        data.Test.Id = testInfo.Id;
-        data.Test.Metadata = testInfo.Metadata ?? new();
-        data.Test.Tags = testInfo.Tags ?? new();
+        data.Test = testExecutionState.TestResult;
         data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
 
         foreach (var scenario in testExecutionState.Scenarios)
