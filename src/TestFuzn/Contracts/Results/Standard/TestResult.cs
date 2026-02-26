@@ -4,7 +4,7 @@ namespace Fuzn.TestFuzn.Contracts.Results.Standard;
 
 internal class TestResult
 {
-    public string GroupName { get; set; }
+    public GroupInfo Group { get; set; }
     public string Name { get; set; }
     public string FullName { get; set; }
     public string Id { get; set; }
@@ -44,7 +44,7 @@ internal class TestResult
 
     public TestResult(TestInfo testInfo, Scenario scenario)
     {
-        GroupName = testInfo.Group.Name;
+        Group = testInfo.Group;
         Name = testInfo.Name;
         FullName = testInfo.FullName;
         Id = testInfo.Id;

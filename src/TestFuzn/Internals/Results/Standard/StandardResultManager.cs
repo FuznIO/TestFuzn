@@ -34,11 +34,11 @@ internal class StandardResultManager
 
     public void AddTestResults(TestResult testResult)
     {
-        var groupResult = _suiteResult.GroupResults.GetOrAdd(testResult.GroupName, (key) => new GroupResult(testResult.GroupName));
+        var groupResult = _suiteResult.GroupResults.GetOrAdd(testResult.Group.Name, (key) => new GroupResult(testResult.Group.Name));
 
         if (!groupResult.TestResults.TryAdd(testResult.Name, testResult))
         {
-            throw new Exception($"Test name '{testResult.Name}' is duplicated, it already exists in group '{testResult.GroupName}'.");
+            throw new Exception($"Test name '{testResult.Name}' is duplicated, it already exists in group '{testResult.Group.Name}'.");
         }
     }
 }

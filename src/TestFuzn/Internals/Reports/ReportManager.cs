@@ -48,8 +48,7 @@ internal class ReportManager
         data.TestRunStartTime = testExecutionState.TestResult.StartTime();
         data.TestRunEndTime = testExecutionState.TestResult.EndTime();
         data.TestRunDuration = testExecutionState.TestResult.TestRunDuration();
-        data.Group = new Contracts.Reports.GroupInfo();
-        data.Group.Name = testInfo.Group.Name;
+        data.Group = testInfo.Group;
         data.Test = new Contracts.Reports.TestInfo();
         data.Test.Name = testInfo.Name;
         data.Test.FullName = testInfo.FullName;
