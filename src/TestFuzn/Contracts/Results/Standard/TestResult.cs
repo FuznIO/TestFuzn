@@ -4,27 +4,12 @@ namespace Fuzn.TestFuzn.Contracts.Results.Standard;
 
 internal class TestResult
 {
-    public string Group { get; set; }
+    public string GroupName { get; set; }
     public string Name { get; set; }
     public string FullName { get; set; }
     public string Id { get; set; }
     public Dictionary<string, string> Metadata { get; set; }
     public List<string> Tags { get; set; }
-    //public TestStatus Status 
-    //{
-    //    get
-    //    {
-    //        if (ScenarioResult == null)
-    //            return field;
-    //        return ScenarioResult.Status;
-    //    }
-    //    set
-    //    {
-    //        field = value;
-    //    }
-    //}
-    
-    /*********************************/
     public string Description { get; set; }
     public DateTime InitStartTime { get; private set; }
     public DateTime InitEndTime { get; private set; }
@@ -59,7 +44,7 @@ internal class TestResult
 
     public TestResult(TestInfo testInfo, Scenario scenario)
     {
-        Group = testInfo.Group.Name;
+        GroupName = testInfo.Group.Name;
         Name = testInfo.Name;
         FullName = testInfo.FullName;
         Id = testInfo.Id;
@@ -77,11 +62,6 @@ internal class TestResult
             HasInputData = scenario.InputDataInfo.HasInputData;
             TestType = scenario.TestType;
         }
-    }
-
-    internal void AddIterationResult(IterationResult iterationResult)
-    {
-        IterationResults.Add(iterationResult);
     }
 
     internal void MarkPhaseAsStarted(StandardTestPhase standardTestPhase, DateTime timestamp)
