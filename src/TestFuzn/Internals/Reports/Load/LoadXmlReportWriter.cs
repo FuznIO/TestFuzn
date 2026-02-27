@@ -119,7 +119,7 @@ internal class LoadXmlReportWriter : ILoadReport
         writer.WriteElementString("Name", scenarioResult.ScenarioName);
         writer.WriteElementString("Id", scenarioResult.Id);
         writer.WriteElementString("Description", scenarioResult.Description);
-        writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString(@"hh\:mm\:ss\.fff"));
+        writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString());
 
         writer.WriteStartElement("Simulations");
         foreach (var simulation in scenarioResult.Simulations)
@@ -182,7 +182,7 @@ internal class LoadXmlReportWriter : ILoadReport
 
         void Write(Stats stats)
         {
-            writer.WriteElementString("TotalExecutionDuration", stats.TotalExecutionDuration.ToString(@"hh\:mm\:ss\.fff"));
+            writer.WriteElementString("TotalExecutionDuration", stats.TotalExecutionDuration.ToString());
             writer.WriteElementString("RequestCount", stats.RequestCount.ToString());
             writer.WriteElementString("RequestsPerSecond", stats.RequestsPerSecond.ToString());
             writer.WriteElementString("Mean", stats.ResponseTimeMean.ToString());
@@ -206,7 +206,7 @@ internal class LoadXmlReportWriter : ILoadReport
         {
             writer.WriteStartElement("Snapshot");
             writer.WriteElementString("Created", scenarioResult.Created.ToString("o"));
-            writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString(@"hh\:mm\:ss\.fff"));
+            writer.WriteElementString("TotalExecutionDuration", scenarioResult.TotalExecutionDuration.ToString());
             WriteStats(writer, scenarioResult.Ok, scenarioResult.Failed);
             WriteSteps(writer, scenarioResult.Steps.Values.ToList());
             writer.WriteEndElement();

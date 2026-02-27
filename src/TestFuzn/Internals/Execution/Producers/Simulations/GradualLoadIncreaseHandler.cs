@@ -23,7 +23,10 @@ internal class GradualLoadIncreaseHandler : ILoadHandler
         var startRate = _configuration.StartRate;
         var endRate = _configuration.EndRate;
         var duration = _configuration.Duration;
-        var sleepBetweenQueueAdding = duration.Ticks / (endRate - startRate);
+        var rateSteps = endRate - startRate;
+        var sleepBetweenQueueAdding = rateSteps > 0
+            ? duration.Ticks / rateSteps
+            : duration.Ticks;
         var currentRate = startRate;
 
         while (currentRate <= endRate

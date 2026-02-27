@@ -1,5 +1,4 @@
 using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
-using Fuzn.TestFuzn.Internals.Results.Load;
 using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Execution.Producers;
@@ -41,7 +40,7 @@ internal class ProducerManager
                 FixedLoadConfiguration fixedLoad => new FixedLoadHandler(fixedLoad, scenario.Name, _testExecutionState),
                 RandomLoadPerSecondConfiguration randomLoadPerSecond => new RandomLoadPerSecondHandler(randomLoadPerSecond, scenario.Name, _testExecutionState),
                 GradualLoadIncreaseConfiguration gradualLoadIncrease => new GradualLoadIncreaseHandler(gradualLoadIncrease, scenario.Name, _testExecutionState),
-                PauseLoadConfiguration gradualLoadIncrease => new PauseLoadHandler(gradualLoadIncrease),
+                PauseLoadConfiguration pauseLoad => new PauseLoadHandler(pauseLoad, _testExecutionState),
                 _ => throw new NotSupportedException($"Load simulation type {loadSimulation.GetType().Name} is not supported."),
             };
 

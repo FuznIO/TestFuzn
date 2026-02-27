@@ -68,11 +68,11 @@ internal class ScenarioLoadCollector
             _lastUpdated = DateTime.UtcNow;
             _requestCount++;
 
-            var testRunTimeInSeconds = (int) (_lastUpdated - _measurementStartTime).TotalSeconds;
-            if (testRunTimeInSeconds == 0)
+            var testRunTimeInSeconds = (_lastUpdated - _measurementStartTime).TotalSeconds;
+            if (testRunTimeInSeconds < 1)
                 _requestsPerSecond = _requestCount;
             else
-                _requestsPerSecond = _requestCount / testRunTimeInSeconds;
+                _requestsPerSecond = (int) Math.Round(_requestCount / testRunTimeInSeconds);
 
             if (status == TestStatus.Passed)
                 _ok.Record(result.ExecutionDuration, _measurementStartTime, _lastUpdated);

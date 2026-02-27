@@ -4,7 +4,7 @@ internal static class TimespanExtensions
 {
     public static string ToTestFuznResponseTime(this TimeSpan duration)
     {
-        if (duration == TimeSpan.Zero)
+        if (duration <= TimeSpan.Zero)
             return "N/A";
         else if (duration.TotalMilliseconds < 1)
             return "<1 ms";
@@ -13,11 +13,16 @@ internal static class TimespanExtensions
 
     public static string ToTestFuznFormattedDuration(this TimeSpan duration)
     {
+        if (duration < TimeSpan.Zero)
+            return "N/A";
         return $"{duration:hh\\:mm\\:ss\\:ff}";
     }
 
     public static string ToTestFuznReadableString(this TimeSpan duration)
     {
+        if (duration < TimeSpan.Zero)
+            return "N/A";
+
         if (duration == TimeSpan.Zero)
             return "0ms";
 

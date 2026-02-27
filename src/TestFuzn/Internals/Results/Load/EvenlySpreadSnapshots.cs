@@ -14,6 +14,9 @@ internal class EvenlySpreadSnapshots
 
     public EvenlySpreadSnapshots(int maxSnapshots)
     {
+        if (maxSnapshots < 2)
+            maxSnapshots = 2;
+
         _maxSnapshots = maxSnapshots;
         _snapshots = new ScenarioLoadResult[_maxSnapshots - 2];
         _offsets  = new TimeSpan[_snapshots.Length];
@@ -43,7 +46,7 @@ internal class EvenlySpreadSnapshots
             if (totalDuration.Ticks <= 0 || _snapshots.Length == 0)
                 break;
 
-            long offsetTicks = (i + 1) * totalDuration.Ticks / (_snapshots.Length + 1);
+            long offsetTicks = totalDuration.Ticks / (_snapshots.Length + 1) * (i + 1);
 
             // Clamp negative offsets to zero
             if (offsetTicks < 0)
