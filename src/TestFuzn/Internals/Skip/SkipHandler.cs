@@ -5,8 +5,6 @@ namespace Fuzn.TestFuzn;
 
 internal class SkipHandler
 {
-    private readonly StandardResultManager _resultManager = new();
-
     public void ApplySkipEvaluation(TestInfo testInfo, MethodInfo testMethod)
     {
         var (skip, reason) = Evaluate(testInfo, testMethod);
@@ -15,7 +13,7 @@ internal class SkipHandler
 
         if (skip)
         {
-            _resultManager.AddSkippedTestResult(testInfo);
+            TestSession.Current.ResultManager.AddSkippedTestResult(testInfo);
         }
     }   
 
@@ -83,6 +81,7 @@ internal class SkipHandler
 
         return (false, null);
     }
+
     private static (bool Skip, string? Reason) EvaluateTargetEnvironment(TestInfo testInfo)
     {
         var testTargetEnvs = testInfo.TargetEnvironments;

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Fuzn.TestFuzn.Internals;
+using Microsoft.Extensions.Configuration;
 
 namespace Fuzn.TestFuzn;
 
@@ -7,9 +8,6 @@ namespace Fuzn.TestFuzn;
 /// </summary>
 public class ConfigurationManager
 {
-    private static IConfigurationRoot? _configRoot;
-    private static readonly object _locker = new();
-
     /// <summary>
     /// Returns true if the configuration section TestFuzn:{sectionName} exists. Otherwise, false.
     /// </summary>
@@ -36,7 +34,7 @@ public class ConfigurationManager
     /// <param name="sectionName">The name of the configuration section to retrieve.</param>
     /// <returns>An instance of <typeparamref name="T"/> populated with configuration values.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the section does not exist or cannot be bound.</exception>
-    public static T GetRequiredSection<T>(string sectionName) 
+    public static T GetRequiredSection<T>(string sectionName)
         where T : new()
     {
         try
@@ -44,7 +42,7 @@ public class ConfigurationManager
             var section = GetConfigRoot().GetSection("TestFuzn").GetSection(sectionName);
             if (!section.Exists())
             {
-                throw new InvalidOperationException(@$"Failed to load configuration for section '{sectionName}'. 
+                throw new InvalidOperationException(@$"Failed to load configuration for section '{sectionName}'.
                     Ensure that the configuration section exists in appsettings.json.");
             }
 
@@ -54,7 +52,7 @@ public class ConfigurationManager
         }
         catch (Exception ex) when (!(ex is InvalidOperationException))
         {
-           throw new InvalidOperationException(@$"Failed to load configuration for section '{sectionName}'. 
+            throw new InvalidOperationException(@$"Failed to load configuration for section '{sectionName}'.
                 Ensure that the configuration section exists in appsettings.json.", ex);
         }
     }
@@ -103,39 +101,9 @@ public class ConfigurationManager
             throw new InvalidOperationException($"Configuration key 'TestFuzn:Values:{key}' could not be converted to type {typeof(T).Name}.");
         }
     }
+
     private static IConfigurationRoot GetConfigRoot()
     {
-        if (_configRoot != null)
-            return _configRoot;
-
-        lock (_locker)
-        {
-            if (_configRoot != null)
-                return _configRoot;
-
-            var builder = new ConfigurationBuilder()
-                                .SetBasePath(Directory.GetCurrentDirectory())
-                                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
-
-            var executionEnv = GlobalState.ExecutionEnvironment;
-            var targetEnv = GlobalState.TargetEnvironment;
-            var nodeName = GlobalState.NodeName;
-
-            if (!string.IsNullOrEmpty(executionEnv))
-                builder.AddJsonFile($"appsettings.exec-{executionEnv}.json", optional: true, reloadOnChange: false);
-
-            if (!string.IsNullOrEmpty(targetEnv))
-                builder.AddJsonFile($"appsettings.target-{targetEnv}.json", optional: true, reloadOnChange: false);
-
-            if (!string.IsNullOrEmpty(executionEnv) && !string.IsNullOrEmpty(targetEnv))
-                builder.AddJsonFile($"appsettings.exec-{executionEnv}.target-{targetEnv}.json", optional: true, reloadOnChange: false);
-
-            if (!string.IsNullOrEmpty(nodeName))
-                builder.AddJsonFile($"appsettings.{nodeName}.json", optional: true, reloadOnChange: false);
-
-            _configRoot = builder.Build();
-
-            return _configRoot;
-        }
+        return TestSession.Current.ConfigRoot;
     }
 }

@@ -8,7 +8,6 @@ using Fuzn.TestFuzn.Internals.Init;
 using Fuzn.TestFuzn.Internals.InputData;
 using Fuzn.TestFuzn.Internals.Logger;
 using Fuzn.TestFuzn.Internals.Reports;
-using Fuzn.TestFuzn.Internals.Results.Standard;
 using Fuzn.TestFuzn.Internals.State;
 using System.Runtime.ExceptionServices;
 
@@ -44,7 +43,6 @@ internal class TestRunner
         var consumerManager = new ConsumerManager(testExecutionState, executeScenarioMessageHandler);
         var executionManager = new ExecutionManager(_testFramework, testExecutionState, producerManager, consumerManager);
         var cleanupManager = new CleanupManager(_testFramework, testExecutionState);
-        var standardResultManager = new StandardResultManager();
         var reportManager = new ReportManager();
 
         try
@@ -53,7 +51,7 @@ internal class TestRunner
             await initManager.Run();
             await executionManager.Run();
             await cleanupManager.Run();
-            standardResultManager.AddTestResults(testExecutionState.TestResult);
+            TestSession.Current.ResultManager.AddTestResults(testExecutionState.TestResult);
             await reportManager.WriteLoadReports(testExecutionState);
             await consoleManager.Complete();
 

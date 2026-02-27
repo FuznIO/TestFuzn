@@ -5,14 +5,14 @@
 /// </summary>
 internal static class LoggerFactory
 {
-    private static readonly ILoggerFactory _loggerFactory;
-    private static readonly bool _isInitialized;
-
-    static LoggerFactory()
+    /// <summary>
+    /// Creates a logger instance for the given output directory
+    /// </summary>
+    public static ILogger CreateLogger(string testsOutputDirectory, string categoryName = "TestFuzn")
     {
         try
         {
-            var logsPath = GlobalState.TestsOutputDirectory;
+            var logsPath = testsOutputDirectory;
             if (string.IsNullOrEmpty(logsPath))
             {
                 // Fallback to temp directory if output directory is not set
@@ -27,19 +27,18 @@ internal static class LoggerFactory
             Directory.CreateDirectory(logsPath);
             string logFilePath = Path.Combine(logsPath, "TestFuzn_Log.log");
 
-            // Create the logger factory with both console and file providers for redundancy
-            _loggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
+            // Create the logger factory with file provider
+            var loggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
             {
                 builder
                     .AddProvider(new FileLoggerProvider(logFilePath))
                     .SetMinimumLevel(LogLevel.Debug);
             });
-
-            _isInitialized = true;
             
-            // Log successful initialization
-            var logger = _loggerFactory.CreateLogger("LoggerFactory");
+            var logger = loggerFactory.CreateLogger(categoryName);
             logger.LogInformation("Logging system initialized successfully. Log file: {LogFilePath}", logFilePath);
+
+            return logger;
         }
         catch (Exception ex)
         {
@@ -47,29 +46,15 @@ internal static class LoggerFactory
             Console.Error.WriteLine($"Failed to initialize LoggerFactory: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
             
-            _loggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
+            var fallbackFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
             {
                 builder
                     .AddConsole()
                     .SetMinimumLevel(LogLevel.Debug);
             });
+
+            return fallbackFactory.CreateLogger(categoryName);
         }
     }
-
-    /// <summary>
-    /// Creates a typed logger instance
-    /// </summary>
-    public static ILogger<T> CreateLogger<T>() => _loggerFactory.CreateLogger<T>();
-
-    /// <summary>
-    /// Creates a logger instance with the specified name
-    /// </summary>
-    public static ILogger CreateLogger(string categoryName = "TestFuzn") => 
-        _loggerFactory.CreateLogger(categoryName);
-
-    /// <summary>
-    /// Indicates whether the logger factory was properly initialized with file logging
-    /// </summary>
-    public static bool IsFileLoggingInitialized => _isInitialized;
 }
 
