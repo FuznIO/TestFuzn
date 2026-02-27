@@ -75,17 +75,17 @@ internal class ExecuteScenarioMessageHandler
             }
         }
 
-        if (_testExecutionState.TestType == TestType.Standard)
+        if (_testExecutionState.TestResult.TestType == TestType.Standard)
         {
             if (currentInputData != null)
                 iterationResult.InputData = currentInputData.ToString();
 
-            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].IterationResults.Add(iterationResult);
+            _testExecutionState.TestResult.IterationResults.Add(iterationResult);
             await CleanupContext(iterationState);
         }
-        else if (_testExecutionState.TestType == TestType.Load)
+        else if (_testExecutionState.TestResult.TestType == TestType.Load)
         {
-            var scenarioLoadCollector = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
+            var scenarioLoadCollector = _testExecutionState.LoadCollectors[scenario.Name];
 
             if (message.IsWarmup)
             {
@@ -100,7 +100,7 @@ internal class ExecuteScenarioMessageHandler
             await CleanupContext(iterationState);
 
             if (scenario.AssertWhileRunningAction != null
-                && _testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Running)
+                && _testExecutionState.ExecutionStatus == ExecutionStatus.Running)
             {
                 try
                 {
@@ -109,9 +109,10 @@ internal class ExecuteScenarioMessageHandler
                 }
                 catch (Exception ex)
                 {
-                    _testExecutionState.TestRunState.ExecutionStatus = ExecutionStatus.Stopped;
-                    _testExecutionState.TestRunState.ExecutionStoppedReason = ex;
-                    _testExecutionState.TestRunState.FirstException = ex;
+                    _testExecutionState.ExecutionStatus = ExecutionStatus.Stopped;
+                    _testExecutionState.ExecutionStoppedReason = ex;
+                    _testExecutionState.TestResult.Status = TestStatus.Failed;
+                    _testExecutionState.FirstException = ex;
                     scenarioLoadCollector.SetAssertWhileRunningException(ex);
                     scenarioLoadCollector.SetStatus(TestStatus.Failed);
                 }

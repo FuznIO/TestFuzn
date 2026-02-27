@@ -145,7 +145,7 @@ public class InputDataTests :  Test
                  })
                  .AssertInternalState((state) =>
                  {
-                     Assert.AreEqual(TestStatus.Failed, state.TestExecutionState.ScenarioResultState.StandardCollectors.First().Value.Status);
+                     Assert.AreEqual(TestStatus.Failed, state.TestExecutionState.TestResult.Status);
                  })
                  .Run();
         }

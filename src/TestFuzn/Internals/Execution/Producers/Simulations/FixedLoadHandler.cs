@@ -32,7 +32,7 @@ internal class FixedLoadHandler : ILoadHandler
         var currentIntervalIndex = 0;
 
         while (currentIntervalIndex < totalIntervals
-            && _testExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
+            && _testExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
         {
             currentIntervalIndex++;
 

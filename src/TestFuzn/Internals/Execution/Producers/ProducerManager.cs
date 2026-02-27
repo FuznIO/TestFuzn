@@ -1,5 +1,4 @@
 using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
-using Fuzn.TestFuzn.Internals.Results.Load;
 using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Execution.Producers;
@@ -25,14 +24,13 @@ internal class ProducerManager
 
     private async Task Produce(Scenario scenario)
     {
-        var standardCollector = _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name];
-        var loadCollector = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name];
+        var loadCollector = _testExecutionState.LoadCollectors[scenario.Name];
         var hasWarmupPhase = false;
         var measurementPhaseStarted = false;
 
         foreach (var loadSimulation in scenario.SimulationsInternal)
         {
-            if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+            if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
                 break;
 
             ILoadHandler handler = loadSimulation switch
@@ -42,14 +40,14 @@ internal class ProducerManager
                 FixedLoadConfiguration fixedLoad => new FixedLoadHandler(fixedLoad, scenario.Name, _testExecutionState),
                 RandomLoadPerSecondConfiguration randomLoadPerSecond => new RandomLoadPerSecondHandler(randomLoadPerSecond, scenario.Name, _testExecutionState),
                 GradualLoadIncreaseConfiguration gradualLoadIncrease => new GradualLoadIncreaseHandler(gradualLoadIncrease, scenario.Name, _testExecutionState),
-                PauseLoadConfiguration gradualLoadIncrease => new PauseLoadHandler(gradualLoadIncrease),
+                PauseLoadConfiguration pauseLoad => new PauseLoadHandler(pauseLoad, _testExecutionState),
                 _ => throw new NotSupportedException($"Load simulation type {loadSimulation.GetType().Name} is not supported."),
             };
 
             if (loadSimulation.IsWarmup && !hasWarmupPhase)
             {
                 hasWarmupPhase = true;
-                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Warmup);
+                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Warmup, DateTime.UtcNow);
             }
 
             if (hasWarmupPhase && !loadSimulation.IsWarmup)
@@ -57,14 +55,15 @@ internal class ProducerManager
                 while (_testExecutionState.IsExecutionQueueEmpty(scenario.Name) == false)
                     await Task.Delay(TimeSpan.FromMilliseconds(100));
 
-                loadCollector.MarkPhaseAsCompleted(LoadTestPhase.Warmup);
+                loadCollector.MarkPhaseAsCompleted(LoadTestPhase.Warmup, DateTime.UtcNow);
             }
 
             if (!loadSimulation.IsWarmup && !measurementPhaseStarted)
             {
                 measurementPhaseStarted = true;
-                standardCollector.MarkPhaseAsStarted(StandardTestPhase.Execute);
-                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Measurement);
+                var timestamp = DateTime.UtcNow;
+                _testExecutionState.TestResult.MarkPhaseAsStarted(StandardTestPhase.Execute, timestamp);
+                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Measurement, timestamp);
             }
 
             await handler.Execute();

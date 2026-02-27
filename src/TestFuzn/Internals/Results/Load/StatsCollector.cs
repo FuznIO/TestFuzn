@@ -20,11 +20,11 @@ internal class StatsCollector
         _totalExecutionDuration = TimeSpan.FromTicks(_totalExecutionDuration.Ticks + executionDuration.Ticks);
         _count++;
 
-        var testRunTimeInSeconds = (int) (endTime - startTime).TotalSeconds;
-        if (testRunTimeInSeconds == 0)
+        var testRunTimeInSeconds = (endTime - startTime).TotalSeconds;
+        if (testRunTimeInSeconds < 1)
             _requestsPerSecond = _count;
         else
-            _requestsPerSecond = _count / testRunTimeInSeconds;
+            _requestsPerSecond = (int) Math.Round(_count / testRunTimeInSeconds);
 
         _histogram.RecordValue(executionDuration.Ticks);
         if (_min == TimeSpan.Zero || executionDuration < _min)

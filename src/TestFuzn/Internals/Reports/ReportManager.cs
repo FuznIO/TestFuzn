@@ -29,7 +29,7 @@ internal class ReportManager
 
     public async Task WriteLoadReports(TestExecutionState testExecutionState)
     {
-        if (testExecutionState.TestType != TestType.Load)
+        if (testExecutionState.TestResult.TestType != TestType.Load)
             return;
 
         var loadReports = GlobalState.Configuration.LoadReports;
@@ -45,22 +45,12 @@ internal class ReportManager
         data.Suite.Id = GlobalState.Configuration.Suite.Id;
         data.Suite.Metadata = GlobalState.Configuration.Suite.Metadata;
         data.TestRunId = GlobalState.TestRunId;
-        data.TestRunStartTime = testExecutionState.TestRunState.StartTime;
-        data.TestRunEndTime = testExecutionState.TestRunState.EndTime;
-        data.TestRunDuration = data.TestRunEndTime - data.TestRunStartTime;
-        data.Group = new Contracts.Reports.GroupInfo();
-        data.Group.Name = testInfo.Group.Name;
-        data.Test = new Contracts.Reports.TestInfo();
-        data.Test.Name = testInfo.Name;
-        data.Test.FullName = testInfo.FullName;
-        data.Test.Id = testInfo.Id;
-        data.Test.Metadata = testInfo.Metadata ?? new();
-        data.Test.Tags = testInfo.Tags ?? new();
+        data.Test = testExecutionState.TestResult;
         data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
 
         foreach (var scenario in testExecutionState.Scenarios)
         {
-            var scenarioResult = testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult(true);
+            var scenarioResult = testExecutionState.LoadCollectors[scenario.Name].GetCurrentResult(true);
             data.ScenarioResults.Add(scenarioResult);
         }
 

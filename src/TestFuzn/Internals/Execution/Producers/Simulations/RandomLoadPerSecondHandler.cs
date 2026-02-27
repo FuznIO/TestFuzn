@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
@@ -30,9 +29,9 @@ internal class RandomLoadPerSecondHandler : ILoadHandler
         var end = DateTime.UtcNow.Add(_configuration.Duration);
 
         while (DateTime.UtcNow < end
-            && _testExecutionState.TestRunState.ExecutionStatus != ExecutionStatus.Stopped)
+            && _testExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
         {
-            var currentRate = random.Next(minRate, maxRate);
+            var currentRate = random.Next(minRate, maxRate + 1);
 
             stopwatch.Reset();
             stopwatch.Start();

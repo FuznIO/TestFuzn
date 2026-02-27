@@ -68,11 +68,11 @@ internal class ScenarioLoadCollector
             _lastUpdated = DateTime.UtcNow;
             _requestCount++;
 
-            var testRunTimeInSeconds = (int) (_lastUpdated - _measurementStartTime).TotalSeconds;
-            if (testRunTimeInSeconds == 0)
+            var testRunTimeInSeconds = (_lastUpdated - _measurementStartTime).TotalSeconds;
+            if (testRunTimeInSeconds < 1)
                 _requestsPerSecond = _requestCount;
             else
-                _requestsPerSecond = _requestCount / testRunTimeInSeconds;
+                _requestsPerSecond = (int) Math.Round(_requestCount / testRunTimeInSeconds);
 
             if (status == TestStatus.Passed)
                 _ok.Record(result.ExecutionDuration, _measurementStartTime, _lastUpdated);
@@ -90,23 +90,23 @@ internal class ScenarioLoadCollector
         }
     }
 
-    internal void MarkPhaseAsStarted(LoadTestPhase testPhase)
+    internal void MarkPhaseAsStarted(LoadTestPhase testPhase, DateTime timestamp)
     {
         lock (_lock)
         {
             switch (testPhase)
             {
                 case LoadTestPhase.Init:
-                    _initStartTime = DateTime.UtcNow;
+                    _initStartTime = timestamp;
                     break;
                 case LoadTestPhase.Warmup:
-                    _warmupStartTime = DateTime.UtcNow;
+                    _warmupStartTime = timestamp;
                     break;
                 case LoadTestPhase.Measurement:
-                    _measurementStartTime = DateTime.UtcNow;
+                    _measurementStartTime = timestamp;
                     break;
                 case LoadTestPhase.Cleanup:
-                    _cleanupStartTime = DateTime.UtcNow;
+                    _cleanupStartTime = timestamp;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(testPhase), testPhase, null);
@@ -114,7 +114,7 @@ internal class ScenarioLoadCollector
         }
     }
 
-    internal void MarkPhaseAsCompleted(LoadTestPhase testPhase)
+    internal void MarkPhaseAsCompleted(LoadTestPhase testPhase, DateTime timestamp)
     {
         lock (_lock)
         {
@@ -122,12 +122,12 @@ internal class ScenarioLoadCollector
             {
                 case LoadTestPhase.Init:
                 {
-                    _initEndTime = DateTime.UtcNow;
+                    _initEndTime = timestamp;
                     break;
                 }
                 case LoadTestPhase.Warmup:
                 {
-                    _warmupEndTime = DateTime.UtcNow;
+                    _warmupEndTime = timestamp;
                     break;
                 }
                 case LoadTestPhase.Measurement:
@@ -139,7 +139,7 @@ internal class ScenarioLoadCollector
                 }
                 case LoadTestPhase.Cleanup:
                 {
-                    _cleanupEndTime = DateTime.UtcNow;
+                    _cleanupEndTime = timestamp;
                     break;
                 }
                 default:

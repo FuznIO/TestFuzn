@@ -34,6 +34,6 @@ internal class StandaloneRunnerCore
             return;
         }
 
-        await new TestRunner().RunTest(args, testFrameworkInstanceCreator(), testInfo);
+        await new StandaloneTestRunner().RunTest(args, testFrameworkInstanceCreator(), testInfo);
     }
 }

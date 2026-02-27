@@ -1,9 +1,10 @@
-﻿using Fuzn.TestFuzn.Internals.InputData;
-using Fuzn.TestFuzn.Internals.State;
-using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
-using Fuzn.TestFuzn.Internals.Execution;
-using Fuzn.TestFuzn.Contracts;
+﻿using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
+using Fuzn.TestFuzn.Internals.InputData;
+using Fuzn.TestFuzn.Internals.State;
+using HdrHistogram;
 
 namespace Fuzn.TestFuzn.Internals.Init;
 
@@ -24,18 +25,19 @@ internal class InitManager
 
     public async Task Run()
     {
+        var startedTimestamp = DateTime.UtcNow;
+
         foreach (var scenario in _testExecutionState.Scenarios)
-        {
-            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsStarted(StandardTestPhase.Init);
-            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init);
+        {       
+            _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init, startedTimestamp);
         }
 
-        await ExecuteInitTestMethod();
+        await ExecuteBeforeTestMethod();
         
         var initPerScenarioTasks = new List<Task>();
 
         foreach (var scenario in _testExecutionState.Scenarios)
-            initPerScenarioTasks.Add(ExecuteInitMethodsOnScenario(scenario));
+            initPerScenarioTasks.Add(ExecuteBeforeScenarioAndInputData(scenario));
         
         await Task.WhenAll(initPerScenarioTasks);
 
@@ -43,23 +45,24 @@ internal class InitManager
 
         await SetupSimulations();
 
+        var timestamp = DateTime.UtcNow;
+
         foreach (var scenario in _testExecutionState.Scenarios)
-        {
-            _testExecutionState.ScenarioResultState.StandardCollectors[scenario.Name].MarkPhaseAsCompleted(StandardTestPhase.Init);
-            _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init);
-        }
+            _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Init, timestamp);
+
+        _testExecutionState.TestResult.MarkPhaseAsCompleted(StandardTestPhase.Init, timestamp);
     }
 
-    private async Task ExecuteInitTestMethod()
+    private async Task ExecuteBeforeTestMethod()
     {
-        if (_testExecutionState.TestClassInstance is IBeforeTest init)
+        if (_testExecutionState.TestClassInstance is IBeforeTest testClassInstance)
         {
             var context = ContextFactory.CreateContext(_testFramework, "BeforeTest");
-            await init.BeforeTest(context);
+            await testClassInstance.BeforeTest(context);
         }
     }
 
-    private async Task ExecuteInitMethodsOnScenario(Scenario scenario)
+    private async Task ExecuteBeforeScenarioAndInputData(Scenario scenario)
     {
         if (scenario.BeforeScenario != null)
         {
@@ -72,7 +75,7 @@ internal class InitManager
 
         if (scenario.InputDataInfo.SourceType == InputDataSourceType.Action)
         {
-            var context = ContextFactory.CreateScenarioContext(_testFramework, "Inputs");
+            var context = ContextFactory.CreateScenarioContext(_testFramework, "InputData");
             scenario.InputDataInfo.InputDataList = await scenario.InputDataInfo.InputDataAction(context);
         }
     }
@@ -81,7 +84,7 @@ internal class InitManager
     {
         foreach (var scenario in _testExecutionState.Scenarios)
         {
-            if (_testExecutionState.TestType == TestType.Standard)
+            if (_testExecutionState.TestResult.TestType == TestType.Standard)
             {
                 var totalExecutions = 1;
                 if (scenario.InputDataInfo.HasInputData)
@@ -89,7 +92,7 @@ internal class InitManager
 
                 scenario.SimulationsInternal.Add(new FixedConcurrentLoadConfiguration(1, totalExecutions));
             }
-            else if (_testExecutionState.TestType == TestType.Load)
+            else if (_testExecutionState.TestResult.TestType == TestType.Load)
             {
                 if (scenario.WarmupAction != null)
                 {

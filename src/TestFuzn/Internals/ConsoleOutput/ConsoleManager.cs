@@ -33,7 +33,7 @@ internal class ConsoleManager(
         {
             loadTestMetrics.TryAdd(scenario.Name, new LiveMetrics
             {
-                ScenarioLoadResultSnapshot = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult(),
+                ScenarioLoadResultSnapshot = _testExecutionState.LoadCollectors[scenario.Name].GetCurrentResult(),
                 Status = "Running"
             });
         }
@@ -62,10 +62,10 @@ internal class ConsoleManager(
             if (_testExecutionState.IsScenarioExecutionComplete(scenario.Name) && loadTestMetrics[scenario.Name].ConsoleCompleted)
                 continue;
 
-            var updatedSnapshot = _testExecutionState.ScenarioResultState.LoadCollectors[scenario.Name].GetCurrentResult();
+            var updatedSnapshot = _testExecutionState.LoadCollectors[scenario.Name].GetCurrentResult();
             if (_testExecutionState.IsScenarioExecutionComplete(scenario.Name) || 
-                _testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Completed
-                || _testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+                _testExecutionState.ExecutionStatus == ExecutionStatus.Completed
+                || _testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
             {
                 loadTestMetrics[scenario.Name].Status = updatedSnapshot.Status.ToString();
                 loadTestMetrics[scenario.Name].ConsoleCompleted = true;

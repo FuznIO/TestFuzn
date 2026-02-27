@@ -4,7 +4,7 @@ using Spectre.Console;
 
 namespace Fuzn.TestFuzn.StandaloneRunner;
 
-internal class TestRunner
+internal class StandaloneTestRunner
 {
     internal async Task RunTest(string[] args, ITestFrameworkAdapter testFramework, 
         DiscoveredTest testInfo)

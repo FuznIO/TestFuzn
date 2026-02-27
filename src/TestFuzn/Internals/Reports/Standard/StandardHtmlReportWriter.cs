@@ -1,11 +1,14 @@
 ﻿using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
+using System.Net;
 using System.Text;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Standard;
 
 internal class StandardHtmlReportWriter : IStandardReport
 {
+    private static string E(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
+
     public async Task WriteReport(StandardReportData reportData)
     {
         try
@@ -45,7 +48,7 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine("<body>");
         b.AppendLine(@"<div class=""page-container"">");
 
-        b.AppendLine($"<h1>{reportData.Suite.Name} - Test Report</h1>");
+        b.AppendLine($"<h1>{E(reportData.Suite.Name)} - Test Report</h1>");
 
         WriteRunInfo(reportData, b);
 
@@ -192,21 +195,21 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine(@"<div class=""run-info"">");
         
         b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Run ID</span><span class=""info-value"">" + reportData.TestRunId + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Duration</span><span class=""info-value"">" + reportData.TestRunDuration.ToTestFuznReadableString() + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Run ID</span><span class=""info-value"">" + E(reportData.TestRunId) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Duration</span><span class=""info-value"">" + E(reportData.TestRunDuration.ToTestFuznReadableString()) + "</span></div>");
         b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Started</span><span class=""info-value"">" + reportData.TestRunStartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
         b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Completed</span><span class=""info-value"">" + reportData.TestRunEndTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.ExecutionEnvironment) ? "-" : GlobalState.ExecutionEnvironment) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.TargetEnvironment) ? "-" : GlobalState.TargetEnvironment) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.ExecutionEnvironment) ? "-" : E(GlobalState.ExecutionEnvironment)) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.TargetEnvironment) ? "-" : E(GlobalState.TargetEnvironment)) + "</span></div>");
 
         if (reportData.Suite.Metadata != null && reportData.Suite.Metadata.Count > 0)
         {
             foreach (var metadata in reportData.Suite.Metadata)
             {
-                b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{metadata.Key}</span><span class=""info-value"">{metadata.Value}</span></div>");
+                b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{E(metadata.Key)}</span><span class=""info-value"">{E(metadata.Value)}</span></div>");
             }
         }
         b.AppendLine("</div>");
@@ -245,7 +248,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             }
 
             b.AppendLine(@$"<tr class=""group"">");
-            b.AppendLine($"<td>{symbol} {groupResult.Value.Name}</td>");
+            b.AppendLine($"<td>{symbol} {E(groupResult.Value.Name)}</td>");
             b.AppendLine($"<td>{statusText}</td>");
             b.AppendLine($"<td></td>");
             b.AppendLine($"<td></td>");
@@ -280,25 +283,25 @@ internal class StandardHtmlReportWriter : IStandardReport
             }
 
             b.AppendLine($"<tr>");
-            b.AppendLine(@$"<td style=""padding-left:30px"">{symbol} {testResult.Value.Name}");
-            var sr = testResult.Value.ScenarioResult;
-            if (sr != null)
-                WriteScenarioDetails(b, sr);
+            b.AppendLine(@$"<td style=""padding-left:30px"">{symbol} {E(testResult.Value.Name)}");
+            
+            WriteScenarioDetails(b, testResult.Value);
+
             b.AppendLine("</td>");
             b.AppendLine($"<td>{statusText}</td>");
-            b.AppendLine($"<td>{testResult.Value.Duration.ToTestFuznReadableString()}</td>");
+            b.AppendLine($"<td>{testResult.Value.TestRunDuration().ToTestFuznReadableString()}</td>");
             b.AppendLine("<td>");
             if (testResult.Value.Tags != null && testResult.Value.Tags.Count > 0)
             {
                 foreach (var tag in testResult.Value.Tags)
-                    b.AppendLine($"{tag}<br/>");
+                    b.AppendLine($"{E(tag)}<br/>");
             }
             b.AppendLine("</td>");
             b.AppendLine($"</tr>");
         }
     }
 
-    private void WriteScenarioDetails(StringBuilder b, ScenarioStandardResult sr)
+    private void WriteScenarioDetails(StringBuilder b, TestResult sr)
     {
         if (sr.Status != TestStatus.Skipped
             && sr.IterationResults.Count > 0)
@@ -315,7 +318,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             b.AppendLine("</details>");
     }
 
-    private void WriteStepDetails(StringBuilder b, ScenarioStandardResult sr)
+    private void WriteStepDetails(StringBuilder b, TestResult sr)
     {
         b.AppendLine(@"<table style=""margin:30px;0;30px;0;"">");
 
@@ -341,8 +344,8 @@ internal class StandardHtmlReportWriter : IStandardReport
 
                 b.AppendLine($"<tr>");
                 b.AppendLine($"<th>{symbol} Input Data: ");
-                b.AppendLine($"{(string.IsNullOrEmpty(iteration.InputData) ? " " : iteration.InputData)}");
-                b.AppendLine($"<br/>{hiddenSymbol} CorrelationId: {iteration.CorrelationId}");
+                b.AppendLine($"{(string.IsNullOrEmpty(iteration.InputData) ? " " : E(iteration.InputData))}");
+                b.AppendLine($"<br/>{hiddenSymbol} CorrelationId: {E(iteration.CorrelationId)}");
                 b.AppendLine($"</th>");
                 b.AppendLine($"<th>{statusText}</th>");
                 b.AppendLine($"<th></th>");
@@ -351,7 +354,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             else
             {
                 b.AppendLine($"<tr>");
-                b.AppendLine($"<th>CorrelationId: {iteration.CorrelationId}");
+                b.AppendLine($"<th>CorrelationId: {E(iteration.CorrelationId)}");
                 b.AppendLine($"</th>");
                 b.AppendLine($"<th></th>");
                 b.AppendLine($"<th></th>");
@@ -394,15 +397,15 @@ internal class StandardHtmlReportWriter : IStandardReport
 
         b.AppendLine($"<tr>");
         if (level == 1)
-            b.AppendLine($"<td>{symbol} Step: {stepResult.Name}");
+            b.AppendLine($"<td>{symbol} Step: {E(stepResult.Name)}");
         else
-            b.AppendLine($"<td style='padding-left:{padding}px'>{symbol} Step: {stepResult.Name}");
+            b.AppendLine($"<td style='padding-left:{padding}px'>{symbol} Step: {E(stepResult.Name)}");
 
         if (stepResult.Comments != null && stepResult.Comments.Count > 0)
         {
             foreach (var comment in stepResult.Comments)
             {
-                b.AppendLine($"<br/>{hiddenSymbol} // {comment.Text}");
+                b.AppendLine($"<br/>{hiddenSymbol} // {E(comment.Text)}");
             }
         }
 
@@ -411,7 +414,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             foreach (var attachment in stepResult.Attachments)
             {
                 var fileName = Path.GetFileName(attachment.Path);
-                b.AppendLine($"<br/>{hiddenSymbol} Attachment: <a href=\"Attachments/{fileName}\" target=\"_blank\">{attachment.Name}</a>");
+                b.AppendLine($"<br/>{hiddenSymbol} Attachment: <a href=\"Attachments/{E(fileName)}\" target=\"_blank\">{E(attachment.Name)}</a>");
             }
         }
 

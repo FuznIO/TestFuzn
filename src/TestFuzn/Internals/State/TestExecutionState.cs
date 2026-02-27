@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Results.Load;
@@ -10,19 +9,27 @@ internal class TestExecutionState
 {
     public List<Scenario> Scenarios { get; set; } = new();
     public ITest TestClassInstance { get; set; }
-    public TestType TestType { get; set; }
-    public TestRunState TestRunState { get; } = new();
+    public TestResult TestResult { get; set; }
+    public Dictionary<string, ScenarioLoadCollector> LoadCollectors = new();
+    public ExecutionStatus ExecutionStatus { get; set; } = ExecutionStatus.NotStarted;
+    public Exception ExecutionStoppedReason { get; set; }
+    public Exception FirstException { get; set; }
     public ScenarioExecutionState ExecutionState { get; } = new();
-    public ScenarioResultState ScenarioResultState { get; } = new();
     public bool IsConsumingCompleted { get; private set; }
 
     public TestExecutionState(ITest test, params Scenario[] scenarios)
     {
-        TestRunState.StartTime = DateTime.UtcNow;
-        TestRunState.ExecutionStatus = ExecutionStatus.Running;
+        if (test == null)
+            throw new ArgumentNullException(nameof(test));
+        if (scenarios == null || scenarios.Length == 0)
+            throw new ArgumentException("At least one scenario must be provided.", nameof(scenarios));
+
+        TestResult = new TestResult(test.TestInfo, scenarios.First());
+        TestResult.MarkPhaseAsStarted(StandardTestPhase.Init, DateTime.UtcNow);
+        
+        ExecutionStatus = ExecutionStatus.Running;
         TestClassInstance = test;
         Scenarios.AddRange(scenarios);
-        TestType = scenarios.First().TestType;
 
         foreach (var scenario in scenarios)
         {
@@ -31,8 +38,7 @@ internal class TestExecutionState
 
             ExecutionState.MessageCountPerScenario[scenario.Name] = 0;
 
-            ScenarioResultState.LoadCollectors.Add(scenario.Name, new ScenarioLoadCollector(scenario));
-            ScenarioResultState.StandardCollectors.Add(scenario.Name, new ScenarioStandardResult(scenario));
+            LoadCollectors.Add(scenario.Name, new ScenarioLoadCollector(scenario));
         }
     }
 
@@ -101,13 +107,14 @@ internal class TestExecutionState
         IsConsumingCompleted = true;
     }
 
-    public void Complete()
+    public TimeSpan TestRunDuration()
     {
-        TestRunState.EndTime = DateTime.UtcNow;
+        var start = TestResult.StartTime();
+        var end = TestResult.EndTime();
 
-        foreach (var scenario in Scenarios)
-        {
-            ScenarioResultState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Measurement);
-        }
+        if (end == default)
+            return DateTime.UtcNow - start;
+
+        return end - start;
     }
 }

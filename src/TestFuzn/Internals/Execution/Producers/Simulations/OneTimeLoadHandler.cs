@@ -24,7 +24,7 @@ internal class OneTimeLoadHandler : ILoadHandler
 
         for (int i = 0; i < oneTimeLoadCount; i++)
         {
-            if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+            if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
                 return Task.CompletedTask;
 
             var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);

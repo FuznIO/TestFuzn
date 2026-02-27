@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 
@@ -10,11 +11,13 @@ internal class LoadHtmlReportWriter : ILoadReport
     {
     }
 
+    private static string E(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
+
     public async Task WriteReport(LoadReportData loadReportData)
     {
         try
         {
-            var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Group.Name}-{loadReportData.Test.Name}");
+            var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Test.Group.Name}-{loadReportData.Test.Name}");
             var filePath = Path.Combine(loadReportData.TestsOutputDirectory, $"LoadTestReport-{reportName}.html");
 
             var htmlContent = GenerateHtmlReport(loadReportData);
@@ -43,7 +46,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<body>");
         b.AppendLine(@"<div class=""page-container"">");
 
-        b.AppendLine($"<h1>{loadReportData.Test.Name} - Load Test Report</h1>");
+        b.AppendLine($"<h1>{E(loadReportData.Test.Name)} - Load Test Report</h1>");
 
         WriteRunInfo(loadReportData, b);
 
@@ -70,27 +73,27 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine(@"<div class=""run-info"">");
 
         b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Suite</span><span class=""info-value"">" + loadReportData.Suite.Name + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Group</span><span class=""info-value"">" + loadReportData.Group.Name + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Test</span><span class=""info-value"">" + loadReportData.Test.Name + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Suite</span><span class=""info-value"">" + E(loadReportData.Suite.Name) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Group</span><span class=""info-value"">" + E(loadReportData.Test.Group.Name) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Test</span><span class=""info-value"">" + E(loadReportData.Test.Name) + "</span></div>");
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Run ID</span><span class=""info-value"">" + loadReportData.TestRunId + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Duration</span><span class=""info-value"">" + loadReportData.TestRunDuration.ToTestFuznReadableString() + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Started</span><span class=""info-value"">" + loadReportData.TestRunStartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Completed</span><span class=""info-value"">" + loadReportData.TestRunEndTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Run ID</span><span class=""info-value"">" + E(loadReportData.TestRunId) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Duration</span><span class=""info-value"">" + E(loadReportData.Test.TestRunDuration().ToTestFuznReadableString()) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Started</span><span class=""info-value"">" + loadReportData.Test.StartTime().ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Completed</span><span class=""info-value"">" + loadReportData.Test.EndTime().ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.ExecutionEnvironment) ? "-" : GlobalState.ExecutionEnvironment) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.TargetEnvironment) ? "-" : GlobalState.TargetEnvironment) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.ExecutionEnvironment) ? "-" : E(GlobalState.ExecutionEnvironment)) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.TargetEnvironment) ? "-" : E(GlobalState.TargetEnvironment)) + "</span></div>");
         b.AppendLine("</div>");
 
         if (loadReportData.Test.Tags != null && loadReportData.Test.Tags.Count > 0)
         {
             b.AppendLine(@"<div class=""run-info-row"">");
-            b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Tags</span><span class=""info-value"">" + string.Join(", ", loadReportData.Test.Tags) + "</span></div>");
+            b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Tags</span><span class=""info-value"">" + E(string.Join(", ", loadReportData.Test.Tags)) + "</span></div>");
             b.AppendLine("</div>");
         }
         if (loadReportData.Suite.Metadata != null && loadReportData.Suite.Metadata.Count > 0)
@@ -98,7 +101,7 @@ internal class LoadHtmlReportWriter : ILoadReport
             b.AppendLine(@"<div class=""run-info-row"">");
             foreach (var metadata in loadReportData.Suite.Metadata)
             {
-                b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{metadata.Key}</span><span class=""info-value"">{metadata.Value}</span></div>");
+                b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{E(metadata.Key)}</span><span class=""info-value"">{E(metadata.Value)}</span></div>");
             }
             b.AppendLine("</div>");
         }
@@ -107,7 +110,7 @@ internal class LoadHtmlReportWriter : ILoadReport
             b.AppendLine(@"<div class=""run-info-row"">");
             foreach (var metadata in loadReportData.Test.Metadata)
             {
-                b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{metadata.Key}</span><span class=""info-value"">{metadata.Value}</span></div>");
+                b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{E(metadata.Key)}</span><span class=""info-value"">{E(metadata.Value)}</span></div>");
             }
             b.AppendLine("</div>");
         }
@@ -157,9 +160,9 @@ internal class LoadHtmlReportWriter : ILoadReport
     private void WriteScenarioSection(LoadReportData loadReportData, ScenarioLoadResult scenarioResult, StringBuilder b, int scenarioIndex)
     {
         if (loadReportData.ScenarioResults.Count == 1)
-            b.AppendLine($"<h2>Scenario -  {scenarioResult.ScenarioName}</h2>");
+            b.AppendLine($"<h2>Scenario -  {E(scenarioResult.ScenarioName)}</h2>");
         else
-            b.AppendLine($"<h2>Scenario {scenarioIndex} -  {scenarioResult.ScenarioName}</h2>");
+            b.AppendLine($"<h2>Scenario {scenarioIndex} -  {E(scenarioResult.ScenarioName)}</h2>");
 
         WriteScenarioInfo(scenarioResult, b);                                    // 1
         b.AppendLine(@"<div style=""margin-top: 32px;""></div>");
@@ -189,14 +192,14 @@ internal class LoadHtmlReportWriter : ILoadReport
     {
         b.AppendLine("<table>");
         if (!string.IsNullOrEmpty(scenarioResult.Description))
-            b.AppendLine(@$"<tr><th class=""vertical"">Description</th><td>{scenarioResult.Description}</td></tr>");
+            b.AppendLine(@$"<tr><th class=""vertical"">Description</th><td>{E(scenarioResult.Description)}</td></tr>");
 
         if (scenarioResult.Simulations != null && scenarioResult.Simulations.Count > 0)
         {
             b.AppendLine("<tr>");
             b.AppendLine(@"<th class=""vertical"">Simulations</th><td><ul>");
             foreach (var simulation in scenarioResult.Simulations)
-                b.AppendLine($"<li>{simulation}</li>");
+                b.AppendLine($"<li>{E(simulation)}</li>");
             b.AppendLine("</ul></td></tr>");
         }
         b.AppendLine("</table>");
@@ -216,9 +219,9 @@ internal class LoadHtmlReportWriter : ILoadReport
         {
             var exception = "";
             if (scenarioResult.AssertWhileRunningException != null)
-                exception = $"AssertWhileRunning failed: {scenarioResult.AssertWhileRunningException.Message}";
+                exception = $"AssertWhileRunning failed: {E(scenarioResult.AssertWhileRunningException.Message)}";
             else if (scenarioResult.AssertWhenDoneException != null)
-                exception = $"AssertWhenDone failed: {scenarioResult.AssertWhenDoneException.Message}";
+                exception = $"AssertWhenDone failed: {E(scenarioResult.AssertWhenDoneException.Message)}";
 
             b.AppendLine(@"<div class=""overall-status failed"">");
             b.AppendLine(@"<div class=""icon"">❌</div>");
@@ -287,7 +290,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
     private void WriteSnapshotTimelineChart(LoadReportData loadReportData, StringBuilder b, ScenarioLoadResult scenario, int scenarioIndex)
     {
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
+        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Test.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
 
         if (snapshots == null || snapshots.Count == 0)
             return;
@@ -434,8 +437,8 @@ internal class LoadHtmlReportWriter : ILoadReport
             foreach (var error in step.Errors.Values)
             {
                 b.AppendLine("<li>");
-                b.AppendLine(@$"<span style=""font-weight:bold"">Message:</span> {error.Message}<br/>");
-                b.AppendLine(@$"<span style=""font-weight:bold"">Details:</span> {error.Details}<br/>");
+                b.AppendLine(@$"<span style=""font-weight:bold"">Message:</span> {E(error.Message)}<br/>");
+                b.AppendLine(@$"<span style=""font-weight:bold"">Details:</span> {E(error.Details)}<br/>");
                 b.AppendLine(@$"<span style=""font-weight:bold"">Count:</span> {error.Count}");
                 b.AppendLine("</li>");
             }
@@ -451,7 +454,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
     private void WriteSnapshotTable(LoadReportData loadReportData, StringBuilder b, ScenarioLoadResult scenario)
     {
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
+        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Test.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
 
         if (snapshots == null || snapshots.Count == 0)
             return;
@@ -543,7 +546,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         {
             b.AppendLine(@"<div class=""status-panel failed"">");
             b.AppendLine(@"<div class=""title"">AssertWhileRunning Failed</div>");
-            b.AppendLine($@"<div class=""details"">{scenarioResult.AssertWhileRunningException.Message}</div>");
+            b.AppendLine($@"<div class=""details"">{E(scenarioResult.AssertWhileRunningException.Message)}</div>");
             b.AppendLine("</div>");
         }
 
@@ -551,7 +554,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         {
             b.AppendLine(@"<div class=""status-panel failed"">");
             b.AppendLine(@"<div class=""title"">AssertWhenDone Failed</div>");
-            b.AppendLine($@"<div class=""details"">{scenarioResult.AssertWhenDoneException.Message}</div>");
+            b.AppendLine($@"<div class=""details"">{E(scenarioResult.AssertWhenDoneException.Message)}</div>");
             b.AppendLine("</div>");
         }
     }
@@ -574,7 +577,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
         var cssClass = isOkRow ? "ok" : "failed";
 
-        b.AppendLine($"<td{padding}>{prefix} {stepName}</td>");
+        b.AppendLine($"<td{padding}>{prefix} {E(stepName)}</td>");
         b.AppendLine(@$"<td class=""{cssClass}"">{(isOkRow ? "Ok" : "Failed")}</td>");
         b.AppendLine(@$"<td class=""{cssClass}"">{stats.RequestCount}</td>");
         b.AppendLine(@$"<td class=""{cssClass}"">{stats.RequestsPerSecond}</td>");
@@ -665,7 +668,7 @@ internal class LoadHtmlReportWriter : ILoadReport
             b.AppendLine("}");
 
             // RPS and Timeline Charts (if snapshots exist)
-            var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
+            var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Test.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
             if (snapshots != null && snapshots.Count > 0)
             {
                 var labels = string.Join(",", snapshots.Select(s => "'" + s.Created.ToString("HH:mm:ss") + "'"));

@@ -18,7 +18,8 @@ public class AssertionTests : Test
                     Interlocked.Increment(ref stepExecutionCount);
                     Assert.Fail();
                 })
-                .Load().Simulations((context, simulations) => simulations.FixedLoad(1, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5)))
+                //.Load().Simulations((context, simulations) => simulations.FixedLoad(1, TimeSpan.FromSeconds(1) , TimeSpan.FromSeconds(5)))
+                .Load().Simulations((context, simulations) => simulations.OneTimeLoad(1))
                 .Load().AssertWhileRunning((context, stats) =>
                 {
                     assertWhileRunningExecuted = true;

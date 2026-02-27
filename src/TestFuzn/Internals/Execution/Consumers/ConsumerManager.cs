@@ -27,7 +27,7 @@ internal class ConsumerManager
         var queue = _testExecutionState.ExecutionState.MessageQueue;
         await Parallel.ForEachAsync(queue.GetConsumingEnumerable(), async (message, cancellationToken) =>
         {
-            if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Stopped)
+            if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 return;
@@ -41,12 +41,10 @@ internal class ConsumerManager
 
             if (_testExecutionState.IsScenarioExecutionComplete(message.ScenarioName))
             {
-                _testExecutionState.ScenarioResultState.StandardCollectors[message.ScenarioName].MarkPhaseAsCompleted(StandardTestPhase.Execute);
-                
-                if (_testExecutionState.TestType == TestType.Load)
+                if (_testExecutionState.TestResult.TestType == TestType.Load)
                 {
-                    _testExecutionState.ScenarioResultState.LoadCollectors[message.ScenarioName].MarkPhaseAsCompleted(LoadTestPhase.Measurement);
-                    var scenarioLoadResult = _testExecutionState.ScenarioResultState.LoadCollectors[message.ScenarioName].GetCurrentResult(true);
+                    _testExecutionState.LoadCollectors[message.ScenarioName].MarkPhaseAsCompleted(LoadTestPhase.Measurement, DateTime.UtcNow);
+                    var scenarioLoadResult = _testExecutionState.LoadCollectors[message.ScenarioName].GetCurrentResult(true);
                     await _scenarioExecutor.WriteToSinks(scenario, scenarioLoadResult, true);
                 }
             }
@@ -59,7 +57,7 @@ internal class ConsumerManager
     {
         await Task.WhenAll(_consumer);
         
-        if (_testExecutionState.TestRunState.ExecutionStatus == ExecutionStatus.Running)
-            _testExecutionState.TestRunState.ExecutionStatus = ExecutionStatus.Completed;
+        if (_testExecutionState.ExecutionStatus == ExecutionStatus.Running)
+            _testExecutionState.ExecutionStatus = ExecutionStatus.Completed;
     }
 }
