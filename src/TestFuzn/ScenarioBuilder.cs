@@ -1,5 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Internals;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn;
 
@@ -319,7 +319,10 @@ public class ScenarioBuilder<TModel>
 
         InheritValuesFromTest(scenarios);
 
-        await new TestRunner(_testFramework, _test, _assertInternalState).Run(scenarios.ToArray());
+        var serviceProviderPerTest = GlobalState.Configuration.ServiceProvider.CreateScope().ServiceProvider;
+
+        var testRunner = serviceProviderPerTest.GetRequiredService<TestRunner>();
+        await testRunner.Run(_testFramework, _test, _assertInternalState, scenarios.ToArray());
     }
 
     private void InheritValuesFromTest(List<Scenario> scenarios)

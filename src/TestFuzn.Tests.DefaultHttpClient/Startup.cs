@@ -1,5 +1,4 @@
 using Fuzn.TestFuzn.Plugins.Http;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Tests.DefaultHttpClient;
 

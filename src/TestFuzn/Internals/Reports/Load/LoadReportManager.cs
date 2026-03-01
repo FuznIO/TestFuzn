@@ -1,32 +1,12 @@
 ﻿using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Reports;
-using Fuzn.TestFuzn.Internals.Results.Standard;
 using Fuzn.TestFuzn.Internals.State;
 
-namespace Fuzn.TestFuzn.Internals.Reports;
+namespace Fuzn.TestFuzn.Internals.Reports.Load;
 
-internal class ReportManager
+internal class LoadReportManager
 {
-    public async Task WriteStandardReports(StandardResultManager standardResultsManager)
-    {
-        var groupResults = standardResultsManager.GetSuiteResults();
-
-        var data = new StandardReportData();
-        data.Suite = new Contracts.Reports.SuiteInfo();
-        data.Suite.Name = GlobalState.Configuration.Suite.Name;
-        data.Suite.Id = GlobalState.Configuration.Suite.Id;
-        data.Suite.Metadata = GlobalState.Configuration.Suite.Metadata;
-        data.TestRunId = GlobalState.TestRunId;
-        data.TestRunStartTime = GlobalState.TestRunStartTime;
-        data.TestRunEndTime = GlobalState.TestRunEndTime;
-        data.TestRunDuration = data.TestRunEndTime - data.TestRunStartTime;
-        data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
-        data.GroupResults = groupResults.GroupResults;
-        
-        foreach (var standardReport in GlobalState.Configuration.StandardReports)
-            await standardReport.WriteReport(data);
-    }
-
+    
     public async Task WriteLoadReports(TestExecutionState testExecutionState)
     {
         if (testExecutionState.TestResult.TestType != TestType.Load)

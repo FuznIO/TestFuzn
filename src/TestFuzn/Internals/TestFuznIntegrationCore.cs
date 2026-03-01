@@ -1,10 +1,17 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Contracts.Plugins;
-using Fuzn.TestFuzn.Contracts.Reports;
-using Fuzn.TestFuzn.Internals.Reports;
+using Fuzn.TestFuzn.Internals.Cleanup;
+using Fuzn.TestFuzn.Internals.ConsoleOutput;
+using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Internals.Execution.Consumers;
+using Fuzn.TestFuzn.Internals.Execution.Producers;
+using Fuzn.TestFuzn.Internals.Init;
+using Fuzn.TestFuzn.Internals.InputData;
+using Fuzn.TestFuzn.Internals.Logger;
 using Fuzn.TestFuzn.Internals.Reports.EmbeddedResources;
-using Fuzn.TestFuzn.Internals.Results.Standard;
-using System.Reflection;
+using Fuzn.TestFuzn.Internals.Reports.Load;
+using Fuzn.TestFuzn.Internals.Reports.Standard;
+using Fuzn.TestFuzn.Internals.State;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Internals;
 
@@ -68,6 +75,8 @@ internal static class TestFuznIntegrationCore
         configuration.Suite.Name = testAssemblyName;
         session.StartupInstance.Configure(configuration);            
 
+        AddServices(configuration);
+
         // Build the service provider after all plugins have registered their services
         configuration.BuildServiceProvider();
 
@@ -88,6 +97,24 @@ internal static class TestFuznIntegrationCore
         session.IsInitializeGlobalExecuted = true;
     }
 
+    private static void AddServices(TestFuznConfiguration configuration)
+    {
+        var services = configuration.Services;
+
+        services.AddScoped<TestRunner>();
+        services.AddScoped<TestExecutionState>();
+        services.AddScoped<ConsoleWriter>();
+        services.AddScoped<ConsoleManager>();
+        services.AddScoped<InitManager>();
+        services.AddScoped<InputDataFeeder>();
+        services.AddScoped<ProducerManager>();
+        services.AddScoped<ExecuteScenarioMessageHandler>();
+        services.AddScoped<ConsumerManager>();
+        services.AddScoped<ExecutionManager>();
+        services.AddScoped<CleanupManager>();
+        services.AddScoped<LoadReportManager>();
+    }
+
     public static async Task Cleanup(ITestFrameworkAdapter testFramework)
     {
         var session = TestSession.Current;
@@ -105,7 +132,7 @@ internal static class TestFuznIntegrationCore
         if (!session.IsInitializeGlobalExecuted)
             return;
         
-        await new ReportManager().WriteStandardReports(session.ResultManager);
+        await new StandardReportManager().WriteStandardReports(session.ResultManager);
 
         foreach (var plugin in session.Configuration.ContextPlugins)
             await plugin.CleanupSuite();

@@ -2,32 +2,33 @@
 using Fuzn.TestFuzn.Internals.Execution.Consumers;
 using Fuzn.TestFuzn.Internals.Execution.Producers;
 using Fuzn.TestFuzn.Contracts;
-using Fuzn.TestFuzn.Contracts.Adapters;
 
 namespace Fuzn.TestFuzn.Internals.Execution;
 
 internal class ExecutionManager
 {
-    private readonly ITestFrameworkAdapter _testFramework;
     private readonly TestExecutionState _testExecutionState;
-    private readonly ConsumerManager _consumerManager;
     private readonly ProducerManager _producerManager;
+    private readonly ConsumerManager _consumerManager;
+    private readonly ExecuteScenarioMessageHandler _executeScenarioMessageHandler;
 
-    public ExecutionManager(ITestFrameworkAdapter testFramework, 
+    public ExecutionManager(
         TestExecutionState testExecutionState,
         ProducerManager producerManager,
-        ConsumerManager consumerManager)
+        ConsumerManager consumerManager,
+        ExecuteScenarioMessageHandler executeScenarioMessageHandler)
     {
-        _testFramework = testFramework;
         _testExecutionState = testExecutionState;
         _producerManager = producerManager;
         _consumerManager = consumerManager;
+        _executeScenarioMessageHandler = executeScenarioMessageHandler;
     }
+
     public async Task Run()
     {
-        _producerManager.StartProducers();
+        _producerManager.StartProducers(_testExecutionState);
 
-        _consumerManager.StartConsumers();
+        _consumerManager.StartConsumers(_testExecutionState, _executeScenarioMessageHandler);
 
         await _producerManager.WaitForProducersToComplete();
 
@@ -54,7 +55,7 @@ internal class ExecutionManager
             {
                 try
                 {
-                    var context = ContextFactory.CreateScenarioContext(_testFramework, "AssertWhenDoneAction");
+                    var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestFramework, "AssertWhenDoneAction");
                     scenario.AssertWhenDoneAction(context, new AssertScenarioStats(scenarioResult));
                 }
                 catch (Exception e)

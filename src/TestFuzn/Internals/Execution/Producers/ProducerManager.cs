@@ -5,16 +5,13 @@ namespace Fuzn.TestFuzn.Internals.Execution.Producers;
 
 internal class ProducerManager
 {
-    private readonly TestExecutionState _testExecutionState;
+    private TestExecutionState _testExecutionState = null!;
     private List<Task> _producerTasks = new();
 
-    public ProducerManager(TestExecutionState testExecutionState)
+    public void StartProducers(TestExecutionState testExecutionState)
     {
         _testExecutionState = testExecutionState;
-    }
 
-    public void StartProducers()
-    {
         foreach (var scenario in _testExecutionState.Scenarios)
         {
             var producerTask = Task.Run(async () => await Produce(scenario));

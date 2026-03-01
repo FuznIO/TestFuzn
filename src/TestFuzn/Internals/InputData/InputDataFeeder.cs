@@ -6,15 +6,12 @@ internal class InputDataFeeder
 {
     private object _lock = new();
     private Dictionary<string, InputEnumeratorInfo> _feeder = new();
-    private readonly TestExecutionState _testExecutionState;
+    private TestExecutionState _testExecutionState = null!;
 
-    public InputDataFeeder(TestExecutionState testExecutionState)
+    public void Init(TestExecutionState testExecutionState)
     {
         _testExecutionState = testExecutionState;
-    }
 
-    public void Init()
-    {
         foreach (var scenario in _testExecutionState.Scenarios)
         {
             var enumeratorInfo = new InputEnumeratorInfo
@@ -27,11 +24,11 @@ internal class InputDataFeeder
         }
     }
 
-    public object GetNextInput(string section)
+    public object GetNextInput(string scenario)
     {
         lock (_lock)
         {
-            var info = _feeder[section];
+            var info = _feeder[scenario];
             bool isLastItem = info.Index == info.InputData.Count - 1;
 
             switch (info.EndOfInputBehavior)

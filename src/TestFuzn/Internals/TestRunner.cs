@@ -1,13 +1,9 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals.Cleanup;
-using Fuzn.TestFuzn.Internals.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.Execution;
-using Fuzn.TestFuzn.Internals.Execution.Consumers;
-using Fuzn.TestFuzn.Internals.Execution.Producers;
 using Fuzn.TestFuzn.Internals.Init;
-using Fuzn.TestFuzn.Internals.InputData;
 using Fuzn.TestFuzn.Internals.Logger;
-using Fuzn.TestFuzn.Internals.Reports;
+using Fuzn.TestFuzn.Internals.Reports.Load;
 using Fuzn.TestFuzn.Internals.State;
 using System.Runtime.ExceptionServices;
 
@@ -15,57 +11,62 @@ namespace Fuzn.TestFuzn.Internals;
 
 internal class TestRunner
 {
-    private readonly ITestFrameworkAdapter _testFramework;
-    private readonly ITest _test;
-    internal Action<AssertInternalState> _assertInternalState;
+    private readonly TestExecutionState _testExecutionState;
+    private readonly ConsoleManager _consoleManager;
+    private readonly InitManager _initManager;
+    private readonly ExecutionManager _executionManager;
+    private readonly CleanupManager _cleanupManager;
+    private readonly LoadReportManager _loadReportManager;
 
-    public TestRunner(ITestFrameworkAdapter testFramework, 
-        ITest test,
-        Action<AssertInternalState> assertInternalState)
+    public TestRunner(
+        TestExecutionState testExecutionState,
+        ConsoleManager consoleManager,
+        InitManager initManager,
+        ExecutionManager executionManager,
+        CleanupManager cleanupManager,
+        LoadReportManager loadReportManager)
     {
-        if (testFramework == null)
-                throw new ArgumentNullException(nameof(testFramework));
-            _testFramework = testFramework;
-
-        _test = test;
-        _assertInternalState = assertInternalState;
+        _testExecutionState = testExecutionState;
+        _consoleManager = consoleManager;
+        _initManager = initManager;
+        _executionManager = executionManager;
+        _cleanupManager = cleanupManager;
+        _loadReportManager = loadReportManager;
     }
 
-    public async Task Run(params Scenario[] scenarios)
+    public async Task Run(
+        ITestFrameworkAdapter testFramework, 
+        ITest test,
+        Action<AssertInternalState>? assertInternalState,
+        params Scenario[] scenarios)
     {
-        var testExecutionState = new TestExecutionState(_test, scenarios);
-        var consoleWriter = new ConsoleWriter(_testFramework, testExecutionState);
-        var consoleManager = new ConsoleManager(_testFramework, testExecutionState, consoleWriter);
-        var inputDataFeeder = new InputDataFeeder(testExecutionState);
-        var initManager = new InitManager(_testFramework, testExecutionState, inputDataFeeder);
-        var producerManager = new ProducerManager(testExecutionState);
-        var executeScenarioMessageHandler = new ExecuteScenarioMessageHandler(_testFramework, testExecutionState, inputDataFeeder);
-        var consumerManager = new ConsumerManager(testExecutionState, executeScenarioMessageHandler);
-        var executionManager = new ExecutionManager(_testFramework, testExecutionState, producerManager, consumerManager);
-        var cleanupManager = new CleanupManager(_testFramework, testExecutionState);
-        var reportManager = new ReportManager();
+        ArgumentNullException.ThrowIfNull(testFramework);
+        ArgumentNullException.ThrowIfNull(test);
+        ArgumentNullException.ThrowIfNull(scenarios);
 
         try
         {
-            consoleManager.StartRealtimeConsoleOutputIfEnabled();
-            await initManager.Run();
-            await executionManager.Run();
-            await cleanupManager.Run();
-            TestSession.Current.ResultManager.AddTestResults(testExecutionState.TestResult);
-            await reportManager.WriteLoadReports(testExecutionState);
-            await consoleManager.Complete();
+            _testExecutionState.Init(testFramework, test, scenarios);
 
-            if (_assertInternalState != null)
-                _assertInternalState(new AssertInternalState(testExecutionState));
+            _consoleManager.StartRealtimeConsoleOutputIfEnabled();
+            await _initManager.Run();
+            await _executionManager.Run();
+            await _cleanupManager.Run();
+            TestSession.Current.ResultManager.AddTestResults(_testExecutionState.TestResult);
+            await _loadReportManager.WriteLoadReports(_testExecutionState);
+            await _consoleManager.Complete();
 
-            if (testExecutionState.FirstException != null)
-                ExceptionDispatchInfo.Capture(testExecutionState.FirstException).Throw();
+            if (assertInternalState != null)
+                assertInternalState(new AssertInternalState(_testExecutionState));
+
+            if (_testExecutionState.FirstException != null)
+                ExceptionDispatchInfo.Capture(_testExecutionState.FirstException).Throw();
         }
         catch (Exception)
         {
-            if (testExecutionState.ExecutionStoppedReason != null)
+            if (_testExecutionState.ExecutionStoppedReason != null)
             {
-                throw testExecutionState.ExecutionStoppedReason;
+                throw _testExecutionState.ExecutionStoppedReason;
             }
 
             throw;

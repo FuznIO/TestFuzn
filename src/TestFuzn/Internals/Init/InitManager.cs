@@ -1,24 +1,20 @@
 ﻿using Fuzn.TestFuzn.Contracts;
-using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 using Fuzn.TestFuzn.Internals.InputData;
 using Fuzn.TestFuzn.Internals.State;
-using HdrHistogram;
 
 namespace Fuzn.TestFuzn.Internals.Init;
 
 internal class InitManager
 {
-    private readonly ITestFrameworkAdapter _testFramework;
-    private readonly TestExecutionState _testExecutionState;
-    private readonly InputDataFeeder _inputDataFeeder;
+    private TestExecutionState _testExecutionState;
+    private InputDataFeeder _inputDataFeeder;
 
-    public InitManager(ITestFrameworkAdapter testFramework, 
+    public InitManager(
         TestExecutionState testExecutionState,
         InputDataFeeder inputDataFeeder)
     {
-        _testFramework = testFramework;
         _testExecutionState = testExecutionState;
         _inputDataFeeder = inputDataFeeder;
     }
@@ -41,7 +37,7 @@ internal class InitManager
         
         await Task.WhenAll(initPerScenarioTasks);
 
-         _inputDataFeeder.Init();
+         _inputDataFeeder.Init(_testExecutionState);
 
         await SetupSimulations();
 
@@ -57,7 +53,7 @@ internal class InitManager
     {
         if (_testExecutionState.TestClassInstance is IBeforeTest testClassInstance)
         {
-            var context = ContextFactory.CreateContext(_testFramework, "BeforeTest");
+            var context = ContextFactory.CreateContext(_testExecutionState.TestFramework, "BeforeTest");
             await testClassInstance.BeforeTest(context);
         }
     }
@@ -66,7 +62,7 @@ internal class InitManager
     {
         if (scenario.BeforeScenario != null)
         {
-            var context = ContextFactory.CreateScenarioContext(_testFramework, "BeforeScenario");
+            var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestFramework, "BeforeScenario");
             await scenario.BeforeScenario(context);
         }
 
@@ -75,7 +71,7 @@ internal class InitManager
 
         if (scenario.InputDataInfo.SourceType == InputDataSourceType.Action)
         {
-            var context = ContextFactory.CreateScenarioContext(_testFramework, "InputData");
+            var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestFramework, "InputData");
             scenario.InputDataInfo.InputDataList = await scenario.InputDataInfo.InputDataAction(context);
         }
     }
@@ -97,12 +93,12 @@ internal class InitManager
                 if (scenario.WarmupAction != null)
                 {
                     await scenario.WarmupAction(
-                        ContextFactory.CreateScenarioContext(_testFramework, "Warmup"),
+                        ContextFactory.CreateScenarioContext(_testExecutionState.TestFramework, "Warmup"),
                         new SimulationsBuilder(scenario, isWarmup: true));
                 }
 
                 await scenario.SimulationsAction(
-                    ContextFactory.CreateScenarioContext(_testFramework, "Simulations"), 
+                    ContextFactory.CreateScenarioContext(_testExecutionState.TestFramework, "Simulations"), 
                     new SimulationsBuilder(scenario, isWarmup: false));
             }
 

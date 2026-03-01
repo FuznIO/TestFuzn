@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Results.Load;
@@ -7,23 +8,31 @@ namespace Fuzn.TestFuzn.Internals.State;
 
 internal class TestExecutionState
 {
-    public List<Scenario> Scenarios { get; set; } = new();
-    public ITest TestClassInstance { get; set; }
-    public TestResult TestResult { get; set; }
+    public ITestFrameworkAdapter TestFramework { get; private set; } = null!;
+    public List<Scenario> Scenarios { get; private set; } = new();
+    public ITest TestClassInstance { get; private set; } = null!;
+    public TestResult TestResult { get; private set; } = null!;
     public Dictionary<string, ScenarioLoadCollector> LoadCollectors = new();
     public ExecutionStatus ExecutionStatus { get; set; } = ExecutionStatus.NotStarted;
-    public Exception ExecutionStoppedReason { get; set; }
-    public Exception FirstException { get; set; }
+    public Exception? ExecutionStoppedReason { get; set; }
+    public Exception? FirstException { get; set; }
     public ScenarioExecutionState ExecutionState { get; } = new();
     public bool IsConsumingCompleted { get; private set; }
+    public readonly ConcurrentDictionary<string, DateTime> LastSinkWrite = new();
+    public readonly ConcurrentDictionary<string, SemaphoreSlim> SinkSemaphores = new();
 
-    public TestExecutionState(ITest test, params Scenario[] scenarios)
+    public void Init(
+        ITestFrameworkAdapter testFramework,
+        ITest test, 
+        params Scenario[] scenarios
+        )
     {
-        if (test == null)
-            throw new ArgumentNullException(nameof(test));
+        ArgumentNullException.ThrowIfNull(testFramework);
+        ArgumentNullException.ThrowIfNull(test);
         if (scenarios == null || scenarios.Length == 0)
             throw new ArgumentException("At least one scenario must be provided.", nameof(scenarios));
 
+        TestFramework = testFramework;
         TestResult = new TestResult(test.TestInfo, scenarios.First());
         TestResult.MarkPhaseAsStarted(StandardTestPhase.Init, DateTime.UtcNow);
         

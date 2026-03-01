@@ -5,26 +5,22 @@ namespace Fuzn.TestFuzn.Internals.Execution.Consumers;
 
 internal class ConsumerManager
 {
-    private Task _consumer;
-    private readonly TestExecutionState _testExecutionState;
-    private readonly ExecuteScenarioMessageHandler _scenarioExecutor;
+    private Task _consumer = null!;
+    private TestExecutionState _testExecutionState = null!;
+    private ExecuteScenarioMessageHandler _messageHandler = null!;
 
-    public ConsumerManager(
-        TestExecutionState testExecutionState,
-        ExecuteScenarioMessageHandler scenarioExecutor)
+    public void StartConsumers(TestExecutionState testExecutionState,
+        ExecuteScenarioMessageHandler messageHandler)
     {
         _testExecutionState = testExecutionState;
-        _scenarioExecutor = scenarioExecutor;
-    }
-
-    public void StartConsumers()
-    {
+        _messageHandler = messageHandler;
         _consumer = Task.Run(Consume);
     }
 
-    public async Task Consume()
+    private async Task Consume()
     {
         var queue = _testExecutionState.ExecutionState.MessageQueue;
+
         await Parallel.ForEachAsync(queue.GetConsumingEnumerable(), async (message, cancellationToken) =>
         {
             if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
@@ -35,7 +31,7 @@ internal class ConsumerManager
 
             var scenario = _testExecutionState.Scenarios.Single(s => s.Name == message.ScenarioName);
 
-            await _scenarioExecutor.Execute(message, scenario);
+            await _messageHandler.Execute(_testExecutionState, message, scenario);
 
             _testExecutionState.RemoveFromQueues(message);
 
@@ -45,7 +41,7 @@ internal class ConsumerManager
                 {
                     _testExecutionState.LoadCollectors[message.ScenarioName].MarkPhaseAsCompleted(LoadTestPhase.Measurement, DateTime.UtcNow);
                     var scenarioLoadResult = _testExecutionState.LoadCollectors[message.ScenarioName].GetCurrentResult(true);
-                    await _scenarioExecutor.WriteToSinks(scenario, scenarioLoadResult, true);
+                    await _messageHandler.WriteToSinks(_testExecutionState, scenario, scenarioLoadResult, true);
                 }
             }
         });

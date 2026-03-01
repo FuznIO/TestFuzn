@@ -44,7 +44,7 @@ internal class ContextFactory
         return context;
     }
 
-    public static IterationState CreateIterationState(ITestFrameworkAdapter testFramework, Scenario scenario, object currentInput)
+    public static IterationState CreateIterationState(ITestFrameworkAdapter testFramework, Scenario scenario, object? currentInput)
     {
         var state = new IterationState();
         if (scenario.ContextType.IsGenericType && scenario.ContextType.GetGenericTypeDefinition() == typeof(IterationContext<>))

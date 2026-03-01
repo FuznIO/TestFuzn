@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using Fuzn.TestFuzn.ConsoleOutput;
-using Fuzn.TestFuzn.Internals.Results.Load;
 using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Contracts;
@@ -11,27 +10,22 @@ namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 
 internal class ConsoleWriter
 {
-    private readonly ITestFrameworkAdapter _testFramework;
-    private readonly TestExecutionState _testExecutionState;
-    private CursorPosition _cursorPosition;
+    private TestExecutionState _testExecutionState = null!;
+    private CursorPosition? _cursorPosition;
 
-    public ConsoleWriter(ITestFrameworkAdapter testFramework,
-        TestExecutionState testExecutionState)
+    public void WriteSummary(TestExecutionState testExecutionState)
     {
-        _testFramework = testFramework;
         _testExecutionState = testExecutionState;
-    }
 
-    public void WriteSummary()
-    {
         if (_testExecutionState.TestResult.TestType == TestType.Standard)
             WriteSummaryStandard();
         else
             WriteSummaryLoad();
     }
 
-    public void WriteSummaryStandard()
+    private void WriteSummaryStandard()
     {
+        var testFramework = _testExecutionState.TestFramework;
         var scenario = _testExecutionState.Scenarios.Single();
         var scenarioResult = _testExecutionState.TestResult;
         
@@ -145,15 +139,15 @@ internal class ConsoleWriter
                     _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
                 };
             }
-            _testFramework.Write(Environment.NewLine);
-            _testFramework.WriteAdvancedTable(table);
+            testFramework.Write(Environment.NewLine);
+            testFramework.WriteAdvancedTable(table);
 
             var errorSection = new StringBuilder();
 
             if (errorSection.Length > 0)
             {
-                _testFramework.Write(Environment.NewLine);
-                _testFramework.WriteMarkup(errorSection.ToString());
+                testFramework.Write(Environment.NewLine);
+                testFramework.WriteMarkup(errorSection.ToString());
             }
         }
     }
@@ -191,10 +185,12 @@ internal class ConsoleWriter
 
     private void WriteSummaryLoad()
     {
-        if (_cursorPosition == null)
-            _cursorPosition = _testFramework.GetCursorPosition();
+        var testFramework = _testExecutionState.TestFramework;
 
-        if (_testFramework.SupportsRealTimeConsoleOutput)
+        if (_cursorPosition == null)
+            _cursorPosition = testFramework.GetCursorPosition();
+
+        if (testFramework.SupportsRealTimeConsoleOutput)
         {
             var loadtestResults = new Dictionary<Scenario, ScenarioLoadResult>();
 
@@ -203,19 +199,19 @@ internal class ConsoleWriter
                 loadtestResults.TryAdd(scenario, _testExecutionState.LoadCollectors[scenario.Name].GetCurrentResult());
             }
             
-            _testFramework.WriteSummary(loadtestResults.First().Value.StartTime(), _testExecutionState.TestRunDuration(), loadtestResults);
+            testFramework.WriteSummary(loadtestResults.First().Value.StartTime(), _testExecutionState.TestRunDuration(), loadtestResults);
             return;
         }
 
         var elapsed = _testExecutionState.TestRunDuration().ToString(@"hh\:mm\:ss\:ff");
 
-        _testFramework.WriteMarkup($"[bold]Total elapsed Time:[/] [yellow]{elapsed}[/]");
+        testFramework.WriteMarkup($"[bold]Total elapsed Time:[/] [yellow]{elapsed}[/]");
         if (_testExecutionState.IsConsumingCompleted || _testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
         {
             if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
-                _testFramework.WriteMarkup($"[red]Status: Stopped, reason: {_testExecutionState.ExecutionStoppedReason.Message}[/]\r\n");
+                testFramework.WriteMarkup($"[red]Status: Stopped, reason: {_testExecutionState.ExecutionStoppedReason.Message}[/]\r\n");
             else
-                _testFramework.WriteMarkup("[green]Status: Completed successfully.[/]\r\n");
+                testFramework.WriteMarkup("[green]Status: Completed successfully.[/]\r\n");
         }
 
         foreach (var scenario in _testExecutionState.Scenarios)
@@ -434,7 +430,7 @@ internal class ConsoleWriter
                 }
             }
 
-            _testFramework.WriteAdvancedTable(table);
+            testFramework.WriteAdvancedTable(table);
 
             //Assertion
             var assertionSection = new StringBuilder();
@@ -456,8 +452,8 @@ internal class ConsoleWriter
 
             if (assertionSection.Length > 0)
             {
-                _testFramework.Write(Environment.NewLine);
-                _testFramework.WriteMarkup(assertionSection.ToString());
+                testFramework.Write(Environment.NewLine);
+                testFramework.WriteMarkup(assertionSection.ToString());
             }
 
             // Errors
@@ -476,8 +472,8 @@ internal class ConsoleWriter
             }
             if (errorSection.Length > 0)
             {
-                _testFramework.Write(Environment.NewLine);
-                _testFramework.WriteMarkup(errorSection.ToString());
+                testFramework.Write(Environment.NewLine);
+                testFramework.WriteMarkup(errorSection.ToString());
             }
         }
     }
