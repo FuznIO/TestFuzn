@@ -6,10 +6,12 @@ namespace Fuzn.TestFuzn.Internals.Cleanup;
 
 internal class CleanupManager
 {
+    private readonly IServiceProvider _serviceProvider;
     private TestExecutionState _testExecutionState;
 
-    public CleanupManager(TestExecutionState testExecutionState)
+    public CleanupManager(IServiceProvider serviceProvider, TestExecutionState testExecutionState)
     {
+        _serviceProvider = serviceProvider;
         _testExecutionState = testExecutionState;
     }
 
@@ -47,7 +49,7 @@ internal class CleanupManager
 
     private async Task ExecuteCleanupScenario(ITestFrameworkAdapter testFramework, Scenario scenario)
     {
-        var context = ContextFactory.CreateScenarioContext(testFramework, "AfterScenario");
+        var context = ContextFactory.CreateScenarioContext(_serviceProvider, testFramework, "AfterScenario");
         await scenario.AfterScenarioAction(context);
     }
 
@@ -55,7 +57,7 @@ internal class CleanupManager
     {
         if (_testExecutionState.TestClassInstance is IAfterTest cleanup)
         {
-            Context context = ContextFactory.CreateContext(_testExecutionState.TestFramework, "AfterTest");
+            Context context = ContextFactory.CreateContext(_serviceProvider, _testExecutionState.TestFramework, "AfterTest");
             await cleanup.AfterTest(context);
         }
     }

@@ -21,7 +21,7 @@ internal class WebSocketPlugin : IContextPlugin
         await Task.CompletedTask;
     }
 
-    public object InitContext()
+    public object InitContext(IServiceProvider serviceProvider)
     {
         var webSocketManager = new WebSocketManager();
         return webSocketManager;

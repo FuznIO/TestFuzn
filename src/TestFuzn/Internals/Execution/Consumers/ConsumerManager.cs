@@ -6,14 +6,22 @@ namespace Fuzn.TestFuzn.Internals.Execution.Consumers;
 internal class ConsumerManager
 {
     private Task _consumer = null!;
+    private readonly IServiceProvider _serviceProvider;
     private TestExecutionState _testExecutionState = null!;
-    private ExecuteScenarioMessageHandler _messageHandler = null!;
+    private ExecuteScenarioMessageHandler _executeScenarioMessageHandler = null!;
 
-    public void StartConsumers(TestExecutionState testExecutionState,
-        ExecuteScenarioMessageHandler messageHandler)
+    public ConsumerManager(
+        IServiceProvider serviceProvider,
+        TestExecutionState testExecutionState,
+        ExecuteScenarioMessageHandler executeScenarioMessageHandler)
     {
+        _serviceProvider = serviceProvider;
         _testExecutionState = testExecutionState;
-        _messageHandler = messageHandler;
+        _executeScenarioMessageHandler = executeScenarioMessageHandler;
+    }
+
+    public void StartConsumers()
+    {
         _consumer = Task.Run(Consume);
     }
 
@@ -31,7 +39,7 @@ internal class ConsumerManager
 
             var scenario = _testExecutionState.Scenarios.Single(s => s.Name == message.ScenarioName);
 
-            await _messageHandler.Execute(_testExecutionState, message, scenario);
+            await _executeScenarioMessageHandler.Execute(message, scenario);
 
             _testExecutionState.RemoveFromQueues(message);
 
@@ -41,7 +49,7 @@ internal class ConsumerManager
                 {
                     _testExecutionState.LoadCollectors[message.ScenarioName].MarkPhaseAsCompleted(LoadTestPhase.Measurement, DateTime.UtcNow);
                     var scenarioLoadResult = _testExecutionState.LoadCollectors[message.ScenarioName].GetCurrentResult(true);
-                    await _messageHandler.WriteToSinks(_testExecutionState, scenario, scenarioLoadResult, true);
+                    await _executeScenarioMessageHandler.WriteToSinks(_testExecutionState, scenario, scenarioLoadResult, true);
                 }
             }
         });

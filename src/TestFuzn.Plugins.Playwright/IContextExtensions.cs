@@ -13,7 +13,8 @@ public static class IContextExtensions
     /// </summary>
     public static IPlaywright GetPlaywright(this TestFuzn.Context context)
     {
-        return PlaywrightGlobalState.Playwright;
+        var playwrightManager = GetPlaywrightManager(context);
+        return playwrightManager.Playwright;
     }
 
     /// <summary>

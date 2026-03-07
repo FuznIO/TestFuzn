@@ -57,7 +57,7 @@ public static class ContextExtensions
         if (!HttpGlobalState.HasBeenInitialized)
             throw new InvalidOperationException("TestFuzn.Plugins.HTTP has not been initialized. Please call configuration.UseHttp() in the Startup.");
 
-        var httpClientInstance = context.Services.GetRequiredService(httpClientType);
+        var httpClientInstance = context.ServicesProvider.GetRequiredService(httpClientType);
         if (httpClientInstance is not IHttpClient httpClient)
             throw new InvalidOperationException($"The specified HTTP client type '{httpClientType.FullName}' does not implement IHttpClient.");
 

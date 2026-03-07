@@ -4,28 +4,39 @@ using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Internals.State;
 using System.Diagnostics;
 using Fuzn.TestFuzn.Internals.InputData;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Internals.Execution;
 
 internal class ExecuteScenarioMessageHandler
 {
+    private readonly IServiceProvider _serviceProvider;
+    private readonly TestExecutionState _testExecutionState;
     private InputDataFeeder _inputDataFeeder;
 
-    public ExecuteScenarioMessageHandler(InputDataFeeder inputDataFeeder)
+    public ExecuteScenarioMessageHandler(
+        IServiceProvider serviceProvider,
+        TestExecutionState testExecutionState,
+        InputDataFeeder inputDataFeeder)
     {
+        _serviceProvider = serviceProvider;
+        _testExecutionState = testExecutionState;
         _inputDataFeeder = inputDataFeeder;
     }
 
     public async Task Execute(
-        TestExecutionState testExecutionState,
-        ExecuteScenarioMessage message, 
+        ExecuteScenarioMessage message,
         Scenario scenario)
     {
+        // Create a new scope for the iteration execution.
+        await using var iterationScope = _serviceProvider.CreateAsyncScope();
+        var iterationServiceProvider = iterationScope.ServiceProvider;
+
         object? currentInputData = null;
         if (scenario.InputDataInfo.HasInputData)
             currentInputData = _inputDataFeeder.GetNextInput(scenario.Name);
 
-        var iterationState = ContextFactory.CreateIterationState(testExecutionState.TestFramework, scenario, currentInputData);
+        var iterationState = ContextFactory.CreateIterationState(iterationServiceProvider, _testExecutionState.TestFramework, scenario, currentInputData);
 
         var iterationResult = new IterationResult();
         iterationResult.CorrelationId = iterationState.Info.CorrelationId;
@@ -33,7 +44,7 @@ internal class ExecuteScenarioMessageHandler
         var scenarioDuration = new Stopwatch();
         scenarioDuration.Start();
 
-        var executeStepHandler = new ExecuteStepHandler(testExecutionState, iterationState, null);
+        var executeStepHandler = new ExecuteStepHandler(_testExecutionState, iterationState, null);
 
         try
         {
@@ -68,17 +79,17 @@ internal class ExecuteScenarioMessageHandler
             }
         }
 
-        if (testExecutionState.TestResult.TestType == TestType.Standard)
+        if (_testExecutionState.TestResult.TestType == TestType.Standard)
         {
             if (currentInputData != null)
                 iterationResult.InputData = currentInputData.ToString();
 
-            testExecutionState.TestResult.IterationResults.Add(iterationResult);
+            _testExecutionState.TestResult.IterationResults.Add(iterationResult);
             await CleanupContext(iterationState);
         }
-        else if (testExecutionState.TestResult.TestType == TestType.Load)
+        else if (_testExecutionState.TestResult.TestType == TestType.Load)
         {
-            var scenarioLoadCollector = testExecutionState.LoadCollectors[scenario.Name];
+            var scenarioLoadCollector = _testExecutionState.LoadCollectors[scenario.Name];
 
             if (message.IsWarmup)
             {
@@ -93,25 +104,25 @@ internal class ExecuteScenarioMessageHandler
             await CleanupContext(iterationState);
 
             if (scenario.AssertWhileRunningAction != null
-                && testExecutionState.ExecutionStatus == ExecutionStatus.Running)
+                && _testExecutionState.ExecutionStatus == ExecutionStatus.Running)
             {
                 try
                 {
-                    var context = ContextFactory.CreateScenarioContext(testExecutionState.TestFramework, "AssertWhileRunning");
+                    var context = ContextFactory.CreateScenarioContext(iterationServiceProvider, _testExecutionState.TestFramework, "AssertWhileRunning");
                     scenario.AssertWhileRunningAction(context, new AssertScenarioStats(scenarioLoadResult));
                 }
                 catch (Exception ex)
                 {
-                    testExecutionState.ExecutionStatus = ExecutionStatus.Stopped;
-                    testExecutionState.ExecutionStoppedReason = ex;
-                    testExecutionState.TestResult.Status = TestStatus.Failed;
-                    testExecutionState.FirstException = ex;
+                    _testExecutionState.ExecutionStatus = ExecutionStatus.Stopped;
+                    _testExecutionState.ExecutionStoppedReason = ex;
+                    _testExecutionState.TestResult.Status = TestStatus.Failed;
+                    _testExecutionState.FirstException = ex;
                     scenarioLoadCollector.SetAssertWhileRunningException(ex);
                     scenarioLoadCollector.SetStatus(TestStatus.Failed);
                 }
             }
 
-            await WriteToSinks(testExecutionState, scenario, scenarioLoadResult, false);
+            await WriteToSinks(_testExecutionState, scenario, scenarioLoadResult, false);
         }
     }
 

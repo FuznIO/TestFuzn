@@ -43,6 +43,8 @@ internal class TestSession
         set => _configRoot = value;
     }
 
+    internal IServiceProvider ServiceProvider { get; set; }
+
     internal void EnsureInitialized(ITestFrameworkAdapter testFramework)
     {
         if (testFramework == null)

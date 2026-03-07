@@ -319,9 +319,11 @@ public class ScenarioBuilder<TModel>
 
         InheritValuesFromTest(scenarios);
 
-        var serviceProviderPerTest = GlobalState.Configuration.ServiceProvider.CreateScope().ServiceProvider;
+        await using var testScope = GlobalState.ServiceProvider.CreateAsyncScope();
+        var testServiceProvider = testScope.ServiceProvider;
 
-        var testRunner = serviceProviderPerTest.GetRequiredService<TestRunner>();
+        var testRunner = testServiceProvider.GetRequiredService<TestRunner>();
+
         await testRunner.Run(_testFramework, _test, _assertInternalState, scenarios.ToArray());
     }
 

@@ -35,7 +35,6 @@ public class TestFuznConfiguration
     internal List<IStandardReport> StandardReports { get; set; } = new();
     internal List<ILoadReport> LoadReports { get; set; } = new();
     internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
-    internal IServiceProvider ServiceProvider { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TestFuznConfiguration"/> class with default settings.
@@ -89,9 +88,9 @@ public class TestFuznConfiguration
     /// Builds the service provider from the configured services.
     /// Called internally after all plugins have registered their services.
     /// </summary>
-    internal void BuildServiceProvider()
+    internal IServiceProvider BuildServiceProvider()
     {
-        ServiceProvider = Services.BuildServiceProvider();
+        return Services.BuildServiceProvider();
     }
 
     internal void ClearReports()

@@ -17,7 +17,7 @@ internal class HttpPlugin : IContextPlugin
         return Task.CompletedTask;
     }
 
-    public object InitContext()
+    public object InitContext(IServiceProvider serviceProvider)
     {
         return new HttpPluginState();
     }

@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Internals;
 
 namespace Fuzn.TestFuzn;
 
@@ -24,6 +23,12 @@ public static class GlobalState
     {
         get => TestSession.Current.Configuration;
         set => TestSession.Current.Configuration = value;
+    }
+
+    internal static IServiceProvider ServiceProvider
+    {
+        get => TestSession.Current.ServiceProvider;
+        set => TestSession.Current.ServiceProvider = value;
     }
 
     internal static bool LoadTestWasExecuted

@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Plugins.Playwright.Internals;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Plugins.Playwright;
 
@@ -25,9 +26,14 @@ public static class TestFuznConfigurationExtensions
 
         ValidateConfiguration(playwrightConfiguration);
 
-        PlaywrightGlobalState.Configuration = playwrightConfiguration;
+        config.Services.AddSingleton(playwrightConfiguration);
 
-        config.AddContextPlugin(new PlaywrightPlugin());
+        var playwrightPlugin = new PlaywrightPlugin(playwrightConfiguration);
+        config.Services.AddSingleton(playwrightPlugin);
+
+        config.AddContextPlugin(playwrightPlugin);
+
+        config.Services.AddTransient<PlaywrightManager>();
     }
 
     private static void ValidateConfiguration(PlaywrightPluginConfiguration config)

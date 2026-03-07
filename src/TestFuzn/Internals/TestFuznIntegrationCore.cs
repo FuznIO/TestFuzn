@@ -78,13 +78,13 @@ internal static class TestFuznIntegrationCore
         AddServices(configuration);
 
         // Build the service provider after all plugins have registered their services
-        configuration.BuildServiceProvider();
+        session.ServiceProvider = configuration.BuildServiceProvider();
 
         session.Configuration = configuration;
 
         if (session.StartupInstance is IBeforeSuite initGlobalInstance)
         {
-            var context = ContextFactory.CreateContext(testFramework, "Init");
+            var context = ContextFactory.CreateContext(session.ServiceProvider, testFramework, "Init");
             await initGlobalInstance.BeforeSuite(context);
         }
 
@@ -124,7 +124,7 @@ internal static class TestFuznIntegrationCore
 
         if (session.StartupInstance is IAfterSuite cleanupGlobalInstance)
         {
-            await cleanupGlobalInstance.AfterSuite(ContextFactory.CreateContext(testFramework, "Cleanup"));
+            await cleanupGlobalInstance.AfterSuite(ContextFactory.CreateContext(session.ServiceProvider, testFramework, "Cleanup"));
         }
 
         session.TestRunEndTime = DateTime.UtcNow;

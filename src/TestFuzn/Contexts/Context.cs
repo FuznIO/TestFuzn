@@ -9,9 +9,9 @@ namespace Fuzn.TestFuzn;
 /// </summary>
 public class Context
 {
-    internal ITestFrameworkAdapter TestFramework => IterationState.TestFramework;
     internal IterationState IterationState { get; set; }
-
+    internal ITestFrameworkAdapter TestFramework => IterationState.TestFramework;
+    
     /// <summary>
     /// Gets execution information for the current test iteration, including scenario details and timing.
     /// </summary>
@@ -35,5 +35,5 @@ public class Context
     /// <summary>
     /// Gets the service provider for resolving dependencies from the IoC container.
     /// </summary>
-    public IServiceProvider Services => GlobalState.Configuration.ServiceProvider;
+    public IServiceProvider ServicesProvider => IterationState.ServiceProvider;
 }

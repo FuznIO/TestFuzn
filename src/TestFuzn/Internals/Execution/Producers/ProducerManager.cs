@@ -8,10 +8,13 @@ internal class ProducerManager
     private TestExecutionState _testExecutionState = null!;
     private List<Task> _producerTasks = new();
 
-    public void StartProducers(TestExecutionState testExecutionState)
+    public ProducerManager(TestExecutionState testExecutionState)
     {
         _testExecutionState = testExecutionState;
+    }
 
+    public void StartProducers()
+    {
         foreach (var scenario in _testExecutionState.Scenarios)
         {
             var producerTask = Task.Run(async () => await Produce(scenario));
