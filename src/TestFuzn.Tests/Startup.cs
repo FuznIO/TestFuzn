@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Plugins.Http;
 using Fuzn.TestFuzn.Plugins.Playwright;
 using Fuzn.TestFuzn.Plugins.WebSocket;
 using Fuzn.TestFuzn.Sinks.InfluxDB;
+using Fuzn.TestFuzn.Tests.IocContainer;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Tests;
@@ -86,6 +87,10 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             // config.SerializerProvider = new NewtonsoftSerializerProvider();
         });
         configuration.UseInfluxDB();
+
+        configuration.Services.AddSingleton<SingletonMarker>();
+        configuration.Services.AddScoped<ScopedMarker>();
+        configuration.Services.AddTransient<TransientMarker>();
     }
 
     public Task BeforeSuite(Context context)
