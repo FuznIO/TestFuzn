@@ -5,23 +5,33 @@ namespace Fuzn.TestFuzn.Internals.Reports.Standard;
 
 internal class StandardReportManager
 {
+    private readonly IEnumerable<IStandardReport> _standardReports;
+    private readonly TestSession _testSession;
+
+    public StandardReportManager(IEnumerable<IStandardReport> standardReports,
+        TestSession testSession)
+    {
+        _standardReports = standardReports;
+        _testSession = testSession;
+    }
+
     public async Task WriteStandardReports(StandardResultManager standardResultsManager)
     {
         var groupResults = standardResultsManager.GetSuiteResults();
 
         var data = new StandardReportData();
         data.Suite = new Contracts.Reports.SuiteInfo();
-        data.Suite.Name = GlobalState.Configuration.Suite.Name;
-        data.Suite.Id = GlobalState.Configuration.Suite.Id;
-        data.Suite.Metadata = GlobalState.Configuration.Suite.Metadata;
-        data.TestRunId = GlobalState.TestRunId;
-        data.TestRunStartTime = GlobalState.TestRunStartTime;
-        data.TestRunEndTime = GlobalState.TestRunEndTime;
+        data.Suite.Name = _testSession.Configuration.Suite.Name;
+        data.Suite.Id = _testSession.Configuration.Suite.Id;
+        data.Suite.Metadata = _testSession.Configuration.Suite.Metadata;
+        data.TestRunId = _testSession.TestRunId;
+        data.TestRunStartTime = _testSession.TestRunStartTime;
+        data.TestRunEndTime = _testSession.TestRunEndTime;
         data.TestRunDuration = data.TestRunEndTime - data.TestRunStartTime;
-        data.TestsOutputDirectory = GlobalState.TestsOutputDirectory;
+        data.TestsOutputDirectory = _testSession.TestsOutputDirectory;
         data.GroupResults = groupResults.GroupResults;
-        
-        foreach (var standardReport in GlobalState.Configuration.StandardReports)
+
+        foreach (var standardReport in _standardReports)
             await standardReport.WriteReport(data);
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Internals;
 
 namespace Fuzn.TestFuzn;
 
@@ -25,7 +24,7 @@ public class Context
     /// <summary>
     /// Gets the logger for recording test execution events and diagnostics.
     /// </summary>
-    public ILogger Logger => IterationState.Logger; 
+    public ILogger Logger => IterationState.Info.TestSession.Logger; 
     
     /// <summary>
     /// Gets information about the currently executing step, including its name and hierarchy.

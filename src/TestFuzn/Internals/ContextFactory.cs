@@ -1,10 +1,12 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Internals;
 
 internal class ContextFactory
 {
-    public static Context CreateContext(IServiceProvider serviceProvider, 
+    public static Context CreateContext(
+        IServiceProvider serviceProvider, 
         ITestFrameworkAdapter testFramework, 
         string stepName)
     {
@@ -13,14 +15,15 @@ internal class ContextFactory
         if (GlobalState.Configuration != null)
         {
             context.IterationState = new();
-            PopulateSharedProperties(context.IterationState, serviceProvider, testFramework);
+            PopulateIterationStateProperties(context.IterationState, serviceProvider, testFramework);
             context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 
         return context;
     }
 
-    public static ScenarioContext CreateScenarioContext(IServiceProvider serviceProvider, 
+    public static ScenarioContext CreateScenarioContext(
+        IServiceProvider serviceProvider, 
         ITestFrameworkAdapter testFramework, 
         string stepName)
     {
@@ -29,7 +32,7 @@ internal class ContextFactory
         if (GlobalState.Configuration != null)
         {
             context.IterationState = new();
-            PopulateSharedProperties(context.IterationState, serviceProvider, testFramework);
+            PopulateIterationStateProperties(context.IterationState, serviceProvider, testFramework);
             context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 
@@ -48,7 +51,8 @@ internal class ContextFactory
         return context;
     }
 
-    public static IterationState CreateIterationState(IServiceProvider serviceProvider, 
+    public static IterationState CreateIterationState(
+        IServiceProvider serviceProvider, 
         ITestFrameworkAdapter testFramework, 
         Scenario scenario, object? 
         currentInput)
@@ -64,7 +68,7 @@ internal class ContextFactory
 
             iterationState.Model = modelInstance;
         }
-        PopulateSharedProperties(iterationState, serviceProvider, testFramework);
+        PopulateIterationStateProperties(iterationState, serviceProvider, testFramework);
         iterationState.SharedData = new();
         iterationState.Scenario = scenario;
         iterationState.InputData = currentInput;
@@ -72,20 +76,19 @@ internal class ContextFactory
         return iterationState;
     }
 
-    private static void PopulateSharedProperties(IterationState iterationState, IServiceProvider serviceProvider, ITestFrameworkAdapter testFramework)
+    private static void PopulateIterationStateProperties(
+        IterationState iterationState, 
+        IServiceProvider serviceProvider, 
+        ITestFrameworkAdapter testFramework)
     {
         iterationState.Info = new ExecutionInfo();
-        iterationState.Info.TargetEnvironment = GlobalState.TargetEnvironment;
-        iterationState.Info.ExecutionEnvironment = GlobalState.ExecutionEnvironment;
-        iterationState.Info.NodeName = GlobalState.NodeName;
-        iterationState.Info.TestRunId = GlobalState.TestRunId;
+        iterationState.Info.TestSession = serviceProvider.GetRequiredService<TestSession>();
         iterationState.Info.CorrelationId = Guid.NewGuid().ToString();
-        iterationState.Logger = GlobalState.Logger;
         iterationState.TestFramework = testFramework;
         iterationState.ServiceProvider = serviceProvider;
         iterationState.Internals = new ContextInternals();
         
-        foreach (var plugin in GlobalState.Configuration.ContextPlugins)
+        foreach (var plugin in iterationState.Info.TestSession.Configuration.ContextPlugins)
         {
             if (!plugin.RequireState)
                 continue;

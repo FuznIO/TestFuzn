@@ -24,7 +24,10 @@ internal class ProducerManager
 
     private async Task Produce(Scenario scenario)
     {
-        var loadCollector = _testExecutionState.LoadCollectors[scenario.Name];
+        // The producer is used for both standard test with input data and load tests.
+        var testType = _testExecutionState.TestType;
+
+        var loadCollector = (testType == Contracts.TestType.Load) ? _testExecutionState.LoadCollectors[scenario.Name] : null;
         var hasWarmupPhase = false;
         var measurementPhaseStarted = false;
 
@@ -44,18 +47,21 @@ internal class ProducerManager
                 _ => throw new NotSupportedException($"Load simulation type {loadSimulation.GetType().Name} is not supported."),
             };
 
-            if (loadSimulation.IsWarmup && !hasWarmupPhase)
+            if (testType == Contracts.TestType.Load)
             {
-                hasWarmupPhase = true;
-                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Warmup, DateTime.UtcNow);
-            }
+                if (loadSimulation.IsWarmup && !hasWarmupPhase)
+                {
+                    hasWarmupPhase = true;
+                    loadCollector!.MarkPhaseAsStarted(LoadTestPhase.Warmup, DateTime.UtcNow);
+                }
+            
+                if (hasWarmupPhase && !loadSimulation.IsWarmup)
+                {
+                    while (_testExecutionState.IsExecutionQueueEmpty(scenario.Name) == false)
+                        await Task.Delay(TimeSpan.FromMilliseconds(100));
 
-            if (hasWarmupPhase && !loadSimulation.IsWarmup)
-            {
-                while (_testExecutionState.IsExecutionQueueEmpty(scenario.Name) == false)
-                    await Task.Delay(TimeSpan.FromMilliseconds(100));
-
-                loadCollector.MarkPhaseAsCompleted(LoadTestPhase.Warmup, DateTime.UtcNow);
+                    loadCollector!.MarkPhaseAsCompleted(LoadTestPhase.Warmup, DateTime.UtcNow);
+                }
             }
 
             if (!loadSimulation.IsWarmup && !measurementPhaseStarted)
@@ -63,7 +69,9 @@ internal class ProducerManager
                 measurementPhaseStarted = true;
                 var timestamp = DateTime.UtcNow;
                 _testExecutionState.TestResult.MarkPhaseAsStarted(StandardTestPhase.Execute, timestamp);
-                loadCollector.MarkPhaseAsStarted(LoadTestPhase.Measurement, timestamp);
+                
+                if (testType == Contracts.TestType.Load)
+                    loadCollector!.MarkPhaseAsStarted(LoadTestPhase.Measurement, timestamp);
             }
 
             await handler.Execute();

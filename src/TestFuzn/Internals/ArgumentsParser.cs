@@ -1,8 +1,15 @@
 ﻿namespace Fuzn.TestFuzn.Internals;
 
-internal static class ArgumentsParser
+internal class ArgumentsParser
 {
-    public static Dictionary<string, string> Parse(string[] args)
+    private readonly IEnvironmentWrapper _environmentWrapper;
+
+    public ArgumentsParser(IEnvironmentWrapper environmentWrapper)
+    {
+        _environmentWrapper = environmentWrapper;
+    }
+
+    public Dictionary<string, string> Parse(string[] args)
     {
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     
@@ -26,12 +33,12 @@ internal static class ArgumentsParser
         return result;
     }
 
-    public static string GetValueFromArgsOrEnvironmentVariable(Dictionary<string, string> parsedArgs, string argsKey, string envKey)
+    public string GetValueFromArgsOrEnvironmentVariable(Dictionary<string, string> parsedArgs, string argsKey, string envKey)
     {
         // First try to get from command arguments
         if (parsedArgs != null && parsedArgs.TryGetValue(argsKey, out var value))
             return value;
 
-        return Environment.GetEnvironmentVariable(envKey) ?? "";
+        return _environmentWrapper.GetEnvironmentVariable(envKey) ?? "";
     }
 }

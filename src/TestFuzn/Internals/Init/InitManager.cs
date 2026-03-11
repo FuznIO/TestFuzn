@@ -18,7 +18,6 @@ internal class InitManager
         InputDataFeeder inputDataFeeder)
     {
         _serviceProvider = serviceProvider;
-        _serviceProvider = serviceProvider;
         _testExecutionState = testExecutionState;
         _inputDataFeeder = inputDataFeeder;
     }

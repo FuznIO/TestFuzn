@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using Fuzn.TestFuzn.Internals;
+using System.ComponentModel;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Fuzn.TestFuzn;
@@ -27,6 +29,14 @@ public class TestAttribute : TestMethodAttribute
     public string? Description { get; set; }
 
     /// <summary>
+    /// Gets or sets the identifier used to resolve a <see cref="TestSession"/> from the <see cref="TestSessionRegistry"/>.
+    /// When set, the matching session is retrieved and assigned as the current session via <see cref="AsyncLocal{T}"/>.
+    /// This is intended for advanced usage such as internal framework testing and is not part of the public API.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public string? TestSessionId { get; set; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="TestAttribute"/> class.
     /// </summary>
     /// <param name="callerFilePath">The source file path of the caller. Automatically populated by the compiler.</param>
@@ -39,6 +49,12 @@ public class TestAttribute : TestMethodAttribute
     /// <inheritdoc/>
     public override async Task<TestResult[]> ExecuteAsync(ITestMethod testMethod)
     {
+        if (TestSessionId != null)
+        {
+            var testSession = TestSessionRegistry.Get(TestSessionId);
+            TestSession.Current = testSession;
+        }
+
         if (string.IsNullOrEmpty(testMethod.TestMethodName))
             throw new Exception("testMethod.TestMethodName is null or empty.");
 

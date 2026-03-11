@@ -8,14 +8,19 @@ namespace Fuzn.TestFuzn;
 public static class TestFuznIntegration
 {
     /// <summary>
-    /// Initializes the TestFuzn test suite. Call from an <c>[AssemblyInitialize]</c> method.
+    /// Initializes the TestFuzn test suite using the specified <typeparamref name="TStartup"/> class.
+    /// Call from an <c>[AssemblyInitialize]</c> method.
     /// </summary>
+    /// <typeparam name="TStartup">The <see cref="IStartup"/> implementation to configure the suite.</typeparam>
     /// <param name="testContext">The MSTest <see cref="TestContext"/> for the current test run.</param>
-    public static async Task Init(TestContext testContext)
+    public static async Task Init<TStartup>(TestContext testContext)
+        where TStartup : IStartup, new()
     {
         var testFramework = new MsTestRunnerAdapter(testContext);
 
-        await TestFuznIntegrationCore.Init(testFramework);
+        var testSession = new TestSession("default");
+        TestSession.Default = testSession;
+        await testSession.Init<TStartup>(testFramework);
     }
 
     /// <summary>
@@ -24,8 +29,12 @@ public static class TestFuznIntegration
     /// <param name="testContext">The MSTest <see cref="TestContext"/> for the current test run.</param>
     public static async Task Cleanup(TestContext testContext)
     {
+        var testSession = TestSession.Default;
+        if (testSession == null)
+            return;
+
         var testFramework = new MsTestRunnerAdapter(testContext);
 
-        await TestFuznIntegrationCore.Cleanup(testFramework);
+        await testSession.Cleanup(testFramework);
     }
 }

@@ -8,8 +8,14 @@ namespace Fuzn.TestFuzn.Internals.Reports.Load;
 
 internal class LoadXmlReportWriter : ILoadReport
 {
-    public LoadXmlReportWriter()
+    private readonly IFileSystem _fileSystem;
+    private readonly TestSession _testSession;
+
+    public LoadXmlReportWriter(IFileSystem fileSystem,
+        TestSession testSession)
     {
+        _fileSystem = fileSystem;
+        _testSession = testSession;
     }
 
     public async Task WriteReport(LoadReportData loadReportData)
@@ -17,7 +23,7 @@ internal class LoadXmlReportWriter : ILoadReport
         try
         {
             var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Test.Group.Name}-{loadReportData.Test.Name}");
-            var filePath = Path.Combine(GlobalState.TestsOutputDirectory, $"LoadTestReport-{reportName}.xml");
+            var filePath = Path.Combine(_testSession.TestsOutputDirectory, $"LoadTestReport-{reportName}.xml");
 
             var stringBuilder = new StringBuilder();
             using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))
@@ -51,15 +57,15 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteEndElement();
 
                 writer.WriteElementString("TestRunId", loadReportData.TestRunId);
-                writer.WriteElementString("TargetEnvironment", GlobalState.TargetEnvironment);
-                writer.WriteElementString("ExecutionEnvironment", GlobalState.ExecutionEnvironment);
+                writer.WriteElementString("TargetEnvironment", _testSession.TargetEnvironment);
+                writer.WriteElementString("ExecutionEnvironment", _testSession.ExecutionEnvironment);
 
                 WriteTest(writer, loadReportData.Test);
 
                 writer.WriteStartElement("Scenarios");
                 foreach (var scenarioResult in loadReportData.ScenarioResults)
                 {
-                    WriteScenario(writer, loadReportData.Test.Group.Name, loadReportData.Test.Name, scenarioResult);
+                    WriteScenario(writer, loadReportData, scenarioResult);
                 }
                 writer.WriteEndElement();
 
@@ -67,12 +73,7 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteEndDocument();
             }
 
-            foreach (var scenarioResult in loadReportData.ScenarioResults)
-            {
-                InMemorySnapshotCollectorSinkPlugin.RemoveSnapshots(loadReportData.Test.Group.Name, loadReportData.Test.Name, scenarioResult.ScenarioName);
-            }
-
-            await File.WriteAllTextAsync(filePath, stringBuilder.ToString());
+            await _fileSystem.WriteAllTextAsync(filePath, stringBuilder.ToString());
         }
         catch (Exception ex)
         {
@@ -113,7 +114,7 @@ internal class LoadXmlReportWriter : ILoadReport
         writer.WriteEndElement();
     }
 
-    private void WriteScenario(XmlWriter writer, string groupName, string testName, ScenarioLoadResult scenarioResult)
+    private void WriteScenario(XmlWriter writer, LoadReportData data, ScenarioLoadResult scenarioResult)
     {
         writer.WriteStartElement("Scenario");
         writer.WriteElementString("Name", scenarioResult.ScenarioName);
@@ -132,7 +133,7 @@ internal class LoadXmlReportWriter : ILoadReport
 
         WriteSteps(writer, scenarioResult.Steps.Values.ToList());
 
-        WriteSnapshots(writer, groupName, testName, scenarioResult.ScenarioName);
+        WriteSnapshots(writer, data, scenarioResult.ScenarioName);
 
         writer.WriteEndElement();
     }
@@ -196,9 +197,9 @@ internal class LoadXmlReportWriter : ILoadReport
         }
     }
 
-    private void WriteSnapshots(XmlWriter writer, string groupName, string testName, string scenarioName)
+    private void WriteSnapshots(XmlWriter writer, LoadReportData data, string scenarioName)
     {
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(groupName, testName, scenarioName);
+        var snapshots = data.Snapshots[scenarioName];
 
         writer.WriteStartElement("Snapshots");
 

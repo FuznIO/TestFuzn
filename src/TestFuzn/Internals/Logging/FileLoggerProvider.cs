@@ -17,25 +17,27 @@ internal class FileLoggerProvider : ILoggerProvider, IDisposable
     /// <summary>
     /// Initializes a new instance of the FileLoggerProvider
     /// </summary>
+    /// <param name="fileSystem">File system abstraction used for directory and file operations.</param>
     /// <param name="path">Path to the log file</param>
-    public FileLoggerProvider(string path)
+    public FileLoggerProvider(IFileSystem fileSystem, string path)
     {
+        ArgumentNullException.ThrowIfNull(fileSystem);
         if (string.IsNullOrWhiteSpace(path))
             throw new ArgumentException("Log file path cannot be null or empty", nameof(path));
 
         _path = path;
-        
+
         try
         {
             // Ensure directory exists
             string? directory = Path.GetDirectoryName(_path);
             if (!string.IsNullOrEmpty(directory))
             {
-                Directory.CreateDirectory(directory);
+                fileSystem.CreateDirectory(directory);
             }
 
             // Open file with more robust settings
-            _writer = new StreamWriter(new FileStream(_path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite), Encoding.UTF8)
+            _writer = new StreamWriter(fileSystem.OpenFileStream(_path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite), Encoding.UTF8)
             {
                 AutoFlush = true
             };

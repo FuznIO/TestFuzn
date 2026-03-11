@@ -8,7 +8,7 @@ internal static class LoggerFactory
     /// <summary>
     /// Creates a logger instance for the given output directory
     /// </summary>
-    public static ILogger CreateLogger(string testsOutputDirectory, string categoryName = "TestFuzn")
+    public static ILogger CreateLogger(IFileSystem fileSystem, string testsOutputDirectory, string categoryName = "TestFuzn")
     {
         try
         {
@@ -22,16 +22,16 @@ internal static class LoggerFactory
             string? directory = Path.GetDirectoryName(logsPath);
             if (!string.IsNullOrEmpty(directory))
             {
-                Directory.CreateDirectory(directory);
+                fileSystem.CreateDirectory(directory);
             }
-            Directory.CreateDirectory(logsPath);
+            fileSystem.CreateDirectory(logsPath);
             string logFilePath = Path.Combine(logsPath, "TestFuzn_Log.log");
 
             // Create the logger factory with file provider
             var loggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
             {
                 builder
-                    .AddProvider(new FileLoggerProvider(logFilePath))
+                    .AddProvider(new FileLoggerProvider(fileSystem, logFilePath))
                     .SetMinimumLevel(LogLevel.Debug);
             });
             

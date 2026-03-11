@@ -21,9 +21,12 @@ internal class CleanupManager
 
         _testExecutionState.TestResult.MarkPhaseAsStarted(StandardTestPhase.Cleanup, timestampStarted);
 
-        foreach (var scenario in _testExecutionState.Scenarios)
+        if (_testExecutionState.TestType == Contracts.TestType.Load)
         {
-            _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Cleanup, timestampStarted);
+            foreach (var scenario in _testExecutionState.Scenarios)
+            {
+                _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Cleanup, timestampStarted);
+            }
         }
 
         var cleanupPerScenarioTasks = new List<Task>();
@@ -39,9 +42,13 @@ internal class CleanupManager
         await ExecuteCleanupTestMethod();
 
         var timestampCompleted = DateTime.UtcNow;
-        foreach (var scenario in _testExecutionState.Scenarios)
+
+        if (_testExecutionState.TestType == Contracts.TestType.Load)
         {
-            _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Cleanup, timestampCompleted);
+            foreach (var scenario in _testExecutionState.Scenarios)
+            {
+                _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsCompleted(LoadTestPhase.Cleanup, timestampCompleted);
+            }
         }
 
         _testExecutionState.TestResult.MarkPhaseAsCompleted(StandardTestPhase.Cleanup, timestampCompleted);

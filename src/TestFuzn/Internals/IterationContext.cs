@@ -8,7 +8,6 @@ internal class IterationState
     // Context
     public ExecutionInfo Info { get; internal set; }
     public ContextInternals Internals { get; set; }
-    public ILogger Logger { get; set; }
     public ITestFrameworkAdapter TestFramework { get; set; }
     public IServiceProvider ServiceProvider { get; set; }
 

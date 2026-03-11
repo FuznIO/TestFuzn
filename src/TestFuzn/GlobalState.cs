@@ -7,12 +7,6 @@ namespace Fuzn.TestFuzn;
 /// </summary>
 public static class GlobalState
 {
-    internal static bool IsInitializeGlobalExecuted
-    {
-        get => TestSession.Current.IsInitializeGlobalExecuted;
-        set => TestSession.Current.IsInitializeGlobalExecuted = value;
-    }
-
     internal static string TestsOutputDirectory
     {
         get => TestSession.Current.TestsOutputDirectory;

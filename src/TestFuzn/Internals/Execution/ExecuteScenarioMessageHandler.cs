@@ -1,6 +1,7 @@
 ﻿using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Contracts.Sinks;
 using Fuzn.TestFuzn.Internals.State;
 using System.Diagnostics;
 using Fuzn.TestFuzn.Internals.InputData;
@@ -12,16 +13,20 @@ internal class ExecuteScenarioMessageHandler
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly TestExecutionState _testExecutionState;
+    private readonly IEnumerable<ISinkPlugin> _sinkPlugins;
     private InputDataFeeder _inputDataFeeder;
 
     public ExecuteScenarioMessageHandler(
         IServiceProvider serviceProvider,
         TestExecutionState testExecutionState,
-        InputDataFeeder inputDataFeeder)
+        InputDataFeeder inputDataFeeder,
+        IEnumerable<ISinkPlugin> sinkPlugins,
+        TestSession testSession)
     {
         _serviceProvider = serviceProvider;
         _testExecutionState = testExecutionState;
         _inputDataFeeder = inputDataFeeder;
+        _sinkPlugins = sinkPlugins;
     }
 
     public async Task Execute(
@@ -56,14 +61,14 @@ internal class ExecuteScenarioMessageHandler
 
             foreach (var (step, index) in scenario.Steps.Select((s,i)=> (s,i)))
             {
-                using var loggingScope = GlobalState.Logger.BeginScope(new Dictionary<string, object?>
+                using var loggingScope = _testExecutionState.TestSession.Logger.BeginScope(new Dictionary<string, object?>
                 {
                     ["scenario"] = scenario.Name,
                     ["step"] = index + 1
                 });
                 
                 await executeStepHandler.ExecuteStep(step);
-                iterationResult.StepResults.Add(executeStepHandler.RootStepResult.Name, executeStepHandler.RootStepResult);
+                iterationResult.StepResults.Add(executeStepHandler.RootStepResult!.Name, executeStepHandler.RootStepResult);
             }
         }
         finally
@@ -122,13 +127,13 @@ internal class ExecuteScenarioMessageHandler
                 }
             }
 
-            await WriteToSinks(_testExecutionState, scenario, scenarioLoadResult, false);
+            await WriteToSinksAndSnapshotCollector(_testExecutionState, scenario, scenarioLoadResult, false);
         }
     }
 
-    private static async Task CleanupContext(IterationState iterationContext)
+    private async Task CleanupContext(IterationState iterationContext)
     {
-        foreach (var plugin in GlobalState.Configuration.ContextPlugins)
+        foreach (var plugin in _testExecutionState.TestSession.Configuration.ContextPlugins)
         {
             if (!plugin.RequireState)
                 continue;
@@ -138,7 +143,7 @@ internal class ExecuteScenarioMessageHandler
         }
     }
 
-    public async Task WriteToSinks(
+    public async Task WriteToSinksAndSnapshotCollector(
         TestExecutionState testExecutionState,
         Scenario scenario, ScenarioLoadResult scenarioLoadResult, 
         bool forceWrite)
@@ -159,15 +164,13 @@ internal class ExecuteScenarioMessageHandler
 
                 if (firstExecution
                     || forceWrite
-                    || (now - lastWrite).TotalSeconds >= GlobalState.SinkWriteFrequency.TotalSeconds)
+                    || (now - lastWrite).TotalSeconds >= _testExecutionState.TestSession.SinkWriteFrequency.TotalSeconds)
                 {
-                    var sinkPlugins = GlobalState.Configuration.SinkPlugins;
-                    if (sinkPlugins != null && sinkPlugins.Count > 0)
+                    await testExecutionState.LoadSnapshotCollector.WriteStats(scenarioLoadResult);
+
+                    foreach (var sinkPlugin in _sinkPlugins)
                     {
-                        foreach (var sinkPlugin in GlobalState.Configuration.SinkPlugins)
-                        {
-                            await sinkPlugin.WriteStats(GlobalState.TestRunId, testExecutionState.TestClassInstance.TestInfo.Group.Name, testExecutionState.TestClassInstance.TestInfo.Name, scenarioLoadResult);
-                        }
+                        await sinkPlugin.WriteStats(_testExecutionState.TestSession.TestRunId, testExecutionState.TestClassInstance.TestInfo.Group.Name, testExecutionState.TestClassInstance.TestInfo.Name, scenarioLoadResult);
                     }
                     testExecutionState.LastSinkWrite[scenario.Name] = now;
                 }

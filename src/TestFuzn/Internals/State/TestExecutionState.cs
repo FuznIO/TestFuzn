@@ -1,7 +1,9 @@
 ﻿using System.Collections.Concurrent;
+using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Internals.Reports.Load;
 using Fuzn.TestFuzn.Internals.Results.Load;
 
 namespace Fuzn.TestFuzn.Internals.State;
@@ -12,7 +14,9 @@ internal class TestExecutionState
     public List<Scenario> Scenarios { get; private set; } = new();
     public ITest TestClassInstance { get; private set; } = null!;
     public TestResult TestResult { get; private set; } = null!;
+    public TestType TestType => TestResult.TestType;
     public Dictionary<string, ScenarioLoadCollector> LoadCollectors = new();
+    public InMemorySnapshotCollector LoadSnapshotCollector { get; } = new();
     public ExecutionStatus ExecutionStatus { get; set; } = ExecutionStatus.NotStarted;
     public Exception? ExecutionStoppedReason { get; set; }
     public Exception? FirstException { get; set; }
@@ -20,6 +24,12 @@ internal class TestExecutionState
     public bool IsConsumingCompleted { get; private set; }
     public readonly ConcurrentDictionary<string, DateTime> LastSinkWrite = new();
     public readonly ConcurrentDictionary<string, SemaphoreSlim> SinkSemaphores = new();
+    public TestSession TestSession { get; internal set; }
+
+    public TestExecutionState(TestSession testSession)
+    {
+        TestSession = testSession;
+    }
 
     public void Init(
         ITestFrameworkAdapter testFramework,

@@ -49,7 +49,7 @@ internal class ConsumerManager
                 {
                     _testExecutionState.LoadCollectors[message.ScenarioName].MarkPhaseAsCompleted(LoadTestPhase.Measurement, DateTime.UtcNow);
                     var scenarioLoadResult = _testExecutionState.LoadCollectors[message.ScenarioName].GetCurrentResult(true);
-                    await _executeScenarioMessageHandler.WriteToSinks(_testExecutionState, scenario, scenarioLoadResult, true);
+                    await _executeScenarioMessageHandler.WriteToSinksAndSnapshotCollector(_testExecutionState, scenario, scenarioLoadResult, true);
                 }
             }
         });

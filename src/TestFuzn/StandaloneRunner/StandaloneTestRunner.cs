@@ -1,13 +1,13 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Internals;
 using Spectre.Console;
 
 namespace Fuzn.TestFuzn.StandaloneRunner;
 
 internal class StandaloneTestRunner
 {
-    internal async Task RunTest(string[] args, ITestFrameworkAdapter testFramework, 
+    internal async Task RunTest<TStartup>(string[] args, ITestFrameworkAdapter testFramework, 
         DiscoveredTest testInfo)
+        where TStartup : IStartup, new()
     {
         AnsiConsole.Write(new Markup($"[green]Running test:[/] [bold green]{testInfo.Name}[/]"));
         AnsiConsole.WriteLine();
@@ -24,9 +24,10 @@ internal class StandaloneTestRunner
             return;
         }
 
+        var testSession = new TestSession("default");
         try
         {
-            await TestFuznIntegrationCore.Init(testFramework);
+            await testSession.Init<TStartup>(testFramework);
             iTestClassInstance.TestFramework = testFramework;
             iTestClassInstance.TestMethodInfo = testInfo.Method;
 
@@ -37,7 +38,7 @@ internal class StandaloneTestRunner
         }
         finally
         {
-            await TestFuznIntegrationCore.Cleanup(testFramework);
+            await testSession.Cleanup(testFramework);
         }
     }
 }

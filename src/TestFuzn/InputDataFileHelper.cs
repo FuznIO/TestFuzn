@@ -1,17 +1,20 @@
-﻿using System.Globalization;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System.Globalization;
 using System.Text.Json;
 
 namespace Fuzn.TestFuzn;
 public static class InputDataFileHelper
 {
     private static JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
     public static async Task<List<object>> LoadFromCsv<T>(string path)
     {
+        var fileSystem = TestSession.Current.ServiceProvider.GetRequiredService<IFileSystem>();
         var result = new List<object>();
-        if (!File.Exists(path))
+        if (!fileSystem.FileExists(path))
             throw new FileNotFoundException($"CSV file not found: {path}");
 
-        using var reader = new StreamReader(path);
+        using var reader = fileSystem.OpenStreamReader(path);
         var headerLine = await reader.ReadLineAsync();
         if (headerLine == null)
             return result;
@@ -100,9 +103,10 @@ public static class InputDataFileHelper
     
     public static async Task<List<object>> LoadFromJson<T>(string path)
     {
-        if (!File.Exists(path))
+        var fileSystem = TestSession.Current.ServiceProvider.GetRequiredService<IFileSystem>();
+        if (!fileSystem.FileExists(path))
             throw new FileNotFoundException($"JSON file not found: {path}");
-        var json = await File.ReadAllTextAsync(path);
+        var json = await fileSystem.ReadAllTextAsync(path);
         var items = JsonSerializer.Deserialize<List<T>>(json, _jsonSerializerOptions);
         return items?.Cast<object>().ToList() ?? [];
     }
