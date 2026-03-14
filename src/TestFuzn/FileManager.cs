@@ -3,18 +3,34 @@ using System.Globalization;
 using System.Text.Json;
 
 namespace Fuzn.TestFuzn;
-public static class InputDataFileHelper
+
+/// <summary>
+/// Provides methods for loading test data from external files such as CSV and JSON.
+/// </summary>
+public class FileManager
 {
     private static JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+    private readonly IFileSystem _fileSystem;
 
-    public static async Task<List<object>> LoadFromCsv<T>(string path)
+    internal FileManager(IFileSystem fileSystem)
     {
-        var fileSystem = TestSession.Current.ServiceProvider.GetRequiredService<IFileSystem>();
+        _fileSystem = fileSystem;
+    }
+
+    /// <summary>
+    /// Loads records from a CSV file, mapping columns to properties of <typeparamref name="T"/> by header name.
+    /// </summary>
+    /// <typeparam name="T">The type to map each CSV row to.</typeparam>
+    /// <param name="path">The path to the CSV file.</param>
+    /// <returns>A list of deserialized objects.</returns>
+    /// <exception cref="FileNotFoundException">Thrown when the specified CSV file does not exist.</exception>
+    public async Task<List<object>> LoadFromCsv<T>(string path)
+    {
         var result = new List<object>();
-        if (!fileSystem.FileExists(path))
+        if (!_fileSystem.FileExists(path))
             throw new FileNotFoundException($"CSV file not found: {path}");
 
-        using var reader = fileSystem.OpenStreamReader(path);
+        using var reader = _fileSystem.OpenStreamReader(path);
         var headerLine = await reader.ReadLineAsync();
         if (headerLine == null)
             return result;
@@ -101,7 +117,14 @@ public static class InputDataFileHelper
         return result;
     }
     
-    public static async Task<List<object>> LoadFromJson<T>(string path)
+    /// <summary>
+    /// Loads records from a JSON file, deserializing the contents as a list of <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize each JSON element to.</typeparam>
+    /// <param name="path">The path to the JSON file.</param>
+    /// <returns>A list of deserialized objects.</returns>
+    /// <exception cref="FileNotFoundException">Thrown when the specified JSON file does not exist.</exception>
+    public async Task<List<object>> LoadFromJson<T>(string path)
     {
         var fileSystem = TestSession.Current.ServiceProvider.GetRequiredService<IFileSystem>();
         if (!fileSystem.FileExists(path))

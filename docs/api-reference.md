@@ -34,6 +34,16 @@
 | `CreateHttpRequest(string)` | Create HTTP request (requires HTTP plugin) |
 | `CreateBrowserPage(browserType?, device?, configureBrowserContext?)` | Create Playwright browser page with optional browser type, device emulation, and context options (requires Playwright plugin) |
 | `GetPlaywright()` | Get the Playwright instance for direct API access such as device descriptors (requires Playwright plugin) |
+| `Files` | Access the `FileManager` for loading test data from CSV and JSON files |
+
+---
+
+## FileManager Methods
+
+| Method | Description |
+|--------|-------------|
+| `LoadFromCsv<T>(string path)` | Load records from a CSV file, mapping columns to properties of `T` by header name |
+| `LoadFromJson<T>(string path)` | Load records from a JSON file, deserializing contents as a list of `T` |
 
 ---
 

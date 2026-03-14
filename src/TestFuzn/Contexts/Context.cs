@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn;
 
@@ -35,4 +36,9 @@ public class Context
     /// Gets the service provider for resolving dependencies from the IoC container.
     /// </summary>
     public IServiceProvider ServicesProvider => IterationState.ServiceProvider;
+
+    /// <summary>
+    /// Gets the file manager for loading test data from CSV and JSON files.
+    /// </summary>
+    public FileManager Files => IterationState.ServiceProvider.GetRequiredService<FileManager>();
 }

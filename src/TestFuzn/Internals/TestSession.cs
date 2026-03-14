@@ -16,6 +16,7 @@ using Fuzn.TestFuzn.Internals.Results.Standard;
 using Fuzn.TestFuzn.Internals.State;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.ComponentModel.DataAnnotations;
 
 namespace Fuzn.TestFuzn.Internals;
 
@@ -184,6 +185,7 @@ internal class TestSession
         services.AddSingleton(this);
         services.AddSingleton<IFileSystem>(fileSystem);
         services.AddSingleton<ILogger>(logger);
+        services.AddSingleton(new FileManager(fileSystem));
         services.AddScoped<TestRunner>();
         services.AddScoped<TestExecutionState>();
         services.AddScoped<ConsoleWriter>();
