@@ -15,7 +15,6 @@ internal class StandaloneRunnerCore
         var parsedArgs = argumentsParser.Parse(args);
 
         Console.OutputEncoding = Encoding.UTF8;
-        GlobalState.AssemblyWithTestsName = assembly.GetName().Name;
 
         var tests = new DiscoverTests().GetTests(assembly);
 

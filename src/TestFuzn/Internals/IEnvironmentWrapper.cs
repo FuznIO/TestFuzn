@@ -2,6 +2,6 @@
 
 internal interface IEnvironmentWrapper
 {
-    string GetEnvironmentVariable(string key);
+    string? GetEnvironmentVariable(string key);
     string GetMachineName();
 }

@@ -6,6 +6,7 @@ using Fuzn.TestFuzn.Internals.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Execution.Consumers;
 using Fuzn.TestFuzn.Internals.Execution.Producers;
+using Fuzn.TestFuzn.Internals.FileConfiguration;
 using Fuzn.TestFuzn.Internals.Init;
 using Fuzn.TestFuzn.Internals.InputData;
 using Fuzn.TestFuzn.Internals.Logger;
@@ -14,13 +15,11 @@ using Fuzn.TestFuzn.Internals.Reports.Load;
 using Fuzn.TestFuzn.Internals.Reports.Standard;
 using Fuzn.TestFuzn.Internals.Results.Standard;
 using Fuzn.TestFuzn.Internals.State;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.ComponentModel.DataAnnotations;
 
 namespace Fuzn.TestFuzn.Internals;
 
-internal class TestSession
+internal partial class TestSession
 {
     private static readonly AsyncLocal<TestSession> _current = new();
     private static TestSession? _default;
@@ -48,7 +47,6 @@ internal class TestSession
     internal TestFuznConfiguration Configuration { get; set; }
     internal bool LoadTestWasExecuted { get; set; } = false;
     internal ILogger Logger { get; set; }
-    internal string AssemblyWithTestsName { get; set; }
     internal string TestRunId { get; set; }
     internal DateTime TestRunStartTime { get; set; }
     internal DateTime TestRunEndTime { get; set; }
@@ -62,15 +60,6 @@ internal class TestSession
     internal StandardResultManager ResultManager { get; } = new();
     internal IStartup StartupInstance { get; set; }
     internal string Id { get; }
-
-    private IConfigurationRoot _configRoot;
-    private readonly object _configLocker = new();
-
-    //internal IConfigurationRoot ConfigRoot
-    //{
-    //    get => _configRoot ??= BuildConfigRoot();
-    //    set => _configRoot = value;
-    //}
 
     internal IServiceProvider ServiceProvider { get; set; }
 
@@ -90,23 +79,26 @@ internal class TestSession
     }
 
     public async Task Init<TStartup>(
-        ITestFrameworkAdapter testFramework, 
+        ITestFrameworkAdapter testFramework,
         Dictionary<string, string>? args = null)
         where TStartup : IStartup, new()
     {
         var environmentWrapper = new EnvironmentWrapper();
 
+        var fileSystem = new FileSystem();
         await Init<TStartup>(
             environmentWrapper,
-            new FileSystem(),
+            fileSystem,
+            new ConfigurationLoader(),
             new ArgumentsParser(environmentWrapper),
-            testFramework, 
+            testFramework,
             args);
     }
 
     internal async Task Init<TStartup>(
         IEnvironmentWrapper environmentWrapper,
         IFileSystem fileSystem,
+        IConfigurationLoader configurationLoader,
         ArgumentsParser argumentParser,
         ITestFrameworkAdapter testFramework,
         Dictionary<string, string>? args = null)
@@ -119,7 +111,7 @@ internal class TestSession
                                         args, "target-environment", "TESTFUZN_TARGET_ENVIRONMENT");
         ExecutionEnvironment = argumentParser.GetValueFromArgsOrEnvironmentVariable(
                                         args, "execution-environment", "TESTFUZN_EXECUTION_ENVIRONMENT");
-        
+
         var tagsInclude = argumentParser.GetValueFromArgsOrEnvironmentVariable(
                                 args, "tags-filter-include", "TESTFUZN_TAGS_FILTER_INCLUDE");
         if (!string.IsNullOrEmpty(tagsInclude))
@@ -145,13 +137,21 @@ internal class TestSession
         Logger = Internals.Logging.LoggerFactory.CreateLogger(fileSystem, TestsOutputDirectory);
         Logger.LogInformation("Logging initialized");
 
+        var configRoot = configurationLoader.LoadConfigRoot(
+                                executionEnvironment: ExecutionEnvironment,
+                                targetEnvironment: TargetEnvironment, 
+                                nodeName: NodeName);
+
+        var configurationManager = new ConfigurationManager(configRoot);
+
         var services = new ServiceCollection();
-        AddServices(services, fileSystem, Logger);
+        AddServices(services, fileSystem, Logger, configurationManager);
 
         var configuration = new TestFuznConfiguration(services);
+        configuration.Configuration = configurationManager;
         configuration.Suite = new SuiteInfo();
         configuration.Suite.Name = testAssemblyName;
-        StartupInstance.Configure(configuration);            
+        StartupInstance.Configure(configuration);
         Configuration = configuration;
 
         // Build the service provider after all plugins have registered their services
@@ -159,7 +159,7 @@ internal class TestSession
 
         if (StartupInstance is IBeforeSuite initGlobalInstance)
         {
-            var context = ContextFactory.CreateContext(ServiceProvider, testFramework, "Init");
+            var context = ContextFactory.CreateContext(this, ServiceProvider, testFramework, "Init");
             await initGlobalInstance.BeforeSuite(context);
         }
 
@@ -180,12 +180,14 @@ internal class TestSession
 
     private void AddServices(ServiceCollection services,
         IFileSystem fileSystem,
-        ILogger logger)
+        ILogger logger,
+        ConfigurationManager configurationManager)
     {
         services.AddSingleton(this);
         services.AddSingleton<IFileSystem>(fileSystem);
         services.AddSingleton<ILogger>(logger);
         services.AddSingleton(new FileManager(fileSystem));
+        services.AddSingleton(configurationManager);
         services.AddScoped<TestRunner>();
         services.AddScoped<TestExecutionState>();
         services.AddScoped<ConsoleWriter>();
@@ -212,7 +214,7 @@ internal class TestSession
 
         if (StartupInstance is IAfterSuite cleanupGlobalInstance)
         {
-            await cleanupGlobalInstance.AfterSuite(ContextFactory.CreateContext(ServiceProvider, testFramework, "Cleanup"));
+            await cleanupGlobalInstance.AfterSuite(ContextFactory.CreateContext(this, ServiceProvider, testFramework, "Cleanup"));
         }
 
         TestRunEndTime = DateTime.UtcNow;
@@ -229,37 +231,4 @@ internal class TestSession
         foreach (var plugin in ServiceProvider.GetServices<ISinkPlugin>())
             await plugin.CleanupSuite();
     }
-
-    //private IConfigurationRoot BuildConfigRoot()
-    //{
-    //    lock (_configLocker)
-    //    {
-    //        if (_configRoot != null)
-    //            return _configRoot;
-
-    //        var builder = new ConfigurationBuilder()
-    //                            .SetBasePath(Directory.GetCurrentDirectory())
-    //                            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
-
-    //        var executionEnv = ExecutionEnvironment;
-    //        var targetEnv = TargetEnvironment;
-    //        var nodeName = NodeName;
-
-    //        if (!string.IsNullOrEmpty(executionEnv))
-    //            builder.AddJsonFile($"appsettings.exec-{executionEnv}.json", optional: true, reloadOnChange: false);
-
-    //        if (!string.IsNullOrEmpty(targetEnv))
-    //            builder.AddJsonFile($"appsettings.target-{targetEnv}.json", optional: true, reloadOnChange: false);
-
-    //        if (!string.IsNullOrEmpty(executionEnv) && !string.IsNullOrEmpty(targetEnv))
-    //            builder.AddJsonFile($"appsettings.exec-{executionEnv}.target-{targetEnv}.json", optional: true, reloadOnChange: false);
-
-    //        if (!string.IsNullOrEmpty(nodeName))
-    //            builder.AddJsonFile($"appsettings.{nodeName}.json", optional: true, reloadOnChange: false);
-
-    //        _configRoot = builder.Build();
-
-    //        return _configRoot;
-    //    }
-    //}
 }

@@ -9,23 +9,23 @@ public class ConfigurationManagerTests : Test
         await Scenario()
             .Step("Verify GetRequiredSection", context =>
             {
-                Assert.AreEqual("CustomValueThatExists", ConfigurationManager.GetRequiredSection<CustomSectionThatExists>("CustomSectionThatExists").CustomKeyThatExists);
-                Assert.Throws<InvalidOperationException>(() => ConfigurationManager.GetRequiredSection<CustomSectionThatDoesNotExist>("CustomSectionThatDoesNotExist"));
+                Assert.AreEqual("CustomValueThatExists", context.Configuration.GetRequiredSection<CustomSectionThatExists>("CustomSectionThatExists").CustomKeyThatExists);
+                Assert.Throws<InvalidOperationException>(() => context.Configuration.GetRequiredSection<CustomSectionThatDoesNotExist>("CustomSectionThatDoesNotExist"));
             })
             .Step("Verify GetRequiredValue", context =>
             {
-                Assert.AreEqual("ValueThatExists", ConfigurationManager.GetRequiredValue<string>("KeyThatExists"));
-                Assert.Throws<KeyNotFoundException>(() => ConfigurationManager.GetRequiredValue<string>("KeyThatDoesNotExist"));
+                Assert.AreEqual("ValueThatExists", context.Configuration.GetRequiredValue<string>("KeyThatExists"));
+                Assert.Throws<KeyNotFoundException>(() => context.Configuration.GetRequiredValue<string>("KeyThatDoesNotExist"));
             })
             .Step("Verify HasSection", context =>
             {
-                Assert.IsTrue(ConfigurationManager.HasSection("CustomSectionThatExists"));
-                Assert.IsFalse(ConfigurationManager.HasSection("SectionThatDoesNotExist"));
+                Assert.IsTrue(context.Configuration.HasSection("CustomSectionThatExists"));
+                Assert.IsFalse(context.Configuration.HasSection("SectionThatDoesNotExist"));
             })
             .Step("Verify HasValue", context =>
             {
-                Assert.IsTrue(ConfigurationManager.HasValue("KeyThatExists"));
-                Assert.IsFalse(ConfigurationManager.HasValue("KeyThatDoesNotExist"));
+                Assert.IsTrue(context.Configuration.HasValue("KeyThatExists"));
+                Assert.IsFalse(context.Configuration.HasValue("KeyThatDoesNotExist"));
             })
             .Run();
     }

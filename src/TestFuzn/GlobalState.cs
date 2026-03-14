@@ -37,12 +37,6 @@ public static class GlobalState
         set => TestSession.Current.Logger = value;
     }
 
-    internal static string AssemblyWithTestsName
-    {
-        get => TestSession.Current.AssemblyWithTestsName;
-        set => TestSession.Current.AssemblyWithTestsName = value;
-    }
-
     internal static string TestRunId
     {
         get => TestSession.Current.TestRunId;

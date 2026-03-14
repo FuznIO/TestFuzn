@@ -41,4 +41,9 @@ public class Context
     /// Gets the file manager for loading test data from CSV and JSON files.
     /// </summary>
     public FileManager Files => IterationState.ServiceProvider.GetRequiredService<FileManager>();
+
+    /// <summary>
+    /// Gets the configuration manager for accessing values from appsettings.json and environment-specific configuration files.
+    /// </summary>
+    public ConfigurationManager Configuration => IterationState.ServiceProvider.GetRequiredService<ConfigurationManager>();
 }

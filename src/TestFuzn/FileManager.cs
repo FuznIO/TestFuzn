@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
 
 namespace Fuzn.TestFuzn;
@@ -126,10 +125,9 @@ public class FileManager
     /// <exception cref="FileNotFoundException">Thrown when the specified JSON file does not exist.</exception>
     public async Task<List<object>> LoadFromJson<T>(string path)
     {
-        var fileSystem = TestSession.Current.ServiceProvider.GetRequiredService<IFileSystem>();
-        if (!fileSystem.FileExists(path))
+        if (!_fileSystem.FileExists(path))
             throw new FileNotFoundException($"JSON file not found: {path}");
-        var json = await fileSystem.ReadAllTextAsync(path);
+        var json = await _fileSystem.ReadAllTextAsync(path);
         var items = JsonSerializer.Deserialize<List<T>>(json, _jsonSerializerOptions);
         return items?.Cast<object>().ToList() ?? [];
     }

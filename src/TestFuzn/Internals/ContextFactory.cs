@@ -6,13 +6,14 @@ namespace Fuzn.TestFuzn.Internals;
 internal class ContextFactory
 {
     public static Context CreateContext(
+        TestSession testSession,
         IServiceProvider serviceProvider, 
         ITestFrameworkAdapter testFramework, 
         string stepName)
     {
         var context = new Context();
 
-        if (GlobalState.Configuration != null)
+        if (testSession.Configuration != null)
         {
             context.IterationState = new();
             PopulateIterationStateProperties(context.IterationState, serviceProvider, testFramework);

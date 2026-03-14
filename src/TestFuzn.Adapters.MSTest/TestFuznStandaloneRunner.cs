@@ -4,6 +4,9 @@ using System.Reflection;
 
 namespace Fuzn.TestFuzn;
 
+/// <summary>
+/// Provides a standalone runner for executing TestFuzn test suites outside of a MS test framework host.
+/// </summary>
 public class TestFuznStandaloneRunner
 {
     /// <summary>

@@ -56,7 +56,7 @@ internal class InitManager
     {
         if (_testExecutionState.TestClassInstance is IBeforeTest testClassInstance)
         {
-            var context = ContextFactory.CreateContext(_serviceProvider, _testExecutionState.TestFramework, "BeforeTest");
+            var context = ContextFactory.CreateContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "BeforeTest");
             await testClassInstance.BeforeTest(context);
         }
     }

@@ -30,6 +30,10 @@ public class TestFuznConfiguration
     public IServiceCollection Services { get; }
 
     internal List<IContextPlugin> ContextPlugins { get; set; } = new();
+    /// <summary>
+    /// Gets the configuration manager that provides access to application configuration settings.
+    /// </summary>
+    public ConfigurationManager Configuration { get; internal set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TestFuznConfiguration"/> class with default settings.

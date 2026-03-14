@@ -7,19 +7,34 @@ namespace Fuzn.TestFuzn;
 /// </summary>
 public class ConfigurationManager
 {
-    private static IConfigurationRoot? _configRoot;
-    private static readonly object _locker = new();
+    private IConfigurationRoot ConfigRoot
+    {
+        get
+        {
+            if (field == null)
+                throw new InvalidOperationException("Configuration has not been initialized. Ensure that appsettings.json is present and that TestFuzn is properly configured.");
+
+            return field;
+        }
+        set;
+    }
+
+    internal ConfigurationManager(IConfigurationRoot configRoot)
+    {
+        ConfigRoot = configRoot;
+    }
+
 
     /// <summary>
     /// Returns true if the configuration section TestFuzn:{sectionName} exists. Otherwise, false.
     /// </summary>
     /// <param name="sectionName">The name of the configuration section to check.</param>
     /// <returns>True if the section exists; otherwise, false.</returns>
-    public static bool HasSection(string sectionName)
+    public bool HasSection(string sectionName)
     {
         try
         {
-            var section = GetConfigRoot().GetSection("TestFuzn").GetSection(sectionName);
+            var section = ConfigRoot.GetSection("TestFuzn").GetSection(sectionName);
 
             return section.Exists();
         }
@@ -36,12 +51,12 @@ public class ConfigurationManager
     /// <param name="sectionName">The name of the configuration section to retrieve.</param>
     /// <returns>An instance of <typeparamref name="T"/> populated with configuration values.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the section does not exist or cannot be bound.</exception>
-    public static T GetRequiredSection<T>(string sectionName) 
+    public T GetRequiredSection<T>(string sectionName) 
         where T : new()
     {
         try
         {
-            var section = GetConfigRoot().GetSection("TestFuzn").GetSection(sectionName);
+            var section = ConfigRoot.GetSection("TestFuzn").GetSection(sectionName);
             if (!section.Exists())
             {
                 throw new InvalidOperationException(@$"Failed to load configuration for section '{sectionName}'. 
@@ -64,11 +79,11 @@ public class ConfigurationManager
     /// </summary>
     /// <param name="key">The configuration key to check.</param>
     /// <returns>True if the value exists; otherwise, false.</returns>
-    public static bool HasValue(string key)
+    public bool HasValue(string key)
     {
         try
         {
-            var section = GetConfigRoot().GetSection($"TestFuzn:Values:{key}");
+            var section = ConfigRoot.GetSection($"TestFuzn:Values:{key}");
             return section.Exists();
         }
         catch
@@ -85,9 +100,9 @@ public class ConfigurationManager
     /// <returns>The configuration value converted to <typeparamref name="T"/>.</returns>
     /// <exception cref="KeyNotFoundException">Thrown when the key does not exist.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the value cannot be converted to the specified type.</exception>
-    public static T GetRequiredValue<T>(string key)
+    public T GetRequiredValue<T>(string key)
     {
-        var section = GetConfigRoot().GetSection($"TestFuzn:Values:{key}");
+        var section = ConfigRoot.GetSection($"TestFuzn:Values:{key}");
         if (!section.Exists())
             throw new KeyNotFoundException($"Configuration key 'TestFuzn:Values:{key}' not found.");
 
@@ -101,41 +116,6 @@ public class ConfigurationManager
         catch
         {
             throw new InvalidOperationException($"Configuration key 'TestFuzn:Values:{key}' could not be converted to type {typeof(T).Name}.");
-        }
-    }
-    private static IConfigurationRoot GetConfigRoot()
-    {
-        if (_configRoot != null)
-            return _configRoot;
-
-        lock (_locker)
-        {
-            if (_configRoot != null)
-                return _configRoot;
-
-            var builder = new ConfigurationBuilder()
-                                .SetBasePath(Directory.GetCurrentDirectory())
-                                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
-
-            var executionEnv = GlobalState.ExecutionEnvironment;
-            var targetEnv = GlobalState.TargetEnvironment;
-            var nodeName = GlobalState.NodeName;
-
-            if (!string.IsNullOrEmpty(executionEnv))
-                builder.AddJsonFile($"appsettings.exec-{executionEnv}.json", optional: true, reloadOnChange: false);
-
-            if (!string.IsNullOrEmpty(targetEnv))
-                builder.AddJsonFile($"appsettings.target-{targetEnv}.json", optional: true, reloadOnChange: false);
-
-            if (!string.IsNullOrEmpty(executionEnv) && !string.IsNullOrEmpty(targetEnv))
-                builder.AddJsonFile($"appsettings.exec-{executionEnv}.target-{targetEnv}.json", optional: true, reloadOnChange: false);
-
-            if (!string.IsNullOrEmpty(nodeName))
-                builder.AddJsonFile($"appsettings.{nodeName}.json", optional: true, reloadOnChange: false);
-
-            _configRoot = builder.Build();
-
-            return _configRoot;
         }
     }
 }

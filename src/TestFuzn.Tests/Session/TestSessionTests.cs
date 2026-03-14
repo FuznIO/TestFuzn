@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Internals;
+using Fuzn.TestFuzn.Internals.FileConfiguration;
 
 namespace Fuzn.TestFuzn.Tests.Session;
 
@@ -9,9 +10,11 @@ public class TestSessionTests : Test, IStartup
     public static async Task ClassInitialize(TestContext testContext)
     {
         var testSession = new TestSession(nameof(TestSessionTests));
+        var fileSystem = new FileSystem();
         await testSession.Init<TestSessionTests>(
             new EnvironmentWrapper(),
-            new FileSystem(),
+            fileSystem  ,
+            new ConfigurationLoader(),
             new ArgumentsParser(new EnvironmentWrapper()),
             new MsTestRunnerAdapter(testContext));
         testSession.TestRunId = "TestSessionOverride";

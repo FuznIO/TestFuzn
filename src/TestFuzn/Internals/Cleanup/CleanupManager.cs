@@ -64,7 +64,7 @@ internal class CleanupManager
     {
         if (_testExecutionState.TestClassInstance is IAfterTest cleanup)
         {
-            Context context = ContextFactory.CreateContext(_serviceProvider, _testExecutionState.TestFramework, "AfterTest");
+            Context context = ContextFactory.CreateContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "AfterTest");
             await cleanup.AfterTest(context);
         }
     }

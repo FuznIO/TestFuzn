@@ -25,6 +25,7 @@ internal class StandaloneTestRunner
         }
 
         var testSession = new TestSession("default");
+        TestSession.Default = testSession;
         try
         {
             await testSession.Init<TStartup>(testFramework);
