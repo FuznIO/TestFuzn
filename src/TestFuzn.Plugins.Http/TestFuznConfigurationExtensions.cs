@@ -53,9 +53,13 @@ public static class TestFuznConfigurationExtensions
             httpConfiguration.DefaultHttpClientInternal = typeof(TestFuznHttpClient);
         }
 
-        HttpGlobalState.Configuration = httpConfiguration;
-        HttpGlobalState.HasBeenInitialized = true;
+        var globalState = new HttpGlobalState
+        {
+            Configuration = httpConfiguration,
+            HasBeenInitialized = true
+        };
+        configuration.Services.AddSingleton(globalState);
 
-        configuration.AddContextPlugin(new HttpPlugin());
+        configuration.AddContextPlugin(new HttpPlugin(globalState));
     }
 }

@@ -2,6 +2,6 @@
 
 internal class HttpGlobalState
 {
-    public static HttpPluginConfiguration Configuration { get; set; } = null!;
-    public static bool HasBeenInitialized { get; set; } = false;
+    public HttpPluginConfiguration Configuration { get; set; } = null!;
+    public bool HasBeenInitialized { get; set; } = false;
 }

@@ -6,7 +6,7 @@ namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 /// <summary>
 /// A DelegatingHandler that adds TestFuzn-specific logging and correlation ID injection.
 /// </summary>
-internal class TestFuznLoggingHandler : DelegatingHandler
+internal class TestFuznLoggingHandler(HttpGlobalState globalState) : DelegatingHandler
 {
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
@@ -14,7 +14,7 @@ internal class TestFuznLoggingHandler : DelegatingHandler
         var state = request.Options.GetTestFuznState();
         var verbosity = context.Info.TestSession.Configuration?.LoggingVerbosity ?? LoggingVerbosity.Full;
         var testType = context.IterationState.Scenario?.TestType ?? Contracts.TestType.Standard;
-        var writeHttpDetailsOnStepFailure = HttpGlobalState.Configuration?.WriteHttpDetailsToConsoleOnStepFailure ?? false;
+        var writeHttpDetailsOnStepFailure = globalState.Configuration?.WriteHttpDetailsToConsoleOnStepFailure ?? false;
 
         var correlationId = context.Info.CorrelationId;
         var stepName = context.StepInfo?.Name ?? "Unknown";
@@ -82,9 +82,9 @@ internal class TestFuznLoggingHandler : DelegatingHandler
         }
     }
 
-    private static void InjectCorrelationIdHeader(HttpRequestMessage request, string correlationId)
+    private void InjectCorrelationIdHeader(HttpRequestMessage request, string correlationId)
     {
-        var correlationHeaderName = HttpGlobalState.Configuration.CorrelationIdHeaderName;
+        var correlationHeaderName = globalState.Configuration.CorrelationIdHeaderName;
         if (!request.Headers.Contains(correlationHeaderName))
         {
             request.Headers.TryAddWithoutValidation(correlationHeaderName, correlationId);

@@ -27,16 +27,18 @@ public static class ContextExtensions
     /// </example>
     public static FluentHttpRequest CreateHttpRequest(this Context context, string url)
     {
-        if (!HttpGlobalState.HasBeenInitialized)
+        var globalState = context.ServicesProvider.GetRequiredService<HttpGlobalState>();
+
+        if (!globalState.HasBeenInitialized)
             throw new InvalidOperationException("TestFuzn.Plugins.HTTP has not been initialized. Please call configuration.UseHttp() in the Startup.");
 
-        if (HttpGlobalState.Configuration.DefaultHttpClientInternal == null)
+        if (globalState.Configuration.DefaultHttpClientInternal == null)
             throw new InvalidOperationException(
                 "No default HTTP client has been configured. " +
                 "Either call httpConfig.DefaultHttpClient<THttpClient>() in UseHttp() configuration, " +
                 "or use context.CreateHttpRequest<THttpClient>(url) to specify the HTTP client type explicitly.");
 
-        return CreateHttpRequest(HttpGlobalState.Configuration.DefaultHttpClientInternal, context, url);
+        return CreateHttpRequest(globalState.Configuration.DefaultHttpClientInternal, context, url);
     }
 
     /// <summary>
@@ -54,7 +56,9 @@ public static class ContextExtensions
 
     private static FluentHttpRequest CreateHttpRequest(Type httpClientType, Context context, string url)
     {
-        if (!HttpGlobalState.HasBeenInitialized)
+        var globalState = context.ServicesProvider.GetRequiredService<HttpGlobalState>();
+
+        if (!globalState.HasBeenInitialized)
             throw new InvalidOperationException("TestFuzn.Plugins.HTTP has not been initialized. Please call configuration.UseHttp() in the Startup.");
 
         var httpClientInstance = context.ServicesProvider.GetRequiredService(httpClientType);

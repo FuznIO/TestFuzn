@@ -1,50 +1,53 @@
-﻿using Fuzn.TestFuzn.Contracts.Adapters;
-
-namespace Fuzn.TestFuzn;
+﻿namespace Fuzn.TestFuzn;
 
 /// <summary>
 /// Provides global state and configuration for the TestFuzn framework.
 /// </summary>
 public static class GlobalState
 {
-    internal static string TestsOutputDirectory
-    {
-        get => TestSession.Current.TestsOutputDirectory;
-        set => TestSession.Current.TestsOutputDirectory = value;
-    }
+    /// <summary>
+    /// Gets the target environment the tests are executing against
+    /// Set via TESTFUZN_TARGET_ENVIRONMENT environment variable or --target-environment argument.
+    /// </summary>
+    public static string TargetEnvironment => GetTestSession().Configuration.TargetEnvironment;
 
-    internal static TestFuznConfiguration Configuration
-    {
-        get => TestSession.Current.Configuration;
-        set => TestSession.Current.Configuration = value;
-    }
+    /// <summary>
+    /// Gets the execution environment where tests are running
+    /// Set via TESTFUZN_EXECUTION_ENVIRONMENT environment variable or --execution-environment argument.
+    /// Used for configuration loading, not for test filtering.
+    /// </summary>
+    public static string ExecutionEnvironment => GetTestSession().Configuration.ExecutionEnvironment;
 
-    internal static IServiceProvider ServiceProvider
-    {
-        get => TestSession.Current.ServiceProvider;
-        set => TestSession.Current.ServiceProvider = value;
-    }
+    /// <summary>
+    /// Gets the configuration manager that provides access to application configuration settings.
+    /// </summary>
+    public static AppConfigurationManager AppConfiguration => GetTestSession().Configuration.AppConfiguration;
 
-    internal static ILogger Logger
-    {
-        get => TestSession.Current.Logger;
-        set => TestSession.Current.Logger = value;
-    }
+    /// <summary>
+    /// Gets the name of the node (machine) where the tests are running.
+    /// </summary>
+    public static string NodeName => GetTestSession().NodeName;
 
-    internal static string TestRunId
-    {
-        get => TestSession.Current.TestRunId;
-        set => TestSession.Current.TestRunId = value;
-    }
+    /// <summary>
+    /// Gets the service provider for resolving dependencies registered during test initialization.
+    /// </summary>
+    public static IServiceProvider ServiceProvider => GetTestSession().ServiceProvider;
 
-    internal static string NodeName
-    {
-        get => TestSession.Current.NodeName;
-        set => TestSession.Current.NodeName = value;
-    }
+    /// <summary>
+    /// Gets the logger instance used for writing test log output.
+    /// </summary>
+    public static ILogger Logger => GetTestSession().Logger;
 
-    internal static void EnsureInitialized(ITestFrameworkAdapter testFramework)
-    {
-        TestSession.Current.EnsureInitialized(testFramework);
-    }
+    /// <summary>
+    /// Gets the output directory where test results and artifacts are written.
+    /// </summary>
+    public static string TestsOutputDirectory => GetTestSession().TestsOutputDirectory;
+
+    /// <summary>
+    /// Gets the unique identifier for the current test run.
+    /// </summary>
+    public static string TestRunId => GetTestSession().TestRunId;
+
+    private static TestSession GetTestSession() =>
+        TestSession.Current ?? throw new InvalidOperationException("TestSession has not been initialized. Ensure TestFuzn is initialized before accessing GlobalState.");
 }

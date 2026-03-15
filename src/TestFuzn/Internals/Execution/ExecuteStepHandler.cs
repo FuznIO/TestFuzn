@@ -143,7 +143,7 @@ internal class ExecuteStepHandler
             }
             catch (Exception ex)
             {
-                GlobalState.Logger.LogError(ex, $"An exception occurred in the plugin {plugin.GetType()} step exception handler.");
+                iterationContext.Logger.LogError(ex, $"An exception occurred in the plugin {plugin.GetType()} step exception handler.");
             }
         }
     }

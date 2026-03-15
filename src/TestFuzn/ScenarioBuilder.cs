@@ -23,7 +23,11 @@ public class ScenarioBuilder<TModel>
         if (testFramework is not ITestFrameworkAdapter adapter)
             throw new ArgumentException("Invalid test framework adapter, must implement ITestFrameworkAdapter.", nameof(testFramework));
 
-        GlobalState.EnsureInitialized(adapter);
+        var testSession = TestSession.Current;
+        if (testSession == null)
+            throw new InvalidOperationException("No active test session found.");
+
+        testSession.EnsureInitialized(adapter);
 
         _testFramework = adapter;
         _test = test;
