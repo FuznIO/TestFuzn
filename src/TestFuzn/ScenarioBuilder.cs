@@ -319,7 +319,7 @@ public class ScenarioBuilder<TModel>
 
         InheritValuesFromTest(scenarios);
 
-        await using var testScope = GlobalState.ServiceProvider.CreateAsyncScope();
+        await using var testScope = TestSession.Current.ServiceProvider.CreateAsyncScope();
         var testServiceProvider = testScope.ServiceProvider;
 
         var testRunner = testServiceProvider.GetRequiredService<TestRunner>();

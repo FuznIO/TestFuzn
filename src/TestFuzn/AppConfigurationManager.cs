@@ -1,0 +1,121 @@
+﻿using Microsoft.Extensions.Configuration;
+
+namespace Fuzn.TestFuzn;
+
+/// <summary>
+/// Provides access to configuration values from appsettings.json and environment-specific configuration files.
+/// </summary>
+public class AppConfigurationManager
+{
+    private IConfigurationRoot ConfigRoot
+    {
+        get
+        {
+            if (field == null)
+                throw new InvalidOperationException("Configuration has not been initialized. Ensure that appsettings.json is present and that TestFuzn is properly configured.");
+
+            return field;
+        }
+        set;
+    }
+
+    internal AppConfigurationManager(IConfigurationRoot configRoot)
+    {
+        ConfigRoot = configRoot;
+    }
+
+
+    /// <summary>
+    /// Returns true if the configuration section TestFuzn:{sectionName} exists. Otherwise, false.
+    /// </summary>
+    /// <param name="sectionName">The name of the configuration section to check.</param>
+    /// <returns>True if the section exists; otherwise, false.</returns>
+    public bool HasSection(string sectionName)
+    {
+        try
+        {
+            var section = ConfigRoot.GetSection("TestFuzn").GetSection(sectionName);
+
+            return section.Exists();
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Returns the configuration section from TestFuzn:{sectionName} as the specified type. Throws an exception if not found.
+    /// </summary>
+    /// <typeparam name="T">The type to bind the configuration section to.</typeparam>
+    /// <param name="sectionName">The name of the configuration section to retrieve.</param>
+    /// <returns>An instance of <typeparamref name="T"/> populated with configuration values.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the section does not exist or cannot be bound.</exception>
+    public T GetRequiredSection<T>(string sectionName) 
+        where T : new()
+    {
+        try
+        {
+            var section = ConfigRoot.GetSection("TestFuzn").GetSection(sectionName);
+            if (!section.Exists())
+            {
+                throw new InvalidOperationException(@$"Failed to load configuration for section '{sectionName}'. 
+                    Ensure that the configuration section exists in appsettings.json.");
+            }
+
+            var instance = new T();
+            section.Bind(instance);
+            return instance;
+        }
+        catch (Exception ex) when (!(ex is InvalidOperationException))
+        {
+           throw new InvalidOperationException(@$"Failed to load configuration for section '{sectionName}'. 
+                Ensure that the configuration section exists in appsettings.json.", ex);
+        }
+    }
+
+    /// <summary>
+    /// Returns true if the value exists in TestFuzn:Values:{key}. Otherwise, false.
+    /// </summary>
+    /// <param name="key">The configuration key to check.</param>
+    /// <returns>True if the value exists; otherwise, false.</returns>
+    public bool HasValue(string key)
+    {
+        try
+        {
+            var section = ConfigRoot.GetSection($"TestFuzn:Values:{key}");
+            return section.Exists();
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Returns the value from TestFuzn:Values:{key} as the specified type. Throws an exception if not found or cannot be converted.
+    /// </summary>
+    /// <typeparam name="T">The type to convert the value to.</typeparam>
+    /// <param name="key">The configuration key to retrieve.</param>
+    /// <returns>The configuration value converted to <typeparamref name="T"/>.</returns>
+    /// <exception cref="KeyNotFoundException">Thrown when the key does not exist.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the value cannot be converted to the specified type.</exception>
+    public T GetRequiredValue<T>(string key)
+    {
+        var section = ConfigRoot.GetSection($"TestFuzn:Values:{key}");
+        if (!section.Exists())
+            throw new KeyNotFoundException($"Configuration key 'TestFuzn:Values:{key}' not found.");
+
+        try
+        {
+            var value = section.Get<T>();
+            if (value is null)
+                throw new InvalidOperationException($"Configuration key 'TestFuzn:Values:{key}' could not be converted to type {typeof(T).Name}.");
+            return value;
+        }
+        catch
+        {
+            throw new InvalidOperationException($"Configuration key 'TestFuzn:Values:{key}' could not be converted to type {typeof(T).Name}.");
+        }
+    }
+}

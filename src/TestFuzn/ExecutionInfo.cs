@@ -10,12 +10,12 @@ public class ExecutionInfo
     /// <summary>
     /// Gets the target environment the tests are executing against (e.g., Dev, Test, Staging, Production).
     /// </summary>
-    public string TargetEnvironment => TestSession.TargetEnvironment;
+    public string TargetEnvironment => TestSession.Configuration?.TargetEnvironment;
 
     /// <summary>
     /// Gets the execution environment where tests are running (e.g., Local, CI, CloudAgent).
     /// </summary>
-    public string ExecutionEnvironment => TestSession.ExecutionEnvironment;
+    public string ExecutionEnvironment => TestSession.Configuration?.ExecutionEnvironment;
 
     /// <summary>
     /// Gets the name of the node executing the tests in distributed scenarios.

@@ -57,8 +57,8 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteEndElement();
 
                 writer.WriteElementString("TestRunId", loadReportData.TestRunId);
-                writer.WriteElementString("TargetEnvironment", _testSession.TargetEnvironment);
-                writer.WriteElementString("ExecutionEnvironment", _testSession.ExecutionEnvironment);
+                writer.WriteElementString("TargetEnvironment", _testSession.Configuration?.TargetEnvironment);
+                writer.WriteElementString("ExecutionEnvironment", _testSession.Configuration?.ExecutionEnvironment);
 
                 WriteTest(writer, loadReportData.Test);
 

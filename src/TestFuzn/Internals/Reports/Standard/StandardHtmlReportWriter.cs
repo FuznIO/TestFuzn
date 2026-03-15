@@ -212,8 +212,8 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.ExecutionEnvironment) ? "-" : E(_testSession.ExecutionEnvironment)) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.TargetEnvironment) ? "-" : E(_testSession.TargetEnvironment)) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.Configuration?.ExecutionEnvironment) ? "-" : E(_testSession.Configuration.ExecutionEnvironment)) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.Configuration?.TargetEnvironment) ? "-" : E(_testSession.Configuration.TargetEnvironment)) + "</span></div>");
 
         if (reportData.Suite.Metadata != null && reportData.Suite.Metadata.Count > 0)
         {

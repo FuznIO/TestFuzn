@@ -1,5 +1,5 @@
 ﻿using Fuzn.TestFuzn.Internals;
-using Fuzn.TestFuzn.Internals.FileConfiguration;
+using Fuzn.TestFuzn.Internals.AppConfiguration;
 
 namespace Fuzn.TestFuzn.Tests.Session;
 

@@ -14,7 +14,7 @@ public static class TestFuznConfigurationExtensions
     /// <exception cref="InvalidOperationException">Thrown when the "InfluxDB" configuration section is missing from appsettings.json.</exception>
     public static void UseInfluxDB(this TestFuznConfiguration config)
     {
-        var influxDbSinkConfig = config.Configuration.GetRequiredSection<InfluxDbSinkConfiguration>("InfluxDB");
+        var influxDbSinkConfig = config.AppConfiguration.GetRequiredSection<InfluxDbSinkConfiguration>("InfluxDB");
         if (influxDbSinkConfig is null)
             throw new InvalidOperationException("InfluxDB configuration is not set in appsettings.json");
 

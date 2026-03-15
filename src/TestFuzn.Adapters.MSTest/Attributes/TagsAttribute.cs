@@ -2,8 +2,8 @@
 
 /// <summary>
 /// Specifies tags for a test method or class for categorization and filtering.
-/// Tags can be used to filter which tests to run using the <see cref="GlobalState.TagsFilterInclude"/> 
-/// and <see cref="GlobalState.TagsFilterExclude"/> properties.
+/// Tags can be used to filter which tests to run using the <see cref="TestFuznConfiguration.TagsFilterInclude"/> 
+/// and <see cref="TestFuznConfiguration.TagsFilterExclude"/> properties.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
 public class TagsAttribute : TestCategoryBaseAttribute

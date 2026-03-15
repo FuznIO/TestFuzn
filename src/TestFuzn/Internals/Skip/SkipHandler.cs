@@ -50,38 +50,38 @@ internal class SkipHandler
         TestInfo test, 
         MethodInfo methodInfo)
     {
+        var config = testSession.Configuration;
 
-
-        if (testSession.TagsFilterInclude.Count == 0 && testSession.TagsFilterExclude.Count == 0)
+        if (config.TagsFilterInclude.Count == 0 && config.TagsFilterExclude.Count == 0)
             return (false, null);
 
         if (test.Tags == null || test.Tags.Count == 0)
         {
-            if (testSession.TagsFilterInclude.Count > 0)
+            if (config.TagsFilterInclude.Count > 0)
             {
-                return (true, $"Test is skipped. Reason: no tags found. Requires all of [{string.Join(", ", testSession.TagsFilterInclude)}].");
+                return (true, $"Test is skipped. Reason: no tags found. Requires all of [{string.Join(", ", config.TagsFilterInclude)}].");
             }
-            
+
             return (false, null);
         }
 
-        if (testSession.TagsFilterExclude.Count > 0 &&
-            test.Tags.Any(t => testSession.TagsFilterExclude.Contains(t, StringComparer.OrdinalIgnoreCase)))
+        if (config.TagsFilterExclude.Count > 0 &&
+            test.Tags.Any(t => config.TagsFilterExclude.Contains(t, StringComparer.OrdinalIgnoreCase)))
         {
             return (true,
-                $"Test is skipped. Reason: matching exclude tags. Test tags: [{string.Join(", ", test.Tags)}], Exclude tags: [{string.Join(", ", testSession.TagsFilterExclude)}]");
+                $"Test is skipped. Reason: matching exclude tags. Test tags: [{string.Join(", ", test.Tags)}], Exclude tags: [{string.Join(", ", config.TagsFilterExclude)}]");
         }
 
-        if (testSession.TagsFilterInclude.Count > 0)
+        if (config.TagsFilterInclude.Count > 0)
         {
-            var missingTags = testSession.TagsFilterInclude
+            var missingTags = config.TagsFilterInclude
                 .Where(filterTag => !test.Tags.Contains(filterTag, StringComparer.OrdinalIgnoreCase))
                 .ToList();
 
             if (missingTags.Count > 0)
             {
                 return (true,
-                    $"Test is skipped. Reason: tag mismatch. Test has [{string.Join(", ", test.Tags)}], requires all of [{string.Join(", ", testSession.TagsFilterInclude)}]. Missing: [{string.Join(", ", missingTags)}].");
+                    $"Test is skipped. Reason: tag mismatch. Test has [{string.Join(", ", test.Tags)}], requires all of [{string.Join(", ", config.TagsFilterInclude)}]. Missing: [{string.Join(", ", missingTags)}].");
             }
         }
 
@@ -92,7 +92,7 @@ internal class SkipHandler
         TestInfo testInfo)
     {
         var testTargetEnvs = testInfo.TargetEnvironments;
-        var currentTargetEnv = testSession.TargetEnvironment ?? "";
+        var currentTargetEnv = testSession.Configuration?.TargetEnvironment ?? "";
 
         if (testTargetEnvs == null || testTargetEnvs.Count == 0)
         {

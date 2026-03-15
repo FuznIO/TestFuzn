@@ -24,6 +24,31 @@ public class TestFuznConfiguration
     public LoggingVerbosity LoggingVerbosity { get; set; } = LoggingVerbosity.Full;
 
     /// <summary>
+    /// Gets or sets the target environment the tests are executing against (e.g., Dev, Test, Staging, Production).
+    /// Set via TESTFUZN_TARGET_ENVIRONMENT environment variable or --target-environment argument.
+    /// </summary>
+    public string TargetEnvironment { get; internal set; }
+
+    /// <summary>
+    /// Gets or sets the execution environment where tests are running (e.g., Local, CI, CloudAgent).
+    /// Set via TESTFUZN_EXECUTION_ENVIRONMENT environment variable or --execution-environment argument.
+    /// Used for configuration loading, not for test filtering.
+    /// </summary>
+    public string ExecutionEnvironment { get; internal set; }
+
+    /// <summary>
+    /// Gets or sets the list of tags to include when filtering tests.
+    /// Only tests with at least one of these tags will be executed.
+    /// </summary>
+    public List<string> TagsFilterInclude { get; internal set; } = [];
+
+    /// <summary>
+    /// Gets or sets the list of tags to exclude when filtering tests.
+    /// Tests with any of these tags will be skipped.
+    /// </summary>
+    public List<string> TagsFilterExclude { get; internal set; } = [];
+
+    /// <summary>
     /// Gets the service collection for registering dependencies.
     /// Plugins and user code can add services here during configuration.
     /// </summary>
@@ -33,7 +58,7 @@ public class TestFuznConfiguration
     /// <summary>
     /// Gets the configuration manager that provides access to application configuration settings.
     /// </summary>
-    public ConfigurationManager Configuration { get; internal set; }
+    public AppConfigurationManager AppConfiguration { get; internal set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TestFuznConfiguration"/> class with default settings.

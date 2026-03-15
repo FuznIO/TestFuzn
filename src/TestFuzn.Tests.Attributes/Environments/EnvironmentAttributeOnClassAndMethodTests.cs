@@ -13,6 +13,7 @@ public class EnvironmentAttributeOnClassAndMethodTests : Test
         await Scenario()
             .Step("Step 1", context => 
             {
+                Assert.AreEqual("test", context.Info.TargetEnvironment);
             })
             .Run();
     }

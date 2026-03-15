@@ -35,8 +35,8 @@ internal class StandardXmlReportWriter : IStandardReport
                 writer.WriteElementString("ToolVersion", typeof(StandardXmlReportWriter).Assembly.GetName().Version?.ToString() ?? "Unknown");
                 writer.WriteElementString("GeneratedOn", DateTime.UtcNow.ToString("o"));
                 writer.WriteElementString("TestRunId", reportData.TestRunId);
-                writer.WriteElementString("ExecutionEnvironment", _testSession.ExecutionEnvironment);
-                writer.WriteElementString("TargetEnvironment", _testSession.TargetEnvironment);
+                writer.WriteElementString("ExecutionEnvironment", _testSession.Configuration?.ExecutionEnvironment);
+                writer.WriteElementString("TargetEnvironment", _testSession.Configuration?.TargetEnvironment);
                 writer.WriteElementString("StartTime", reportData.TestRunStartTime.ToString("o"));
                 writer.WriteElementString("EndTime", reportData.TestRunEndTime.ToString("o"));
 

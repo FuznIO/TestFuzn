@@ -93,8 +93,8 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testExecutionState.TestSession.ExecutionEnvironment) ? "-" : E(_testExecutionState.TestSession.ExecutionEnvironment)) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testExecutionState.TestSession.TargetEnvironment) ? "-" : E(_testExecutionState.TestSession.TargetEnvironment)) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testExecutionState.TestSession.Configuration?.ExecutionEnvironment) ? "-" : E(_testExecutionState.TestSession.Configuration.ExecutionEnvironment)) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testExecutionState.TestSession.Configuration?.TargetEnvironment) ? "-" : E(_testExecutionState.TestSession.Configuration.TargetEnvironment)) + "</span></div>");
         b.AppendLine("</div>");
 
         if (loadReportData.Test.Tags != null && loadReportData.Test.Tags.Count > 0)

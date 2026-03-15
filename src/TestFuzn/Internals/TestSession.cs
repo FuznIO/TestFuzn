@@ -6,7 +6,7 @@ using Fuzn.TestFuzn.Internals.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Execution.Consumers;
 using Fuzn.TestFuzn.Internals.Execution.Producers;
-using Fuzn.TestFuzn.Internals.FileConfiguration;
+using Fuzn.TestFuzn.Internals.AppConfiguration;
 using Fuzn.TestFuzn.Internals.Init;
 using Fuzn.TestFuzn.Internals.InputData;
 using Fuzn.TestFuzn.Internals.Logger;
@@ -52,11 +52,6 @@ internal partial class TestSession
     internal DateTime TestRunEndTime { get; set; }
     internal TimeSpan SinkWriteFrequency { get; set; } = TimeSpan.FromSeconds(3);
     internal string NodeName { get; set; }
-    internal LoggingVerbosity LoggingVerbosity => Configuration?.LoggingVerbosity ?? LoggingVerbosity.Full;
-    internal string TargetEnvironment { get; set; }
-    internal string ExecutionEnvironment { get; set; }
-    internal List<string> TagsFilterInclude { get; set; } = new();
-    internal List<string> TagsFilterExclude { get; set; } = new();
     internal StandardResultManager ResultManager { get; } = new();
     internal IStartup StartupInstance { get; set; }
     internal string Id { get; }
@@ -107,22 +102,24 @@ internal partial class TestSession
         StartupInstance = new TStartup();
         TestRunStartTime = DateTime.UtcNow;
         TestRunId = $"{DateTime.Now:yyyy-MM-dd_HH-mm}__{Guid.NewGuid().ToString("N").Substring(0, 6)}";
-        TargetEnvironment = argumentParser.GetValueFromArgsOrEnvironmentVariable(
+        var targetEnvironment = argumentParser.GetValueFromArgsOrEnvironmentVariable(
                                         args, "target-environment", "TESTFUZN_TARGET_ENVIRONMENT");
-        ExecutionEnvironment = argumentParser.GetValueFromArgsOrEnvironmentVariable(
+        var executionEnvironment = argumentParser.GetValueFromArgsOrEnvironmentVariable(
                                         args, "execution-environment", "TESTFUZN_EXECUTION_ENVIRONMENT");
 
+        var tagsFilterInclude = new List<string>();
         var tagsInclude = argumentParser.GetValueFromArgsOrEnvironmentVariable(
                                 args, "tags-filter-include", "TESTFUZN_TAGS_FILTER_INCLUDE");
         if (!string.IsNullOrEmpty(tagsInclude))
         {
-            TagsFilterInclude.AddRange(tagsInclude.Split(',').Select(t => t.Trim()));
+            tagsFilterInclude.AddRange(tagsInclude.Split(',').Select(t => t.Trim()));
         }
 
+        var tagsFilterExclude = new List<string>();
         var tagsExclude = argumentParser.GetValueFromArgsOrEnvironmentVariable(args, "tags-filter-exclude", "TESTFUZN_TAGS_FILTER_EXCLUDE");
         if (!string.IsNullOrEmpty(tagsExclude))
         {
-            TagsFilterExclude.AddRange(tagsExclude.Split(',').Select(t => t.Trim()));
+            tagsFilterExclude.AddRange(tagsExclude.Split(',').Select(t => t.Trim()));
         }
 
         NodeName = environmentWrapper.GetMachineName();
@@ -138,19 +135,23 @@ internal partial class TestSession
         Logger.LogInformation("Logging initialized");
 
         var configRoot = configurationLoader.LoadConfigRoot(
-                                executionEnvironment: ExecutionEnvironment,
-                                targetEnvironment: TargetEnvironment, 
+                                executionEnvironment: executionEnvironment,
+                                targetEnvironment: targetEnvironment, 
                                 nodeName: NodeName);
 
-        var configurationManager = new ConfigurationManager(configRoot);
+        var configurationManager = new AppConfigurationManager(configRoot);
 
         var services = new ServiceCollection();
         AddServices(services, fileSystem, Logger, configurationManager);
 
         var configuration = new TestFuznConfiguration(services);
-        configuration.Configuration = configurationManager;
+        configuration.AppConfiguration = configurationManager;
         configuration.Suite = new SuiteInfo();
         configuration.Suite.Name = testAssemblyName;
+        configuration.TargetEnvironment = targetEnvironment;
+        configuration.ExecutionEnvironment = executionEnvironment;
+        configuration.TagsFilterInclude = tagsFilterInclude;
+        configuration.TagsFilterExclude = tagsFilterExclude;
         StartupInstance.Configure(configuration);
         Configuration = configuration;
 
@@ -181,7 +182,7 @@ internal partial class TestSession
     private void AddServices(ServiceCollection services,
         IFileSystem fileSystem,
         ILogger logger,
-        ConfigurationManager configurationManager)
+        AppConfigurationManager configurationManager)
     {
         services.AddSingleton(this);
         services.AddSingleton<IFileSystem>(fileSystem);

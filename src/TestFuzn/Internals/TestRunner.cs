@@ -52,7 +52,7 @@ internal class TestRunner
             await _initManager.Run();
             await _executionManager.Run();
             await _cleanupManager.Run();
-            TestSession.Current.ResultManager.AddTestResults(_testExecutionState.TestResult);
+            _testExecutionState.TestSession.ResultManager.AddTestResults(_testExecutionState.TestResult);
             await _loadReportManager.WriteLoadReports(_testExecutionState);
             await _consoleManager.Complete();
 

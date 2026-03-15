@@ -12,7 +12,7 @@ internal class TestFuznLoggingHandler : DelegatingHandler
     {
         var context = request.Options.GetTestFuznContext();
         var state = request.Options.GetTestFuznState();
-        var verbosity = GlobalState.LoggingVerbosity;
+        var verbosity = context.Info.TestSession.Configuration?.LoggingVerbosity ?? LoggingVerbosity.Full;
         var testType = context.IterationState.Scenario?.TestType ?? Contracts.TestType.Standard;
         var writeHttpDetailsOnStepFailure = HttpGlobalState.Configuration?.WriteHttpDetailsToConsoleOnStepFailure ?? false;
 

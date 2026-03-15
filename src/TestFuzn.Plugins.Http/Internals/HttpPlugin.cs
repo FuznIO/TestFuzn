@@ -36,7 +36,7 @@ internal class HttpPlugin : IContextPlugin
         if (state is not HttpPluginState httpState)
             return;
 
-        var verbosity = GlobalState.LoggingVerbosity;
+        var verbosity = context.Info.TestSession.Configuration?.LoggingVerbosity ?? LoggingVerbosity.Full;
         var testType = context.IterationState.Scenario?.TestType ?? Contracts.TestType.Standard;
         var writeHttpDetailsOnStepFailure = HttpGlobalState.Configuration?.WriteHttpDetailsToConsoleOnStepFailure ?? false;
 
