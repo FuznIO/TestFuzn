@@ -19,6 +19,18 @@ public static class GlobalState
     public static string ExecutionEnvironment => GetTestSession().Configuration.ExecutionEnvironment;
 
     /// <summary>
+    /// Gets the list of tags to include when filtering tests.
+    /// Only tests with at least one of these tags will be executed.
+    /// </summary>
+    public static List<string> TagsFilterInclude => GetTestSession().Configuration.TagsFilterInclude;
+
+    /// <summary>
+    /// Gets the list of tags to exclude when filtering tests.
+    /// Tests with any of these tags will be skipped.
+    /// </summary>
+    public static List<string> TagsFilterExclude => GetTestSession().Configuration.TagsFilterExclude;
+
+    /// <summary>
     /// Gets the configuration manager that provides access to application configuration settings.
     /// </summary>
     public static AppConfigurationManager AppConfiguration => GetTestSession().Configuration.AppConfiguration;
