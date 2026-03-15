@@ -5,7 +5,7 @@ namespace Fuzn.TestFuzn.Internals.Results.Standard;
 
 internal class StandardResultManager
 {
-    private static SuiteResult _suiteResult { get; } = new SuiteResult();
+    private SuiteResult _suiteResult { get; } = new SuiteResult();
 
     public SuiteResult GetSuiteResults()
     {

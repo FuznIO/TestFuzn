@@ -1,6 +1,4 @@
-﻿using Fuzn.FluentHttp;
-using Fuzn.TestFuzn.Plugins.Http;
-using Microsoft.AspNetCore.Components;
+﻿using Fuzn.TestFuzn.Plugins.Http;
 using System.Security.Cryptography;
 
 namespace Fuzn.TestFuzn.Tests.Http;

@@ -2,27 +2,28 @@
 using Fuzn.TestFuzn.Internals.Execution.Consumers;
 using Fuzn.TestFuzn.Internals.Execution.Producers;
 using Fuzn.TestFuzn.Contracts;
-using Fuzn.TestFuzn.Contracts.Adapters;
 
 namespace Fuzn.TestFuzn.Internals.Execution;
 
 internal class ExecutionManager
 {
-    private readonly ITestFrameworkAdapter _testFramework;
+    private readonly IServiceProvider _serviceProvider;
     private readonly TestExecutionState _testExecutionState;
-    private readonly ConsumerManager _consumerManager;
     private readonly ProducerManager _producerManager;
+    private readonly ConsumerManager _consumerManager;
 
-    public ExecutionManager(ITestFrameworkAdapter testFramework, 
+    public ExecutionManager(
+        IServiceProvider serviceProvider,
         TestExecutionState testExecutionState,
         ProducerManager producerManager,
         ConsumerManager consumerManager)
     {
-        _testFramework = testFramework;
+        _serviceProvider = serviceProvider;
         _testExecutionState = testExecutionState;
         _producerManager = producerManager;
         _consumerManager = consumerManager;
     }
+
     public async Task Run()
     {
         _producerManager.StartProducers();
@@ -54,7 +55,7 @@ internal class ExecutionManager
             {
                 try
                 {
-                    var context = ContextFactory.CreateScenarioContext(_testFramework, "AssertWhenDoneAction");
+                    var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "AssertWhenDoneAction");
                     scenario.AssertWhenDoneAction(context, new AssertScenarioStats(scenarioResult));
                 }
                 catch (Exception e)

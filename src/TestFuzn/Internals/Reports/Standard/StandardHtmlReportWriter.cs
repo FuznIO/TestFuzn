@@ -7,6 +7,16 @@ namespace Fuzn.TestFuzn.Internals.Reports.Standard;
 
 internal class StandardHtmlReportWriter : IStandardReport
 {
+    private readonly IFileSystem _fileSystem;
+    private readonly TestSession _testSession;
+
+    public StandardHtmlReportWriter(IFileSystem fileSystem,
+        TestSession testSession)
+    {
+        _fileSystem = fileSystem;
+        _testSession = testSession;
+    }
+
     private static string E(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
 
     public async Task WriteReport(StandardReportData reportData)
@@ -17,7 +27,7 @@ internal class StandardHtmlReportWriter : IStandardReport
 
             var htmlContent = GenerateHtmlReport(reportData);
 
-            await File.WriteAllTextAsync(filePath, htmlContent);
+            await _fileSystem.WriteAllTextAsync(filePath, htmlContent);
         }
         catch (Exception ex)
         {
@@ -190,7 +200,7 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine("</script>");
     }
 
-    private static void WriteRunInfo(StandardReportData reportData, StringBuilder b)
+    private void WriteRunInfo(StandardReportData reportData, StringBuilder b)
     {
         b.AppendLine(@"<div class=""run-info"">");
         
@@ -202,8 +212,8 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.ExecutionEnvironment) ? "-" : E(GlobalState.ExecutionEnvironment)) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.TargetEnvironment) ? "-" : E(GlobalState.TargetEnvironment)) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.Configuration?.ExecutionEnvironment) ? "-" : E(_testSession.Configuration.ExecutionEnvironment)) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.Configuration?.TargetEnvironment) ? "-" : E(_testSession.Configuration.TargetEnvironment)) + "</span></div>");
 
         if (reportData.Suite.Metadata != null && reportData.Suite.Metadata.Count > 0)
         {

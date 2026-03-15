@@ -2,13 +2,20 @@
 using System.Text;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Load;
 
 internal class LoadHtmlReportWriter : ILoadReport
 {
-    public LoadHtmlReportWriter()
+    private readonly IFileSystem _fileSystem;
+    private readonly TestExecutionState _testExecutionState;
+
+    public LoadHtmlReportWriter(IFileSystem fileSystem,
+        TestExecutionState testExecutionState)
     {
+        _fileSystem = fileSystem;
+        _testExecutionState = testExecutionState;
     }
 
     private static string E(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
@@ -22,7 +29,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
             var htmlContent = GenerateHtmlReport(loadReportData);
 
-            await File.WriteAllTextAsync(filePath, htmlContent);
+            await _fileSystem.WriteAllTextAsync(filePath, htmlContent);
         }
         catch (Exception ex)
         {
@@ -68,7 +75,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         return b.ToString();
     }
 
-    private static void WriteRunInfo(LoadReportData loadReportData, StringBuilder b)
+    private void WriteRunInfo(LoadReportData loadReportData, StringBuilder b)
     {
         b.AppendLine(@"<div class=""run-info"">");
 
@@ -86,8 +93,8 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.ExecutionEnvironment) ? "-" : E(GlobalState.ExecutionEnvironment)) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(GlobalState.TargetEnvironment) ? "-" : E(GlobalState.TargetEnvironment)) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testExecutionState.TestSession.Configuration?.ExecutionEnvironment) ? "-" : E(_testExecutionState.TestSession.Configuration.ExecutionEnvironment)) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testExecutionState.TestSession.Configuration?.TargetEnvironment) ? "-" : E(_testExecutionState.TestSession.Configuration.TargetEnvironment)) + "</span></div>");
         b.AppendLine("</div>");
 
         if (loadReportData.Test.Tags != null && loadReportData.Test.Tags.Count > 0)
@@ -290,7 +297,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
     private void WriteSnapshotTimelineChart(LoadReportData loadReportData, StringBuilder b, ScenarioLoadResult scenario, int scenarioIndex)
     {
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Test.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
+        var snapshots = loadReportData.Snapshots[scenario.ScenarioName];
 
         if (snapshots == null || snapshots.Count == 0)
             return;
@@ -454,7 +461,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
     private void WriteSnapshotTable(LoadReportData loadReportData, StringBuilder b, ScenarioLoadResult scenario)
     {
-        var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Test.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
+        var snapshots = loadReportData.Snapshots[scenario.ScenarioName];
 
         if (snapshots == null || snapshots.Count == 0)
             return;
@@ -668,7 +675,7 @@ internal class LoadHtmlReportWriter : ILoadReport
             b.AppendLine("}");
 
             // RPS and Timeline Charts (if snapshots exist)
-            var snapshots = InMemorySnapshotCollectorSinkPlugin.GetSnapshots(loadReportData.Test.Group.Name, loadReportData.Test.Name, scenario.ScenarioName);
+            var snapshots = loadReportData.Snapshots[scenario.ScenarioName];
             if (snapshots != null && snapshots.Count > 0)
             {
                 var labels = string.Join(",", snapshots.Select(s => "'" + s.Created.ToString("HH:mm:ss") + "'"));

@@ -7,17 +7,18 @@ namespace Fuzn.TestFuzn.StandaloneRunner;
 
 internal class StandaloneRunnerCore
 {
-    public async Task Run(Assembly assembly, 
+    public async Task Run<TStartup>(Assembly assembly, 
         string[] args, Func<ITestFrameworkAdapter> testFrameworkInstanceCreator)
+        where TStartup : IStartup, new()
     {
-        var parsedArgs = ArgumentsParser.Parse(args);
+        var argumentsParser = new ArgumentsParser(new EnvironmentWrapper());
+        var parsedArgs = argumentsParser.Parse(args);
 
         Console.OutputEncoding = Encoding.UTF8;
-        GlobalState.AssemblyWithTestsName = assembly.GetName().Name;
 
         var tests = new DiscoverTests().GetTests(assembly);
 
-        var testName = ArgumentsParser.GetValueFromArgsOrEnvironmentVariable(parsedArgs, "test-name", "TESTFUZN_TEST_NAME");
+        var testName = argumentsParser.GetValueFromArgsOrEnvironmentVariable(parsedArgs, "test-name", "TESTFUZN_TEST_NAME");
 
         if (string.IsNullOrEmpty(testName))
         {
@@ -34,6 +35,6 @@ internal class StandaloneRunnerCore
             return;
         }
 
-        await new StandaloneTestRunner().RunTest(args, testFrameworkInstanceCreator(), testInfo);
+        await new StandaloneTestRunner().RunTest<TStartup>(args, testFrameworkInstanceCreator(), testInfo);
     }
 }

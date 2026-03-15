@@ -1,8 +1,9 @@
-﻿using Fuzn.FluentHttp;
+﻿using Fuzn.TestFuzn.Internals;
 using Fuzn.TestFuzn.Plugins.Http;
 using Fuzn.TestFuzn.Plugins.Playwright;
 using Fuzn.TestFuzn.Plugins.WebSocket;
 using Fuzn.TestFuzn.Sinks.InfluxDB;
+using Fuzn.TestFuzn.Tests.IocContainer;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Tests;
@@ -12,11 +13,11 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
 {
     public static bool BeforeSuiteExecuted = false;
     public static bool AfterSuiteExecuted = false;
-    
+
     [AssemblyInitialize]
     public static async Task Initialize(TestContext testContext)
     {
-        await TestFuznIntegration.Init(testContext);
+        await TestFuznIntegration.Init<Startup>(testContext);
     }
 
     [AssemblyCleanup]
@@ -24,6 +25,16 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
     {
         await TestFuznIntegration.Cleanup(testContext);
         Assert.IsTrue(AfterSuiteExecuted);
+
+        var sessions = TestSessionRegistry.TestSessions;
+        if (sessions == null)
+            return;
+
+        var testFramework = new MsTestRunnerAdapter(testContext);
+        foreach (var session in sessions)
+        {
+            await session.Value.Cleanup(testFramework);
+        }
     }
 
     public void Configure(TestFuznConfiguration configuration)
@@ -86,6 +97,10 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             // config.SerializerProvider = new NewtonsoftSerializerProvider();
         });
         configuration.UseInfluxDB();
+
+        configuration.Services.AddSingleton<SingletonMarker>();
+        configuration.Services.AddScoped<ScopedMarker>();
+        configuration.Services.AddTransient<TransientMarker>();
     }
 
     public Task BeforeSuite(Context context)

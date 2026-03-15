@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.ComponentModel;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Fuzn.TestFuzn;
@@ -10,6 +11,7 @@ namespace Fuzn.TestFuzn;
 public abstract class Test : ITest
 {
     /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public object TestFramework
     {
         get
@@ -25,6 +27,7 @@ public abstract class Test : ITest
     }
 
     /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public MethodInfo TestMethodInfo
     {
         get
@@ -50,6 +53,7 @@ public abstract class Test : ITest
     }
 
     /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public TestInfo TestInfo { get; set; }
 
     /// <summary>

@@ -1,4 +1,4 @@
-﻿# Configuration Management
+# Configuration Management
 
 TestFuzn provides a flexible configuration system that allows you to manage test settings through `appsettings.json` files.
 
@@ -32,25 +32,25 @@ Configuration is loaded from `appsettings.json` in your test project directory. 
 
 ### Simple Values
 
-Use `ConfigurationManager.GetRequiredValue<T>()` to retrieve values from `TestFuzn:Values`:
+Use `context.AppConfiguration.GetRequiredValue<T>()` to retrieve values from `TestFuzn:Values`:
 
 ```csharp
 // Get a string value
-var baseUrl = ConfigurationManager.GetRequiredValue<string>("BaseUrl");
+var baseUrl = context.AppConfiguration.GetRequiredValue<string>("BaseUrl");
 
 // Get a numeric value
-var timeout = ConfigurationManager.GetRequiredValue<int>("Timeout");
+var timeout = context.AppConfiguration.GetRequiredValue<int>("Timeout");
 
 // Check if a value exists before accessing
-if (ConfigurationManager.HasValue("MaxRetries"))
+if (context.AppConfiguration.HasValue("MaxRetries"))
 {
-    var retries = ConfigurationManager.GetRequiredValue<int>("MaxRetries");
+    var retries = context.AppConfiguration.GetRequiredValue<int>("MaxRetries");
 }
 ```
 
 ### Configuration Sections
 
-Use `ConfigurationManager.GetRequiredSection<T>()` to bind entire sections to strongly-typed objects:
+Use `context.AppConfiguration.GetRequiredSection<T>()` to bind entire sections to strongly-typed objects:
 
 ```csharp
 public class AuthConfig
@@ -60,12 +60,12 @@ public class AuthConfig
 }
 
 // Retrieve and bind the section
-var authConfig = ConfigurationManager.GetRequiredSection<AuthConfig>("Auth");
+var authConfig = context.AppConfiguration.GetRequiredSection<AuthConfig>("Auth");
 
 // Check if a section exists
-if (ConfigurationManager.HasSection("Auth"))
+if (context.AppConfiguration.HasSection("Auth"))
 {
-    var config = ConfigurationManager.GetRequiredSection<AuthConfig>("Auth");
+    var config = context.AppConfiguration.GetRequiredSection<AuthConfig>("Auth");
 }
 ```
 
@@ -84,8 +84,8 @@ public class ProductHttpTests : Test
         await Scenario()
             .Step("Call Products API", async context =>
             {
-                var baseUrl = ConfigurationManager.GetRequiredValue<string>("BaseUrl");
-                var timeout = ConfigurationManager.GetRequiredValue<int>("Timeout");
+                var baseUrl = context.AppConfiguration.GetRequiredValue<string>("BaseUrl");
+                var timeout = context.AppConfiguration.GetRequiredValue<int>("Timeout");
 
                 var response = await context.CreateHttpRequest($"{baseUrl}/api/Products")
                     .WithTimeout(TimeSpan.FromSeconds(timeout))
@@ -97,16 +97,29 @@ public class ProductHttpTests : Test
     }
 }
 ```
+
+---
+
+## Accessing Configuration Outside of Steps
+
+You can also access configuration values outside of step actions using `GlobalState.AppConfiguration`:
+
+```csharp
+var baseUrl = GlobalState.AppConfiguration.GetRequiredValue<string>("BaseUrl");
+```
+
+This is useful in lifecycle hooks (`IBeforeSuite`, `IBeforeTest`, etc.) or anywhere you don't have access to the step context.
+
 ---
 
 ## API Reference
 
 | Method | Description |
 |--------|-------------|
-| `ConfigurationManager.HasValue(key)` | Returns `true` if `TestFuzn:Values:{key}` exists |
-| `ConfigurationManager.GetRequiredValue<T>(key)` | Gets value from `TestFuzn:Values:{key}`, throws if not found |
-| `ConfigurationManager.HasSection(sectionName)` | Returns `true` if `TestFuzn:{sectionName}` exists |
-| `ConfigurationManager.GetRequiredSection<T>(sectionName)` | Binds `TestFuzn:{sectionName}` to type `T`, throws if not found |
+| `context.AppConfiguration.HasValue(key)` | Returns `true` if `TestFuzn:Values:{key}` exists |
+| `context.AppConfiguration.GetRequiredValue<T>(key)` | Gets value from `TestFuzn:Values:{key}`, throws if not found |
+| `context.AppConfiguration.HasSection(sectionName)` | Returns `true` if `TestFuzn:{sectionName}` exists |
+| `context.AppConfiguration.GetRequiredSection<T>(sectionName)` | Binds `TestFuzn:{sectionName}` to type `T`, throws if not found |
 
 ---
 

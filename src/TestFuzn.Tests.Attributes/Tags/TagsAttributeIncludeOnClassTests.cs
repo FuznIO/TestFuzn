@@ -1,4 +1,6 @@
-﻿namespace Fuzn.TestFuzn.Tests.Attributes.Tags;
+﻿using Fuzn.TestFuzn.Internals;
+
+namespace Fuzn.TestFuzn.Tests.Attributes.Tags;
 
 [TestClass]
 [Tags("TagInclude1")]
@@ -11,6 +13,7 @@ public class TagsAttributeIncludeOnClassTests : Test
         await Scenario()
             .Step("Step 1", async (context) =>
             {
+                Assert.Contains("TagInclude1", TestSession.Current.Configuration.TagsFilterInclude);
                 await Task.CompletedTask;
             })
             .Run();

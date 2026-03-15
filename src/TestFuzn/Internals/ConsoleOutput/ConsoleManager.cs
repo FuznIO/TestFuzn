@@ -1,23 +1,27 @@
 ﻿using Fuzn.TestFuzn.Internals.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.State;
-using Fuzn.TestFuzn.Contracts.Adapters;
 
 namespace Fuzn.TestFuzn.Internals.Logger;
 
-internal class ConsoleManager(
-    ITestFrameworkAdapter _testFramework,
-    TestExecutionState _testExecutionState,
-    ConsoleWriter _consoleWriter)
+internal class ConsoleManager
 {
-    private Task _realtimeLogging;
+    private TestExecutionState _testExecutionState = null!;
+    private ConsoleWriter _consoleWriter;
+    private Task _realtimeLogging = null!;
     private CancellationTokenSource _ctSource = new CancellationTokenSource();
 
-    public bool IsEnabled => _testFramework.SupportsRealTimeConsoleOutput;
+    public ConsoleManager(
+        TestExecutionState testExecutionState,
+        ConsoleWriter consoleWriter)
+    {
+        _testExecutionState = testExecutionState;
+        _consoleWriter = consoleWriter;
+    }
 
     public void StartRealtimeConsoleOutputIfEnabled()
     {
         var task = Task.CompletedTask;
-        if (_testFramework.SupportsRealTimeConsoleOutput)
+        if (_testExecutionState.TestFramework.SupportsRealTimeConsoleOutput)
         {
             task = Task.Run(async () => await StartRealtimeConsoleOutput(_ctSource.Token));
         }
@@ -27,6 +31,9 @@ internal class ConsoleManager(
 
     private async Task StartRealtimeConsoleOutput(CancellationToken cancellationToken)
     {
+        if (_testExecutionState.TestType == Contracts.TestType.Standard)
+            throw new Exception("Standard test is not supported. Realtime console output is only supported for load tests.");
+
         var loadTestMetrics = new Dictionary<string, LiveMetrics>();
 
         foreach (var scenario in _testExecutionState.Scenarios)
@@ -85,6 +92,6 @@ internal class ConsoleManager(
         await _ctSource.CancelAsync();
         await _realtimeLogging;
 
-        _consoleWriter.WriteSummary();
+        _consoleWriter.WriteSummary(_testExecutionState);
     }
 }

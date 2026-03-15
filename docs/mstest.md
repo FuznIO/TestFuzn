@@ -29,7 +29,7 @@ TestFuzn is built on top of **MSTest v4** and reuses several MSTest concepts. Th
 
 | MSTest | TestFuzn | Status | Notes |
 |--------|----------|--------|-------|
-| `[AssemblyInitialize]` | `[AssemblyInitialize]` + `IBeforeSuite` | ✅ **Same** | `[AssemblyInitialize]` is required to call `TestFuznIntegration.Init()`. For suite-level setup logic, implement `IBeforeSuite` on the `Startup` class. See [Lifecycle Hooks](lifecycle.md). |
+| `[AssemblyInitialize]` | `[AssemblyInitialize]` + `IBeforeSuite` | ✅ **Same** | `[AssemblyInitialize]` is required to call `TestFuznIntegration.Init<Startup>()`. For suite-level setup logic, implement `IBeforeSuite` on the `Startup` class. See [Lifecycle Hooks](lifecycle.md). |
 | `[AssemblyCleanup]` | `[AssemblyCleanup]` + `IAfterSuite` | ✅ **Same** | `[AssemblyCleanup]` is required to call `TestFuznIntegration.Cleanup()`. For suite-level teardown logic, implement `IAfterSuite` on the `Startup` class. See [Lifecycle Hooks](lifecycle.md). |
 | `[TestInitialize]` | `IBeforeTest` | 🔄 **Replaced** | Implement `IBeforeTest` on your test class. See [Lifecycle Hooks](lifecycle.md). |
 | `[TestCleanup]` | `IAfterTest` | 🔄 **Replaced** | Implement `IAfterTest` on your test class. See [Lifecycle Hooks](lifecycle.md). |
@@ -146,7 +146,7 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
     public static async Task Initialize(TestContext testContext)
     {
         // Required: wires up TestFuzn (triggers IBeforeSuite after initialization)
-        await TestFuznIntegration.Init(testContext);
+        await TestFuznIntegration.Init<Startup>(testContext);
     }
 
     [AssemblyCleanup]

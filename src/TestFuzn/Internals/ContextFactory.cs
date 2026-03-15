@@ -1,31 +1,41 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals.State;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Internals;
 
 internal class ContextFactory
 {
-    public static Context CreateContext(ITestFrameworkAdapter testFramework, string stepName)
+    public static Context CreateContext(
+        TestSession testSession,
+        IServiceProvider serviceProvider, 
+        ITestFrameworkAdapter testFramework, 
+        string stepName)
     {
         var context = new Context();
 
-        if (GlobalState.Configuration != null)
+        if (testSession.Configuration != null)
         {
             context.IterationState = new();
-            PopulateSharedProperties(testFramework, context.IterationState);
+            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework);
             context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 
         return context;
     }
 
-    public static ScenarioContext CreateScenarioContext(ITestFrameworkAdapter testFramework, string stepName)
+    public static ScenarioContext CreateScenarioContext(
+        TestSession testSession,
+        IServiceProvider serviceProvider, 
+        ITestFrameworkAdapter testFramework, 
+        string stepName)
     {
         var context = new ScenarioContext();
 
-        if (GlobalState.Configuration != null)
+        if (testSession.Configuration != null)
         {
             context.IterationState = new();
-            PopulateSharedProperties(testFramework, context.IterationState);
+            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework);
             context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 
@@ -44,9 +54,14 @@ internal class ContextFactory
         return context;
     }
 
-    public static IterationState CreateIterationState(ITestFrameworkAdapter testFramework, Scenario scenario, object currentInput)
+    public static IterationState CreateIterationState(
+        TestSession testSession,
+        IServiceProvider serviceProvider, 
+        ITestFrameworkAdapter testFramework, 
+        Scenario scenario, object? 
+        currentInput)
     {
-        var state = new IterationState();
+        var iterationState = new IterationState();
         if (scenario.ContextType.IsGenericType && scenario.ContextType.GetGenericTypeDefinition() == typeof(IterationContext<>))
         {
             var modelType = scenario.ContextType.GetGenericArguments()[0];
@@ -55,38 +70,39 @@ internal class ContextFactory
             if (modelInstance == null)
                 throw new InvalidOperationException($"Failed to create instance of {modelType}");
 
-            state.Model = modelInstance;
+            iterationState.Model = modelInstance;
         }
-        PopulateSharedProperties(testFramework, state);
-        state.SharedData = new();
-        state.Scenario = scenario;
-        state.InputData = currentInput;
+        PopulateIterationStateProperties(iterationState, testSession, serviceProvider, testFramework);
+        iterationState.SharedData = new();
+        iterationState.Scenario = scenario;
+        iterationState.InputData = currentInput;
 
-        return state;
+        return iterationState;
     }
 
-    private static void PopulateSharedProperties(ITestFrameworkAdapter testFramework, IterationState context)
+    private static void PopulateIterationStateProperties(
+        IterationState iterationState, 
+        TestSession testSession,
+        IServiceProvider serviceProvider, 
+        ITestFrameworkAdapter testFramework)
     {
-        context.Info = new ExecutionInfo();
-        context.Info.TargetEnvironment = GlobalState.TargetEnvironment;
-        context.Info.ExecutionEnvironment = GlobalState.ExecutionEnvironment;
-        context.Info.NodeName = GlobalState.NodeName;
-        context.Info.TestRunId = GlobalState.TestRunId;
-        context.Info.CorrelationId = Guid.NewGuid().ToString();
-        context.Logger = GlobalState.Logger;
-        context.TestFramework = testFramework;
-        context.Internals = new ContextInternals();
+        iterationState.Info = new ExecutionInfo();
+        iterationState.Info.TestSession = testSession;
+        iterationState.Info.CorrelationId = Guid.NewGuid().ToString();
+        iterationState.TestFramework = testFramework;
+        iterationState.ServiceProvider = serviceProvider;
+        iterationState.Internals = new ContextInternals();
         
-        foreach (var plugin in GlobalState.Configuration.ContextPlugins)
+        foreach (var plugin in iterationState.Info.TestSession.Configuration.ContextPlugins)
         {
             if (!plugin.RequireState)
                 continue;
 
-            if (context.Internals.Plugins == null)
-                context.Internals.Plugins = new ContextPluginsState();
+            if (iterationState.Internals.Plugins == null)
+                iterationState.Internals.Plugins = new ContextPluginsState();
 
-            var state = plugin.InitContext();
-            context.Internals.Plugins.SetState(plugin.GetType(), state);
+            var state = plugin.InitContext(serviceProvider);
+            iterationState.Internals.Plugins.SetState(plugin.GetType(), state);
         }
     }
 }

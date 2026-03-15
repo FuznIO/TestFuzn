@@ -5,25 +5,27 @@
 /// </summary>
 public class ExecutionInfo
 {
+    internal TestSession TestSession { get; set; }
+
     /// <summary>
     /// Gets the target environment the tests are executing against (e.g., Dev, Test, Staging, Production).
     /// </summary>
-    public string TargetEnvironment { get; internal set; }
+    public string TargetEnvironment => TestSession.Configuration?.TargetEnvironment;
 
     /// <summary>
     /// Gets the execution environment where tests are running (e.g., Local, CI, CloudAgent).
     /// </summary>
-    public string ExecutionEnvironment { get; internal set; }
+    public string ExecutionEnvironment => TestSession.Configuration?.ExecutionEnvironment;
 
     /// <summary>
     /// Gets the name of the node executing the tests in distributed scenarios.
     /// </summary>
-    public string NodeName { get; internal set; }
+    public string NodeName => TestSession.NodeName;
 
     /// <summary>
     /// Gets the unique identifier for the current test run.
     /// </summary>
-    public string TestRunId { get; internal set; }
+    public string TestRunId => TestSession.TestRunId;
 
     /// <summary>
     /// Gets or sets the correlation ID for tracking across distributed systems.

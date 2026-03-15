@@ -2,11 +2,22 @@
 using System.Xml;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
+using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Standard;
 
 internal class StandardXmlReportWriter : IStandardReport
 {
+    private readonly IFileSystem _fileSystem;
+    private readonly TestSession _testSession;
+
+    public StandardXmlReportWriter(IFileSystem fileSystem,
+        TestSession testSession)
+    {
+        _fileSystem = fileSystem;
+        _testSession = testSession;
+    }
+
     public async Task WriteReport(StandardReportData reportData)
     {
         try
@@ -24,8 +35,8 @@ internal class StandardXmlReportWriter : IStandardReport
                 writer.WriteElementString("ToolVersion", typeof(StandardXmlReportWriter).Assembly.GetName().Version?.ToString() ?? "Unknown");
                 writer.WriteElementString("GeneratedOn", DateTime.UtcNow.ToString("o"));
                 writer.WriteElementString("TestRunId", reportData.TestRunId);
-                writer.WriteElementString("ExecutionEnvironment", GlobalState.ExecutionEnvironment);
-                writer.WriteElementString("TargetEnvironment", GlobalState.TargetEnvironment);
+                writer.WriteElementString("ExecutionEnvironment", _testSession.Configuration?.ExecutionEnvironment);
+                writer.WriteElementString("TargetEnvironment", _testSession.Configuration?.TargetEnvironment);
                 writer.WriteElementString("StartTime", reportData.TestRunStartTime.ToString("o"));
                 writer.WriteElementString("EndTime", reportData.TestRunEndTime.ToString("o"));
 
@@ -60,7 +71,7 @@ internal class StandardXmlReportWriter : IStandardReport
                 writer.WriteEndDocument();
             }
 
-            await File.WriteAllTextAsync(filePath, stringBuilder.ToString());
+            await _fileSystem.WriteAllTextAsync(filePath, stringBuilder.ToString());
         }
         catch (Exception ex)
         {

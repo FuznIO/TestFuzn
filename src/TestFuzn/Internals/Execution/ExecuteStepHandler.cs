@@ -131,7 +131,7 @@ internal class ExecuteStepHandler
 
     private static async Task HandlePluginExceptionHandler(IterationContext iterationContext, Exception exception)
     {
-        foreach (var plugin in GlobalState.Configuration.ContextPlugins)
+        foreach (var plugin in iterationContext.Info.TestSession.Configuration.ContextPlugins)
         {
             try
             {
@@ -143,7 +143,7 @@ internal class ExecuteStepHandler
             }
             catch (Exception ex)
             {
-                GlobalState.Logger.LogError(ex, $"An exception occurred in the plugin {plugin.GetType()} step exception handler.");
+                iterationContext.Logger.LogError(ex, $"An exception occurred in the plugin {plugin.GetType()} step exception handler.");
             }
         }
     }

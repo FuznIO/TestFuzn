@@ -8,13 +8,13 @@ internal class IterationState
     // Context
     public ExecutionInfo Info { get; internal set; }
     public ContextInternals Internals { get; set; }
-    public ILogger Logger { get; set; }
-    public ITestFrameworkAdapter TestFramework { get; internal set; }
-    
+    public ITestFrameworkAdapter TestFramework { get; set; }
+    public IServiceProvider ServiceProvider { get; set; }
+
     // Scenario / StepContext
     public Scenario Scenario { get; internal set; }
     public Dictionary<string, object> SharedData { get; set; }
-    public object InputData { get; set; }
+    public object? InputData { get; set; }
     public ExecuteStepHandler ExecuteStepHandler { get; set; }
     public object Model { get; set; }
 }

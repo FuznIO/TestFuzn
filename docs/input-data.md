@@ -96,5 +96,50 @@ Without overriding `ToString()`, the output shows the fully qualified type name 
 
 ---
 
+## Input Data from CSV File
+
+Load input data from a CSV file using `context.Files.LoadFromCsv<T>()`. Column headers are matched to properties of `T` by name (case-insensitive).
+
+```csharp
+.InputDataFromList(async (context) =>
+{
+    return await context.Files.LoadFromCsv<Product>("TestData/products.csv");
+})
+```
+
+Example CSV (`TestData/products.csv`):
+```csv
+Name,Price
+Laptop,999.99
+Keyboard,49.99
+Monitor,299.99
+```
+
+Supported property types include `string`, `int`, `long`, `float`, `double`, `decimal`, `bool`, `char`, `Guid`, `DateTime`, `DateTimeOffset`, `TimeSpan`, enums, arrays (`;`-separated), `List<T>` (`;`-separated), and complex types (deserialized as JSON).
+
+---
+
+## Input Data from JSON File
+
+Load input data from a JSON file using `context.Files.LoadFromJson<T>()`. The file contents are deserialized as a `List<T>`.
+
+```csharp
+.InputDataFromList(async (context) =>
+{
+    return await context.Files.LoadFromJson<Product>("TestData/products.json");
+})
+```
+
+Example JSON (`TestData/products.json`):
+```json
+[
+  { "Name": "Laptop", "Price": 999.99 },
+  { "Name": "Keyboard", "Price": 49.99 },
+  { "Name": "Monitor", "Price": 299.99 }
+]
+```
+
+---
+
 ```markdown
 [← Back to Table of Contents](README.md)

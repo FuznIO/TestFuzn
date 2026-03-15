@@ -1,5 +1,4 @@
 using Fuzn.TestFuzn.Plugins.Http;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Tests.DefaultHttpClient;
 
@@ -9,7 +8,7 @@ public class Startup : IStartup
     [AssemblyInitialize]
     public static async Task Initialize(TestContext testContext)
     {
-        await TestFuznIntegration.Init(testContext);
+        await TestFuznIntegration.Init<Startup>(testContext);
     }
 
     [AssemblyCleanup]

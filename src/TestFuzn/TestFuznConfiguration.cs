@@ -1,8 +1,6 @@
 ﻿using Fuzn.TestFuzn.Contracts.Plugins;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Sinks;
-using Fuzn.TestFuzn.Internals.Reports.Standard;
-using Fuzn.TestFuzn.Internals.Reports.Load;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn;
@@ -26,28 +24,49 @@ public class TestFuznConfiguration
     public LoggingVerbosity LoggingVerbosity { get; set; } = LoggingVerbosity.Full;
 
     /// <summary>
+    /// Gets or sets the target environment the tests are executing against (e.g., Dev, Test, Staging, Production).
+    /// Set via TESTFUZN_TARGET_ENVIRONMENT environment variable or --target-environment argument.
+    /// </summary>
+    public string TargetEnvironment { get; internal set; }
+
+    /// <summary>
+    /// Gets or sets the execution environment where tests are running (e.g., Local, CI, CloudAgent).
+    /// Set via TESTFUZN_EXECUTION_ENVIRONMENT environment variable or --execution-environment argument.
+    /// Used for configuration loading, not for test filtering.
+    /// </summary>
+    public string ExecutionEnvironment { get; internal set; }
+
+    /// <summary>
+    /// Gets or sets the list of tags to include when filtering tests.
+    /// Only tests with at least one of these tags will be executed.
+    /// </summary>
+    public List<string> TagsFilterInclude { get; internal set; } = [];
+
+    /// <summary>
+    /// Gets or sets the list of tags to exclude when filtering tests.
+    /// Tests with any of these tags will be skipped.
+    /// </summary>
+    public List<string> TagsFilterExclude { get; internal set; } = [];
+
+    /// <summary>
     /// Gets the service collection for registering dependencies.
     /// Plugins and user code can add services here during configuration.
     /// </summary>
-    public IServiceCollection Services { get; } = new ServiceCollection();
+    public IServiceCollection Services { get; }
 
     internal List<IContextPlugin> ContextPlugins { get; set; } = new();
-    internal List<IStandardReport> StandardReports { get; set; } = new();
-    internal List<ILoadReport> LoadReports { get; set; } = new();
-    internal List<ISinkPlugin> SinkPlugins { get; set; } = new();
-    internal IServiceProvider ServiceProvider { get; private set; }
+
+    /// <summary>
+    /// Gets the configuration manager that provides access to application configuration settings.
+    /// </summary>
+    public AppConfigurationManager AppConfiguration { get; internal set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TestFuznConfiguration"/> class with default settings.
     /// </summary>
-    public TestFuznConfiguration()
+    internal TestFuznConfiguration(IServiceCollection services)
     {
-        AddStandardReport(new StandardXmlReportWriter());
-        AddStandardReport(new StandardHtmlReportWriter());
-
-        AddSinkPlugin(new InMemorySnapshotCollectorSinkPlugin());
-        AddLoadReport(new LoadHtmlReportWriter());
-        AddLoadReport(new LoadXmlReportWriter());
+        Services = services;
     }
 
     /// <summary>
@@ -58,50 +77,43 @@ public class TestFuznConfiguration
     /// <exception cref="ArgumentNullException">Thrown when the plugin is null.</exception>
     public void AddContextPlugin(IContextPlugin plugin)
     {
-        if (plugin == null)
-            throw new ArgumentNullException(nameof(plugin), "Context plugin cannot be null");
-        
+        ArgumentNullException.ThrowIfNull(plugin);
         ContextPlugins.Add(plugin);
     }
 
+    /// <summary>
+    /// Registers an additional standard report writer.
+    /// </summary>
     internal void AddStandardReport(IStandardReport report)
     {
-        if (report == null)
-            throw new ArgumentNullException(nameof(report), "Standard report cannot be null");
-        StandardReports.Add(report);
+        ArgumentNullException.ThrowIfNull(report);
+        Services.AddSingleton(report);
     }
 
+    /// <summary>
+    /// Registers an additional load report writer.
+    /// </summary>
     internal void AddLoadReport(ILoadReport report)
     {
-        if (report == null)
-            throw new ArgumentNullException(nameof(report), "Load report cannot be null");
-        LoadReports.Add(report);
+        ArgumentNullException.ThrowIfNull(report);
+        Services.AddSingleton(report);
     }
 
+    /// <summary>
+    /// Registers an additional sink plugin.
+    /// </summary>
     internal void AddSinkPlugin(ISinkPlugin plugin)
     {
-        if (plugin == null)
-            throw new ArgumentNullException(nameof(plugin), "Sink plugin cannot be null");
-        SinkPlugins.Add(plugin);
+        ArgumentNullException.ThrowIfNull(plugin);
+        Services.AddSingleton(plugin);
     }
 
     /// <summary>
     /// Builds the service provider from the configured services.
     /// Called internally after all plugins have registered their services.
     /// </summary>
-    internal void BuildServiceProvider()
+    internal IServiceProvider BuildServiceProvider()
     {
-        ServiceProvider = Services.BuildServiceProvider();
-    }
-
-    internal void ClearReports()
-    {
-        StandardReports.Clear();
-        LoadReports.Clear();
-        var sinkPlugin = SinkPlugins.OfType<InMemorySnapshotCollectorSinkPlugin>().FirstOrDefault();
-        if (sinkPlugin != null)
-        {
-            SinkPlugins.Remove(sinkPlugin);
-        }
+        return Services.BuildServiceProvider();
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
-internal class HttpPlugin : IContextPlugin
+internal class HttpPlugin(HttpGlobalState globalState) : IContextPlugin
 {
     public bool RequireState => true;
     public bool RequireStepExceptionHandling => true;
@@ -17,7 +17,7 @@ internal class HttpPlugin : IContextPlugin
         return Task.CompletedTask;
     }
 
-    public object InitContext()
+    public object InitContext(IServiceProvider serviceProvider)
     {
         return new HttpPluginState();
     }
@@ -36,9 +36,9 @@ internal class HttpPlugin : IContextPlugin
         if (state is not HttpPluginState httpState)
             return;
 
-        var verbosity = GlobalState.LoggingVerbosity;
+        var verbosity = context.Info.TestSession.Configuration?.LoggingVerbosity ?? LoggingVerbosity.Full;
         var testType = context.IterationState.Scenario?.TestType ?? Contracts.TestType.Standard;
-        var writeHttpDetailsOnStepFailure = HttpGlobalState.Configuration?.WriteHttpDetailsToConsoleOnStepFailure ?? false;
+        var writeHttpDetailsOnStepFailure = globalState.Configuration?.WriteHttpDetailsToConsoleOnStepFailure ?? false;
 
         // Only process for standard tests, not load tests
         if (testType == Contracts.TestType.Load)

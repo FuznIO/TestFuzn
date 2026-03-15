@@ -2,7 +2,8 @@
 
 /// <summary>
 /// Interface for configuring TestFuzn at startup.
-/// Implement this interface in your test assembly to customize TestFuzn settings.
+/// Implement this interface in your test assembly and pass the type to
+/// <c>TestFuznIntegration.Init&lt;TStartup&gt;</c> to initialize the suite.
 /// </summary>
 public interface IStartup
 {

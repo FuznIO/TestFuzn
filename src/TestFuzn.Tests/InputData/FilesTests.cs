@@ -3,7 +3,7 @@
 namespace Fuzn.TestFuzn.Tests.InputData;
 
 [TestClass]
-public class InputDataFilerHelperTests : Test
+public class FilesTests : Test
 {
     [Test]
     public async Task Verify_Csv_InputData()
@@ -12,7 +12,7 @@ public class InputDataFilerHelperTests : Test
             .InputDataFromList(async context =>
             {
                 Assert.IsNotNull(context);
-                return await InputDataFileHelper.LoadFromCsv<SimpleUser>("InputData/users.csv");
+                return await context.Files.LoadFromCsv<SimpleUser>("InputData/users.csv");
             })
             .InputDataBehavior(InputDataBehavior.LoopThenRepeatLast)
             .Step("Arrange", async context => { await Task.Delay(100);})
@@ -68,7 +68,7 @@ public class InputDataFilerHelperTests : Test
             .InputDataFromList(async context =>
             {
                 Assert.IsNotNull(context);
-                return await InputDataFileHelper.LoadFromJson<ComplexUser>("InputData/users.json");
+                return await context.Files.LoadFromJson<ComplexUser>("InputData/users.json");
             })
             .Step("Verify", context =>
             {
@@ -125,7 +125,7 @@ public class InputDataFilerHelperTests : Test
             .InputDataFromList(async context =>
             {
                 Assert.IsNotNull(context);
-                return await InputDataFileHelper.LoadFromCsv<SimpleUser>("InputData/users.csv");
+                return await context.Files.LoadFromCsv<SimpleUser>("InputData/users.csv");
             })
             .InputDataBehavior(InputDataBehavior.Loop)
             .Step("Verify", async context =>
@@ -153,7 +153,7 @@ public class InputDataFilerHelperTests : Test
             .InputDataFromList(async context =>
             {
                 Assert.IsNotNull(context);
-                return await InputDataFileHelper.LoadFromJson<ComplexUser>("InputData/users.json");
+                return await context.Files.LoadFromJson<ComplexUser>("InputData/users.json");
             })
             .Step("Verify", async context =>
             {

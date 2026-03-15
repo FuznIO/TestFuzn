@@ -1,5 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Internals;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn;
 
@@ -23,7 +23,11 @@ public class ScenarioBuilder<TModel>
         if (testFramework is not ITestFrameworkAdapter adapter)
             throw new ArgumentException("Invalid test framework adapter, must implement ITestFrameworkAdapter.", nameof(testFramework));
 
-        GlobalState.EnsureInitialized(adapter);
+        var testSession = TestSession.Current;
+        if (testSession == null)
+            throw new InvalidOperationException("No active test session found.");
+
+        testSession.EnsureInitialized(adapter);
 
         _testFramework = adapter;
         _test = test;
@@ -319,7 +323,12 @@ public class ScenarioBuilder<TModel>
 
         InheritValuesFromTest(scenarios);
 
-        await new TestRunner(_testFramework, _test, _assertInternalState).Run(scenarios.ToArray());
+        await using var testScope = TestSession.Current.ServiceProvider.CreateAsyncScope();
+        var testServiceProvider = testScope.ServiceProvider;
+
+        var testRunner = testServiceProvider.GetRequiredService<TestRunner>();
+
+        await testRunner.Run(_testFramework, _test, _assertInternalState, scenarios.ToArray());
     }
 
     private void InheritValuesFromTest(List<Scenario> scenarios)

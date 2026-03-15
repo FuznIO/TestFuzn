@@ -14,7 +14,7 @@ public class EnvironmentTests : Test
             {
                 return context.Info.TargetEnvironment switch
                 {
-                    "test" => await InputDataFileHelper.LoadFromCsv<User>($"users_{context.Info.TargetEnvironment}"),
+                    "test" => await context.Files.LoadFromCsv<User>($"users_{context.Info.TargetEnvironment}"),
                     _ => new List<object> { new User("userId_9"), new User("user_19") },
                 };
             })
