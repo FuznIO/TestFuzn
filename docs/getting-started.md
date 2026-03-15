@@ -1,4 +1,4 @@
-﻿# Getting Started
+# Getting Started
 
 ## Overview
 
@@ -114,6 +114,10 @@ public class Startup : IStartup
     {
         // For HTTP testing, optional.
         configuration.UseHttp();
+
+        // Register custom services for dependency injection, optional.
+        // Resolved via context.ServicesProvider or GlobalState.ServiceProvider.
+        configuration.Services.AddSingleton<IMyService, MyService>();
     }
 }
 ```

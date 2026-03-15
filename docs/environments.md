@@ -121,7 +121,7 @@ Files are loaded in this order (later values override earlier):
 4. `appsettings.exec-ci.target-staging.json`
 5. `appsettings.worker-01.json`
 
-See [Configuration](configuration.md) for details on `appsettings.json` structure and the `ConfigurationManager` API.
+See [Configuration](configuration.md) for details on `appsettings.json` structure and the `AppConfigurationManager` API.
 
 ---
 

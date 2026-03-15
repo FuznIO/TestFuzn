@@ -1,4 +1,4 @@
-﻿# API Reference
+# API Reference
 
 ## ScenarioBuilder Methods
 
@@ -35,6 +35,25 @@
 | `CreateBrowserPage(browserType?, device?, configureBrowserContext?)` | Create Playwright browser page with optional browser type, device emulation, and context options (requires Playwright plugin) |
 | `GetPlaywright()` | Get the Playwright instance for direct API access such as device descriptors (requires Playwright plugin) |
 | `Files` | Access the `FileManager` for loading test data from CSV and JSON files |
+| `AppConfiguration` | Access the `AppConfigurationManager` for reading values from `appsettings.json` |
+| `ServicesProvider` | Access the `IServiceProvider` for resolving dependencies from the IoC container |
+
+---
+
+## GlobalState Members
+
+| Member | Description |
+|--------|-------------|
+| `TargetEnvironment` | The target environment the tests are executing against |
+| `ExecutionEnvironment` | The execution environment where tests are running |
+| `TagsFilterInclude` | Tags to include when filtering tests |
+| `TagsFilterExclude` | Tags to exclude when filtering tests |
+| `AppConfiguration` | Access the `AppConfigurationManager` for reading values from `appsettings.json` |
+| `NodeName` | The name of the machine where the tests are running |
+| `ServiceProvider` | The `IServiceProvider` for resolving dependencies registered during test initialization |
+| `Logger` | The `ILogger` instance used for writing test log output |
+| `TestsOutputDirectory` | The output directory where test results and artifacts are written |
+| `TestRunId` | The unique identifier for the current test run |
 
 ---
 

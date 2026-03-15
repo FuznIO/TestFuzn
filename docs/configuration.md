@@ -97,6 +97,19 @@ public class ProductHttpTests : Test
     }
 }
 ```
+
+---
+
+## Accessing Configuration Outside of Steps
+
+You can also access configuration values outside of step actions using `GlobalState.AppConfiguration`:
+
+```csharp
+var baseUrl = GlobalState.AppConfiguration.GetRequiredValue<string>("BaseUrl");
+```
+
+This is useful in lifecycle hooks (`IBeforeSuite`, `IBeforeTest`, etc.) or anywhere you don't have access to the step context.
+
 ---
 
 ## API Reference
