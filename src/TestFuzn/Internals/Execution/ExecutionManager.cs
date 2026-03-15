@@ -55,7 +55,7 @@ internal class ExecutionManager
             {
                 try
                 {
-                    var context = ContextFactory.CreateScenarioContext(_serviceProvider, _testExecutionState.TestFramework, "AssertWhenDoneAction");
+                    var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "AssertWhenDoneAction");
                     scenario.AssertWhenDoneAction(context, new AssertScenarioStats(scenarioResult));
                 }
                 catch (Exception e)

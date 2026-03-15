@@ -43,24 +43,6 @@ public static class GlobalState
         set => TestSession.Current.TestRunId = value;
     }
 
-    internal static DateTime TestRunStartTime
-    {
-        get => TestSession.Current.TestRunStartTime;
-        set => TestSession.Current.TestRunStartTime = value;
-    }
-
-    internal static DateTime TestRunEndTime
-    {
-        get => TestSession.Current.TestRunEndTime;
-        set => TestSession.Current.TestRunEndTime = value;
-    }
-
-    internal static TimeSpan SinkWriteFrequency
-    {
-        get => TestSession.Current.SinkWriteFrequency;
-        set => TestSession.Current.SinkWriteFrequency = value;
-    }
-
     internal static string NodeName
     {
         get => TestSession.Current.NodeName;

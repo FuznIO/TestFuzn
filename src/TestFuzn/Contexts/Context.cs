@@ -1,5 +1,6 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
 using Microsoft.Extensions.DependencyInjection;
+using System.ComponentModel;
 
 namespace Fuzn.TestFuzn;
 
@@ -20,6 +21,7 @@ public class Context
     /// <summary>
     /// Gets internal context utilities for advanced framework operations.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public ContextInternals Internals => IterationState.Internals;
     
     /// <summary>

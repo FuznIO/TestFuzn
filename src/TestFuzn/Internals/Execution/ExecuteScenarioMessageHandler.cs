@@ -41,7 +41,7 @@ internal class ExecuteScenarioMessageHandler
         if (scenario.InputDataInfo.HasInputData)
             currentInputData = _inputDataFeeder.GetNextInput(scenario.Name);
 
-        var iterationState = ContextFactory.CreateIterationState(iterationServiceProvider, _testExecutionState.TestFramework, scenario, currentInputData);
+        var iterationState = ContextFactory.CreateIterationState(_testExecutionState.TestSession, iterationServiceProvider, _testExecutionState.TestFramework, scenario, currentInputData);
 
         var iterationResult = new IterationResult();
         iterationResult.CorrelationId = iterationState.Info.CorrelationId;
@@ -113,7 +113,7 @@ internal class ExecuteScenarioMessageHandler
             {
                 try
                 {
-                    var context = ContextFactory.CreateScenarioContext(iterationServiceProvider, _testExecutionState.TestFramework, "AssertWhileRunning");
+                    var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, iterationServiceProvider, _testExecutionState.TestFramework, "AssertWhileRunning");
                     scenario.AssertWhileRunningAction(context, new AssertScenarioStats(scenarioLoadResult));
                 }
                 catch (Exception ex)

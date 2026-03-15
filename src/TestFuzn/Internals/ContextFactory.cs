@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals.State;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Internals;
@@ -16,7 +17,7 @@ internal class ContextFactory
         if (testSession.Configuration != null)
         {
             context.IterationState = new();
-            PopulateIterationStateProperties(context.IterationState, serviceProvider, testFramework);
+            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework);
             context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 
@@ -24,16 +25,17 @@ internal class ContextFactory
     }
 
     public static ScenarioContext CreateScenarioContext(
+        TestSession testSession,
         IServiceProvider serviceProvider, 
         ITestFrameworkAdapter testFramework, 
         string stepName)
     {
         var context = new ScenarioContext();
 
-        if (GlobalState.Configuration != null)
+        if (testSession.Configuration != null)
         {
             context.IterationState = new();
-            PopulateIterationStateProperties(context.IterationState, serviceProvider, testFramework);
+            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework);
             context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 
@@ -53,6 +55,7 @@ internal class ContextFactory
     }
 
     public static IterationState CreateIterationState(
+        TestSession testSession,
         IServiceProvider serviceProvider, 
         ITestFrameworkAdapter testFramework, 
         Scenario scenario, object? 
@@ -69,7 +72,7 @@ internal class ContextFactory
 
             iterationState.Model = modelInstance;
         }
-        PopulateIterationStateProperties(iterationState, serviceProvider, testFramework);
+        PopulateIterationStateProperties(iterationState, testSession, serviceProvider, testFramework);
         iterationState.SharedData = new();
         iterationState.Scenario = scenario;
         iterationState.InputData = currentInput;
@@ -79,11 +82,12 @@ internal class ContextFactory
 
     private static void PopulateIterationStateProperties(
         IterationState iterationState, 
+        TestSession testSession,
         IServiceProvider serviceProvider, 
         ITestFrameworkAdapter testFramework)
     {
         iterationState.Info = new ExecutionInfo();
-        iterationState.Info.TestSession = serviceProvider.GetRequiredService<TestSession>();
+        iterationState.Info.TestSession = testSession;
         iterationState.Info.CorrelationId = Guid.NewGuid().ToString();
         iterationState.TestFramework = testFramework;
         iterationState.ServiceProvider = serviceProvider;

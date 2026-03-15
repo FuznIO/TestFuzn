@@ -56,7 +56,7 @@ internal class CleanupManager
 
     private async Task ExecuteCleanupScenario(ITestFrameworkAdapter testFramework, Scenario scenario)
     {
-        var context = ContextFactory.CreateScenarioContext(_serviceProvider, testFramework, "AfterScenario");
+        var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, testFramework, "AfterScenario");
         await scenario.AfterScenarioAction(context);
     }
 
