@@ -43,6 +43,9 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
 
             while (addCount > 0)
             {
+                if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
+                    return;
+
                 addCount--;
                 i++;
 
@@ -51,7 +54,7 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
                 _testExecutionState.AddToConstantQueue(message);
                 _testExecutionState.EnqueueScenarioExecution(message);
             }
-            await Task.Delay(TimeSpan.FromMilliseconds(10));
+            await Task.Delay(TimeSpan.FromMilliseconds(10), _testExecutionState.CancellationToken);
         }
         stopwatch.Stop();
     }

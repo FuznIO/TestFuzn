@@ -22,21 +22,19 @@ internal class ConsumerManager
 
     public void StartConsumers()
     {
-        _consumer = Task.Run(Consume);
+        _consumer = Task.Run(Consume, _testExecutionState.CancellationToken);
     }
 
     private async Task Consume()
     {
         var queue = _testExecutionState.ExecutionState.MessageQueue;
+        var cancellationToken = _testExecutionState.CancellationToken;
 
-        await Parallel.ForEachAsync(queue.GetConsumingEnumerable(), async (message, cancellationToken) =>
+        await Parallel.ForEachAsync(
+            queue.GetConsumingEnumerable(cancellationToken), 
+            new ParallelOptions { CancellationToken = cancellationToken },
+            async (message, ct) =>
         {
-            if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                return;
-            }
-
             var scenario = _testExecutionState.Scenarios.Single(s => s.Name == message.ScenarioName);
 
             await _executeScenarioMessageHandler.Execute(message, scenario);
@@ -54,7 +52,8 @@ internal class ConsumerManager
             }
         });
 
-        _testExecutionState.MarkConsumingCompleted();
+        if (_testExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
+            _testExecutionState.MarkConsumingCompleted();
     }
 
     public async Task WaitForConsumersToFinish()

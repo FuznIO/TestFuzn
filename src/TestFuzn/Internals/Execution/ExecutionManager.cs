@@ -30,9 +30,23 @@ internal class ExecutionManager
 
         _consumerManager.StartConsumers();
 
-        await _producerManager.WaitForProducersToComplete();
+        try
+        {
+            await _producerManager.WaitForProducersToComplete();
+        }
+        catch (OperationCanceledException)
+        {
+            _testExecutionState.ExecutionState.MessageQueue.CompleteAdding();
+        }
 
-        await _consumerManager.WaitForConsumersToFinish();
+        try
+        {
+            await _consumerManager.WaitForConsumersToFinish();
+        }
+        catch (OperationCanceledException)
+        {
+            // Consumer was cancelled — expected during test cancellation
+        }
 
         ExecuteAssertWhenDone();
 
@@ -55,7 +69,7 @@ internal class ExecutionManager
             {
                 try
                 {
-                    var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "AssertWhenDoneAction");
+                    var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "AssertWhenDoneAction", _testExecutionState.CancellationToken);
                     scenario.AssertWhenDoneAction(context, new AssertScenarioStats(scenarioResult));
                 }
                 catch (Exception e)

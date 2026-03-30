@@ -8,7 +8,7 @@ using Fuzn.TestFuzn.Internals.Results.Load;
 
 namespace Fuzn.TestFuzn.Internals.State;
 
-internal class TestExecutionState
+internal class TestExecutionState : IDisposable
 {
     public ITestFrameworkAdapter TestFramework { get; private set; } = null!;
     public List<Scenario> Scenarios { get; private set; } = new();
@@ -17,7 +17,18 @@ internal class TestExecutionState
     public TestType TestType => TestResult.TestType;
     public Dictionary<string, ScenarioLoadCollector> LoadCollectors = new();
     public InMemorySnapshotCollector LoadSnapshotCollector { get; } = new();
-    public ExecutionStatus ExecutionStatus { get; set; } = ExecutionStatus.NotStarted;
+    
+    private volatile ExecutionStatus _executionStatus = ExecutionStatus.NotStarted;
+    private CancellationTokenSource? _cancellationTokenSource;
+
+    public ExecutionStatus ExecutionStatus
+    {
+        get => _executionStatus;
+        set => _executionStatus = value;
+    }
+
+    public CancellationToken CancellationToken => _cancellationTokenSource?.Token ?? CancellationToken.None;
+
     public Exception? ExecutionStoppedReason { get; set; }
     public Exception? FirstException { get; set; }
     public ScenarioExecutionState ExecutionState { get; } = new();
@@ -46,6 +57,8 @@ internal class TestExecutionState
         TestResult = new TestResult(test.TestInfo, scenarios.First());
         TestResult.MarkPhaseAsStarted(StandardTestPhase.Init, DateTime.UtcNow);
         
+        _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(testFramework.CancellationToken);
+        _cancellationTokenSource.Token.Register(() => _executionStatus = ExecutionStatus.Stopped);
         ExecutionStatus = ExecutionStatus.Running;
         TestClassInstance = test;
         Scenarios.AddRange(scenarios);
@@ -135,5 +148,10 @@ internal class TestExecutionState
             return DateTime.UtcNow - start;
 
         return end - start;
+    }
+
+    public void Dispose()
+    {
+        _cancellationTokenSource?.Dispose();
     }
 }

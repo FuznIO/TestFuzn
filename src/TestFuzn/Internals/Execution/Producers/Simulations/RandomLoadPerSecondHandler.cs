@@ -38,6 +38,9 @@ internal class RandomLoadPerSecondHandler : ILoadHandler
 
             for (int i = 0; i < currentRate; i++)
             {
+                if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
+                    return;
+
                 var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
 
                 _testExecutionState.EnqueueScenarioExecution(message);
@@ -46,7 +49,7 @@ internal class RandomLoadPerSecondHandler : ILoadHandler
 
             var sleep = 1000 - stopwatch.ElapsedMilliseconds;
             if (sleep > 0)
-                await Task.Delay(TimeSpan.FromMilliseconds(sleep));
+                await Task.Delay(TimeSpan.FromMilliseconds(sleep), _testExecutionState.CancellationToken);
         }
     }
 }

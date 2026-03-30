@@ -11,6 +11,7 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
     private readonly TestContext _testContext = testContext;
 
     public bool SupportsRealTimeConsoleOutput => false;
+    public CancellationToken CancellationToken => _testContext.CancellationToken;
 
     public ConsoleColor ForegroundColor
     {

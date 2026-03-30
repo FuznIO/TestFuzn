@@ -17,14 +17,14 @@ internal class ProducerManager
     {
         foreach (var scenario in _testExecutionState.Scenarios)
         {
-            var producerTask = Task.Run(async () => await Produce(scenario));
+            var producerTask = Task.Run(async () => await Produce(scenario), _testExecutionState.CancellationToken);
             _producerTasks.Add(producerTask);
         }
     }
 
     private async Task Produce(Scenario scenario)
     {
-        // The producer is used for both standard test with input data and load tests.
+        // The producer is used for both standard tests and load tests.
         var testType = _testExecutionState.TestType;
 
         var loadCollector = (testType == Contracts.TestType.Load) ? _testExecutionState.LoadCollectors[scenario.Name] : null;
@@ -57,8 +57,9 @@ internal class ProducerManager
             
                 if (hasWarmupPhase && !loadSimulation.IsWarmup)
                 {
-                    while (_testExecutionState.IsExecutionQueueEmpty(scenario.Name) == false)
-                        await Task.Delay(TimeSpan.FromMilliseconds(100));
+                    while (_testExecutionState.IsExecutionQueueEmpty(scenario.Name) == false
+                        && _testExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
+                        await Task.Delay(TimeSpan.FromMilliseconds(100), _testExecutionState.CancellationToken);
 
                     loadCollector!.MarkPhaseAsCompleted(LoadTestPhase.Warmup, DateTime.UtcNow);
                 }

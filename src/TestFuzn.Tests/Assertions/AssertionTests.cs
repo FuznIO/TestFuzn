@@ -4,7 +4,7 @@
 public class AssertionTests : Test
 {
     [Test]
-    public async Task Verify_assert_while_running_should_fail()
+    public async Task ShouldFail_Verify_assert_while_running()
     {
         var stepExecutionCount = 0;
         var assertWhileRunningExecuted = false;

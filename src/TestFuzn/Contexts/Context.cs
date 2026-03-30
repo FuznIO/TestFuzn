@@ -48,4 +48,5 @@ public class Context
     /// Gets the configuration manager for accessing values from appsettings.json and environment-specific configuration files.
     /// </summary>
     public AppConfigurationManager AppConfiguration => IterationState.ServiceProvider.GetRequiredService<AppConfigurationManager>();
+
 }

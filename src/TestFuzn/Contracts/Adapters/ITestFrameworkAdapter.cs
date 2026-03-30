@@ -8,6 +8,7 @@ internal interface ITestFrameworkAdapter
 {
     Task ExecuteTestMethod(ITest test, MethodInfo methodInfo);
     bool SupportsRealTimeConsoleOutput { get; }
+    CancellationToken CancellationToken { get; }
     ConsoleColor ForegroundColor { get; set; }
     ConsoleColor BackgroundColor { get; set; }
     int WindowWidth { get; }

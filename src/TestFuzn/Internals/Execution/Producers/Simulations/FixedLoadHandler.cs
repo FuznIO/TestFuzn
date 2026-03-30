@@ -41,6 +41,9 @@ internal class FixedLoadHandler : ILoadHandler
 
             for (int i = 0; i < rate; i++)
             {
+                if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
+                    return;
+
                 var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
                 _testExecutionState.EnqueueScenarioExecution(message);
 
@@ -48,7 +51,7 @@ internal class FixedLoadHandler : ILoadHandler
                 var delay = TimeSpan.FromTicks(nextEnqueueTime - intervalStopwatch.ElapsedTicks);
 
                 if (delay.TotalMilliseconds > 0)
-                    await Task.Delay(delay);
+                    await Task.Delay(delay, _testExecutionState.CancellationToken);
             }
 
             intervalStopwatch.Stop();
@@ -56,7 +59,7 @@ internal class FixedLoadHandler : ILoadHandler
             var intervalDelay = interval - intervalStopwatch.Elapsed;
             if (intervalDelay.TotalMilliseconds > 0)
             {
-                await Task.Delay(intervalDelay);
+                await Task.Delay(intervalDelay, _testExecutionState.CancellationToken);
             }
         }
     }
