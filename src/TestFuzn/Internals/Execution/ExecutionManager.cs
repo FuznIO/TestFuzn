@@ -36,7 +36,7 @@ internal class ExecutionManager
         }
         catch (OperationCanceledException)
         {
-            _testExecutionState.ExecutionState.MessageQueue.CompleteAdding();
+            _testExecutionState.MessageQueue.CompleteAdding();
         }
 
         try

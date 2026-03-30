@@ -1,0 +1,44 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="../.gitignore" />
+    <File Path="../CLAUDE.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="../.github/workflows/publish-package.yml" />
+    <File Path="../README.md" />
+  </Folder>
+  <Folder Name="/Docs/">
+    <File Path="../docs/api-reference.md" />
+    <File Path="../docs/configuration.md" />
+    <File Path="../docs/environments.md" />
+    <File Path="../docs/filtering.md" />
+    <File Path="../docs/getting-started.md" />
+    <File Path="../docs/http-testing.md" />
+    <File Path="../docs/influxdb-grafana.md" />
+    <File Path="../docs/input-data.md" />
+    <File Path="../docs/lifecycle.md" />
+    <File Path="../docs/load-testing.md" />
+    <File Path="../docs/mstest.md" />
+    <File Path="../docs/playwright-testing.md" />
+    <File Path="../docs/README.md" />
+    <File Path="../docs/scenarios.md" />
+    <File Path="../docs/shared-data.md" />
+    <File Path="../docs/shared-steps.md" />
+    <File Path="../docs/steps.md" />
+    <File Path="../docs/test-reports.md" />
+  </Folder>
+  <Folder Name="/Sample/">
+    <Project Path="SampleApp.Tests/SampleApp.Tests.csproj" />
+    <Project Path="SampleApp.WebApp/SampleApp.WebApp.csproj" />
+  </Folder>
+  <Project Path="TestFuzn/TestFuzn.csproj" />
+  <Project Path="TestFuzn.Adapters.MSTest/TestFuzn.Adapters.MSTest.csproj" />
+  <Project Path="TestFuzn.Plugins.Http/TestFuzn.Plugins.Http.csproj" />
+  <Project Path="TestFuzn.Plugins.Playwright/TestFuzn.Plugins.Playwright.csproj" />
+  <Project Path="TestFuzn.Plugins.WebSocket/TestFuzn.Plugins.WebSocket.csproj" />
+  <Project Path="TestFuzn.Sinks.InfluxDB/TestFuzn.Sinks.InfluxDB.csproj" />
+  <Project Path="TestFuzn.Tests/TestFuzn.Tests.csproj" />
+  <Project Path="TestFuzn.Tests.Attributes/TestFuzn.Tests.Attributes.csproj" />
+  <Project Path="TestFuzn.Tests.DefaultHttpClient/TestFuzn.Tests.DefaultHttpClient.csproj" />
+  <Project Path="TestFuzn.Tests.Runner/TestFuzn.Tests.Runner.csproj" />
+  <Project Path="TestWebApp/TestWebApp.csproj" />
+</Solution>

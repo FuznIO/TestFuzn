@@ -8,7 +8,7 @@ internal class WebSocketPlugin : IContextPlugin
     {
     }
         
-    public bool RequireState => true;
+    public bool RequireIterationState => true;
     public bool RequireStepExceptionHandling => false;
     
     public Task InitSuite()
@@ -21,18 +21,18 @@ internal class WebSocketPlugin : IContextPlugin
         await Task.CompletedTask;
     }
 
-    public object InitContext(IServiceProvider serviceProvider)
+    public object InitIteration(IServiceProvider serviceProvider)
     {
         var webSocketManager = new WebSocketManager();
         return webSocketManager;
     }
 
-    public async Task CleanupContext(object state)
+    public async Task CleanupIteration(object state)
     {
         var webSocketManager = state as WebSocketManager;
         if (webSocketManager != null)
         {
-            await webSocketManager.CleanupContext();
+            await webSocketManager.CleanupIteration();
         }
     }
 

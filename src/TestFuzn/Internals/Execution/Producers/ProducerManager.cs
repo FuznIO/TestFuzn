@@ -84,6 +84,6 @@ internal class ProducerManager
     public async Task WaitForProducersToComplete()
     {
         await Task.WhenAll(_producerTasks);
-        _testExecutionState.ExecutionState.MessageQueue.CompleteAdding();
+        _testExecutionState.MessageQueue.CompleteAdding();
     }
 }

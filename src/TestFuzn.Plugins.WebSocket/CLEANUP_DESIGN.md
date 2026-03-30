@@ -22,13 +22,13 @@ internal class WebSocketManager
     private readonly IList<WebSocketConnection> _connections;
     
     public void TrackConnection(WebSocketConnection connection);
-    public async ValueTask CleanupContext();
+    public async ValueTask CleanupIteration();
 }
 ```
 
 - Maintains a thread-safe list of all connections created in a context
 - `TrackConnection()` - Registers a new connection for cleanup
-- `CleanupContext()` - Called automatically after scenario completion:
+- `CleanupIteration()` - Called automatically after scenario completion:
   - Checks each connection's state
   - Gracefully closes open connections
   - Disposes all connections to release resources
@@ -40,17 +40,17 @@ internal class WebSocketPlugin : IContextPlugin
 {
     public bool RequireState => true;
     
-    public object InitContext() 
+    public object InitIteration() 
         => new WebSocketManager();
     
-    public async Task CleanupContext(object state)
-        => await ((WebSocketManager)state).CleanupContext();
+    public async Task CleanupIteration(object state)
+        => await ((WebSocketManager)state).CleanupIteration();
 }
 ```
 
 - `RequireState = true` - Indicates the plugin maintains per-context state
-- `InitContext()` - Creates a new manager for each test context
-- `CleanupContext()` - Automatically called by the framework after scenario completion
+- `InitIteration()` - Creates a new manager for each test context
+- `CleanupIteration()` - Automatically called by the framework after scenario completion
 
 #### IContextExtensions
 ```csharp

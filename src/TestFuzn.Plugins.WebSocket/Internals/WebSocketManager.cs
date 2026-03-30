@@ -15,7 +15,7 @@ internal class WebSocketManager
         }
     }
 
-    public async ValueTask CleanupContext()
+    public async ValueTask CleanupIteration()
     {
         List<WebSocketConnection> connectionsToCleanup;
         lock (_connectionsLock)

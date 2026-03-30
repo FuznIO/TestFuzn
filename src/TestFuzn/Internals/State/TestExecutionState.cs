@@ -10,6 +10,9 @@ namespace Fuzn.TestFuzn.Internals.State;
 
 internal class TestExecutionState : IDisposable
 {
+    private volatile ExecutionStatus _executionStatus = ExecutionStatus.NotStarted;
+    private CancellationTokenSource? _cancellationTokenSource;
+
     public ITestFrameworkAdapter TestFramework { get; private set; } = null!;
     public List<Scenario> Scenarios { get; private set; } = new();
     public ITest TestClassInstance { get; private set; } = null!;
@@ -17,21 +20,18 @@ internal class TestExecutionState : IDisposable
     public TestType TestType => TestResult.TestType;
     public Dictionary<string, ScenarioLoadCollector> LoadCollectors = new();
     public InMemorySnapshotCollector LoadSnapshotCollector { get; } = new();
-    
-    private volatile ExecutionStatus _executionStatus = ExecutionStatus.NotStarted;
-    private CancellationTokenSource? _cancellationTokenSource;
-
     public ExecutionStatus ExecutionStatus
     {
         get => _executionStatus;
         set => _executionStatus = value;
     }
-
     public CancellationToken CancellationToken => _cancellationTokenSource?.Token ?? CancellationToken.None;
-
     public Exception? ExecutionStoppedReason { get; set; }
     public Exception? FirstException { get; set; }
-    public ScenarioExecutionState ExecutionState { get; } = new();
+    public BlockingCollection<ExecuteScenarioMessage> MessageQueue { get; } = new();
+    public Dictionary<string, ConcurrentDictionary<Guid, bool>> ConstantMessageQueue { get; } = new();
+    public ConcurrentDictionary<string, int> MessageCountPerScenario { get; } = new();
+    public ConcurrentDictionary<string, bool> ProducersCompleted { get; } = new();
     public bool IsConsumingCompleted { get; private set; }
     public readonly ConcurrentDictionary<string, DateTime> LastSinkWrite = new();
     public readonly ConcurrentDictionary<string, SemaphoreSlim> SinkSemaphores = new();
@@ -65,10 +65,10 @@ internal class TestExecutionState : IDisposable
 
         foreach (var scenario in scenarios)
         {
-            if (!ExecutionState.ConstantMessageQueue.ContainsKey(scenario.Name))
-                ExecutionState.ConstantMessageQueue.TryAdd(scenario.Name, new ConcurrentDictionary<Guid, bool>());
+            if (!ConstantMessageQueue.ContainsKey(scenario.Name))
+                ConstantMessageQueue.TryAdd(scenario.Name, new ConcurrentDictionary<Guid, bool>());
 
-            ExecutionState.MessageCountPerScenario[scenario.Name] = 0;
+            MessageCountPerScenario[scenario.Name] = 0;
 
             LoadCollectors.Add(scenario.Name, new ScenarioLoadCollector(scenario));
         }
@@ -76,43 +76,43 @@ internal class TestExecutionState : IDisposable
 
     public void EnqueueScenarioExecution(ExecuteScenarioMessage message)
     {
-        ExecutionState.MessageQueue.Add(message);
+        MessageQueue.Add(message);
 
-        ExecutionState.MessageCountPerScenario.AddOrUpdate(message.ScenarioName, 1, (key, oldValue) => oldValue + 1);
+        MessageCountPerScenario.AddOrUpdate(message.ScenarioName, 1, (key, oldValue) => oldValue + 1);
     }
 
     public void AddToConstantQueue(ExecuteScenarioMessage message)
     {
-        var queue = ExecutionState.ConstantMessageQueue[message.ScenarioName];
+        var queue = ConstantMessageQueue[message.ScenarioName];
 
         queue.TryAdd(message.MessageId, true);
     }
 
     public int GetConstantQueueCount(string scenarioName)
     {
-        var queue = ExecutionState.ConstantMessageQueue[scenarioName];
+        var queue = ConstantMessageQueue[scenarioName];
         return queue.Count;
     }
 
     public void RemoveFromQueues(ExecuteScenarioMessage message)
     {
-        ExecutionState.MessageCountPerScenario.AddOrUpdate(message.ScenarioName, 0, (key, oldValue) => oldValue - 1);
+        MessageCountPerScenario.AddOrUpdate(message.ScenarioName, 0, (key, oldValue) => oldValue - 1);
 
-        var queue = ExecutionState.ConstantMessageQueue[message.ScenarioName];
+        var queue = ConstantMessageQueue[message.ScenarioName];
         queue.Remove(message.MessageId, out _);   
     }
 
     public void MarkScenarioProducersCompleted(string scenarioName)
     {
-        ExecutionState.ProducersCompleted.AddOrUpdate(scenarioName, key => true, (key, oldValue) => true);
+        ProducersCompleted.AddOrUpdate(scenarioName, key => true, (key, oldValue) => true);
     }
 
     public bool IsScenarioExecutionComplete(string scenarioName)
     {
-        if (!ExecutionState.ProducersCompleted.ContainsKey(scenarioName))
+        if (!ProducersCompleted.ContainsKey(scenarioName))
             return false;
 
-        if (ExecutionState.MessageCountPerScenario[scenarioName] == 0)
+        if (MessageCountPerScenario[scenarioName] == 0)
             return true;
 
         return false;
@@ -120,7 +120,7 @@ internal class TestExecutionState : IDisposable
 
     public bool IsExecutionQueueEmpty(string scenarioName)
     {
-        if (ExecutionState.MessageCountPerScenario[scenarioName] == 0)
+        if (MessageCountPerScenario[scenarioName] == 0)
             return true;
 
         return false;
@@ -130,9 +130,9 @@ internal class TestExecutionState : IDisposable
     {
         foreach (var scenario in Scenarios)
         {
-            if (!ExecutionState.ProducersCompleted.ContainsKey(scenario.Name))
+            if (!ProducersCompleted.ContainsKey(scenario.Name))
                 throw new InvalidOperationException($"Scenario '{scenario.Name}' producers have not been marked as completed.");
-            if (ExecutionState.MessageCountPerScenario[scenario.Name] > 0)
+            if (MessageCountPerScenario[scenario.Name] > 0)
                 throw new InvalidOperationException($"Scenario '{scenario.Name}' has pending executions in the queue.");
         }
 

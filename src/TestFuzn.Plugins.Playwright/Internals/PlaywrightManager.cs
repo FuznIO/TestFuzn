@@ -74,7 +74,7 @@ internal class PlaywrightManager
         }
     }
 
-    public async ValueTask CleanupContext()
+    public async ValueTask CleanupIteration()
     {
         if (_contexts.Count == 0)
             return;

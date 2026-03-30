@@ -12,7 +12,7 @@ internal class PlaywrightPlugin : IContextPlugin
 
     public IPlaywright Playwright { get; private set; } = null!;
     public ConcurrentDictionary<string, IBrowser> Browsers => _browsers;
-    public bool RequireState => true;
+    public bool RequireIterationState => true;
     public bool RequireStepExceptionHandling => true;
 
     public PlaywrightPlugin(PlaywrightPluginConfiguration configuration)
@@ -48,18 +48,18 @@ internal class PlaywrightPlugin : IContextPlugin
             Playwright.Dispose();
     }
 
-    public object InitContext(IServiceProvider serviceProvider)
+    public object InitIteration(IServiceProvider serviceProvider)
     {
         return serviceProvider.GetRequiredService<PlaywrightManager>();
     }
 
-    public async Task CleanupContext(object state)
+    public async Task CleanupIteration(object state)
     {
         var playwrightManager = state as PlaywrightManager;
         if (playwrightManager == null)
-            throw new InvalidOperationException("PlaywrightManager state is null in CleanupContext.");
+            throw new InvalidOperationException("PlaywrightManager state is null in CleanupIteration.");
 
-        await playwrightManager.CleanupContext();
+        await playwrightManager.CleanupIteration();
     }
 
     public async Task HandleStepException(object state, IterationContext context, Exception exception)
