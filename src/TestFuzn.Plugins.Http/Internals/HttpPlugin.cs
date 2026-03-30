@@ -4,7 +4,7 @@ namespace Fuzn.TestFuzn.Plugins.Http.Internals;
 
 internal class HttpPlugin(HttpGlobalState globalState) : IContextPlugin
 {
-    public bool RequireState => true;
+    public bool RequireIterationState => true;
     public bool RequireStepExceptionHandling => true;
 
     public Task InitSuite()
@@ -17,12 +17,12 @@ internal class HttpPlugin(HttpGlobalState globalState) : IContextPlugin
         return Task.CompletedTask;
     }
 
-    public object InitContext(IServiceProvider serviceProvider)
+    public object InitIteration(IServiceProvider serviceProvider)
     {
         return new HttpPluginState();
     }
 
-    public Task CleanupContext(object state)
+    public Task CleanupIteration(object state)
     {
         if (state is HttpPluginState httpState)
         {

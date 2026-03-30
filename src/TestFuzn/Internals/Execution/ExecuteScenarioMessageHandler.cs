@@ -83,7 +83,7 @@ internal class ExecuteScenarioMessageHandler
                 await scenario.AfterIterationAction(stepContext);
             }
 
-            await CleanupContext(iterationState);
+            await CleanupIteration(iterationState);
         }
 
         if (_testExecutionState.TestResult.TestType == TestType.Standard)
@@ -130,15 +130,15 @@ internal class ExecuteScenarioMessageHandler
         }
     }
 
-    private async Task CleanupContext(IterationState iterationContext)
+    private async Task CleanupIteration(IterationState iterationContext)
     {
         foreach (var plugin in _testExecutionState.TestSession.Configuration.ContextPlugins)
         {
-            if (!plugin.RequireState)
+            if (!plugin.RequireIterationState)
                 continue;
 
             var state = iterationContext.Internals.Plugins.GetState(plugin.GetType());
-            await plugin.CleanupContext(state);
+            await plugin.CleanupIteration(state);
         }
     }
 

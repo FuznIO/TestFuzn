@@ -100,13 +100,13 @@ internal class ContextFactory
         
         foreach (var plugin in iterationState.Info.TestSession.Configuration.ContextPlugins)
         {
-            if (!plugin.RequireState)
+            if (!plugin.RequireIterationState)
                 continue;
 
             if (iterationState.Internals.Plugins == null)
                 iterationState.Internals.Plugins = new ContextPluginsState();
 
-            var state = plugin.InitContext(serviceProvider);
+            var state = plugin.InitIteration(serviceProvider);
             iterationState.Internals.Plugins.SetState(plugin.GetType(), state);
         }
     }

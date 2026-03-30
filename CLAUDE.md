@@ -10,7 +10,7 @@ TestFuzn ("testfusion") is a C# unified testing framework that combines unit tes
 
 ```bash
 # Build the solution
-dotnet build src/TestFuzn.sln
+dotnet build src/TestFuzn.slnx
 
 # Run tests (requires TestWebApp running first)
 dotnet run --project src/TestWebApp/TestWebApp.csproj --launch-profile TestWebApp &
@@ -55,7 +55,7 @@ Tests are built with `ScenarioBuilder<TModel>` which chains `.Step()`, `.InputDa
 
 ### Plugin System
 
-- **IContextPlugin** -- Per-iteration state management (HTTP client, Playwright browser, WebSocket). Methods: `InitSuite()`, `InitContext()`, `HandleStepException()`, `CleanupContext()`, `CleanupSuite()`
+- **IContextPlugin** -- Per-iteration state management (HTTP client, Playwright browser, WebSocket). Methods: `InitSuite()`, `InitIteration()`, `HandleStepException()`, `CleanupIteration()`, `CleanupSuite()`
 - **ISinkPlugin** -- Metrics/reporting sinks (InfluxDB). Methods: `InitSuite()`, `WriteStats()`, `CleanupSuite()`
 - **ITestFrameworkAdapter** -- Abstracts test framework integration (MSTest today, extensible to others)
 
@@ -101,3 +101,4 @@ Test/sample projects: `TestFuzn.Tests`, `TestFuzn.Tests.Attributes`, `TestFuzn.T
   - **Collections:** `Assert.Contains`, `Assert.DoesNotContain`, `Assert.IsEmpty`, `Assert.IsNotEmpty`, `Assert.HasCount`, `Assert.ContainsSingle`
   - **Strings:** `Assert.Contains`, `Assert.StartsWith`, `Assert.EndsWith`, `Assert.MatchesRegex` (prefer over `StringAssert`)
   - **Exceptions:** `Assert.ThrowsExactly<T>`, `Assert.ThrowsExactlyAsync<T>` (prefer over `[ExpectedException]`)
+- When making changes, update relevant README/documentation files (e.g. `README.md`, `docs/*.md`) if the change affects documented behavior, APIs, or usage examples

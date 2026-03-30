@@ -404,3 +404,6 @@ FodyWeavers.xsd
 **/appsettings.void.json
 /src/SampleApp.WebApp/App_Data/
 */TestFuznResults/*
+
+# Claude Code local settings
+.claude/settings.local.json

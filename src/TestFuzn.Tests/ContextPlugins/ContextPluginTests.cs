@@ -7,7 +7,7 @@ namespace Fuzn.TestFuzn.Tests.ContextPlugins;
 public class ContextPluginTests : Test
 {
     [Test]
-    public async Task InitContext_is_called_per_iteration()
+    public async Task InitIteration_is_called_per_iteration()
     {
         var capturedStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
 
@@ -42,7 +42,7 @@ public class ContextPluginTests : Test
     }
 
     [Test]
-    public async Task CleanupContext_is_called_after_each_iteration()
+    public async Task CleanupIteration_is_called_after_each_iteration()
     {
         var capturedStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
 
@@ -56,11 +56,11 @@ public class ContextPluginTests : Test
             .Run();
 
         Assert.IsTrue(capturedStates.All(s => s.CleanedUp),
-            "CleanupContext should be called for every iteration");
+            "CleanupIteration should be called for every iteration");
     }
 
     [Test]
-    public async Task ShouldFail_CleanupContext_runs_when_step_throws()
+    public async Task ShouldFail_CleanupIteration_runs_when_step_throws()
     {
         var capturedStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
 
@@ -107,7 +107,7 @@ public class ContextPluginTests : Test
     }
 
     [Test]
-    public async Task CleanupContext_runs_for_standard_test()
+    public async Task CleanupIteration_runs_for_standard_test()
     {
         var capturedStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
 
@@ -124,7 +124,7 @@ public class ContextPluginTests : Test
     }
 
     [Test]
-    public async Task CleanupContext_runs_for_warmup_iterations()
+    public async Task CleanupIteration_runs_for_warmup_iterations()
     {
         var warmupStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
         var measurementStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
@@ -142,6 +142,6 @@ public class ContextPluginTests : Test
         // All states (warmup + measurement) should be cleaned up
         var allStates = measurementStates.ToList();
         Assert.IsTrue(allStates.All(s => s.CleanedUp),
-            "CleanupContext should run for all iterations including warmup");
+            "CleanupIteration should run for all iterations including warmup");
     }
 }

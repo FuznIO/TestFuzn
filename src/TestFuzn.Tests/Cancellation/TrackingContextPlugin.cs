@@ -4,13 +4,13 @@ namespace Fuzn.TestFuzn.Tests.Cancellation;
 
 public class TrackingContextPlugin : IContextPlugin
 {
-    public bool RequireState => true;
+    public bool RequireIterationState => true;
     public bool RequireStepExceptionHandling => false;
 
     public Task InitSuite() => Task.CompletedTask;
     public Task CleanupSuite() => Task.CompletedTask;
 
-    public object InitContext(IServiceProvider serviceProvider)
+    public object InitIteration(IServiceProvider serviceProvider)
     {
         return new TrackingState();
     }
@@ -18,7 +18,7 @@ public class TrackingContextPlugin : IContextPlugin
     public Task HandleStepException(object state, IterationContext context, Exception exception)
         => Task.CompletedTask;
 
-    public Task CleanupContext(object state)
+    public Task CleanupIteration(object state)
     {
         if (state is TrackingState tracking)
             tracking.MarkCleanedUp();

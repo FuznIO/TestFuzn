@@ -27,7 +27,7 @@ internal class ConsumerManager
 
     private async Task Consume()
     {
-        var queue = _testExecutionState.ExecutionState.MessageQueue;
+        var queue = _testExecutionState.MessageQueue;
         var cancellationToken = _testExecutionState.CancellationToken;
 
         await Parallel.ForEachAsync(
