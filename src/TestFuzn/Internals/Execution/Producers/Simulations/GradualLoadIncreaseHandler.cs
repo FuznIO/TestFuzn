@@ -34,13 +34,16 @@ internal class GradualLoadIncreaseHandler : ILoadHandler
         {
             for (int i = 0; i < currentRate; i++)
             {
+                if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
+                    return;
+
                 var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
 
                 _testExecutionState.EnqueueScenarioExecution(message);
             }
 
             if (sleepBetweenQueueAdding > 0)
-                await Task.Delay(TimeSpan.FromTicks(sleepBetweenQueueAdding));
+                await Task.Delay(TimeSpan.FromTicks(sleepBetweenQueueAdding), _testExecutionState.CancellationToken);
 
             currentRate++;
         }

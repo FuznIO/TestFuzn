@@ -131,7 +131,7 @@ public class InputDataTests :  Test
     }
 
     [Test]
-    public async Task Should_Fail_StandardTest_Verify_Scenario_Fails_When_InputData_Iteration_Fails()
+    public async Task ShouldFail_StandardTest_Verify_Scenario_Fails_When_InputData_Iteration_Fails()
     {
         var catchWasCalled = false;
 

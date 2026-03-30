@@ -8,16 +8,17 @@ internal class ContextFactory
 {
     public static Context CreateContext(
         TestSession testSession,
-        IServiceProvider serviceProvider, 
-        ITestFrameworkAdapter testFramework, 
-        string stepName)
+        IServiceProvider serviceProvider,
+        ITestFrameworkAdapter testFramework,
+        string stepName,
+        CancellationToken cancellationToken = default)
     {
         var context = new Context();
 
         if (testSession.Configuration != null)
         {
             context.IterationState = new();
-            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework);
+            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework, cancellationToken);
             context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 
@@ -26,16 +27,17 @@ internal class ContextFactory
 
     public static ScenarioContext CreateScenarioContext(
         TestSession testSession,
-        IServiceProvider serviceProvider, 
-        ITestFrameworkAdapter testFramework, 
-        string stepName)
+        IServiceProvider serviceProvider,
+        ITestFrameworkAdapter testFramework,
+        string stepName,
+        CancellationToken cancellationToken = default)
     {
         var context = new ScenarioContext();
 
         if (testSession.Configuration != null)
         {
             context.IterationState = new();
-            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework);
+            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework, cancellationToken);
             context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 
@@ -56,10 +58,11 @@ internal class ContextFactory
 
     public static IterationState CreateIterationState(
         TestSession testSession,
-        IServiceProvider serviceProvider, 
-        ITestFrameworkAdapter testFramework, 
-        Scenario scenario, object? 
-        currentInput)
+        IServiceProvider serviceProvider,
+        ITestFrameworkAdapter testFramework,
+        Scenario scenario, object?
+        currentInput,
+        CancellationToken cancellationToken = default)
     {
         var iterationState = new IterationState();
         if (scenario.ContextType.IsGenericType && scenario.ContextType.GetGenericTypeDefinition() == typeof(IterationContext<>))
@@ -72,7 +75,7 @@ internal class ContextFactory
 
             iterationState.Model = modelInstance;
         }
-        PopulateIterationStateProperties(iterationState, testSession, serviceProvider, testFramework);
+        PopulateIterationStateProperties(iterationState, testSession, serviceProvider, testFramework, cancellationToken);
         iterationState.SharedData = new();
         iterationState.Scenario = scenario;
         iterationState.InputData = currentInput;
@@ -81,14 +84,16 @@ internal class ContextFactory
     }
 
     private static void PopulateIterationStateProperties(
-        IterationState iterationState, 
+        IterationState iterationState,
         TestSession testSession,
-        IServiceProvider serviceProvider, 
-        ITestFrameworkAdapter testFramework)
+        IServiceProvider serviceProvider,
+        ITestFrameworkAdapter testFramework,
+        CancellationToken cancellationToken)
     {
         iterationState.Info = new ExecutionInfo();
         iterationState.Info.TestSession = testSession;
         iterationState.Info.CorrelationId = Guid.NewGuid().ToString();
+        iterationState.Info.CancellationToken = cancellationToken;
         iterationState.TestFramework = testFramework;
         iterationState.ServiceProvider = serviceProvider;
         iterationState.Internals = new ContextInternals();

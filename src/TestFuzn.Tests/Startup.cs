@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Plugins.Http;
 using Fuzn.TestFuzn.Plugins.Playwright;
 using Fuzn.TestFuzn.Plugins.WebSocket;
 using Fuzn.TestFuzn.Sinks.InfluxDB;
+using Fuzn.TestFuzn.Tests.Cancellation;
 using Fuzn.TestFuzn.Tests.IocContainer;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +14,7 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
 {
     public static bool BeforeSuiteExecuted = false;
     public static bool AfterSuiteExecuted = false;
+    public static readonly TrackingContextPlugin TrackingPlugin = new();
 
     [AssemblyInitialize]
     public static async Task Initialize(TestContext testContext)
@@ -97,6 +99,7 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             // config.SerializerProvider = new NewtonsoftSerializerProvider();
         });
         configuration.UseInfluxDB();
+        configuration.AddContextPlugin(TrackingPlugin);
 
         configuration.Services.AddSingleton<SingletonMarker>();
         configuration.Services.AddScoped<ScopedMarker>();

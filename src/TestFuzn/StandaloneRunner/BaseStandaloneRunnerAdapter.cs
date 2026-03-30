@@ -7,9 +7,21 @@ using Fuzn.TestFuzn.Contracts.Adapters;
 
 namespace Fuzn.TestFuzn.StandaloneRunner;
 
-internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter
+internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter, IDisposable
 {
+    private readonly CancellationTokenSource _cts = new();
+
+    protected BaseStandaloneRunnerAdapter()
+    {
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = true;
+            _cts.Cancel();
+        };
+    }
+
     public bool SupportsRealTimeConsoleOutput => true;
+    public CancellationToken CancellationToken => _cts.Token;
 
     public ConsoleColor ForegroundColor
     {
@@ -240,5 +252,10 @@ internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter
     public void ThrowTestFuznIsNotInitializedException()
     {
         throw new NotImplementedException();
+    }
+
+    public void Dispose()
+    {
+        _cts.Dispose();
     }
 }

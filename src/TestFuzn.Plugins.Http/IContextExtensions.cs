@@ -71,6 +71,7 @@ public static class ContextExtensions
         var fluentHttpRequest = httpClient
                                     .CreateHttpRequest()
                                     .WithUrl(url)
+                                    .WithCancellationToken(context.Info.CancellationToken)
                                     .WithOption(HttpPluginConstants.ContextOptionName.Key, context);
 
         // Pass the state to the request if available

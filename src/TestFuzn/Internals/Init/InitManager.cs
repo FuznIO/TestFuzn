@@ -56,7 +56,7 @@ internal class InitManager
     {
         if (_testExecutionState.TestClassInstance is IBeforeTest testClassInstance)
         {
-            var context = ContextFactory.CreateContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "BeforeTest");
+            var context = ContextFactory.CreateContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "BeforeTest", _testExecutionState.CancellationToken);
             await testClassInstance.BeforeTest(context);
         }
     }
@@ -65,7 +65,7 @@ internal class InitManager
     {
         if (scenario.BeforeScenario != null)
         {
-            var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "BeforeScenario");
+            var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "BeforeScenario", _testExecutionState.CancellationToken);
             await scenario.BeforeScenario(context);
         }
 
@@ -74,7 +74,7 @@ internal class InitManager
 
         if (scenario.InputDataInfo.SourceType == InputDataSourceType.Action)
         {
-            var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "InputData");
+            var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "InputData", _testExecutionState.CancellationToken);
             scenario.InputDataInfo.InputDataList = await scenario.InputDataInfo.InputDataAction(context);
         }
     }
@@ -96,12 +96,12 @@ internal class InitManager
                 if (scenario.WarmupAction != null)
                 {
                     await scenario.WarmupAction(
-                        ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "Warmup"),
+                        ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "Warmup", _testExecutionState.CancellationToken),
                         new SimulationsBuilder(scenario, isWarmup: true));
                 }
 
                 await scenario.SimulationsAction(
-                    ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "Simulations"), 
+                    ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "Simulations", _testExecutionState.CancellationToken),
                     new SimulationsBuilder(scenario, isWarmup: false));
             }
 

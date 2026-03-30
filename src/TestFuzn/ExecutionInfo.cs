@@ -31,4 +31,10 @@ public class ExecutionInfo
     /// Gets or sets the correlation ID for tracking across distributed systems.
     /// </summary>
     public string CorrelationId { get; set; }
+
+    /// <summary>
+    /// Gets the cancellation token for the current test execution. Use this to cooperatively cancel
+    /// long-running operations (e.g. HTTP requests) when the test is stopped.
+    /// </summary>
+    public CancellationToken CancellationToken { get; internal set; }
 }

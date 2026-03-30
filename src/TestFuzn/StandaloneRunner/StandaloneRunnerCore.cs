@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Internals;
 using System.Reflection;
 using System.Text;
 
@@ -7,7 +6,7 @@ namespace Fuzn.TestFuzn.StandaloneRunner;
 
 internal class StandaloneRunnerCore
 {
-    public async Task Run<TStartup>(Assembly assembly, 
+    public async Task Run<TStartup>(Assembly testAssembly, 
         string[] args, Func<ITestFrameworkAdapter> testFrameworkInstanceCreator)
         where TStartup : IStartup, new()
     {
@@ -16,7 +15,7 @@ internal class StandaloneRunnerCore
 
         Console.OutputEncoding = Encoding.UTF8;
 
-        var tests = new DiscoverTests().GetTests(assembly);
+        var tests = new DiscoverTests().GetTests(testAssembly);
 
         var testName = argumentsParser.GetValueFromArgsOrEnvironmentVariable(parsedArgs, "test-name", "TESTFUZN_TEST_NAME");
 
@@ -35,6 +34,14 @@ internal class StandaloneRunnerCore
             return;
         }
 
-        await new StandaloneTestRunner().RunTest<TStartup>(args, testFrameworkInstanceCreator(), testInfo);
+        var adapter = testFrameworkInstanceCreator();
+        try
+        {
+            await new StandaloneTestRunner().RunTest<TStartup>(args, adapter, testInfo);
+        }
+        finally
+        {
+            (adapter as IDisposable)?.Dispose();
+        }
     }
 }

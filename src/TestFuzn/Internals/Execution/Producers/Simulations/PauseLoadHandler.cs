@@ -28,7 +28,7 @@ internal class PauseLoadHandler : ILoadHandler
                 ? remaining
                 : TimeSpan.FromMilliseconds(100);
 
-            await Task.Delay(delay);
+            await Task.Delay(delay, _testExecutionState.CancellationToken);
         }
     }
 }

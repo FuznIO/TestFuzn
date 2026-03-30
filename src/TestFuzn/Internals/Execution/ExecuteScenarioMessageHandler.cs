@@ -41,7 +41,7 @@ internal class ExecuteScenarioMessageHandler
         if (scenario.InputDataInfo.HasInputData)
             currentInputData = _inputDataFeeder.GetNextInput(scenario.Name);
 
-        var iterationState = ContextFactory.CreateIterationState(_testExecutionState.TestSession, iterationServiceProvider, _testExecutionState.TestFramework, scenario, currentInputData);
+        var iterationState = ContextFactory.CreateIterationState(_testExecutionState.TestSession, iterationServiceProvider, _testExecutionState.TestFramework, scenario, currentInputData, _testExecutionState.CancellationToken);
 
         var iterationResult = new IterationResult();
         iterationResult.CorrelationId = iterationState.Info.CorrelationId;
@@ -66,7 +66,7 @@ internal class ExecuteScenarioMessageHandler
                     ["scenario"] = scenario.Name,
                     ["step"] = index + 1
                 });
-                
+
                 await executeStepHandler.ExecuteStep(step);
                 iterationResult.StepResults.Add(executeStepHandler.RootStepResult!.Name, executeStepHandler.RootStepResult);
             }
@@ -82,6 +82,8 @@ internal class ExecuteScenarioMessageHandler
                 var stepContext = ContextFactory.CreateIterationContext(iterationState, "AfterIteration", null, null);
                 await scenario.AfterIterationAction(stepContext);
             }
+
+            await CleanupContext(iterationState);
         }
 
         if (_testExecutionState.TestResult.TestType == TestType.Standard)
@@ -90,7 +92,6 @@ internal class ExecuteScenarioMessageHandler
                 iterationResult.InputData = currentInputData.ToString();
 
             _testExecutionState.TestResult.IterationResults.Add(iterationResult);
-            await CleanupContext(iterationState);
         }
         else if (_testExecutionState.TestResult.TestType == TestType.Load)
         {
@@ -106,14 +107,12 @@ internal class ExecuteScenarioMessageHandler
 
             var scenarioLoadResult = scenarioLoadCollector.GetCurrentResult();
 
-            await CleanupContext(iterationState);
-
             if (scenario.AssertWhileRunningAction != null
                 && _testExecutionState.ExecutionStatus == ExecutionStatus.Running)
             {
                 try
                 {
-                    var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, iterationServiceProvider, _testExecutionState.TestFramework, "AssertWhileRunning");
+                    var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, iterationServiceProvider, _testExecutionState.TestFramework, "AssertWhileRunning", _testExecutionState.CancellationToken);
                     scenario.AssertWhileRunningAction(context, new AssertScenarioStats(scenarioLoadResult));
                 }
                 catch (Exception ex)

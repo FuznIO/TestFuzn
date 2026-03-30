@@ -48,9 +48,17 @@ internal class TestRunner
         {
             _testExecutionState.Init(testFramework, test, scenarios);
 
-            _consoleManager.StartRealtimeConsoleOutputIfEnabled();
-            await _initManager.Run();
-            await _executionManager.Run();
+            try
+            {
+                _consoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await _initManager.Run();
+                await _executionManager.Run();
+            }
+            catch (OperationCanceledException) when (_testExecutionState.CancellationToken.IsCancellationRequested)
+            {
+                // Cancellation was requested — fall through to run cleanup
+            }
+
             await _cleanupManager.Run();
             _testExecutionState.TestSession.ResultManager.AddTestResults(_testExecutionState.TestResult);
             await _loadReportManager.WriteLoadReports(_testExecutionState);
@@ -61,6 +69,13 @@ internal class TestRunner
 
             if (_testExecutionState.FirstException != null)
                 ExceptionDispatchInfo.Capture(_testExecutionState.FirstException).Throw();
+
+            if (_testExecutionState.CancellationToken.IsCancellationRequested)
+                throw new OperationCanceledException(_testExecutionState.CancellationToken);
+        }
+        catch (OperationCanceledException) when (_testExecutionState.CancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception)
         {
@@ -70,6 +85,10 @@ internal class TestRunner
             }
 
             throw;
+        }
+        finally
+        {
+            _testExecutionState.Dispose();
         }
     }
 }
