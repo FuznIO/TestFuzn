@@ -162,6 +162,13 @@ internal class StandardHtmlReportWriter : IStandardReport
     private static void WriteChartScript(StringBuilder b, int testsPassed, int testsFailed, int testsSkipped)
     {
         b.AppendLine("<script>");
+        b.AppendLine("function toggleDetails(link) {");
+        b.AppendLine("    var details = link.closest('tr').querySelector('details.results');");
+        b.AppendLine("    if (details) {");
+        b.AppendLine("        details.open = !details.open;");
+        b.AppendLine("        link.textContent = details.open ? 'Hide' : 'Show';");
+        b.AppendLine("    }");
+        b.AppendLine("}");
         b.AppendLine("document.addEventListener('DOMContentLoaded', function() {");
         
         // Donut Chart
@@ -238,7 +245,7 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.Append(@"<table class=""group-results"">");
         b.AppendLine($"<tr>");
         b.AppendLine($"<th>Test</th>");
-        b.AppendLine(@$"<th>Report</th>");
+        b.AppendLine(@$"<th>Details</th>");
         b.AppendLine(@$"<th>Type</th>");
         b.AppendLine(@$"<th>Status</th>");
         b.AppendLine(@$"<th>Duration</th>");
@@ -306,11 +313,15 @@ internal class StandardHtmlReportWriter : IStandardReport
                 ? "N/A"
                 : testResult.Value.TestType == TestType.Load ? "Load" : "Standard";
 
-            var reportLink = "";
+            var detailsLink = "";
             if (testResult.Value.TestType == TestType.Load && testResult.Value.Status != TestStatus.Skipped)
             {
                 var reportName = FileNameHelper.MakeFilenameSafe($"{groupResults.Value.Name}-{testResult.Value.Name}");
-                reportLink = $"<a href=\"Data/{E(reportName)}.html\" target=\"_blank\">View</a>";
+                detailsLink = $"<a href=\"Data/{E(reportName)}.html\" target=\"_blank\">View</a>";
+            }
+            else if (testResult.Value.Status != TestStatus.Skipped && testResult.Value.IterationResults.Count > 0)
+            {
+                detailsLink = @"<a href=""#"" class=""toggle-details"" onclick=""toggleDetails(this); return false;"">Show</a>";
             }
 
             b.AppendLine($"<tr>");
@@ -319,7 +330,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             WriteScenarioDetails(b, testResult.Value);
 
             b.AppendLine("</td>");
-            b.AppendLine($"<td>{reportLink}</td>");
+            b.AppendLine($"<td>{detailsLink}</td>");
             b.AppendLine($"<td>{typeText}</td>");
             b.AppendLine($"<td>{statusText}</td>");
             b.AppendLine($"<td>{testResult.Value.TestRunDuration().ToTestFuznReadableString()}</td>");
@@ -340,7 +351,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             && sr.IterationResults.Count > 0)
         {
             b.AppendLine(@"<details class=""results"">");
-            b.AppendLine("<summary></summary>");
+            b.AppendLine(@"<summary style=""display:none""></summary>");
         }
 
         if (sr.IterationResults.Count > 0)

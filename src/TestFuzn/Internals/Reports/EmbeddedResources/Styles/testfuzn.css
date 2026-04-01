@@ -173,16 +173,16 @@ th.vertical
     white-space: nowrap;
 }
 details {
+    margin: 0 50px 0 50px;
+}
+details[open] {
     margin: 8px 50px 8px 50px;
 }
-details.results summary::before {
-    content: "Show Details";
-    font-size: var(--base-font-size);
-    color: var(--text-primary);
+details.results summary {
+    display: none;
 }
-
-details.results[open] > summary::before {
-    content: "Hide Details";
+a.toggle-details {
+    cursor: pointer;
 }
 .status-panel
 {
