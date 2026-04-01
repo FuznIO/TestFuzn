@@ -49,4 +49,19 @@ internal interface IFileSystem
     /// Opens a <see cref="StreamReader"/> for the file at the specified path.
     /// </summary>
     StreamReader OpenStreamReader(string path);
+
+    /// <summary>
+    /// Returns the subdirectories of the specified directory.
+    /// </summary>
+    string[] GetDirectories(string path);
+
+    /// <summary>
+    /// Recursively deletes the specified directory and all its contents.
+    /// </summary>
+    void DeleteDirectory(string path);
+
+    /// <summary>
+    /// Returns the creation time of the specified directory in UTC.
+    /// </summary>
+    DateTime GetDirectoryCreationTimeUtc(string path);
 }

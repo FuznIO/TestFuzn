@@ -19,10 +19,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Internals;
 
-internal partial class TestSession
+internal class TestSession
 {
+    private const string MarkerFileName = ".testfuzn";
+    private const int DefaultKeepLastNRuns = 10;
+
     private static readonly AsyncLocal<TestSession> _current = new();
     private static TestSession? _default;
+
+    private IFileSystem? _fileSystem;
+    private int _keepLastNRuns = DefaultKeepLastNRuns;
 
     internal static TestSession? Current
     {
@@ -125,18 +131,31 @@ internal partial class TestSession
         NodeName = environmentWrapper.GetMachineName();
 
         var testAssemblyName = StartupInstance.GetType().Assembly.GetName().Name;
-        TestsOutputDirectory = Path.Combine(testFramework.TestResultsDirectory, "TestFuznResults", testAssemblyName, $"{TestRunId}");
+
+        var customOutputDirectory = argumentParser.GetValueFromArgsOrEnvironmentVariable(
+                                        args, "output-directory", "TESTFUZN_OUTPUT_DIRECTORY");
+        var baseDirectory = !string.IsNullOrWhiteSpace(customOutputDirectory)
+            ? customOutputDirectory
+            : testFramework.TestResultsDirectory;
+        TestsOutputDirectory = Path.Combine(baseDirectory, "TestFuznResults", testAssemblyName, $"{TestRunId}");
         if (Id != "default")
             TestsOutputDirectory = TestsOutputDirectory + "_" + Id;
 
         fileSystem.CreateDirectory(TestsOutputDirectory);
+        await fileSystem.WriteAllTextAsync(Path.Combine(TestsOutputDirectory, MarkerFileName), "");
+
+        _fileSystem = fileSystem;
+        var keepLastNRunsValue = argumentParser.GetValueFromArgsOrEnvironmentVariable(
+                                        args, "keep-last-n-runs", "TESTFUZN_KEEP_LAST_N_RUNS");
+        if (!string.IsNullOrWhiteSpace(keepLastNRunsValue) && int.TryParse(keepLastNRunsValue, out var parsed) && parsed >= 0)
+            _keepLastNRuns = parsed;
 
         Logger = Internals.Logging.LoggerFactory.CreateLogger(fileSystem, TestsOutputDirectory);
         Logger.LogInformation("Logging initialized");
 
         var configRoot = configurationLoader.LoadConfigRoot(
                                 executionEnvironment: executionEnvironment,
-                                targetEnvironment: targetEnvironment, 
+                                targetEnvironment: targetEnvironment,
                                 nodeName: NodeName);
 
         var configurationManager = new AppConfigurationManager(configRoot);
@@ -231,5 +250,42 @@ internal partial class TestSession
 
         foreach (var plugin in ServiceProvider.GetServices<ISinkPlugin>())
             await plugin.CleanupSuite();
+
+        CleanupOldRuns();
+    }
+
+    private void CleanupOldRuns()
+    {
+        if (_fileSystem == null || _keepLastNRuns <= 0)
+            return;
+
+        var parentDirectory = Path.GetDirectoryName(TestsOutputDirectory);
+        if (parentDirectory == null || !_fileSystem.DirectoryExists(parentDirectory))
+            return;
+
+        try
+        {
+            var runDirectories = _fileSystem.GetDirectories(parentDirectory)
+                .Where(dir => _fileSystem.FileExists(Path.Combine(dir, MarkerFileName)))
+                .OrderByDescending(dir => _fileSystem.GetDirectoryCreationTimeUtc(dir))
+                .ToList();
+
+            foreach (var dir in runDirectories.Skip(_keepLastNRuns))
+            {
+                try
+                {
+                    _fileSystem.DeleteDirectory(dir);
+                    Logger?.LogInformation($"Cleaned up old test run: {Path.GetFileName(dir)}");
+                }
+                catch (Exception ex)
+                {
+                    Logger?.LogWarning($"Failed to clean up old test run '{Path.GetFileName(dir)}': {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogWarning($"Failed to enumerate test runs for cleanup: {ex.Message}");
+        }
     }
 }
