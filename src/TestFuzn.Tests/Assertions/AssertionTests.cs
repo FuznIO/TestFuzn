@@ -40,6 +40,60 @@ public class AssertionTests : Test
     }
 
     [Test]
+    public async Task Verify_ok_rate_and_failed_rate_all_ok()
+    {
+        await Scenario()
+            .Step("Step 1", (context) =>
+            {
+            })
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(10))
+            .Load().AssertWhenDone((context, stats) =>
+            {
+                Assert.AreEqual(1.0, stats.OkRate);
+                Assert.AreEqual(0.0, stats.FailedRate);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_ok_rate_and_failed_rate_all_failed()
+    {
+        await Scenario()
+            .Step("Step 1", (context) =>
+            {
+                Assert.Fail();
+            })
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(10))
+            .Load().AssertWhenDone((context, stats) =>
+            {
+                Assert.AreEqual(0.0, stats.OkRate);
+                Assert.AreEqual(1.0, stats.FailedRate);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_ok_rate_and_failed_rate_mixed()
+    {
+        var counter = 0;
+
+        await Scenario()
+            .Step("Step 1", (context) =>
+            {
+                var current = Interlocked.Increment(ref counter);
+                if (current % 2 == 0)
+                    Assert.Fail();
+            })
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(10))
+            .Load().AssertWhenDone((context, stats) =>
+            {
+                Assert.AreEqual(0.5, stats.OkRate);
+                Assert.AreEqual(0.5, stats.FailedRate);
+            })
+            .Run();
+    }
+
+    [Test]
     public async Task Verify_assert_sub_steps_all_ok()
     {
         await Scenario()

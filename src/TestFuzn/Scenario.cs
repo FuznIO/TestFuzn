@@ -28,6 +28,7 @@ internal class Scenario
     internal Func<ScenarioContext, SimulationsBuilder, Task> WarmupAction;
     internal Func<ScenarioContext, SimulationsBuilder, Task> SimulationsAction;
     internal List<ILoadConfiguration> SimulationsInternal { get; } = new();
+    internal Action<ScenarioContext, WarmupStats>? AssertWhileWarmingUpAction;
     internal Action<ScenarioContext, AssertScenarioStats>? AssertWhileRunningAction;
     internal Action<ScenarioContext, AssertScenarioStats>? AssertWhenDoneAction;
 

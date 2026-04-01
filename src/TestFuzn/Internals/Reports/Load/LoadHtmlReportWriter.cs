@@ -227,7 +227,9 @@ internal class LoadHtmlReportWriter : ILoadReport
         else if (scenarioResult.Status == TestStatus.Failed)
         {
             var exception = "";
-            if (scenarioResult.AssertWhileRunningException != null)
+            if (scenarioResult.AssertWhileWarmingUpException != null)
+                exception = $"AssertWhileWarmingUp failed: {E(scenarioResult.AssertWhileWarmingUpException.Message)}";
+            else if (scenarioResult.AssertWhileRunningException != null)
                 exception = $"AssertWhileRunning failed: {E(scenarioResult.AssertWhileRunningException.Message)}";
             else if (scenarioResult.AssertWhenDoneException != null)
                 exception = $"AssertWhenDone failed: {E(scenarioResult.AssertWhenDoneException.Message)}";
@@ -550,6 +552,14 @@ internal class LoadHtmlReportWriter : ILoadReport
             return;
 
         b.AppendLine($"<h3>Failure Details</h3>");
+
+        if (scenarioResult.AssertWhileWarmingUpException != null)
+        {
+            b.AppendLine(@"<div class=""status-panel failed"">");
+            b.AppendLine(@"<div class=""title"">AssertWhileWarmingUp Failed</div>");
+            b.AppendLine($@"<div class=""details"">{E(scenarioResult.AssertWhileWarmingUpException.Message)}</div>");
+            b.AppendLine("</div>");
+        }
 
         if (scenarioResult.AssertWhileRunningException != null)
         {

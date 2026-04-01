@@ -22,6 +22,16 @@ public class AssertScenarioStats
     /// </summary>
     public AssertStats Failed { get; }
 
+    /// <summary>
+    /// Gets the rate of successful requests (0.0 to 1.0).
+    /// </summary>
+    public double OkRate { get; }
+
+    /// <summary>
+    /// Gets the rate of failed requests (0.0 to 1.0).
+    /// </summary>
+    public double FailedRate { get; }
+
     private Dictionary<string, AssertStepStats> _assertStepMetrics { get; set; }
 
     internal AssertScenarioStats(ScenarioLoadResult scenarioResult)
@@ -29,6 +39,8 @@ public class AssertScenarioStats
         RequestCount = scenarioResult.RequestCount;
         Ok = new AssertStats(scenarioResult.Ok);
         Failed = new AssertStats(scenarioResult.Failed);
+        OkRate = RequestCount == 0 ? 0 : (double)Ok.RequestCount / RequestCount;
+        FailedRate = RequestCount == 0 ? 0 : (double)Failed.RequestCount / RequestCount;
 
         _assertStepMetrics = new();
         foreach (var step in scenarioResult.Steps)
