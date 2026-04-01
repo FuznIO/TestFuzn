@@ -87,6 +87,18 @@ public class LoadBuilder<TModel>
     }
 
     /// <summary>
+    /// Registers an assertion action to run after each warmup iteration.
+    /// If an assertion throws an exception, the load test will be stopped and marked as failed.
+    /// </summary>
+    /// <param name="action">The action that performs assertions on warmup statistics.</param>
+    /// <returns>The parent <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
+    public ScenarioBuilder<TModel> AssertWhileWarmingUp(Action<Context, WarmupStats> action)
+    {
+        _scenarioBuilder.Scenario.AssertWhileWarmingUpAction = action;
+        return _scenarioBuilder;
+    }
+
+    /// <summary>
     /// Registers an assertion action to run periodically while the load test is running.
     /// If an assertion fails, the load test will be stopped and marked as failed.
     /// </summary>

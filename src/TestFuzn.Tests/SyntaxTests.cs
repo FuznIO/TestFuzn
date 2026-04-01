@@ -126,11 +126,17 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
                 await context.Attach($"screenshot.png", new byte[0]);
                 await context.Attach($"screenshot.png", new MemoryStream());
             })
-            // Warmup simulations run before .Load().Simulations(). 
+            // Warmup simulations run before .Load().Simulations().
             // For these simulations no stats will be recorded, AssertWhileRunning, AssertWhenDone and sinks will not be called.
             .Load().Warmup((context, simulations) =>
             {
                 simulations.FixedConcurrentLoad(10, TimeSpan.FromSeconds(3));
+            })
+            // Assert during warmup. If the assertion throws, the test is stopped and marked as failed.
+            .Load().AssertWhileWarmingUp((context, warmup) =>
+            {
+                if (warmup.TotalCount >= 10 && warmup.FailedRate > 0.8)
+                    throw new Exception("Too many failures during warmup");
             })
             // Supports both sync and async.
             .Load().Simulations((context, simulations) =>

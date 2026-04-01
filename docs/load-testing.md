@@ -109,6 +109,31 @@ No metrics or statistics are collected during the warmup phase, only the actual 
 })
 ```
 
+### Assert While Warming Up
+
+Validate warmup iterations and stop the test early if things are fundamentally broken (e.g., the target service is down). 
+Some failures during warmup are expected, so use conditions like minimum iteration count or elapsed time to avoid stopping prematurely:
+
+```csharp
+.Load().AssertWhileWarmingUp((context, warmup) =>
+{
+    // Stop if more than 80% of iterations fail after at least 10 have completed
+    if (warmup.TotalCount >= 10 && warmup.FailedRate > 0.8)
+        throw new Exception("Too many failures during warmup");
+})
+```
+
+Available properties on `WarmupStats`:
+
+| Property | Description |
+|----------|-------------|
+| `OkCount` | Number of successful warmup iterations |
+| `FailedCount` | Number of failed warmup iterations |
+| `TotalCount` | Total warmup iterations (OkCount + FailedCount) |
+| `OkRate` | Rate of successful iterations (0.0 to 1.0) |
+| `FailedRate` | Rate of failed iterations (0.0 to 1.0) |
+| `Duration` | Time since warmup started |
+
 ---
 
 ## Simulations
@@ -202,7 +227,13 @@ Chain multiple simulations together:
 
 ## Assertions
 
-Validate performance during and after test execution:
+Validate performance during and after test execution.
+
+All assertion methods follow the same pattern: if the action throws an exception, the test is stopped and marked as failed.
+
+### Assert While Warming Up
+
+See [Warmup > Assert While Warming Up](#assert-while-warming-up) above.
 
 ### Assert While Running
 
@@ -243,6 +274,8 @@ Available metrics for assertions:
 | Metric | Description |
 |--------|-------------|
 | `RequestCount` | Total number of requests |
+| `OkRate` | Rate of successful requests (0.0 to 1.0) |
+| `FailedRate` | Rate of failed requests (0.0 to 1.0) |
 | `RequestsPerSecond` | Requests per second |
 | `ResponseTimeMin` | Minimum response time |
 | `ResponseTimeMax` | Maximum response time |

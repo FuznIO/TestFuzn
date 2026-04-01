@@ -29,6 +29,7 @@ internal class ScenarioLoadCollector
     private int _warmupRequestCountFailed = 0;
     private ScenarioLoadResult _cachedCurrentResult;
     private DateTime _lastUpdated;
+    private Exception _assertWhileWarmingUpException;
     private Exception _assertWhileRunningException;
     private Exception _assertWhenDoneException;
     private Scenario _scenario;
@@ -57,6 +58,15 @@ internal class ScenarioLoadCollector
                 _warmupRequestCountOk++;
             else if (status == TestStatus.Failed)
                 _warmupRequestCountFailed++;
+        }
+    }
+
+    internal WarmupStats GetWarmupStats()
+    {
+        lock (_lock)
+        {
+            var duration = _warmupStartTime != default ? DateTime.UtcNow - _warmupStartTime : TimeSpan.Zero;
+            return new WarmupStats(_warmupRequestCountOk, _warmupRequestCountFailed, duration);
         }
     }
 
@@ -196,6 +206,7 @@ internal class ScenarioLoadCollector
             {
                 result.Steps.Add(step.Key, step.Value.GetCurrentResult());
             }
+            result.AssertWhileWarmingUpException = _assertWhileWarmingUpException;
             result.AssertWhileRunningException = _assertWhileRunningException;
             result.AssertWhenDoneException = _assertWhenDoneException;
             // Cleanup phase.
@@ -206,6 +217,15 @@ internal class ScenarioLoadCollector
             _cachedCurrentResult = result;
 
             return result;
+        }
+    }
+
+    internal void SetAssertWhileWarmingUpException(Exception exception)
+    {
+        lock (_lock)
+        {
+            _assertWhileWarmingUpException = exception;
+            _lastUpdated = DateTime.UtcNow;
         }
     }
 

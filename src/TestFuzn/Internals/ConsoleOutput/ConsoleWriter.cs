@@ -435,9 +435,17 @@ internal class ConsoleWriter
             //Assertion
             var assertionSection = new StringBuilder();
 
-            if (loadResult.AssertWhileRunningException != null)
+            if (loadResult.AssertWhileWarmingUpException != null)
             {
                 assertionSection.AppendLine("[red]Assert exceptions:[/]");
+
+                assertionSection.AppendLine($"  [red]{loadResult.AssertWhileWarmingUpException.Message}[/]");
+            }
+
+            if (loadResult.AssertWhileRunningException != null)
+            {
+                if (assertionSection.Length == 0)
+                    assertionSection.AppendLine("[red]Assert exceptions:[/]");
 
                 assertionSection.AppendLine($"  [red]{loadResult.AssertWhileRunningException.Message}[/]");
             }

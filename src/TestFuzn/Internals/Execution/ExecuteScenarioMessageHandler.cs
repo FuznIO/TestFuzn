@@ -100,6 +100,27 @@ internal class ExecuteScenarioMessageHandler
             if (message.IsWarmup)
             {
                 scenarioLoadCollector.RecordWarmup(executeStepHandler.CurrentScenarioStatus ?? TestStatus.Failed);
+
+                if (scenario.AssertWhileWarmingUpAction != null
+                    && _testExecutionState.ExecutionStatus == ExecutionStatus.Running)
+                {
+                    try
+                    {
+                        var warmupStats = scenarioLoadCollector.GetWarmupStats();
+                        var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, iterationServiceProvider, _testExecutionState.TestFramework, "AssertWhileWarmingUp", _testExecutionState.CancellationToken);
+                        scenario.AssertWhileWarmingUpAction(context, warmupStats);
+                    }
+                    catch (Exception ex)
+                    {
+                        _testExecutionState.ExecutionStatus = ExecutionStatus.Stopped;
+                        _testExecutionState.ExecutionStoppedReason = ex;
+                        _testExecutionState.TestResult.Status = TestStatus.Failed;
+                        _testExecutionState.FirstException = ex;
+                        scenarioLoadCollector.SetAssertWhileWarmingUpException(ex);
+                        scenarioLoadCollector.SetStatus(TestStatus.Failed);
+                    }
+                }
+
                 return;
             }
 
