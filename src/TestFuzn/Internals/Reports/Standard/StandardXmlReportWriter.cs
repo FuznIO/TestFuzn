@@ -22,7 +22,9 @@ internal class StandardXmlReportWriter : IStandardReport
     {
         try
         {
-            var filePath = Path.Combine(reportData.TestsOutputDirectory, "TestReport.xml");
+            var directory = Path.Combine(reportData.TestsOutputDirectory, "Data");
+            _fileSystem.CreateDirectory(directory);
+            var filePath = Path.Combine(directory, "TestReport.xml");
 
             var stringBuilder = new StringBuilder();
             using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))
@@ -127,6 +129,7 @@ internal class StandardXmlReportWriter : IStandardReport
         writer.WriteElementString("StartTime", testResult.StartTime().ToString("o"));
         writer.WriteElementString("EndTime", testResult.EndTime().ToString("o"));
         writer.WriteElementString("Status", testResult.Status.ToString());
+        writer.WriteElementString("TestType", testResult.TestType.ToString());
         writer.WriteElementString("Duration", testResult.TestRunDuration().ToString(@"hh\:mm\:ss\.fff"));
 
         WriteScenario(writer, testResult);

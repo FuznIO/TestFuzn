@@ -1,5 +1,7 @@
-﻿using Fuzn.TestFuzn.Contracts.Reports;
+﻿using Fuzn.TestFuzn.Contracts;
+using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
+using Fuzn.TestFuzn.Internals.Utils;
 using System.Net;
 using System.Text;
 
@@ -52,8 +54,8 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine("<meta charset='UTF-8'>");
         b.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         b.AppendLine("<title>TestFuzn - Test Report</title>");
-        b.AppendLine("<link rel='stylesheet' href='assets/styles/testfuzn.css'>");
-        b.AppendLine("<script src='assets/scripts/chart.js'></script>");
+        b.AppendLine("<link rel='stylesheet' href='Data/Assets/styles/testfuzn.css'>");
+        b.AppendLine("<script src='Data/Assets/scripts/chart.js'></script>");
         b.AppendLine("</head>");
         b.AppendLine("<body>");
         b.AppendLine(@"<div class=""page-container"">");
@@ -224,6 +226,10 @@ internal class StandardHtmlReportWriter : IStandardReport
         }
         b.AppendLine("</div>");
 
+        b.AppendLine(@"<div class=""run-info-row"">");
+        b.AppendLine(@"<div class=""info-item""><a href=""TestFuzn_Log.log"" target=""_blank"">View Log</a></div>");
+        b.AppendLine("</div>");
+
         b.AppendLine("</div>");
     }
 
@@ -232,6 +238,8 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.Append(@"<table class=""group-results"">");
         b.AppendLine($"<tr>");
         b.AppendLine($"<th>Test</th>");
+        b.AppendLine(@$"<th>Report</th>");
+        b.AppendLine(@$"<th>Type</th>");
         b.AppendLine(@$"<th>Status</th>");
         b.AppendLine(@$"<th>Duration</th>");
         b.AppendLine(@$"<th>Tags</th>");
@@ -259,6 +267,8 @@ internal class StandardHtmlReportWriter : IStandardReport
 
             b.AppendLine(@$"<tr class=""group"">");
             b.AppendLine($"<td>{symbol} {E(groupResult.Value.Name)}</td>");
+            b.AppendLine($"<td></td>");
+            b.AppendLine($"<td></td>");
             b.AppendLine($"<td>{statusText}</td>");
             b.AppendLine($"<td></td>");
             b.AppendLine($"<td></td>");
@@ -292,12 +302,25 @@ internal class StandardHtmlReportWriter : IStandardReport
                     break;
             }
 
+            var typeText = testResult.Value.Status == TestStatus.Skipped
+                ? "N/A"
+                : testResult.Value.TestType == TestType.Load ? "Load" : "Standard";
+
+            var reportLink = "";
+            if (testResult.Value.TestType == TestType.Load && testResult.Value.Status != TestStatus.Skipped)
+            {
+                var reportName = FileNameHelper.MakeFilenameSafe($"{groupResults.Value.Name}-{testResult.Value.Name}");
+                reportLink = $"<a href=\"Data/{E(reportName)}.html\" target=\"_blank\">View</a>";
+            }
+
             b.AppendLine($"<tr>");
             b.AppendLine(@$"<td style=""padding-left:30px"">{symbol} {E(testResult.Value.Name)}");
-            
+
             WriteScenarioDetails(b, testResult.Value);
 
             b.AppendLine("</td>");
+            b.AppendLine($"<td>{reportLink}</td>");
+            b.AppendLine($"<td>{typeText}</td>");
             b.AppendLine($"<td>{statusText}</td>");
             b.AppendLine($"<td>{testResult.Value.TestRunDuration().ToTestFuznReadableString()}</td>");
             b.AppendLine("<td>");
@@ -424,7 +447,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             foreach (var attachment in stepResult.Attachments)
             {
                 var fileName = Path.GetFileName(attachment.Path);
-                b.AppendLine($"<br/>{hiddenSymbol} Attachment: <a href=\"Attachments/{E(fileName)}\" target=\"_blank\">{E(attachment.Name)}</a>");
+                b.AppendLine($"<br/>{hiddenSymbol} Attachment: <a href=\"Data/Attachments/{E(fileName)}\" target=\"_blank\">{E(attachment.Name)}</a>");
             }
         }
 

@@ -23,7 +23,9 @@ internal class LoadXmlReportWriter : ILoadReport
         try
         {
             var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Test.Group.Name}-{loadReportData.Test.Name}");
-            var filePath = Path.Combine(_testSession.TestsOutputDirectory, $"LoadTestReport-{reportName}.xml");
+            var directory = Path.Combine(_testSession.TestsOutputDirectory, "Data");
+            _fileSystem.CreateDirectory(directory);
+            var filePath = Path.Combine(directory, $"{reportName}.xml");
 
             var stringBuilder = new StringBuilder();
             using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))

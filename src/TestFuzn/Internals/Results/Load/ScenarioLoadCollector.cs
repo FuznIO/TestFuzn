@@ -132,7 +132,7 @@ internal class ScenarioLoadCollector
                 }
                 case LoadTestPhase.Measurement:
                 {
-                    _measurementEndTime = _lastUpdated;
+                    _measurementEndTime = _lastUpdated != default ? _lastUpdated : timestamp;
                     _isCompleted = true;
                     _ = GetCurrentResult(true);
                     break;
