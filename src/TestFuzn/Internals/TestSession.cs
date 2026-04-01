@@ -171,10 +171,10 @@ internal partial class TestSession
             await plugin.InitSuite();
 
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(fileSystem, "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
-                                        Path.Combine(TestsOutputDirectory, "assets/styles/testfuzn.css"));
+                                        Path.Combine(TestsOutputDirectory, "Data/Assets/styles/testfuzn.css"));
 
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(fileSystem, "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
-                                        Path.Combine(TestsOutputDirectory, "assets/scripts/chart.js"));
+                                        Path.Combine(TestsOutputDirectory, "Data/Assets/scripts/chart.js"));
 
         IsInitializeGlobalExecuted = true;
     }

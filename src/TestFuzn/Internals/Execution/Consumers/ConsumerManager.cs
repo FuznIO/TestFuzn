@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts;
+using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Execution.Consumers;
@@ -52,8 +53,25 @@ internal class ConsumerManager
             }
         });
 
+        FinalizeLoadMeasurementPhase();
+
         if (_testExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
             _testExecutionState.MarkConsumingCompleted();
+    }
+
+    private void FinalizeLoadMeasurementPhase()
+    {
+        if (_testExecutionState.TestResult.TestType != TestType.Load)
+            return;
+
+        var now = DateTime.UtcNow;
+        foreach (var scenario in _testExecutionState.Scenarios)
+        {
+            var collector = _testExecutionState.LoadCollectors[scenario.Name];
+            var result = collector.GetCurrentResult();
+            if (!result.IsCompleted)
+                collector.MarkPhaseAsCompleted(LoadTestPhase.Measurement, now);
+        }
     }
 
     public async Task WaitForConsumersToFinish()

@@ -25,7 +25,9 @@ internal class LoadHtmlReportWriter : ILoadReport
         try
         {
             var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Test.Group.Name}-{loadReportData.Test.Name}");
-            var filePath = Path.Combine(loadReportData.TestsOutputDirectory, $"LoadTestReport-{reportName}.html");
+            var directory = Path.Combine(loadReportData.TestsOutputDirectory, "Data");
+            _fileSystem.CreateDirectory(directory);
+            var filePath = Path.Combine(directory, $"{reportName}.html");
 
             var htmlContent = GenerateHtmlReport(loadReportData);
 
@@ -47,8 +49,8 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<meta charset='UTF-8'>");
         b.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         b.AppendLine("<title>TestFuzn - Load Test Report</title>");
-        b.AppendLine("<link rel='stylesheet' href='assets/styles/testfuzn.css'>");
-        b.AppendLine("<script src='assets/scripts/chart.js'></script>");
+        b.AppendLine("<link rel='stylesheet' href='Assets/styles/testfuzn.css'>");
+        b.AppendLine("<script src='Assets/scripts/chart.js'></script>");
         b.AppendLine("</head>");
         b.AppendLine("<body>");
         b.AppendLine(@"<div class=""page-container"">");
