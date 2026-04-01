@@ -31,4 +31,13 @@ internal sealed class FileSystem : IFileSystem
 
     public StreamReader OpenStreamReader(string path) =>
         new StreamReader(path);
+
+    public string[] GetDirectories(string path) =>
+        Directory.GetDirectories(path);
+
+    public void DeleteDirectory(string path) =>
+        Directory.Delete(path, recursive: true);
+
+    public DateTime GetDirectoryCreationTimeUtc(string path) =>
+        Directory.GetCreationTimeUtc(path);
 }

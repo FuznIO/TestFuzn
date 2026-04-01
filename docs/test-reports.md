@@ -32,16 +32,30 @@ The load test reports include:
 
 ## Report Location
 
-Reports are saved to the same root folder as the MSTest results directory:
+Reports are saved under a `TestFuznResults` directory:
 
 ```
-TestFuznResults\{run-id}/
+{base}/TestFuznResults/{assembly-name}/{run-id}/
 ├──  TestReport.html
 ├──  TestReport.xml
 ├──  LoadTestReport-*.html
 ├──  LoadTestReport-*.xml
 ├──  Attachments/
 ```
+
+By default, `{base}` is the test framework's results directory (e.g., MSTest's `TestResults` folder). You can override it with:
+- Environment variable: `TESTFUZN_OUTPUT_DIRECTORY`
+- Command line: `--output-directory <path>`
+
+### Report Retention
+
+By default, TestFuzn keeps the last **10 test runs** per assembly and automatically deletes older ones during cleanup. Only directories created by TestFuzn (identified by an internal `.testfuzn` marker file) are deleted.
+
+To change the retention limit:
+- Environment variable: `TESTFUZN_KEEP_LAST_N_RUNS`
+- Command line: `--keep-last-n-runs <number>`
+
+Set to `0` to disable cleanup and keep all runs.
 
 ---
 
