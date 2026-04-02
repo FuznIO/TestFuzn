@@ -40,7 +40,61 @@ internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter, IDi
 
     public void WriteAdvancedTable(AdvancedTable table)
     {
-        AnsiConsole.MarkupLine("[red]not implemented[/]");
+        int colCount = table.ColumnCount;
+        int[] colWidths = new int[colCount];
+
+        foreach (var row in table.Rows)
+        {
+            if (row.IsDivider) continue;
+            int col = 0;
+            foreach (var cell in row.Cells)
+            {
+                int span = cell.ColSpan;
+                int contentWidth = cell.GetContentWidth();
+                if (span == 1)
+                {
+                    if (contentWidth > colWidths[col])
+                        colWidths[col] = contentWidth;
+                }
+                else
+                {
+                    int perCol = (contentWidth + span - 1) / span;
+                    for (int i = 0; i < span; i++)
+                    {
+                        if (perCol > colWidths[col + i])
+                            colWidths[col + i] = perCol;
+                    }
+                }
+                col += span;
+            }
+        }
+
+        for (int i = 0; i < colWidths.Length; i++)
+            colWidths[i] += 4;
+
+        string BorderLine() => "+" + string.Join("-", colWidths.Select(w => new string('-', w))) + "+";
+        AnsiConsole.WriteLine(BorderLine());
+
+        foreach (var row in table.Rows)
+        {
+            if (row.IsDivider)
+            {
+                AnsiConsole.WriteLine(BorderLine());
+                continue;
+            }
+
+            var line = "|";
+            int col = 0;
+            foreach (var cell in row.Cells)
+            {
+                int span = cell.ColSpan;
+                int spanWidth = colWidths.Skip(col).Take(span).Sum() + (span - 1);
+                line += cell.Render(spanWidth) + "|";
+                col += span;
+            }
+            AnsiConsole.WriteLine(line);
+        }
+        AnsiConsole.WriteLine(BorderLine());
     }
 
     public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults)

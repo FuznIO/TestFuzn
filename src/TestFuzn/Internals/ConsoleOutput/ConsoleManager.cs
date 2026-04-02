@@ -21,7 +21,8 @@ internal class ConsoleManager
     public void StartRealtimeConsoleOutputIfEnabled()
     {
         var task = Task.CompletedTask;
-        if (_testExecutionState.TestFramework.SupportsRealTimeConsoleOutput)
+        if (_testExecutionState.TestFramework.SupportsRealTimeConsoleOutput
+            && _testExecutionState.TestType == Contracts.TestType.Load)
         {
             task = Task.Run(async () => await StartRealtimeConsoleOutput(_ctSource.Token));
         }
@@ -31,8 +32,6 @@ internal class ConsoleManager
 
     private async Task StartRealtimeConsoleOutput(CancellationToken cancellationToken)
     {
-        if (_testExecutionState.TestType == Contracts.TestType.Standard)
-            throw new Exception("Standard test is not supported. Realtime console output is only supported for load tests.");
 
         var loadTestMetrics = new Dictionary<string, LiveMetrics>();
 
