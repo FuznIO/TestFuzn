@@ -12,6 +12,7 @@
 | `InputData(params object[])` | Provide static input data |
 | `InputDataFromList(Func)` | Provide input data from function |
 | `InputDataBehavior(InputDataBehavior)` | Set input data consumption behavior |
+| `Step(Action/Func)` | Add a step with auto-generated name |
 | `Step(string, Action/Func)` | Add a step |
 | `Step(string, string, Action/Func)` | Add a step with ID |
 | `Load()` | Access load testing configuration |

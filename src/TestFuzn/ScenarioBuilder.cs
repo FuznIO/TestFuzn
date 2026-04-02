@@ -1,4 +1,4 @@
-﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Adapters;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn;
@@ -15,9 +15,10 @@ public class ScenarioBuilder<TModel>
     internal Scenario Scenario;
     internal List<Func<Scenario>> IncludeScenarios;
     private Action<AssertInternalState> _assertInternalState;
+    private int _autoStepCounter;
 
-    internal ScenarioBuilder(object testFramework, 
-        ITest test, 
+    internal ScenarioBuilder(object testFramework,
+        ITest test,
         string name)
     {
         if (testFramework is not ITestFrameworkAdapter adapter)
@@ -230,6 +231,30 @@ public class ScenarioBuilder<TModel>
         return this;
     }
 
+    /// <summary>
+    /// Adds an asynchronous step to the scenario with an auto-generated name.
+    /// </summary>
+    /// <param name="action">The asynchronous action to execute for the step.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
+    public ScenarioBuilder<TModel> Step(Func<IterationContext<TModel>, Task> action)
+    {
+        var name = $"Step {++_autoStepCounter}";
+        Step(name, null, action);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a synchronous step to the scenario with an auto-generated name.
+    /// </summary>
+    /// <param name="action">The synchronous action to execute for the step.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
+    public ScenarioBuilder<TModel> Step(Action<IterationContext<TModel>> action)
+    {
+        var name = $"Step {++_autoStepCounter}";
+        Step(name, null, action);
+        return this;
+    }
+
     private void EnsureStepNameIsUnique(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -310,7 +335,7 @@ public class ScenarioBuilder<TModel>
     }
 
     /// <summary>
-    /// Executes the configured scenario. 
+    /// Executes the configured scenario.
     /// For load tests, use Load().IncludeScenario() to execute multiple scenarios in a single test, in parallel.
     /// </summary>
     /// <returns>A task representing the asynchronous scenario execution.</returns>
