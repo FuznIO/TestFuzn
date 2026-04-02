@@ -2,6 +2,17 @@
 
 Steps are the building blocks of scenarios. They execute in order, and if one fails, subsequent steps are skipped.
 
+## Steps Without a Name
+
+For simple tests where a step name isn't needed, the name can be omitted. Steps are auto-named "Step 1", "Step 2", etc.:
+
+```csharp
+.Step(context =>
+{
+    context.Logger.LogInformation("Auto-named step");
+})
+```
+
 ## Synchronous Steps
 
 ```csharp

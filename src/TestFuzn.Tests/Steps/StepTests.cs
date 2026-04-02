@@ -96,6 +96,92 @@ public class StepTests : Test
     }
 
     [Test]
+    public async Task Verify_nameless_step_sync()
+    {
+        var executed = false;
+
+        await Scenario()
+            .Step(context =>
+            {
+                Assert.AreEqual("Step 1", context.StepInfo.Name);
+                executed = true;
+            })
+            .Run();
+
+        Assert.IsTrue(executed);
+    }
+
+    [Test]
+    public async Task Verify_nameless_step_async()
+    {
+        var executed = false;
+
+        await Scenario()
+            .Step(async context =>
+            {
+                Assert.AreEqual("Step 1", context.StepInfo.Name);
+                executed = true;
+                await Task.CompletedTask;
+            })
+            .Run();
+
+        Assert.IsTrue(executed);
+    }
+
+    [Test]
+    public async Task Verify_multiple_nameless_steps()
+    {
+        var step1Executed = false;
+        var step2Executed = false;
+        var step3Executed = false;
+
+        await Scenario()
+            .Step(context =>
+            {
+                Assert.AreEqual("Step 1", context.StepInfo.Name);
+                step1Executed = true;
+            })
+            .Step(context =>
+            {
+                Assert.AreEqual("Step 2", context.StepInfo.Name);
+                step2Executed = true;
+            })
+            .Step(context =>
+            {
+                Assert.AreEqual("Step 3", context.StepInfo.Name);
+                step3Executed = true;
+            })
+            .Run();
+
+        Assert.IsTrue(step1Executed);
+        Assert.IsTrue(step2Executed);
+        Assert.IsTrue(step3Executed);
+    }
+
+    [Test]
+    public async Task Verify_mixed_named_and_nameless_steps()
+    {
+        var step1Executed = false;
+        var step2Executed = false;
+
+        await Scenario()
+            .Step("Named step", context =>
+            {
+                Assert.AreEqual("Named step", context.StepInfo.Name);
+                step1Executed = true;
+            })
+            .Step(context =>
+            {
+                Assert.AreEqual("Step 1", context.StepInfo.Name);
+                step2Executed = true;
+            })
+            .Run();
+
+        Assert.IsTrue(step1Executed);
+        Assert.IsTrue(step2Executed);
+    }
+
+    [Test]
     public async Task StepNameCannotBeEmpty()
     {
         try

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -88,7 +88,7 @@ public abstract class Test : ITest
         where TModel : new()
     {
         var testMethod = TestMethodInfo;
-        
+
         if (TestInfo == null)
             TestInfo = GetTestInfoFromTestAttribute(testMethod);
 
