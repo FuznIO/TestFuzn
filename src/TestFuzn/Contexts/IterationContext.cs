@@ -140,6 +140,44 @@ public abstract class IterationContext : Context
         );
     }
 
+    /// <summary>
+    /// Registers a cleanup action to execute at the end of the current iteration, after all steps complete.
+    /// Multiple cleanup actions are executed in reverse registration order (LIFO).
+    /// </summary>
+    /// <param name="action">The asynchronous cleanup action to execute.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="action"/> is null.</exception>
+    public void Cleanup(Func<Task> action)
+    {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action), "Cleanup action cannot be null.");
+
+        if (IterationState.CleanupActions == null)
+            IterationState.CleanupActions = new();
+
+        IterationState.CleanupActions.Add(action);
+    }
+
+    /// <summary>
+    /// Registers a cleanup action to execute at the end of the current iteration, after all steps complete.
+    /// Multiple cleanup actions are executed in reverse registration order (LIFO).
+    /// </summary>
+    /// <param name="action">The synchronous cleanup action to execute.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="action"/> is null.</exception>
+    public void Cleanup(Action action)
+    {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action), "Cleanup action cannot be null.");
+
+        if (IterationState.CleanupActions == null)
+            IterationState.CleanupActions = new();
+
+        IterationState.CleanupActions.Add(() =>
+        {
+            action();
+            return Task.CompletedTask;
+        });
+    }
+
     private async Task Attach(string fileName, IFileSystem fileSystem, Func<string, Task> writeFileAsync)
     {
         if (StepInfo.Attachments == null)

@@ -29,6 +29,7 @@
 | `SetSharedData(string, object)` | Store shared data |
 | `GetSharedData<T>(string)` | Retrieve shared data |
 | `Step(string, Action/Func)` | Create sub-step |
+| `Cleanup(Action/Func)` | Register cleanup action for end of iteration |
 | `Comment(string)` | Add comment to execution |
 | `Attach(string, content)` | Attach file to step |
 | `CreateHttpRequest(string)` | Create HTTP request (requires HTTP plugin) |

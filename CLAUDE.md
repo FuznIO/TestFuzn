@@ -103,4 +103,5 @@ Test/sample projects: `TestFuzn.Tests`, `TestFuzn.Tests.Attributes`, `TestFuzn.T
   - **Exceptions:** `Assert.ThrowsExactly<T>`, `Assert.ThrowsExactlyAsync<T>` (prefer over `[ExpectedException]`)
 - When making changes, update relevant README/documentation files (e.g. `README.md`, `docs/*.md`) if the change affects documented behavior, APIs, or usage examples
 - Test methods that are expected to throw an exception or fail should be prefixed with `ShouldFail_` (e.g. `ShouldFail_Verify_assert_while_running`)
+- For null checks, use explicit `if` checks -- not null-conditional (`?.`), null-coalescing (`??`), or null-coalescing assignment (`??=`) operators
 - Consistent terminology matters. Before naming new properties, classes, methods, or parameters, search the existing codebase to see what terms are already used for similar concepts. Use the same words -- e.g. if the codebase uses `Duration` for time spans, don't introduce `Elapsed` or `TimeSpan` for the same idea. This applies to naming at all levels: public API, internals, tests, and documentation.

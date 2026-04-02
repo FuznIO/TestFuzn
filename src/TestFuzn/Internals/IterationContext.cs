@@ -17,4 +17,5 @@ internal class IterationState
     public object? InputData { get; set; }
     public ExecuteStepHandler ExecuteStepHandler { get; set; }
     public object Model { get; set; }
+    public List<Func<Task>>? CleanupActions { get; set; }
 }
