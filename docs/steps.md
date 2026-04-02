@@ -94,6 +94,40 @@ Attach files to steps for attachments and debugging:
 
 ---
 
+## Cleanup
+
+Register cleanup actions from within a step. Cleanup actions run at the end of the iteration in reverse registration order (LIFO), before `AfterIteration`:
+
+```csharp
+.Step("Create test user", async context =>
+{
+    var userId = await CreateUser();
+    context.SetSharedData("UserId", userId);
+
+    // Runs at end of iteration, even if a later step fails
+    context.Cleanup(async () =>
+    {
+        await DeleteUser(userId);
+    });
+})
+.Step("Verify user", context =>
+{
+    var userId = context.GetSharedData<string>("UserId");
+    // Use userId...
+})
+```
+
+Synchronous overload:
+
+```csharp
+context.Cleanup(() =>
+{
+    File.Delete(tempFilePath);
+});
+```
+
+---
+
 ## Logging
 
 Use the built-in logger for structured logging:

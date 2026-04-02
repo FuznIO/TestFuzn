@@ -77,6 +77,14 @@ internal class ExecuteScenarioMessageHandler
 
             iterationResult.ExecutionDuration = scenarioDuration.Elapsed;
 
+            if (iterationState.CleanupActions != null)
+            {
+                for (int i = iterationState.CleanupActions.Count - 1; i >= 0; i--)
+                {
+                    await iterationState.CleanupActions[i]();
+                }
+            }
+
             if (scenario.AfterIterationAction != null)
             {
                 var stepContext = ContextFactory.CreateIterationContext(iterationState, "AfterIteration", null, null);

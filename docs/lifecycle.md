@@ -24,9 +24,17 @@
 })
 .AfterIteration((context) =>
 {
-    // Runs after each iteration's steps
+    // Runs after each iteration's steps and cleanup actions
 })
 ```
+
+**Execution order within an iteration:**
+
+1. `BeforeIteration`
+2. Steps (in order)
+3. Cleanup actions registered via `context.Cleanup()` (in reverse order)
+4. `AfterIteration`
+5. Plugin `CleanupIteration`
 
 ---
 
