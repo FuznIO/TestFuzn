@@ -5,6 +5,7 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 using Fuzn.TestFuzn.Sinks.InfluxDB;
 using Fuzn.TestFuzn.Tests.Cancellation;
 using Fuzn.TestFuzn.Tests.IocContainer;
+using Fuzn.TestFuzn.Tests.Lifecycle;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Tests;
@@ -25,6 +26,9 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
     [AssemblyCleanup]
     public static async Task Cleanup(TestContext testContext)
     {
+        Assert.AreEqual(1, ClassLifecycleTests.BeforeClassCallCount, "IBeforeClass.BeforeClass should be called exactly once.");
+        Assert.IsTrue(ClassLifecycleTests.AfterClassCalled, "IAfterClass.AfterClass was not called.");
+
         await TestFuznIntegration.Cleanup(testContext);
         Assert.IsTrue(AfterSuiteExecuted);
 

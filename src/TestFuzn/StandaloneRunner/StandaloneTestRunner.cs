@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals;
 using Spectre.Console;
 
 namespace Fuzn.TestFuzn.StandaloneRunner;
@@ -29,6 +30,13 @@ internal class StandaloneTestRunner
         try
         {
             await testSession.Init<TStartup>(testFramework);
+
+            if (iTestClassInstance is IBeforeClass beforeClass)
+            {
+                var context = ContextFactory.CreateContext(testSession, testSession.ServiceProvider, testFramework, "BeforeClass");
+                await beforeClass.BeforeClass(context);
+            }
+
             iTestClassInstance.TestFramework = testFramework;
             iTestClassInstance.TestMethodInfo = testInfo.Method;
 
@@ -39,6 +47,12 @@ internal class StandaloneTestRunner
         }
         finally
         {
+            if (iTestClassInstance is IAfterClass afterClass)
+            {
+                var context = ContextFactory.CreateContext(testSession, testSession.ServiceProvider, testFramework, "AfterClass");
+                await afterClass.AfterClass(context);
+            }
+
             await testSession.Cleanup(testFramework);
         }
     }

@@ -38,7 +38,31 @@
 
 ---
 
-## Test Class Level
+## Class Level
+
+Implement interfaces for class-level hooks that run once per test class:
+
+```csharp
+[TestClass]
+public class ProductHttpTests : Test, IBeforeClass, IAfterClass
+{
+    public Task BeforeClass(Context context)
+    {
+        // Runs once before the first test in this class
+        return Task.CompletedTask;
+    }
+
+    public Task AfterClass(Context context)
+    {
+        // Runs once after all tests in this class complete
+        return Task.CompletedTask;
+    }
+}
+```
+
+---
+
+## Test Level
 
 Implement interfaces for test-level hooks:
 
