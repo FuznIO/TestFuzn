@@ -33,8 +33,8 @@ TestFuzn is built on top of **MSTest v4** and reuses several MSTest concepts. Th
 | `[AssemblyCleanup]` | `[AssemblyCleanup]` + `IAfterSuite` | ✅ **Same** | `[AssemblyCleanup]` is required to call `TestFuznIntegration.Cleanup()`. For suite-level teardown logic, implement `IAfterSuite` on the `Startup` class. See [Lifecycle Hooks](lifecycle.md). |
 | `[TestInitialize]` | `IBeforeTest` | 🔄 **Replaced** | Implement `IBeforeTest` on your test class. See [Lifecycle Hooks](lifecycle.md). |
 | `[TestCleanup]` | `IAfterTest` | 🔄 **Replaced** | Implement `IAfterTest` on your test class. See [Lifecycle Hooks](lifecycle.md). |
-| `[ClassInitialize]` | — | ❌ **Not supported** | Use `IBeforeSuite` on the `Startup` class for suite-level setup, or `BeforeScenario()` for scenario-level setup. See [Lifecycle Hooks](lifecycle.md). |
-| `[ClassCleanup]` | — | ❌ **Not supported** | Use `IAfterSuite` on the `Startup` class for suite-level teardown, or `AfterScenario()` for scenario-level teardown. See [Lifecycle Hooks](lifecycle.md). |
+| `[ClassInitialize]` | `IBeforeClass` | 🔄 **Replaced** | Implement `IBeforeClass` on your test class. See [Lifecycle Hooks](lifecycle.md). |
+| `[ClassCleanup]` | `IAfterClass` | 🔄 **Replaced** | Implement `IAfterClass` on your test class. See [Lifecycle Hooks](lifecycle.md). |
 
 ---
 
@@ -201,7 +201,7 @@ Assert.IsNotNull(response.Data);
 | **Parameterized tests** | `[DataRow]`, `[DynamicData]` | `InputData()`, `InputDataFromList()` |
 | **Test categorization** | `[TestCategory]` | `[Tags]` |
 | **Test lifecycle** | `[TestInitialize]` / `[TestCleanup]` | `IBeforeTest` / `IAfterTest` interfaces |
-| **Class lifecycle** | `[ClassInitialize]` / `[ClassCleanup]` | `BeforeScenario()` / `AfterScenario()` |
+| **Class lifecycle** | `[ClassInitialize]` / `[ClassCleanup]` | `IBeforeClass` / `IAfterClass` interfaces |
 | **Suite lifecycle** | `[AssemblyInitialize]` / `[AssemblyCleanup]` | Same (required for wiring) + `IBeforeSuite` / `IAfterSuite` for user logic |
 | **Data sharing** | Class fields | `SetSharedData()` / `GetSharedData()` or custom context models |
 | **Load testing** | Not available | Built-in via `Load().Simulations()` |

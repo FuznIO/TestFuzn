@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Fuzn.TestFuzn.Internals;
 
 namespace Fuzn.TestFuzn;
 
@@ -10,6 +11,63 @@ namespace Fuzn.TestFuzn;
 /// </summary>
 public abstract class Test : ITest
 {
+    /// <summary>
+    /// Called by MSTest before any test in a derived class runs.
+    /// If the class implements <see cref="IBeforeClass"/>, invokes <see cref="IBeforeClass.BeforeClass"/>.
+    /// </summary>
+    [ClassInitialize(InheritanceBehavior.BeforeEachDerivedClass)]
+    public static async Task TestFuznClassInitialize(TestContext testContext)
+    {
+        var testFramework = new MsTestRunnerAdapter(testContext);
+        var testSession = GetTestSessionAndEnsureInitialized(testFramework);
+
+        var classType = ResolveTestClassType(testSession, testContext.FullyQualifiedTestClassName);
+        if (classType == null || !typeof(IBeforeClass).IsAssignableFrom(classType))
+            return;
+
+        var instance = (IBeforeClass) Activator.CreateInstance(classType)!;
+        var context = ContextFactory.CreateContext(testSession, testSession.ServiceProvider, testFramework, "BeforeClass");
+        await instance.BeforeClass(context);
+    }
+
+    /// <summary>
+    /// Called by MSTest after all tests in a derived class complete.
+    /// If the class implements <see cref="IAfterClass"/>, invokes <see cref="IAfterClass.AfterClass"/>.
+    /// </summary>
+    [ClassCleanup(InheritanceBehavior.BeforeEachDerivedClass)]
+    public static async Task TestFuznClassCleanup(TestContext testContext)
+    {
+        var testFramework = new MsTestRunnerAdapter(testContext);
+        var testSession = GetTestSessionAndEnsureInitialized(testFramework);
+
+        var classType = ResolveTestClassType(testSession, testContext.FullyQualifiedTestClassName);
+        if (classType == null || !typeof(IAfterClass).IsAssignableFrom(classType))
+            return;
+
+        var instance = (IAfterClass) Activator.CreateInstance(classType)!;
+        var context = ContextFactory.CreateContext(testSession, testSession.ServiceProvider, testFramework, "AfterClass");
+        await instance.AfterClass(context);
+    }
+
+    private static TestSession GetTestSessionAndEnsureInitialized(MsTestRunnerAdapter testFramework)
+    {
+        var testSession = TestSession.Current ?? TestSession.Default;
+        if (testSession == null)
+            throw new InvalidOperationException("No active test session found.");
+
+        testSession.EnsureInitialized(testFramework);
+        return testSession;
+    }
+
+    private static Type? ResolveTestClassType(TestSession testSession, string? fullyQualifiedClassName)
+    {
+        if (string.IsNullOrEmpty(fullyQualifiedClassName))
+            return null;
+
+        var testAssembly = testSession.StartupInstance.GetType().Assembly;
+        return testAssembly.GetType(fullyQualifiedClassName);
+    }
+
     /// <inheritdoc/>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public object TestFramework
