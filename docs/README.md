@@ -24,6 +24,7 @@
 
 ### Plugins
 - [HTTP Testing](http-testing.md) — HTTP client setup, requests, authentication, response handling
+- [WebSocket Testing](websocket-testing.md) — WebSocket connections, messaging, streaming, auto-reconnect
 - [Web UI Testing with Playwright](playwright-testing.md) — Browser automation, device emulation, UI load testing
 
 ### Load Testing
