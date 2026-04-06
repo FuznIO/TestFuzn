@@ -39,7 +39,7 @@ public class SerializerProviderTests : Test
                 };
                 var response = await context.CreateHttpRequest("/api/Products")
                                         .WithAuthBearer(token)
-                                        .WithJsonOptions(options)
+                                        .WithSerializer(new SystemTextJsonSerializerProvider(options))
                                         .Get<List<Product>>();
 
                 Assert.IsTrue(response.IsSuccessful);

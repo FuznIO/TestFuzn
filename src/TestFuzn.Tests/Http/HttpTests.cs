@@ -1,4 +1,5 @@
-﻿using Fuzn.TestFuzn.Plugins.Http;
+﻿using Fuzn.FluentHttp;
+using Fuzn.TestFuzn.Plugins.Http;
 using System.Security.Cryptography;
 
 namespace Fuzn.TestFuzn.Tests.Http;
@@ -45,7 +46,7 @@ public class HttpTests : Test
                 var token = await GetAuthToken(context);
                 var response = await context.CreateHttpRequest("/api/Products")
                     .WithAuthBearer(token)
-                    .WithJsonOptions(new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                    .WithSerializer(new SystemTextJsonSerializerProvider(new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }))
                     .Get<List<Product>>();
 
                 Assert.IsTrue(response.IsSuccessful);
