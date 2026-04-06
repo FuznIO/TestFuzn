@@ -84,7 +84,7 @@ This is why tests should avoid depending on MSTest-specific APIs (e.g. `TestCont
 | TestFuzn.Adapters.MSTest | Yes | MSTest integration, `Test` base class |
 | TestFuzn.Plugins.Http | Yes | HTTP testing via Fuzn.FluentHttp |
 | TestFuzn.Plugins.Playwright | Yes | Browser automation |
-| TestFuzn.Plugins.WebSocket | - | WebSocket testing |
+| TestFuzn.Plugins.WebSocket | Yes | WebSocket testing |
 | TestFuzn.Sinks.InfluxDB | Yes | Real-time metrics to InfluxDB |
 
 Test/sample projects: `TestFuzn.Tests`, `TestFuzn.Tests.Attributes`, `TestFuzn.Tests.DefaultHttpClient`, `TestFuzn.Tests.Runner`, `SampleApp.Tests`, `SampleApp.WebApp`, `TestWebApp`.
