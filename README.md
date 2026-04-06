@@ -23,5 +23,16 @@
 - ✅ **MSTest compatible**  
   Built-in support for the widely used MSTest framework — reuse what you already know and love.
 
+## 📦 NuGet Packages
+
+| Package | Description |
+|---------|-------------|
+| [Fuzn.TestFuzn](https://www.nuget.org/packages/Fuzn.TestFuzn) | Core framework |
+| [Fuzn.TestFuzn.Adapters.MSTest](https://www.nuget.org/packages/Fuzn.TestFuzn.Adapters.MSTest) | MSTest integration |
+| [Fuzn.TestFuzn.Plugins.Http](https://www.nuget.org/packages/Fuzn.TestFuzn.Plugins.Http) | HTTP testing via Fuzn.FluentHttp |
+| [Fuzn.TestFuzn.Plugins.Playwright](https://www.nuget.org/packages/Fuzn.TestFuzn.Plugins.Playwright) | Browser automation with Playwright |
+| [Fuzn.TestFuzn.Plugins.WebSocket](https://www.nuget.org/packages/Fuzn.TestFuzn.Plugins.WebSocket) | WebSocket testing |
+| [Fuzn.TestFuzn.Sinks.InfluxDB](https://www.nuget.org/packages/Fuzn.TestFuzn.Sinks.InfluxDB) | Real-time metrics to InfluxDB |
+
 ## 💸 License & Usage
 - 100% **free** — for personal, organizational, and commercial use.
