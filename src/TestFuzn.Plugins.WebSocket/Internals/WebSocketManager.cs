@@ -1,13 +1,13 @@
-﻿using System.Net.WebSockets;
+using Fuzn.FluentWebSocket;
 
 namespace Fuzn.TestFuzn.Plugins.WebSocket.Internals;
 
 internal class WebSocketManager
 {
-    private readonly IList<WebSocketConnection> _connections = new List<WebSocketConnection>();
-    private readonly object _connectionsLock = new object();
+    private readonly List<FluentWebSocketConnection> _connections = new();
+    private readonly object _connectionsLock = new();
 
-    public void TrackConnection(WebSocketConnection connection)
+    public void TrackConnection(FluentWebSocketConnection connection)
     {
         lock (_connectionsLock)
         {
@@ -17,23 +17,14 @@ internal class WebSocketManager
 
     public async ValueTask CleanupIteration()
     {
-        List<WebSocketConnection> connectionsToCleanup;
+        List<FluentWebSocketConnection> connectionsToCleanup;
         lock (_connectionsLock)
-            connectionsToCleanup = new List<WebSocketConnection>(_connections);
+            connectionsToCleanup = new List<FluentWebSocketConnection>(_connections);
 
         foreach (var connection in connectionsToCleanup)
         {
             try
             {
-                // Skip already disposed connections
-                if (connection.IsDisposed)
-                    continue;
-
-                // Close only if fully open or in close-received state
-                if (connection.State == WebSocketState.Open || connection.State == WebSocketState.CloseReceived)
-                    await connection.Close(WebSocketCloseStatus.NormalClosure, "Test scenario completed - auto cleanup");
-
-                // Dispose (will skip Close again if not open)
                 await connection.DisposeAsync();
             }
             catch

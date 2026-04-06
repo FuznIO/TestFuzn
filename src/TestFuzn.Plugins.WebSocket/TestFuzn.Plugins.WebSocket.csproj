@@ -16,7 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="../../README.md" Pack="true" PackagePath="\"/>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fuzn.FluentWebSocket" Version="0.3.0" />
   </ItemGroup>
 
 </Project>

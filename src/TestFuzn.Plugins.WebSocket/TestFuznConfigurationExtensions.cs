@@ -1,4 +1,5 @@
-﻿using Fuzn.TestFuzn.Plugins.WebSocket.Internals;
+using Fuzn.TestFuzn.Plugins.WebSocket.Internals;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Plugins.WebSocket;
 
@@ -37,11 +38,15 @@ public static class TestFuznConfigurationExtensions
         if (webSocketConfiguration.ReceiveBufferSize <= 0)
             throw new ArgumentException("ReceiveBufferSize must be greater than zero.", nameof(configureAction));
 
-        if (webSocketConfiguration.MaxMessageBufferSize < 0)
-            throw new ArgumentException("MaxMessageBufferSize must be zero or greater.", nameof(configureAction));
+        if (webSocketConfiguration.MaxMessageSize < 0)
+            throw new ArgumentException("MaxMessageSize must be zero or greater.", nameof(configureAction));
 
-        WebSocketGlobalState.Configuration = webSocketConfiguration;
-        WebSocketGlobalState.HasBeenInitialized = true;
+        var globalState = new WebSocketGlobalState
+        {
+            Configuration = webSocketConfiguration,
+            HasBeenInitialized = true
+        };
+        configuration.Services.AddSingleton(globalState);
 
         configuration.AddContextPlugin(new WebSocketPlugin());
     }

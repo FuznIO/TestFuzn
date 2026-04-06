@@ -34,6 +34,7 @@
 | `Comment(string)` | Add comment to execution |
 | `Attach(string, content)` | Attach file to step |
 | `CreateHttpRequest(string)` | Create HTTP request (requires HTTP plugin) |
+| `CreateWebSocketConnection(string, Action<FluentWebSocketRequest>?)` | Create and connect a WebSocket connection with optional configuration (requires WebSocket plugin) |
 | `CreateBrowserPage(browserType?, device?, configureBrowserContext?)` | Create Playwright browser page with optional browser type, device emulation, and context options (requires Playwright plugin) |
 | `GetPlaywright()` | Get the Playwright instance for direct API access such as device descriptors (requires Playwright plugin) |
 | `Files` | Access the `FileManager` for loading test data from CSV and JSON files |

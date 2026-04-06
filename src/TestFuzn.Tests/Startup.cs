@@ -100,7 +100,7 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             config.DefaultKeepAliveInterval = TimeSpan.FromSeconds(30);
             config.LogFailedConnectionsToTestConsole = true;
             // Configure custom serializer for WebSocket JSON messages
-            // config.SerializerProvider = new NewtonsoftSerializerProvider();
+            // config.Serializer = new NewtonsoftSerializerProvider();
         });
         configuration.UseInfluxDB();
         configuration.AddContextPlugin(TrackingPlugin);

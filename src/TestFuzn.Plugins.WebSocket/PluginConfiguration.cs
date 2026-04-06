@@ -1,4 +1,6 @@
-﻿namespace Fuzn.TestFuzn.Plugins.WebSocket;
+using Fuzn.FluentWebSocket;
+
+namespace Fuzn.TestFuzn.Plugins.WebSocket;
 
 /// <summary>
 /// Configuration options for the WebSocket plugin.
@@ -30,15 +32,15 @@ public class PluginConfiguration
     public int ReceiveBufferSize { get; set; } = 4096;
 
     /// <summary>
-    /// Gets or sets the maximum number of messages to buffer in memory.
-    /// Set to 0 for unlimited buffering (not recommended for load tests).
-    /// Default value is 1000.
+    /// Gets or sets the maximum allowed message size in bytes.
+    /// Messages exceeding this limit will cause an exception during receive.
+    /// Set to 0 for no limit. Default value is 0.
     /// </summary>
-    public int MaxMessageBufferSize { get; set; } = 1000;
+    public long MaxMessageSize { get; set; } = 0;
 
     /// <summary>
     /// Gets or sets the serializer provider for JSON serialization and deserialization.
-    /// Default value is <see cref="SystemTextJsonSerializerProvider"/>.
+    /// Default value is <see cref="Fuzn.FluentWebSocket.SystemTextJsonSerializerProvider"/>.
     /// </summary>
     public ISerializerProvider Serializer { get; set; } = new SystemTextJsonSerializerProvider();
 }
