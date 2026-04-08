@@ -32,7 +32,7 @@ The load test reports include:
 
 ## Report Location
 
-Reports are saved under a `TestFuznResults` directory:
+By default, reports are saved under a `TestFuznResults` directory next to the test framework's own results folder:
 
 ```
 {base}/TestFuznResults/{assembly-name}/{run-id}/
@@ -43,9 +43,17 @@ Reports are saved under a `TestFuznResults` directory:
 ├──  Attachments/
 ```
 
-By default, `{base}` is the test framework's results directory (e.g., MSTest's `TestResults` folder). You can override it with:
-- Environment variable: `TESTFUZN_OUTPUT_DIRECTORY`
-- Command line: `--output-directory <path>`
+`{base}` is the parent of the test framework's results folder — for MSTest that means `TestFuznResults` is created as a sibling of MSTest's `TestResults`, not inside it.
+
+You can override the location with:
+- Environment variable: `TESTFUZN_RESULTS_DIRECTORY`
+- Command line: `--results-directory <path>`
+
+When a custom results directory is supplied, the extra `TestFuznResults` segment is **not** appended — TestFuzn writes directly into the directory you specified:
+
+```
+{custom-results-directory}/{assembly-name}/{run-id}/
+```
 
 ### Report Retention
 

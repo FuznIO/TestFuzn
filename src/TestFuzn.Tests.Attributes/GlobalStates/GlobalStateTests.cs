@@ -45,9 +45,9 @@ public class GlobalStateTests
     }
 
     [TestMethod]
-    public void TestsOutputDirectoryContainsTestRunId()
+    public void TestsResultsDirectoryContainsTestRunId()
     {
-        Assert.IsTrue(GlobalState.TestsOutputDirectory.Contains(GlobalState.TestRunId));
+        Assert.IsTrue(GlobalState.TestsResultsDirectory.Contains(GlobalState.TestRunId));
     }
 
     [TestMethod]

@@ -199,7 +199,18 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
         throw new NotImplementedException("Should not happen");
     }
 
-    public string TestResultsDirectory => new DirectoryInfo(_testContext.TestRunDirectory).Parent.Parent.ToString();
+    public string TestResultsDirectory
+    {
+        get
+        {
+            // _testContext.TestRunDirectory is the per-run deploy folder, e.g.
+            //   <buildOutput>\TestResults\Deploy_<machine> <timestamp>
+            // Walking up two levels lands at <buildOutput>, so TestFuzn writes its
+            // TestFuznResults folder as a sibling of MSTest's TestResults folder.
+            var testResultsFolder = Path.GetDirectoryName(_testContext.TestRunDirectory);
+            return Path.GetDirectoryName(testResultsFolder)!;
+        }
+    }
 
     private static string StripMarkup(string input)
     {

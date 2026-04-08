@@ -33,7 +33,7 @@ internal class LoadReportManager
         data.Suite.Metadata = _testSession.Configuration.Suite.Metadata;
         data.TestRunId = _testSession.TestRunId;
         data.Test = testExecutionState.TestResult;
-        data.TestsOutputDirectory = _testSession.TestsOutputDirectory;
+        data.TestsResultsDirectory = _testSession.TestsResultsDirectory;
 
         foreach (var scenario in testExecutionState.Scenarios)
         {

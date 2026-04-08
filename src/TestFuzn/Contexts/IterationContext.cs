@@ -183,7 +183,7 @@ public abstract class IterationContext : Context
         if (StepInfo.Attachments == null)
             StepInfo.Attachments = new();
 
-        var directory = Path.Combine(Info.TestSession.TestsOutputDirectory, "Data", "Attachments");
+        var directory = Path.Combine(Info.TestSession.TestsResultsDirectory, "Data", "Attachments");
         if (!fileSystem.DirectoryExists(directory))
             fileSystem.CreateDirectory(directory);
 

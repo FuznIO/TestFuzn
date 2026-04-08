@@ -23,7 +23,7 @@ internal class LoadXmlReportWriter : ILoadReport
         try
         {
             var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Test.Group.Name}-{loadReportData.Test.Name}");
-            var directory = Path.Combine(_testSession.TestsOutputDirectory, "Data");
+            var directory = Path.Combine(_testSession.TestsResultsDirectory, "Data");
             _fileSystem.CreateDirectory(directory);
             var filePath = Path.Combine(directory, $"{reportName}.xml");
 

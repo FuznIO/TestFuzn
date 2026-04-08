@@ -25,7 +25,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         try
         {
             var reportName = FileNameHelper.MakeFilenameSafe($"{loadReportData.Test.Group.Name}-{loadReportData.Test.Name}");
-            var directory = Path.Combine(loadReportData.TestsOutputDirectory, "Data");
+            var directory = Path.Combine(loadReportData.TestsResultsDirectory, "Data");
             _fileSystem.CreateDirectory(directory);
             var filePath = Path.Combine(directory, $"{reportName}.html");
 

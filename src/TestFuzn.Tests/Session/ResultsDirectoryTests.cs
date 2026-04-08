@@ -4,7 +4,7 @@ using Fuzn.TestFuzn.Internals.AppConfiguration;
 namespace Fuzn.TestFuzn.Tests.Session;
 
 [TestClass]
-public class OutputDirectoryTests : Test, IStartup
+public class ResultsDirectoryTests : Test, IStartup
 {
     private static string _tempBaseDirectory = null!;
     private static string _assemblyOutputDirectory = null!;
@@ -14,8 +14,8 @@ public class OutputDirectoryTests : Test, IStartup
     {
         _tempBaseDirectory = Path.Combine(Path.GetTempPath(), $"TestFuzn_OutputDirTest_{Guid.NewGuid():N}");
 
-        var testSession = new TestSession(nameof(OutputDirectoryTests));
-        await testSession.Init<OutputDirectoryTests>(
+        var testSession = new TestSession(nameof(ResultsDirectoryTests));
+        await testSession.Init<ResultsDirectoryTests>(
             new EnvironmentWrapper(),
             new FileSystem(),
             new ConfigurationLoader(),
@@ -23,13 +23,13 @@ public class OutputDirectoryTests : Test, IStartup
             new MsTestRunnerAdapter(testContext),
             args: new Dictionary<string, string>
             {
-                ["output-directory"] = _tempBaseDirectory,
+                ["results-directory"] = _tempBaseDirectory,
                 ["keep-last-n-runs"] = "2"
             });
         TestSessionRegistry.Add(testSession);
 
         // The parent directory contains all runs for this assembly
-        _assemblyOutputDirectory = Path.GetDirectoryName(testSession.TestsOutputDirectory)!;
+        _assemblyOutputDirectory = Path.GetDirectoryName(testSession.TestsResultsDirectory)!;
     }
 
     [ClassCleanup]
@@ -47,34 +47,74 @@ public class OutputDirectoryTests : Test, IStartup
     {
     }
 
-    [Test(TestSessionId = nameof(OutputDirectoryTests))]
-    public async Task Custom_output_directory_is_used_as_base_path()
+    [Test(TestSessionId = nameof(ResultsDirectoryTests))]
+    public async Task Custom_results_directory_is_used_as_base_path()
     {
         await Scenario()
-            .Step("Verify output directory uses custom base path", context =>
+            .Step("Verify results directory uses custom base path", context =>
             {
-                Assert.StartsWith(_tempBaseDirectory, TestSession.Current.TestsOutputDirectory);
+                Assert.StartsWith(_tempBaseDirectory, TestSession.Current.TestsResultsDirectory);
             })
-            .Step("Verify TestFuznResults structure is appended", context =>
+            .Step("Verify TestFuznResults segment is NOT appended for custom results directory", context =>
             {
-                Assert.Contains("TestFuznResults", TestSession.Current.TestsOutputDirectory);
+                // When the user explicitly sets results-directory, TestFuzn must not nest
+                // an extra TestFuznResults folder underneath -- the user already chose the location.
+                Assert.DoesNotContain("TestFuznResults", TestSession.Current.TestsResultsDirectory);
+            })
+            .Step("Verify layout is <customDir>/<assemblyName>/<runId>", context =>
+            {
+                var assemblyName = typeof(ResultsDirectoryTests).Assembly.GetName().Name!;
+                var expectedPrefix = Path.Combine(_tempBaseDirectory, assemblyName);
+                Assert.StartsWith(expectedPrefix, TestSession.Current.TestsResultsDirectory);
             })
             .Run();
     }
 
-    [Test(TestSessionId = nameof(OutputDirectoryTests))]
+    [Test(TestSessionId = nameof(ResultsDirectoryTests))]
+    public async Task Default_results_directory_uses_test_framework_path_with_TestFuznResults_segment()
+    {
+        // Build a session WITHOUT a custom results-directory so we exercise the default path
+        // (testFramework.TestResultsDirectory + "TestFuznResults" + assemblyName + runId).
+        TestSession defaultSession = null!;
+
+        await Scenario()
+            .Step("Init session without custom results-directory", async context =>
+            {
+                defaultSession = new TestSession($"{nameof(ResultsDirectoryTests)}_default");
+                await defaultSession.Init<ResultsDirectoryTests>(
+                    new EnvironmentWrapper(),
+                    new FileSystem(),
+                    new ConfigurationLoader(),
+                    new ArgumentsParser(new EnvironmentWrapper()),
+                    new MsTestRunnerAdapter(TestContext));
+            })
+            .Step("Verify TestFuznResults segment is present", context =>
+            {
+                Assert.Contains("TestFuznResults", defaultSession.TestsResultsDirectory);
+            })
+            .Step("Verify TestFuznResults sits next to MSTest TestResults (not inside it)", context =>
+            {
+                // The MSTest adapter returns the parent of the TestResults folder, so the
+                // resulting path should NOT contain a "TestResults/TestFuznResults" segment.
+                var combined = Path.Combine("TestResults", "TestFuznResults");
+                Assert.DoesNotContain(combined, defaultSession.TestsResultsDirectory);
+            })
+            .Run();
+    }
+
+    [Test(TestSessionId = nameof(ResultsDirectoryTests))]
     public async Task Marker_file_exists_in_output_directory()
     {
         await Scenario()
             .Step("Verify .testfuzn marker file exists", context =>
             {
-                var markerPath = Path.Combine(TestSession.Current.TestsOutputDirectory, ".testfuzn");
+                var markerPath = Path.Combine(TestSession.Current.TestsResultsDirectory, ".testfuzn");
                 Assert.IsTrue(File.Exists(markerPath), $"Marker file not found at {markerPath}");
             })
             .Run();
     }
 
-    [Test(TestSessionId = nameof(OutputDirectoryTests))]
+    [Test(TestSessionId = nameof(ResultsDirectoryTests))]
     public async Task Cleanup_deletes_old_runs_with_marker_and_preserves_unmarked()
     {
         await Scenario()
@@ -96,7 +136,7 @@ public class OutputDirectoryTests : Test, IStartup
             })
             .Step("Trigger cleanup by calling session Cleanup", async context =>
             {
-                var session = TestSessionRegistry.Get(nameof(OutputDirectoryTests));
+                var session = TestSessionRegistry.Get(nameof(ResultsDirectoryTests));
                 var testFramework = new MsTestRunnerAdapter(TestContext);
                 await session.Cleanup(testFramework);
             })
@@ -104,7 +144,7 @@ public class OutputDirectoryTests : Test, IStartup
             {
                 // We have 4 marked directories: current run + old-run-1, old-run-2, old-run-3
                 // keep-last-n-runs=2, so the 2 oldest (old-run-2, old-run-3) should be deleted
-                var currentRunExists = Directory.Exists(TestSession.Current.TestsOutputDirectory);
+                var currentRunExists = Directory.Exists(TestSession.Current.TestsResultsDirectory);
                 Assert.IsTrue(currentRunExists, "Current run directory should still exist");
 
                 var oldRun1Exists = Directory.Exists(Path.Combine(_assemblyOutputDirectory, "old-run-1"));

@@ -10,6 +10,6 @@ internal class StandardReportData
     public DateTime TestRunStartTime { get; internal set; }
     public DateTime TestRunEndTime { get; internal set; }
     public TimeSpan TestRunDuration { get; internal set; }
-    public string TestsOutputDirectory { get; internal set; }
+    public string TestsResultsDirectory { get; internal set; }
     public ConcurrentDictionary<string, GroupResult> GroupResults { get; internal set; }
 }
