@@ -51,9 +51,9 @@ public static class GlobalState
     public static ILogger Logger => GetTestSession().Logger;
 
     /// <summary>
-    /// Gets the output directory where test results and artifacts are written.
+    /// Gets the directory where test results and artifacts are written.
     /// </summary>
-    public static string TestsOutputDirectory => GetTestSession().TestsOutputDirectory;
+    public static string TestsResultsDirectory => GetTestSession().TestsResultsDirectory;
 
     /// <summary>
     /// Gets the unique identifier for the current test run.

@@ -55,7 +55,7 @@
 | `NodeName` | The name of the machine where the tests are running |
 | `ServiceProvider` | The `IServiceProvider` for resolving dependencies registered during test initialization |
 | `Logger` | The `ILogger` instance used for writing test log output |
-| `TestsOutputDirectory` | The output directory where test results and artifacts are written |
+| `TestsResultsDirectory` | The directory where test results and artifacts are written |
 | `TestRunId` | The unique identifier for the current test run |
 
 ---

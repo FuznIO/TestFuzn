@@ -28,7 +28,7 @@ internal class StandardReportManager
         data.TestRunStartTime = _testSession.TestRunStartTime;
         data.TestRunEndTime = _testSession.TestRunEndTime;
         data.TestRunDuration = data.TestRunEndTime - data.TestRunStartTime;
-        data.TestsOutputDirectory = _testSession.TestsOutputDirectory;
+        data.TestsResultsDirectory = _testSession.TestsResultsDirectory;
         data.GroupResults = groupResults.GroupResults;
 
         foreach (var standardReport in _standardReports)

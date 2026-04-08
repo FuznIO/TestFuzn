@@ -25,7 +25,7 @@ internal class StandardHtmlReportWriter : IStandardReport
     {
         try
         {
-            var filePath = Path.Combine(reportData.TestsOutputDirectory, "TestReport.html");
+            var filePath = Path.Combine(reportData.TestsResultsDirectory, "TestReport.html");
 
             var htmlContent = GenerateHtmlReport(reportData);
 

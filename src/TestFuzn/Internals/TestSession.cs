@@ -49,7 +49,7 @@ internal class TestSession
     }
 
     internal bool IsInitializeGlobalExecuted { get; set; } = false;
-    internal string TestsOutputDirectory { get; set; }
+    internal string TestsResultsDirectory { get; set; }
     internal TestFuznConfiguration Configuration { get; set; }
     internal bool LoadTestWasExecuted { get; set; } = false;
     internal ILogger Logger { get; set; }
@@ -132,17 +132,16 @@ internal class TestSession
 
         var testAssemblyName = StartupInstance.GetType().Assembly.GetName().Name;
 
-        var customOutputDirectory = argumentParser.GetValueFromArgsOrEnvironmentVariable(
-                                        args, "output-directory", "TESTFUZN_OUTPUT_DIRECTORY");
-        var baseDirectory = !string.IsNullOrWhiteSpace(customOutputDirectory)
-            ? customOutputDirectory
-            : testFramework.TestResultsDirectory;
-        TestsOutputDirectory = Path.Combine(baseDirectory, "TestFuznResults", testAssemblyName, $"{TestRunId}");
+        var customResultsDirectory = argumentParser.GetValueFromArgsOrEnvironmentVariable(
+                                        args, "results-directory", "TESTFUZN_RESULTS_DIRECTORY");
+        TestsResultsDirectory = !string.IsNullOrWhiteSpace(customResultsDirectory)
+            ? Path.Combine(customResultsDirectory, testAssemblyName, $"{TestRunId}")
+            : Path.Combine(testFramework.TestResultsDirectory, "TestFuznResults", testAssemblyName, $"{TestRunId}");
         if (Id != "default")
-            TestsOutputDirectory = TestsOutputDirectory + "_" + Id;
+            TestsResultsDirectory = TestsResultsDirectory + "_" + Id;
 
-        fileSystem.CreateDirectory(TestsOutputDirectory);
-        await fileSystem.WriteAllTextAsync(Path.Combine(TestsOutputDirectory, MarkerFileName), "");
+        fileSystem.CreateDirectory(TestsResultsDirectory);
+        await fileSystem.WriteAllTextAsync(Path.Combine(TestsResultsDirectory, MarkerFileName), "");
 
         _fileSystem = fileSystem;
         var keepLastNRunsValue = argumentParser.GetValueFromArgsOrEnvironmentVariable(
@@ -150,7 +149,7 @@ internal class TestSession
         if (!string.IsNullOrWhiteSpace(keepLastNRunsValue) && int.TryParse(keepLastNRunsValue, out var parsed) && parsed >= 0)
             _keepLastNRuns = parsed;
 
-        Logger = Internals.Logging.LoggerFactory.CreateLogger(fileSystem, TestsOutputDirectory);
+        Logger = Internals.Logging.LoggerFactory.CreateLogger(fileSystem, TestsResultsDirectory);
         Logger.LogInformation("Logging initialized");
 
         var configRoot = configurationLoader.LoadConfigRoot(
@@ -190,10 +189,10 @@ internal class TestSession
             await plugin.InitSuite();
 
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(fileSystem, "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
-                                        Path.Combine(TestsOutputDirectory, "Data/Assets/styles/testfuzn.css"));
+                                        Path.Combine(TestsResultsDirectory, "Data/Assets/styles/testfuzn.css"));
 
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(fileSystem, "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
-                                        Path.Combine(TestsOutputDirectory, "Data/Assets/scripts/chart.js"));
+                                        Path.Combine(TestsResultsDirectory, "Data/Assets/scripts/chart.js"));
 
         IsInitializeGlobalExecuted = true;
     }
@@ -259,7 +258,7 @@ internal class TestSession
         if (_fileSystem == null || _keepLastNRuns <= 0)
             return;
 
-        var parentDirectory = Path.GetDirectoryName(TestsOutputDirectory);
+        var parentDirectory = Path.GetDirectoryName(TestsResultsDirectory);
         if (parentDirectory == null || !_fileSystem.DirectoryExists(parentDirectory))
             return;
 

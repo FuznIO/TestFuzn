@@ -22,7 +22,7 @@ internal class StandardXmlReportWriter : IStandardReport
     {
         try
         {
-            var directory = Path.Combine(reportData.TestsOutputDirectory, "Data");
+            var directory = Path.Combine(reportData.TestsResultsDirectory, "Data");
             _fileSystem.CreateDirectory(directory);
             var filePath = Path.Combine(directory, "TestReport.xml");
 

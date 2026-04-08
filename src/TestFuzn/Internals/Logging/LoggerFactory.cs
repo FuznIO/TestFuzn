@@ -8,16 +8,16 @@ internal static class LoggerFactory
     /// <summary>
     /// Creates a logger instance for the given output directory
     /// </summary>
-    public static ILogger CreateLogger(IFileSystem fileSystem, string testsOutputDirectory, string categoryName = "TestFuzn")
+    public static ILogger CreateLogger(IFileSystem fileSystem, string testsResultsDirectory, string categoryName = "TestFuzn")
     {
         try
         {
-            var logsPath = testsOutputDirectory;
+            var logsPath = testsResultsDirectory;
             if (string.IsNullOrEmpty(logsPath))
             {
                 // Fallback to temp directory if output directory is not set
                 logsPath = Path.Combine(Path.GetTempPath(), "TestFuzn_Logs", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
-                Console.WriteLine($"WARNING: TestsOutputDirectory not set, using temporary path: {logsPath}");
+                Console.WriteLine($"WARNING: TestsResultsDirectory not set, using temporary path: {logsPath}");
             }
             string? directory = Path.GetDirectoryName(logsPath);
             if (!string.IsNullOrEmpty(directory))
