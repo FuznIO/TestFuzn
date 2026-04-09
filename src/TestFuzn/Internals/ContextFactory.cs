@@ -1,11 +1,23 @@
-﻿using Fuzn.TestFuzn.Contracts.Adapters;
-using Fuzn.TestFuzn.Internals.State;
-using Microsoft.Extensions.DependencyInjection;
+﻿using System.Collections.Concurrent;
+using System.Linq.Expressions;
+using Fuzn.TestFuzn.Contracts.Adapters;
 
 namespace Fuzn.TestFuzn.Internals;
 
 internal class ContextFactory
 {
+    private static readonly ConcurrentDictionary<Type, Func<object>> FactoryCache = new();
+
+    private static Func<object> GetOrCreateFactory(Type type)
+    {
+        return FactoryCache.GetOrAdd(type, t =>
+        {
+            var newExpr = Expression.New(t);
+            var lambda = Expression.Lambda<Func<object>>(Expression.Convert(newExpr, typeof(object)));
+            return lambda.Compile();
+        });
+    }
+
     public static Context CreateContext(
         TestSession testSession,
         IServiceProvider serviceProvider,
@@ -18,7 +30,7 @@ internal class ContextFactory
         if (testSession.Configuration != null)
         {
             context.IterationState = new();
-            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework, cancellationToken);
+            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework, Guid.NewGuid(), cancellationToken);
             context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 
@@ -37,7 +49,7 @@ internal class ContextFactory
         if (testSession.Configuration != null)
         {
             context.IterationState = new();
-            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework, cancellationToken);
+            PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework, Guid.NewGuid(), cancellationToken);
             context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 
@@ -46,7 +58,8 @@ internal class ContextFactory
 
     public static IterationContext CreateIterationContext(IterationState iterationState, string stepName, string? stepId, string? parentName)
     {
-        var contextObj = Activator.CreateInstance(iterationState.Scenario.ContextType);
+        var factory = GetOrCreateFactory(iterationState.Scenario.ContextType);
+        var contextObj = factory();
         if (contextObj is not IterationContext context)
             throw new InvalidOperationException($"Failed to create instance of {iterationState.Scenario.ContextType}");
 
@@ -62,20 +75,22 @@ internal class ContextFactory
         ITestFrameworkAdapter testFramework,
         Scenario scenario, object?
         currentInput,
+        Guid correlationId,
         CancellationToken cancellationToken = default)
     {
         var iterationState = new IterationState();
         if (scenario.ContextType.IsGenericType && scenario.ContextType.GetGenericTypeDefinition() == typeof(IterationContext<>))
         {
             var modelType = scenario.ContextType.GetGenericArguments()[0];
-            var modelInstance = Activator.CreateInstance(modelType);
+            var modelFactory = GetOrCreateFactory(modelType);
+            var modelInstance = modelFactory();
 
             if (modelInstance == null)
                 throw new InvalidOperationException($"Failed to create instance of {modelType}");
 
             iterationState.Model = modelInstance;
         }
-        PopulateIterationStateProperties(iterationState, testSession, serviceProvider, testFramework, cancellationToken);
+        PopulateIterationStateProperties(iterationState, testSession, serviceProvider, testFramework, correlationId, cancellationToken);
         iterationState.SharedData = new();
         iterationState.Scenario = scenario;
         iterationState.InputData = currentInput;
@@ -88,11 +103,12 @@ internal class ContextFactory
         TestSession testSession,
         IServiceProvider serviceProvider,
         ITestFrameworkAdapter testFramework,
+        Guid correlationId,
         CancellationToken cancellationToken)
     {
         iterationState.Info = new ExecutionInfo();
         iterationState.Info.TestSession = testSession;
-        iterationState.Info.CorrelationId = Guid.NewGuid().ToString();
+        iterationState.Info.CorrelationId = correlationId.ToString();
         iterationState.Info.CancellationToken = cancellationToken;
         iterationState.TestFramework = testFramework;
         iterationState.ServiceProvider = serviceProvider;

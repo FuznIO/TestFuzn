@@ -8,8 +8,6 @@ internal class FileLogger : ILogger
     private readonly StreamWriter _writer;
     private readonly string _categoryName;
     private readonly object _lock;
-    private const int MaxRetryAttempts = 3;
-    private const int RetryDelayMs = 100;
 
     // Thread-safe scope storage using AsyncLocal
     private static readonly AsyncLocal<LoggerScope?> _currentScope = new();
@@ -54,65 +52,37 @@ internal class FileLogger : ILogger
         if (!IsEnabled(logLevel) || formatter == null)
             return;
 
-        int attempt = 0;
-        bool success = false;
-
-        while (!success && attempt < MaxRetryAttempts)
+        try
         {
-            try
+            string message = formatter(state, exception);
+            var (scenario, step) = GetScopeContext();
+            string logRecord = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{logLevel}] [{scenario}] [Step {step}] {_categoryName} {message}";
+
+            lock (_lock)
             {
-                string message = formatter(state, exception);
-                var (scenario, step) = GetScopeContext();
-                string logRecord = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{logLevel}] [{scenario}] [Step {step}] {_categoryName} {message}";
+                _writer.WriteLine(logRecord);
 
-                lock (_lock)
+                if (exception != null)
                 {
-                    _writer.WriteLine(logRecord);
+                    _writer.WriteLine($"Exception: {exception.Message}");
+                    _writer.WriteLine($"StackTrace: {exception.StackTrace}");
 
-                    if (exception != null)
+                    var innerException = exception.InnerException;
+                    while (innerException != null)
                     {
-                        _writer.WriteLine($"Exception: {exception.Message}");
-                        _writer.WriteLine($"StackTrace: {exception.StackTrace}");
-
-                        var innerException = exception.InnerException;
-                        while (innerException != null)
-                        {
-                            _writer.WriteLine($"Inner Exception: {innerException.Message}");
-                            innerException = innerException.InnerException;
-                        }
+                        _writer.WriteLine($"Inner Exception: {innerException.Message}");
+                        innerException = innerException.InnerException;
                     }
-
-                    _writer.Flush();
-                    success = true;
                 }
             }
-            catch (IOException)
-            {
-                // File might be locked, retry after delay
-                attempt++;
-                if (attempt < MaxRetryAttempts)
-                {
-                    Thread.Sleep(RetryDelayMs);
-                }
-                else
-                {
-                    // Log to console if all retries fail
-                    Console.Error.WriteLine($"Failed to write to log after {MaxRetryAttempts} attempts: [{logLevel}] {_categoryName}");
-                }
-            }
-            catch (ObjectDisposedException)
-            {
-                // Writer was disposed, log to console
-                Console.Error.WriteLine($"Cannot write to log - writer was disposed: [{logLevel}] {_categoryName}");
-                break;
-            }
-            catch (Exception ex)
-            {
-                // Unexpected error, log to console
-                Console.Error.WriteLine($"Unexpected error during logging: {ex.Message}");
-                Console.Error.WriteLine(ex.StackTrace);
-                break;
-            }
+        }
+        catch (ObjectDisposedException)
+        {
+            Console.Error.WriteLine($"Cannot write to log - writer was disposed: [{logLevel}] {_categoryName}");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Unexpected error during logging: {ex.Message}");
         }
     }
 
@@ -125,28 +95,16 @@ internal class FileLogger : ILogger
         if (scope == null)
             return (string.Empty, string.Empty);
 
-        string? scenario = null;
-        string? step = null;
-
-        // Walk the scope chain to find scenario and step values
+        // Fast path: check for LoggingScopeState to avoid dictionary allocations
         while (scope != null)
         {
-            var scopeValues = scope.GetScopeValues();
-            
-            if (scenario == null && scopeValues.TryGetValue("scenario", out var scenarioValue))
-                scenario = scenarioValue?.ToString();
-            
-            if (step == null && scopeValues.TryGetValue("step", out var stepValue))
-                step = stepValue?.ToString();
-            
-            // If we found both, no need to continue
-            if (scenario != null && step != null)
-                break;
-            
+            if (scope.State is LoggingScopeState scopeState)
+                return (scopeState.Scenario, scopeState.Step.ToString());
+
             scope = scope.Parent;
         }
 
-        return (scenario ?? string.Empty, step ?? string.Empty);
+        return (string.Empty, string.Empty);
     }
 
     /// <summary>
@@ -159,33 +117,12 @@ internal class FileLogger : ILogger
         private bool _disposed;
 
         public LoggerScope? Parent => _parent;
+        public object State => _state;
 
         public LoggerScope(object state, LoggerScope? parent)
         {
             _state = state;
             _parent = parent;
-        }
-
-        /// <summary>
-        /// Gets scope values as a dictionary
-        /// </summary>
-        public Dictionary<string, object?> GetScopeValues()
-        {
-            var values = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-
-            if (_state == null)
-                return values;
-
-            // Handle Dictionary<string, object?> which is commonly used for structured scopes
-            if (_state is IEnumerable<KeyValuePair<string, object?>> kvps)
-            {
-                foreach (var kvp in kvps)
-                {
-                    values[kvp.Key] = kvp.Value;
-                }
-            }
-
-            return values;
         }
 
         public void Dispose()

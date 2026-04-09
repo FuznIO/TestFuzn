@@ -3,13 +3,14 @@
 internal class ExecuteScenarioMessage
 {
     public Guid MessageId { get; set; }
-    public string ScenarioName { get; set; }
+    public Scenario Scenario { get; }
+    public string ScenarioName => Scenario.Name;
     public bool IsWarmup { get; }
-    
-    public ExecuteScenarioMessage(string scenarioName, bool isWarmup)
+
+    public ExecuteScenarioMessage(Scenario scenario, bool isWarmup)
     {
         MessageId = Guid.NewGuid();
-        ScenarioName = scenarioName;
+        Scenario = scenario;
         IsWarmup = isWarmup;
     }
 }

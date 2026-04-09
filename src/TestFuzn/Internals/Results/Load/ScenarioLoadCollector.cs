@@ -32,7 +32,7 @@ internal class ScenarioLoadCollector
     private Exception _assertWhileWarmingUpException;
     private Exception _assertWhileRunningException;
     private Exception _assertWhenDoneException;
-    private Scenario _scenario;
+    private List<string> _simulationDescriptions;
 
     public string ScenarioName { get => _scenarioName; set => _scenarioName = value; }
     public string Id { get => _id; set => _id = value; }
@@ -47,7 +47,15 @@ internal class ScenarioLoadCollector
         {
             _steps.Add(step.Name, new StepLoadCollector(step.Name, step.Id));
         }
-        _scenario = scenario;
+    }
+
+    internal void CacheSimulationDescriptions(Scenario scenario)
+    {
+        _simulationDescriptions = new List<string>();
+        foreach (var simulation in scenario.SimulationsInternal)
+        {
+            _simulationDescriptions.Add(simulation.GetDescription());
+        }
     }
 
     internal void RecordWarmup(TestStatus status)
@@ -179,11 +187,7 @@ internal class ScenarioLoadCollector
             result.Id = _id;
             result.Description = _description;
 
-            result.Simulations = new List<string>();
-            foreach (var simulation in _scenario.SimulationsInternal)
-            {
-                result.Simulations.Add(simulation.GetDescription());
-            }
+            result.Simulations = _simulationDescriptions;
             result.InitStartTime = _initStartTime;
             result.InitEndTime = _initEndTime;
             // Warmup phase.

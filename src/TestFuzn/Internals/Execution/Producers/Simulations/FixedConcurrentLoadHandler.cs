@@ -7,16 +7,16 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
 {
     private readonly FixedConcurrentLoadConfiguration _configuration;
     private readonly TestExecutionState _testExecutionState;
-    private readonly string _scenarioName;
+    private readonly Scenario _scenario;
 
     public FixedConcurrentLoadHandler(
         FixedConcurrentLoadConfiguration configuration,
-        string scenarioName,
+        Scenario scenario,
         TestExecutionState testExecutionState
         )
     {
         _configuration = configuration;
-        _scenarioName = scenarioName;
+        _scenario = scenario;
         _testExecutionState = testExecutionState;
     }
 
@@ -39,7 +39,7 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
                 break;
             }
 
-            var addCount = _configuration.FixedCount - _testExecutionState.GetConstantQueueCount(_scenarioName);
+            var addCount = _configuration.FixedCount - _testExecutionState.GetConstantQueueCount(_scenario.Name);
 
             while (addCount > 0)
             {
@@ -49,7 +49,7 @@ internal class FixedConcurrentLoadHandler : ILoadHandler
                 addCount--;
                 i++;
 
-                var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
+                var message = new ExecuteScenarioMessage(_scenario, _configuration.IsWarmup);
 
                 _testExecutionState.AddToConstantQueue(message);
                 _testExecutionState.EnqueueScenarioExecution(message);

@@ -11,8 +11,6 @@ internal class FileLoggerProvider : ILoggerProvider, IDisposable
     private readonly StreamWriter _writer;
     private readonly object _lock = new object();
     private bool _disposed;
-    private const int MaxRetryAttempts = 3;
-    private const int RetryDelayMs = 100;
 
     /// <summary>
     /// Initializes a new instance of the FileLoggerProvider
@@ -72,41 +70,19 @@ internal class FileLoggerProvider : ILoggerProvider, IDisposable
     /// </summary>
     private void WriteDirectly(string message)
     {
-        int attempt = 0;
-        bool success = false;
-
-        while (!success && attempt < MaxRetryAttempts)
+        try
         {
-            try
+            lock (_lock)
             {
-                lock (_lock)
+                if (!_disposed)
                 {
-                    if (!_disposed)
-                    {
-                        _writer.WriteLine(message);
-                        _writer.Flush();
-                        success = true;
-                    }
+                    _writer.WriteLine(message);
                 }
             }
-            catch (IOException)
-            {
-                // File might be temporarily locked, retry after delay
-                attempt++;
-                if (attempt < MaxRetryAttempts)
-                {
-                    Thread.Sleep(RetryDelayMs);
-                }
-                else
-                {
-                    Console.Error.WriteLine($"Failed to write to log file after {MaxRetryAttempts} attempts: {message}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Unexpected error writing to log file: {ex.Message}");
-                break;
-            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Unexpected error writing to log file: {ex.Message}");
         }
     }
 
@@ -132,7 +108,6 @@ internal class FileLoggerProvider : ILoggerProvider, IDisposable
                 {
                     lock (_lock)
                     {
-                        _writer.Flush();
                         _writer.Dispose();
                     }
                 }

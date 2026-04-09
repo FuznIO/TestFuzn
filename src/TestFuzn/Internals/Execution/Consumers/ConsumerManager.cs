@@ -1,5 +1,4 @@
 ﻿using Fuzn.TestFuzn.Contracts;
-using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Execution.Consumers;
@@ -33,12 +32,10 @@ internal class ConsumerManager
 
         await Parallel.ForEachAsync(
             queue.GetConsumingEnumerable(cancellationToken), 
-            new ParallelOptions { CancellationToken = cancellationToken },
+            new ParallelOptions { MaxDegreeOfParallelism = int.MaxValue, CancellationToken = cancellationToken },
             async (message, ct) =>
         {
-            var scenario = _testExecutionState.Scenarios.Single(s => s.Name == message.ScenarioName);
-
-            await _executeScenarioMessageHandler.Execute(message, scenario);
+            await _executeScenarioMessageHandler.Execute(message);
 
             _testExecutionState.RemoveFromQueues(message);
 
@@ -46,9 +43,9 @@ internal class ConsumerManager
             {
                 if (_testExecutionState.TestResult.TestType == TestType.Load)
                 {
-                    _testExecutionState.LoadCollectors[message.ScenarioName].MarkPhaseAsCompleted(LoadTestPhase.Measurement, DateTime.UtcNow);
-                    var scenarioLoadResult = _testExecutionState.LoadCollectors[message.ScenarioName].GetCurrentResult(true);
-                    await _executeScenarioMessageHandler.WriteToSinksAndSnapshotCollector(_testExecutionState, scenario, scenarioLoadResult, true);
+                    var completedCollector = _testExecutionState.LoadCollectors[message.ScenarioName];
+                    completedCollector.MarkPhaseAsCompleted(LoadTestPhase.Measurement, DateTime.UtcNow);
+                    await _executeScenarioMessageHandler.WriteToSinksAndSnapshotCollector(_testExecutionState, message.Scenario, () => completedCollector.GetCurrentResult(true), true);
                 }
             }
         });

@@ -184,6 +184,7 @@ public class ScenarioBuilder<TModel>
         step.Name = name;
         step.Id = id;
         step.Action = context => action((IterationContext<TModel>) context);
+        step.Validate();
         Scenario.Steps.Add(step);
 
         return this;
