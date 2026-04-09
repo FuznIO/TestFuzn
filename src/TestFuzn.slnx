@@ -41,4 +41,7 @@
   <Project Path="TestFuzn.Tests.DefaultHttpClient/TestFuzn.Tests.DefaultHttpClient.csproj" />
   <Project Path="TestFuzn.Tests.Runner/TestFuzn.Tests.Runner.csproj" />
   <Project Path="TestWebApp/TestWebApp.csproj" />
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
 </Solution>

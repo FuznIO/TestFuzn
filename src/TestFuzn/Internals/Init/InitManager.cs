@@ -44,6 +44,9 @@ internal class InitManager
 
         await SetupSimulations();
 
+        foreach (var scenario in _testExecutionState.Scenarios)
+            _testExecutionState.LoadCollectors[scenario.Name].CacheSimulationDescriptions(scenario);
+
         var timestamp = DateTime.UtcNow;
 
         foreach (var scenario in _testExecutionState.Scenarios)

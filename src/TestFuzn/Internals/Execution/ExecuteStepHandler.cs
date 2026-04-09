@@ -23,8 +23,6 @@ internal class ExecuteStepHandler
 
     public async Task ExecuteStep(Step step)
     {
-        step.Validate();
-
         var stepDuration = new Stopwatch();
         stepDuration.Start();
 

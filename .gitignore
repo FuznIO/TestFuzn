@@ -398,6 +398,7 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+.idea/
 
 # Local appsettings
 **/appsettings.frankintel.json

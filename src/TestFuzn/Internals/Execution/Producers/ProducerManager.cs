@@ -38,11 +38,11 @@ internal class ProducerManager
 
             ILoadHandler handler = loadSimulation switch
             {
-                OneTimeLoadConfiguration oneTimeLoad => new OneTimeLoadHandler(oneTimeLoad, scenario.Name, _testExecutionState),
-                FixedConcurrentLoadConfiguration fixedConcurrent => new FixedConcurrentLoadHandler(fixedConcurrent, scenario.Name, _testExecutionState),
-                FixedLoadConfiguration fixedLoad => new FixedLoadHandler(fixedLoad, scenario.Name, _testExecutionState),
-                RandomLoadPerSecondConfiguration randomLoadPerSecond => new RandomLoadPerSecondHandler(randomLoadPerSecond, scenario.Name, _testExecutionState),
-                GradualLoadIncreaseConfiguration gradualLoadIncrease => new GradualLoadIncreaseHandler(gradualLoadIncrease, scenario.Name, _testExecutionState),
+                OneTimeLoadConfiguration oneTimeLoad => new OneTimeLoadHandler(oneTimeLoad, scenario, _testExecutionState),
+                FixedConcurrentLoadConfiguration fixedConcurrent => new FixedConcurrentLoadHandler(fixedConcurrent, scenario, _testExecutionState),
+                FixedLoadConfiguration fixedLoad => new FixedLoadHandler(fixedLoad, scenario, _testExecutionState),
+                RandomLoadPerSecondConfiguration randomLoadPerSecond => new RandomLoadPerSecondHandler(randomLoadPerSecond, scenario, _testExecutionState),
+                GradualLoadIncreaseConfiguration gradualLoadIncrease => new GradualLoadIncreaseHandler(gradualLoadIncrease, scenario, _testExecutionState),
                 PauseLoadConfiguration pauseLoad => new PauseLoadHandler(pauseLoad, _testExecutionState),
                 _ => throw new NotSupportedException($"Load simulation type {loadSimulation.GetType().Name} is not supported."),
             };

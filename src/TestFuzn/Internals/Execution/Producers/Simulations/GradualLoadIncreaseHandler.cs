@@ -5,16 +5,16 @@ namespace Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 internal class GradualLoadIncreaseHandler : ILoadHandler
 {
     private readonly GradualLoadIncreaseConfiguration _configuration;
-    private readonly string _scenarioName;
+    private readonly Scenario _scenario;
     private readonly TestExecutionState _testExecutionState;
 
     public GradualLoadIncreaseHandler(
         GradualLoadIncreaseConfiguration configuration,
-        string scenarioName,
+        Scenario scenario,
         TestExecutionState testExecutionState)
     {
         _configuration = configuration;
-        _scenarioName = scenarioName;
+        _scenario = scenario;
         _testExecutionState = testExecutionState;
     }
 
@@ -37,7 +37,7 @@ internal class GradualLoadIncreaseHandler : ILoadHandler
                 if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
                     return;
 
-                var message = new ExecuteScenarioMessage(_scenarioName, _configuration.IsWarmup);
+                var message = new ExecuteScenarioMessage(_scenario, _configuration.IsWarmup);
 
                 _testExecutionState.EnqueueScenarioExecution(message);
             }

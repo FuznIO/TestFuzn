@@ -108,7 +108,7 @@ public class AssertWhileWarmingUpTests : Test
 
         Assert.IsNotEmpty(capturedStats);
 
-        var lastStats = capturedStats.Last();
+        var lastStats = capturedStats.OrderByDescending(s => s.TotalCount).First();
         Assert.AreEqual(5, lastStats.TotalCount);
         Assert.AreEqual(5, lastStats.OkCount);
         Assert.AreEqual(0, lastStats.FailedCount);

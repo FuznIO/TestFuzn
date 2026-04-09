@@ -4,7 +4,7 @@ namespace Fuzn.TestFuzn.Internals.InputData;
 
 internal class InputDataFeeder
 {
-    private object _lock = new();
+    private Dictionary<string, object> _locks = new();
     private Dictionary<string, InputEnumeratorInfo> _feeder = new();
     private TestExecutionState _testExecutionState = null!;
 
@@ -20,15 +20,16 @@ internal class InputDataFeeder
                 EndOfInputBehavior = scenario.InputDataInfo.InputDataBehavior,
                 Index = -1
             };
+            _locks[scenario.Name] = new object();
             _feeder[scenario.Name] = enumeratorInfo;
         }
     }
 
     public object GetNextInput(string scenario)
     {
-        lock (_lock)
+        var info = _feeder[scenario];
+        lock (_locks[scenario])
         {
-            var info = _feeder[scenario];
             bool isLastItem = info.Index == info.InputData.Count - 1;
 
             switch (info.EndOfInputBehavior)
