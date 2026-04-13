@@ -37,6 +37,30 @@ jobs:
         echo "📦 Version found: $VERSION"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+    - name: Restore and build
+      run: |
+        PROJECTS=(
+          "src/TestFuzn/TestFuzn.csproj"
+          "src/TestFuzn.Adapters.MSTest/TestFuzn.Adapters.MSTest.csproj"
+          "src/TestFuzn.Plugins.Http/TestFuzn.Plugins.Http.csproj"
+          "src/TestFuzn.Plugins.Playwright/TestFuzn.Plugins.Playwright.csproj"
+          "src/TestFuzn.Plugins.WebSocket/TestFuzn.Plugins.WebSocket.csproj"
+          "src/TestFuzn.Sinks.InfluxDB/TestFuzn.Sinks.InfluxDB.csproj"
+        )
+        for proj in "${PROJECTS[@]}"; do
+          dotnet restore "$proj"
+          dotnet build "$proj" --configuration Release --no-restore
+        done
+
+    - name: Pack
+      run: |
+        dotnet pack src/TestFuzn/TestFuzn.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn.Plugins.Playwright/TestFuzn.Plugins.Playwright.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn.Plugins.Http/TestFuzn.Plugins.Http.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn.Adapters.MSTest/TestFuzn.Adapters.MSTest.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn.Sinks.InfluxDB/TestFuzn.Sinks.InfluxDB.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn.Plugins.WebSocket/TestFuzn.Plugins.WebSocket.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+
     - name: Create and push tag
       run: |
         TAG="v${{ steps.get-version.outputs.version }}"
@@ -47,21 +71,6 @@ jobs:
         git push origin "$TAG"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Restore dependencies
-      run: dotnet restore src/TestFuzn.slnx
-
-    - name: Build
-      run: dotnet build src/TestFuzn.slnx --configuration Release --no-restore
-
-    - name: Pack
-      run: |
-        dotnet pack src/TestFuzn/TestFuzn.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFuzn.Plugins.Playwright/TestFuzn.Plugins.Playwright.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFuzn.Plugins.Http/TestFuzn.Plugins.Http.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFuzn.Adapters.MSTest/TestFuzn.Adapters.MSTest.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFuzn.Sinks.InfluxDB/TestFuzn.Sinks.InfluxDB.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFuzn.Plugins.WebSocket/TestFuzn.Plugins.WebSocket.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
 
     - name: Push to NuGet
       run: |
