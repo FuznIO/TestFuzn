@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TestFuzn ("testfusion") is a C# unified testing framework that combines unit tests, end-to-end tests, and load tests under a single fluent API. Currently in beta (v0.6.18-beta). Not yet stable -- backwards compatibility is not a concern.
+TestFuzn ("testfusion") is a C# unified testing framework that combines unit tests, end-to-end tests, and load tests under a single fluent API. Backwards compatibility is not a concern.
 
 ## Build & Test Commands
 
@@ -87,7 +87,7 @@ This is why tests should avoid depending on MSTest-specific APIs (e.g. `TestCont
 | TestFuzn.Plugins.WebSocket | Yes | WebSocket testing |
 | TestFuzn.Sinks.InfluxDB | Yes | Real-time metrics to InfluxDB |
 
-Test/sample projects: `TestFuzn.Tests`, `TestFuzn.Tests.Attributes`, `TestFuzn.Tests.DefaultHttpClient`, `TestFuzn.Tests.Runner`, `SampleApp.Tests`, `SampleApp.WebApp`, `TestWebApp`.
+Test/sample projects: `TestFuzn.Tests`, `TestFuzn.Tests.Attributes`, `TestFuzn.Tests.DefaultHttpClient`, `TestFuzn.Tests.CustomHttpClient`, `TestFuzn.Tests.Failing`, `TestFuzn.Tests.Runner`, `SampleApp.Tests`, `SampleApp.WebApp`, `TestWebApp`.
 
 ## Key Conventions
 
