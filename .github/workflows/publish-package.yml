@@ -48,11 +48,20 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Restore dependencies
-      run: dotnet restore src/TestFuzn.slnx
-
-    - name: Build
-      run: dotnet build src/TestFuzn.slnx --configuration Release --no-restore
+    - name: Restore and build
+      run: |
+        PROJECTS=(
+          "src/TestFuzn/TestFuzn.csproj"
+          "src/TestFuzn.Adapters.MSTest/TestFuzn.Adapters.MSTest.csproj"
+          "src/TestFuzn.Plugins.Http/TestFuzn.Plugins.Http.csproj"
+          "src/TestFuzn.Plugins.Playwright/TestFuzn.Plugins.Playwright.csproj"
+          "src/TestFuzn.Plugins.WebSocket/TestFuzn.Plugins.WebSocket.csproj"
+          "src/TestFuzn.Sinks.InfluxDB/TestFuzn.Sinks.InfluxDB.csproj"
+        )
+        for proj in "${PROJECTS[@]}"; do
+          dotnet restore "$proj"
+          dotnet build "$proj" --configuration Release --no-restore
+        done
 
     - name: Pack
       run: |
