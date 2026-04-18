@@ -54,7 +54,7 @@ public class TestInfo
     /// <summary>
     /// Gets or sets the metadata key-value pairs associated with the test.
     /// </summary>
-    internal Dictionary<string, string> Metadata { get; set; }
+    internal KeyValueList Metadata { get; set; }
 
     /// <summary>
     /// Gets or sets the tags associated with the test for filtering.

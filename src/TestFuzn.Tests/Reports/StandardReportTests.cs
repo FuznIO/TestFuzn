@@ -25,7 +25,7 @@ public class StandardReportTests : Test
             .Run();
     }
 
-    [Test]
+    [Test(Description = "Text with more description")]
     [Tags("Tag1", "Tag2", "Tag2")]
     [Metadata("MetaKey1", "MetaValue1")]
     [Metadata("MetaKey2", "MetaValue2")]

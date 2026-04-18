@@ -81,14 +81,17 @@ internal class ConsoleWriter
                 });
 
                 if (iterationResult.InputData != null)
+                {
+                    var inputText = iterationResult.InputData.ToString() ?? string.Empty;
                     table.Rows.Add(new AdvancedTableRow
                     {
                         Cells =
                         {
                             new AdvancedTableCell("Input data", 1),
-                            new AdvancedTableCell($"{(iterationResult.InputData?.Length > 50 ? iterationResult.InputData[..50] + "..." : iterationResult.InputData)}", 4),
+                            new AdvancedTableCell(inputText.Length > 50 ? inputText[..50] + "..." : inputText, 4),
                         }
                     });
+                }
 
                 foreach (var (stepResult, index) in iterationResult.StepResults.Select((sr, i) => (sr, i)))
                 {
@@ -149,7 +152,18 @@ internal class ConsoleWriter
                 testFramework.Write(Environment.NewLine);
                 testFramework.WriteMarkup(errorSection.ToString());
             }
+
+            WriteReportLink(testFramework);
         }
+    }
+
+    private void WriteReportLink(ITestFrameworkAdapter testFramework)
+    {
+        var reportPath = Path.Combine(_testExecutionState.TestSession.TestsResultsDirectory, "TestReport.html");
+        var fullPath = Path.GetFullPath(reportPath);
+        testFramework.Write(Environment.NewLine);
+        testFramework.Write($"Report: {fullPath}");
+        testFramework.Write(Environment.NewLine);
     }
 
     private static void AddCommentsAndAttachmentsRows(AdvancedTable table, StepStandardResult stepResult, string indent)
@@ -431,6 +445,8 @@ internal class ConsoleWriter
             }
 
             testFramework.WriteAdvancedTable(table);
+
+            WriteReportLink(testFramework);
 
             //Assertion
             var assertionSection = new StringBuilder();

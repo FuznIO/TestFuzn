@@ -5,6 +5,7 @@
 | Method | Description |
 |--------|-------------|
 | `Id(string)` | Set scenario ID |
+| `Description(string)` | Set scenario description, shown in reports |
 | `BeforeScenario(Action/Func)` | Add scenario initialization hook |
 | `AfterScenario(Action/Func)` | Add scenario cleanup hook |
 | `BeforeIteration(Action/Func)` | Add iteration initialization hook |

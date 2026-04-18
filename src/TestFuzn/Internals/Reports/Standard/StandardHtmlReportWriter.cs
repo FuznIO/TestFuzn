@@ -56,6 +56,16 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine("<title>TestFuzn - Test Report</title>");
         b.AppendLine("<link rel='stylesheet' href='Data/Assets/styles/testfuzn.css'>");
         b.AppendLine("<script src='Data/Assets/scripts/chart.js'></script>");
+        b.AppendLine("<style>");
+        b.AppendLine(".group-results td, .group-results th { padding: 4px 8px; line-height: 1.3; }");
+        b.AppendLine(".group-results tr.group td { padding-top: 10px; }");
+        b.AppendLine("details.link-toggle summary { display: inline; list-style: none; cursor: pointer; color: #0645ad; text-decoration: underline; font-weight: normal; }");
+        b.AppendLine("details.link-toggle summary::-webkit-details-marker { display: none; }");
+        b.AppendLine("details.link-toggle summary::marker { display: none; }");
+        b.AppendLine("details.link-toggle summary .t-hide { display: none; }");
+        b.AppendLine("details.link-toggle[open] summary .t-show { display: none; }");
+        b.AppendLine("details.link-toggle[open] summary .t-hide { display: inline; }");
+        b.AppendLine("</style>");
         b.AppendLine("</head>");
         b.AppendLine("<body>");
         b.AppendLine(@"<div class=""page-container"">");
@@ -215,23 +225,25 @@ internal class StandardHtmlReportWriter : IStandardReport
         
         b.AppendLine(@"<div class=""run-info-row"">");
         b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Run ID</span><span class=""info-value"">" + E(reportData.TestRunId) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Duration</span><span class=""info-value"">" + E(reportData.TestRunDuration.ToTestFuznReadableString()) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Started</span><span class=""info-value"">" + reportData.TestRunStartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Completed</span><span class=""info-value"">" + reportData.TestRunEndTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.Configuration?.ExecutionEnvironment) ? "-" : E(_testSession.Configuration.ExecutionEnvironment)) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.Configuration?.TargetEnvironment) ? "-" : E(_testSession.Configuration.TargetEnvironment)) + "</span></div>");
         b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.Configuration?.ExecutionEnvironment) ? "-" : E(_testSession.Configuration.ExecutionEnvironment)) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.Configuration?.TargetEnvironment) ? "-" : E(_testSession.Configuration.TargetEnvironment)) + "</span></div>");
-
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Duration</span><span class=""info-value"">" + E(reportData.TestRunDuration.ToTestFuznReadableString()) + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Started</span><span class=""info-value"">" + reportData.TestRunStartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
+        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Ended</span><span class=""info-value"">" + reportData.TestRunEndTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
+        b.AppendLine("</div>");
+        
         if (reportData.Suite.Metadata != null && reportData.Suite.Metadata.Count > 0)
         {
             foreach (var metadata in reportData.Suite.Metadata)
             {
+                b.AppendLine(@"<div class=""run-info-row"">");
                 b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{E(metadata.Key)}</span><span class=""info-value"">{E(metadata.Value)}</span></div>");
+                b.AppendLine("</div>");
             }
         }
-        b.AppendLine("</div>");
 
         b.AppendLine(@"<div class=""run-info-row"">");
         b.AppendLine(@"<div class=""info-item""><a href=""TestFuzn_Log.log"" target=""_blank"">View Log</a></div>");
@@ -272,8 +284,13 @@ internal class StandardHtmlReportWriter : IStandardReport
                     break;
             }
 
+            var groupTotal = groupResult.Value.TestResults.Count;
+            var groupPassed = groupResult.Value.TestResults.Count(t => t.Value.Status == TestStatus.Passed);
+            var groupFailed = groupResult.Value.TestResults.Count(t => t.Value.Status == TestStatus.Failed);
+            var groupSkipped = groupResult.Value.TestResults.Count(t => t.Value.Status == TestStatus.Skipped);
+
             b.AppendLine(@$"<tr class=""group"">");
-            b.AppendLine($"<td>{symbol} {E(groupResult.Value.Name)}</td>");
+            b.AppendLine($"<td>{symbol} {E(groupResult.Value.Name)}<br/><span style=\"visibility:hidden\">{symbol}</span> <span style=\"font-size:smaller;opacity:0.7\">{groupTotal} total: {groupPassed} passed, {groupFailed} failed, {groupSkipped} skipped</span></td>");
             b.AppendLine($"<td></td>");
             b.AppendLine($"<td></td>");
             b.AppendLine($"<td>{statusText}</td>");
@@ -313,21 +330,22 @@ internal class StandardHtmlReportWriter : IStandardReport
                 ? "N/A"
                 : testResult.Value.TestType == TestType.Load ? "Load" : "Standard";
 
-            var detailsLink = "";
+            var detailsLinks = new List<string>();
+            if (testResult.Value.Status != TestStatus.Skipped)
+            {
+                detailsLinks.Add(@"<a href=""#"" class=""toggle-details"" onclick=""toggleDetails(this); return false;"">Show</a>");
+            }
             if (testResult.Value.TestType == TestType.Load && testResult.Value.Status != TestStatus.Skipped)
             {
                 var reportName = FileNameHelper.MakeFilenameSafe($"{groupResults.Value.Name}-{testResult.Value.Name}");
-                detailsLink = $"<a href=\"Data/{E(reportName)}.html\" target=\"_blank\">View</a>";
+                detailsLinks.Add($"<a href=\"Data/{E(reportName)}.html\">Report</a>");
             }
-            else if (testResult.Value.Status != TestStatus.Skipped && testResult.Value.IterationResults.Count > 0)
-            {
-                detailsLink = @"<a href=""#"" class=""toggle-details"" onclick=""toggleDetails(this); return false;"">Show</a>";
-            }
+            var detailsLink = string.Join(" | ", detailsLinks);
 
             b.AppendLine($"<tr>");
             b.AppendLine(@$"<td style=""padding-left:30px"">{symbol} {E(testResult.Value.Name)}");
 
-            WriteScenarioDetails(b, testResult.Value);
+            WriteTestDetails(b, testResult.Value);
 
             b.AppendLine("</td>");
             b.AppendLine($"<td>{detailsLink}</td>");
@@ -345,77 +363,126 @@ internal class StandardHtmlReportWriter : IStandardReport
         }
     }
 
-    private void WriteScenarioDetails(StringBuilder b, TestResult sr)
+    private void WriteTestDetails(StringBuilder b, TestResult sr)
     {
-        if (sr.Status != TestStatus.Skipped
-            && sr.IterationResults.Count > 0)
+        if (sr.Status == TestStatus.Skipped) return;
+
+        b.AppendLine(@"<details class=""results"">");
+        b.AppendLine(@"<summary style=""display:none""></summary>");
+
+        var showCorrelationId = !sr.HasInputData && sr.IterationResults.Count > 0;
+        var useToggle = sr.TestType != TestType.Load;
+
+        if (!string.IsNullOrEmpty(sr.Description))
+            b.AppendLine($@"<div style=""margin:6px 0"">{E(sr.Description)}</div>");
+
+        if (useToggle)
+            b.AppendLine(@"<details class=""link-toggle"" style=""margin:6px 0 20px 0""><summary><span class=""t-show"">Show details</span><span class=""t-hide"">Hide details</span></summary>");
+
+        var hasInfoRows = !string.IsNullOrEmpty(sr.Id)
+            || showCorrelationId
+            || (sr.Metadata != null && sr.Metadata.Count > 0);
+
+        if (hasInfoRows)
         {
-            b.AppendLine(@"<details class=""results"">");
-            b.AppendLine(@"<summary style=""display:none""></summary>");
+            b.AppendLine(@"<table style=""margin:6px 0"">");
+            if (!string.IsNullOrEmpty(sr.Id))
+                b.AppendLine($@"<tr><th class=""vertical"">Id</th><td>{E(sr.Id)}</td></tr>");
+            if (showCorrelationId)
+                b.AppendLine($@"<tr><th class=""vertical"">CorrelationId</th><td>{E(sr.IterationResults[0].CorrelationId)}</td></tr>");
+            if (sr.Metadata != null && sr.Metadata.Count > 0)
+            {
+                foreach (var kv in sr.Metadata)
+                    b.AppendLine($@"<tr><th class=""vertical"">{E(kv.Key)}</th><td>{E(kv.Value)}</td></tr>");
+            }
+            b.AppendLine("</table>");
         }
 
-        if (sr.IterationResults.Count > 0)
-            WriteStepDetails(b, sr);
+        b.AppendLine(@"<table style=""margin:6px 0"">");
+        b.AppendLine("<tr><th>Phase</th><th>Duration</th><th>Started</th><th>Ended</th></tr>");
+        b.AppendLine($"<tr><td>Init</td><td>{sr.InitDuration().ToTestFuznResponseTime()}</td><td>{sr.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.InitEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
+        b.AppendLine($"<tr><td>Execution</td><td>{sr.ExecuteDuration().ToTestFuznResponseTime()}</td><td>{sr.ExecuteStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.ExecuteEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
+        b.AppendLine($"<tr><td>Cleanup</td><td>{sr.CleanupDuration().ToTestFuznResponseTime()}</td><td>{sr.CleanupStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
+        b.AppendLine($"<tr><td>Total Test Run</td><td>{sr.TestRunDuration().ToTestFuznReadableString()}</td><td>{sr.StartTime().ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.EndTime().ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
+        b.AppendLine("</table>");
 
-        if (sr.Status != TestStatus.Skipped
-            && sr.IterationResults.Count > 0)
+        if (useToggle)
             b.AppendLine("</details>");
+
+        if (sr.IterationResults.Count > 0)
+        {
+            WriteStepDetails(b, sr);
+        }
+
+        b.AppendLine("</details>");
     }
 
     private void WriteStepDetails(StringBuilder b, TestResult sr)
     {
-        b.AppendLine(@"<table style=""margin:30px;0;30px;0;"">");
+        b.AppendLine(@"<table class=""iterations"" style=""margin:6px 0;border-collapse:collapse;width:100%"">");
+        b.AppendLine(@"<tr style=""background:#eee;text-align:left"">");
+        b.AppendLine($@"<th style=""padding:4px 8px"">{(sr.HasInputData ? "Iteration / Step" : "Step")}</th>");
+        b.AppendLine(@"<th style=""padding:4px 8px;width:110px"">Status</th>");
+        b.AppendLine(@"<th style=""padding:4px 8px;width:90px"">Duration</th>");
+        b.AppendLine(@"</tr>");
 
-        foreach (var iteration in sr.IterationResults)
+        if (!sr.HasInputData)
         {
-            if (sr.HasInputData)
-            {
-                var symbol = "";
-                var hiddenSymbol = "";
-                var statusText = "";
-                if (iteration.Passed)
-                {
-                    symbol = "→ ✅";
-                    hiddenSymbol = @"<span style=""visibility:hidden"">→ ✅</span>";
-                    statusText = "✅ Passed";
-                }
-                else
-                {
-                    symbol = "→ ❌";
-                    hiddenSymbol = @"<span style=""visibility:hidden"">→ ❌</span>";
-                    statusText = "❌ Failed";
-                }
-
-                b.AppendLine($"<tr>");
-                b.AppendLine($"<th>{symbol} Input Data: ");
-                b.AppendLine($"{(string.IsNullOrEmpty(iteration.InputData) ? " " : E(iteration.InputData))}");
-                b.AppendLine($"<br/>{hiddenSymbol} CorrelationId: {E(iteration.CorrelationId)}");
-                b.AppendLine($"</th>");
-                b.AppendLine($"<th>{statusText}</th>");
-                b.AppendLine($"<th></th>");
-                b.AppendLine($"</tr>");
-            }
-            else
-            {
-                b.AppendLine($"<tr>");
-                b.AppendLine($"<th>CorrelationId: {E(iteration.CorrelationId)}");
-                b.AppendLine($"</th>");
-                b.AppendLine($"<th></th>");
-                b.AppendLine($"<th></th>");
-                b.AppendLine($"</tr>");
-            }
-
-            foreach (var stepResult in iteration.StepResults)
+            foreach (var stepResult in sr.IterationResults[0].StepResults)
             {
                 WriteStepResult(b, stepResult.Value, 1);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < sr.IterationResults.Count; i++)
+            {
+                var iteration = sr.IterationResults[i];
+                var symbol = iteration.Passed ? "→ ✅" : "→ ❌";
+                var statusText = iteration.Passed ? "✅ Passed" : "❌ Failed";
+
+                var rowStyle = i == 0
+                    ? "background:#fafafa"
+                    : "background:#fafafa;border-top:2px solid #ddd";
+                b.AppendLine($@"<tr style=""{rowStyle}"">");
+                b.Append($"<td style=\"padding:4px 8px\">{symbol} Iteration #{i}");
+                var inputDataString = iteration.InputData?.ToString();
+                var inputDataText = string.IsNullOrEmpty(inputDataString) ? "(empty)" : E(inputDataString);
+                b.Append($" - Input: {inputDataText}");
+                b.Append(" ");
+                WriteIterationDetailsToggle(b, iteration);
+                b.AppendLine("</td>");
+                b.AppendLine($"<td style=\"padding:4px 8px\">{statusText}</td>");
+                b.AppendLine($"<td style=\"padding:4px 8px\">{iteration.Duration().ToTestFuznResponseTime()}</td>");
+                b.AppendLine("</tr>");
+
+                foreach (var stepResult in iteration.StepResults)
+                {
+                    WriteStepResult(b, stepResult.Value, 1);
+                }
             }
         }
         b.AppendLine("</table>");
     }
 
+    private static void WriteIterationDetailsToggle(StringBuilder b, IterationResult iteration)
+    {
+        b.Append(@"<details class=""link-toggle"" style=""display:inline""><summary><span class=""t-show"">Show details</span><span class=""t-hide"">Hide details</span></summary>");
+        b.Append(@"<table style=""margin:6px 0;font-weight:normal"">");
+        b.Append($@"<tr><th class=""vertical"">CorrelationId</th><td>{E(iteration.CorrelationId)}</td></tr>");
+        b.AppendLine("</table>");
+        b.AppendLine(@"<table style=""margin:6px 0;font-weight:normal"">");
+        b.AppendLine("<tr><th>Phase</th><th>Duration</th><th>Started</th><th>Ended</th></tr>");
+        b.AppendLine($"<tr><td>Init</td><td>{iteration.InitDuration().ToTestFuznResponseTime()}</td><td>{iteration.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.InitEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine($"<tr><td>Execution</td><td>{iteration.ExecuteDuration().ToTestFuznResponseTime()}</td><td>{iteration.ExecuteStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.ExecuteEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine($"<tr><td>Cleanup</td><td>{iteration.CleanupDuration().ToTestFuznResponseTime()}</td><td>{iteration.CleanupStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine($"<tr><td>Total Iteration Run</td><td>{iteration.Duration().ToTestFuznResponseTime()}</td><td>{iteration.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine("</table></details>");
+    }
+
     private void WriteStepResult(StringBuilder b, StepStandardResult stepResult, int level)
     {
-        var padding = ((30 * level) - 30);
+        var leftPadding = 24 + ((level - 1) * 20);
 
         var symbol = "";
         var hiddenSymbol = "";
@@ -440,10 +507,12 @@ internal class StandardHtmlReportWriter : IStandardReport
         }
 
         b.AppendLine($"<tr>");
-        if (level == 1)
-            b.AppendLine($"<td>{symbol} Step: {E(stepResult.Name)}");
-        else
-            b.AppendLine($"<td style='padding-left:{padding}px'>{symbol} Step: {E(stepResult.Name)}");
+        b.AppendLine($"<td style=\"padding:4px 8px;padding-left:{leftPadding}px\">{symbol} Step: {E(stepResult.Name)}");
+
+        if (!string.IsNullOrEmpty(stepResult.Id))
+        {
+            b.AppendLine($"<br/>{hiddenSymbol} <span style=\"font-size:smaller;opacity:0.7\">Id: {E(stepResult.Id)}</span>");
+        }
 
         if (stepResult.Comments != null && stepResult.Comments.Count > 0)
         {
@@ -462,9 +531,14 @@ internal class StandardHtmlReportWriter : IStandardReport
             }
         }
 
+        if (stepResult.Status == StepStatus.Failed && stepResult.Exception != null)
+        {
+            WriteFailure(b, stepResult.Exception, hiddenSymbol);
+        }
+
         b.AppendLine("</td>");
-        b.AppendLine($"<td>{statusText}</td>");
-        b.AppendLine($"<td>{stepResult.Duration.ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td style=\"padding:4px 8px\">{statusText}</td>");
+        b.AppendLine($"<td style=\"padding:4px 8px\">{stepResult.Duration.ToTestFuznResponseTime()}</td>");
         b.AppendLine($"</tr>");
 
         if (stepResult.StepResults != null && stepResult.StepResults.Count > 0)
@@ -475,4 +549,26 @@ internal class StandardHtmlReportWriter : IStandardReport
             }
         }
     }
+
+    private static void WriteFailure(StringBuilder b, Exception exception, string hiddenSymbol)
+    {
+        b.AppendLine($"<br/>{hiddenSymbol} <div style=\"display:inline-block;margin-top:6px;padding:8px 10px;background:#fee;border-left:3px solid #EF4444;font-family:Consolas,Menlo,monospace;font-size:0.85em;white-space:pre-wrap\">");
+        WriteExceptionBody(b, exception);
+        b.AppendLine("</div>");
+    }
+
+    private static void WriteExceptionBody(StringBuilder b, Exception exception)
+    {
+        b.AppendLine($"<strong>{E(exception.GetType().FullName)}</strong>: {E(exception.Message)}");
+        if (exception.StackTrace != null)
+        {
+            b.AppendLine($"<br/>{E(exception.StackTrace)}");
+        }
+        if (exception.InnerException != null)
+        {
+            b.AppendLine("<br/><br/><strong>Inner Exception:</strong><br/>");
+            WriteExceptionBody(b, exception.InnerException);
+        }
+    }
+
 }
