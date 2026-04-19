@@ -12,9 +12,7 @@ TestFuzn ("testfusion") is a C# unified testing framework that combines unit tes
 # Build the solution
 dotnet build src/TestFuzn.slnx
 
-# Run tests (requires TestWebApp running first)
-dotnet run --project src/TestWebApp/TestWebApp.csproj --launch-profile TestWebApp &
-# Wait for it to respond, then run test suites sequentially:
+# Run tests (TestWebApp and SampleApp.WebApp run in Kubernetes — do NOT start them locally)
 dotnet test src/TestFuzn.Tests/TestFuzn.Tests.csproj
 dotnet test src/TestFuzn.Tests.Attributes/TestFuzn.Tests.Attributes.csproj
 dotnet test src/TestFuzn.Tests.DefaultHttpClient/TestFuzn.Tests.DefaultHttpClient.csproj
@@ -23,7 +21,9 @@ dotnet test src/TestFuzn.Tests.DefaultHttpClient/TestFuzn.Tests.DefaultHttpClien
 dotnet test src/TestFuzn.Tests/TestFuzn.Tests.csproj --filter "FullyQualifiedName~TestMethodName"
 ```
 
-TestWebApp listens on `https://localhost:7058` and `http://localhost:7059`.
+**Always run `dotnet test src/TestFuzn.Tests/TestFuzn.Tests.csproj` before reporting a task as complete.** A clean build is not enough — the suite must pass.
+
+`TestWebApp` and `SampleApp.WebApp` run as services in Kubernetes — the user manages those; don't try to `dotnet run` them. TestWebApp listens on `https://localhost:7058` and `http://localhost:7059`.
 
 ## Target Framework
 

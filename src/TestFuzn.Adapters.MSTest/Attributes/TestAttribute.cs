@@ -120,7 +120,7 @@ public class TestAttribute : TestMethodAttribute
             : null;
     }
 
-    private static Dictionary<string, string>? GetMetadata(MethodInfo testMethod)
+    private static KeyValueList? GetMetadata(MethodInfo testMethod)
     {
         var methodMetadata = testMethod.GetCustomAttributes<MetadataAttribute>(inherit: true);
         var classMetadata = testMethod.DeclaringType?
@@ -128,9 +128,13 @@ public class TestAttribute : TestMethodAttribute
 
         var metadataAttributes = methodMetadata.Concat(classMetadata).ToList();
 
-        return metadataAttributes.Any()
-            ? metadataAttributes.ToDictionary(m => m.Key, m => m.Value)
-            : null;
+        if (!metadataAttributes.Any())
+            return null;
+
+        var result = new KeyValueList();
+        foreach (var m in metadataAttributes)
+            result.Add(m.Key, m.Value);
+        return result;
     }
 
     private static List<string> GetTargetEnvironments(MethodInfo methodInfo)

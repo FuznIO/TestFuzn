@@ -93,9 +93,9 @@ internal class ScenarioLoadCollector
                 _requestsPerSecond = (int) Math.Round(_requestCount / testRunTimeInSeconds);
 
             if (status == TestStatus.Passed)
-                _ok.Record(result.ExecutionDuration, _measurementStartTime, _lastUpdated);
+                _ok.Record(result.ExecuteDuration(), _measurementStartTime, _lastUpdated);
             else if (status == TestStatus.Failed)
-                _failed.Record(result.ExecutionDuration, _measurementStartTime, _lastUpdated);
+                _failed.Record(result.ExecuteDuration(), _measurementStartTime, _lastUpdated);
             else
                 throw new Exception($"Invalid scenario status: {status}");
 

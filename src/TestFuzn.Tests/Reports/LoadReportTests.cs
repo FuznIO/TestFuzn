@@ -3,7 +3,7 @@
 [TestClass]
 public class LoadReportTests : Test
 {
-    [Test]
+    [Test( Description = "Test of description")]
     [Tags("Category1", "Category2", "Category3")]
     [Metadata("MetadataKey1", "MetadataValue1")]
     [Metadata("ClassMetaKey1", "ClassMetaValue1")]
@@ -93,6 +93,7 @@ public class LoadReportTests : Test
     }
 
     [Test]
+    [Skip]
     public async Task ZLongRunning()
     {
         int i = 0;

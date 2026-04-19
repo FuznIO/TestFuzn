@@ -49,7 +49,7 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
         {
             Id = "TestFuzn.Tests",
             Name = "TestFuzn Tests",
-            Metadata = new Dictionary<string, string>
+            Metadata = new KeyValueList
             {
                 { "Owner", "Fuzn" },
                 { "OwnerID", "123" },

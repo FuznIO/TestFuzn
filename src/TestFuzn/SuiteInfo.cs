@@ -19,5 +19,5 @@ public class SuiteInfo
     /// <summary>
     /// Gets or sets the metadata key-value pairs associated with the test suite.
     /// </summary>
-    public Dictionary<string, string> Metadata { get; set; }
+    public KeyValueList Metadata { get; set; }
 }

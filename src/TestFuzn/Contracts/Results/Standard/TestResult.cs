@@ -8,7 +8,7 @@ internal class TestResult
     public string Name { get; set; }
     public string FullName { get; set; }
     public string Id { get; set; }
-    public Dictionary<string, string> Metadata { get; set; }
+    public KeyValueList Metadata { get; set; }
     public List<string> Tags { get; set; }
     public string Description { get; set; }
     public DateTime InitStartTime { get; private set; }
@@ -114,4 +114,8 @@ internal class TestResult
     {
         return EndTime() - StartTime();
     }
+
+    public TimeSpan InitDuration() => InitEndTime - InitStartTime;
+    public TimeSpan ExecuteDuration() => ExecuteEndTime - ExecuteStartTime;
+    public TimeSpan CleanupDuration() => CleanupEndTime - CleanupStartTime;
 }

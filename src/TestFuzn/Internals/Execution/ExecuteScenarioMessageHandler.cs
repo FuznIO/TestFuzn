@@ -4,7 +4,6 @@ using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Contracts.Sinks;
 using Fuzn.TestFuzn.Internals.Logging;
 using Fuzn.TestFuzn.Internals.State;
-using System.Diagnostics;
 using Fuzn.TestFuzn.Internals.InputData;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -48,18 +47,25 @@ internal class ExecuteScenarioMessageHandler
         var iterationResult = new IterationResult();
         iterationResult.CorrelationId = iterationState.Info.CorrelationId;
 
-        var scenarioDuration = new Stopwatch();
-        scenarioDuration.Start();
+        var isStandardTest = _testExecutionState.TestResult.TestType == TestType.Standard;
 
         var executeStepHandler = new ExecuteStepHandler(_testExecutionState, iterationState, null);
 
         try
         {
+            if (isStandardTest)
+                iterationResult.InitStartTime = DateTime.UtcNow;
+
             if (scenario.BeforeIterationAction != null)
             {
                 var stepContext = ContextFactory.CreateIterationContext(iterationState, "BeforeIteration", null, null);
                 await scenario.BeforeIterationAction(stepContext);
             }
+
+            if (isStandardTest)
+                iterationResult.InitEndTime = DateTime.UtcNow;
+
+            iterationResult.ExecuteStartTime = DateTime.UtcNow;
 
             foreach (var (step, index) in scenario.Steps.Select((s,i)=> (s,i)))
             {
@@ -71,9 +77,10 @@ internal class ExecuteScenarioMessageHandler
         }
         finally
         {
-            scenarioDuration.Stop();
+            iterationResult.ExecuteEndTime = DateTime.UtcNow;
 
-            iterationResult.ExecutionDuration = scenarioDuration.Elapsed;
+            if (isStandardTest)
+                iterationResult.CleanupStartTime = DateTime.UtcNow;
 
             if (iterationState.CleanupActions != null)
             {
@@ -90,12 +97,15 @@ internal class ExecuteScenarioMessageHandler
             }
 
             await CleanupIteration(iterationState);
+
+            if (isStandardTest)
+                iterationResult.CleanupEndTime = DateTime.UtcNow;
         }
 
         if (_testExecutionState.TestResult.TestType == TestType.Standard)
         {
             if (currentInputData != null)
-                iterationResult.InputData = currentInputData.ToString();
+                iterationResult.InputData = currentInputData;
 
             _testExecutionState.TestResult.IterationResults.Add(iterationResult);
         }

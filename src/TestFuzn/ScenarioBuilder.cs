@@ -49,6 +49,18 @@ public class ScenarioBuilder<TModel>
     }
 
     /// <summary>
+    /// Sets a description for the scenario.
+    /// Provides additional context about what the scenario tests, shown in reports.
+    /// </summary>
+    /// <param name="description">The description for the scenario.</param>
+    /// <returns>The current <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
+    public ScenarioBuilder<TModel> Description(string description)
+    {
+        Scenario.Description = description;
+        return this;
+    }
+
+    /// <summary>
     /// Registers an action to execute before the scenario starts.
     /// </summary>
     /// <param name="action">The synchronous action to execute before the scenario.</param>

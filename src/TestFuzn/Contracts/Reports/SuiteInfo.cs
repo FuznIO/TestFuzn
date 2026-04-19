@@ -4,5 +4,5 @@ internal class SuiteInfo
 {
     public string Name { get; set; }
     public string Id { get; set; }
-    public Dictionary<string, string> Metadata { get; set; } = new();
+    public KeyValueList Metadata { get; set; } = new();
 }

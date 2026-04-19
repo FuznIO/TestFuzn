@@ -1,5 +1,6 @@
-﻿using System.Text;
+using System.Text;
 using System.Xml;
+using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Internals.State;
@@ -26,8 +27,13 @@ internal class StandardXmlReportWriter : IStandardReport
             _fileSystem.CreateDirectory(directory);
             var filePath = Path.Combine(directory, "TestReport.xml");
 
-            var stringBuilder = new StringBuilder();
-            using (var writer = XmlWriter.Create(stringBuilder, new XmlWriterSettings { Indent = true }))
+            using var memoryStream = new MemoryStream();
+            var settings = new XmlWriterSettings
+            {
+                Indent = true,
+                Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            };
+            using (var writer = XmlWriter.Create(memoryStream, settings))
             {
                 writer.WriteStartDocument();
                 writer.WriteStartElement("TestRun");
@@ -41,6 +47,9 @@ internal class StandardXmlReportWriter : IStandardReport
                 writer.WriteElementString("TargetEnvironment", _testSession.Configuration?.TargetEnvironment);
                 writer.WriteElementString("StartTime", reportData.TestRunStartTime.ToString("o"));
                 writer.WriteElementString("EndTime", reportData.TestRunEndTime.ToString("o"));
+
+                var runSummary = ComputeSummary(reportData.GroupResults.Values);
+                WriteSummary(writer, runSummary);
 
                 writer.WriteStartElement("Suite");
                 {
@@ -60,6 +69,8 @@ internal class StandardXmlReportWriter : IStandardReport
                         writer.WriteEndElement();
                     }
 
+                    WriteSummary(writer, runSummary);
+
                     writer.WriteStartElement("Groups");
                     foreach (var standardResult in reportData.GroupResults.Values)
                     {
@@ -73,7 +84,7 @@ internal class StandardXmlReportWriter : IStandardReport
                 writer.WriteEndDocument();
             }
 
-            await _fileSystem.WriteAllTextAsync(filePath, stringBuilder.ToString());
+            await _fileSystem.WriteAllBytesAsync(filePath, memoryStream.ToArray());
         }
         catch (Exception ex)
         {
@@ -86,6 +97,8 @@ internal class StandardXmlReportWriter : IStandardReport
         writer.WriteStartElement("Group");
 
         writer.WriteElementString("Name", groupResult.Name);
+
+        WriteSummary(writer, ComputeSummary(groupResult));
 
         writer.WriteStartElement("Tests");
         foreach (var testResult in groupResult.TestResults)
@@ -102,6 +115,9 @@ internal class StandardXmlReportWriter : IStandardReport
         writer.WriteStartElement("Test");
         writer.WriteElementString("Name", testResult.Name);
         writer.WriteElementString("Id", testResult.Id);
+
+        if (!string.IsNullOrEmpty(testResult.Description))
+            writer.WriteElementString("Description", testResult.Description);
 
         if (testResult.Tags != null && testResult.Tags.Count > 0)
         {
@@ -126,13 +142,34 @@ internal class StandardXmlReportWriter : IStandardReport
             writer.WriteEndElement();
         }
 
-        writer.WriteElementString("StartTime", testResult.StartTime().ToString("o"));
-        writer.WriteElementString("EndTime", testResult.EndTime().ToString("o"));
         writer.WriteElementString("Status", testResult.Status.ToString());
         writer.WriteElementString("TestType", testResult.TestType.ToString());
+
+        writer.WriteElementString("StartTime", testResult.StartTime().ToString("o"));
+        writer.WriteElementString("EndTime", testResult.EndTime().ToString("o"));
         writer.WriteElementString("Duration", testResult.TestRunDuration().ToString(@"hh\:mm\:ss\.fff"));
 
-        WriteScenario(writer, testResult);
+        writer.WriteElementString("InitStartTime", testResult.InitStartTime.ToString("o"));
+        writer.WriteElementString("InitEndTime", testResult.InitEndTime.ToString("o"));
+        writer.WriteElementString("InitDuration", testResult.InitDuration().ToString(@"hh\:mm\:ss\.fff"));
+
+        writer.WriteElementString("ExecuteStartTime", testResult.ExecuteStartTime.ToString("o"));
+        writer.WriteElementString("ExecuteEndTime", testResult.ExecuteEndTime.ToString("o"));
+        writer.WriteElementString("ExecuteDuration", testResult.ExecuteDuration().ToString(@"hh\:mm\:ss\.fff"));
+
+        writer.WriteElementString("CleanupStartTime", testResult.CleanupStartTime.ToString("o"));
+        writer.WriteElementString("CleanupEndTime", testResult.CleanupEndTime.ToString("o"));
+        writer.WriteElementString("CleanupDuration", testResult.CleanupDuration().ToString(@"hh\:mm\:ss\.fff"));
+
+        if (testResult.TestType == TestType.Load)
+        {
+            var reportName = FileNameHelper.MakeFilenameSafe($"{testResult.Group.Name}-{testResult.Name}");
+            writer.WriteElementString("LoadReportPath", $"{reportName}.xml");
+        }
+        else
+        {
+            WriteScenario(writer, testResult);
+        }
 
         writer.WriteEndElement();
     }
@@ -160,10 +197,42 @@ internal class StandardXmlReportWriter : IStandardReport
         writer.WriteStartElement("Iteration");
 
         writer.WriteElementString("Index", index.ToString());
+        writer.WriteElementString("CorrelationId", iterationResult.CorrelationId);
         writer.WriteElementString("Status", iterationResult.Passed ? "Passed" : "Failed");
 
         if (iterationResult.InputData is not null)
-            writer.WriteElementString("InputData", iterationResult.InputData);
+        {
+            writer.WriteElementString("InputData", iterationResult.InputData.ToString() ?? string.Empty);
+
+            if (iterationResult.InputData is IReportableInputData reportable)
+            {
+                var properties = reportable.ToReportProperties();
+                if (properties != null && properties.Count > 0)
+                {
+                    writer.WriteStartElement("InputDataProperties");
+                    foreach (var property in properties)
+                    {
+                        writer.WriteStartElement("Property");
+                        writer.WriteElementString("Key", property.Key);
+                        writer.WriteElementString("Value", property.Value);
+                        writer.WriteEndElement();
+                    }
+                    writer.WriteEndElement();
+                }
+            }
+        }
+
+        writer.WriteElementString("InitStartTime", iterationResult.InitStartTime.ToString("o"));
+        writer.WriteElementString("InitEndTime", iterationResult.InitEndTime.ToString("o"));
+        writer.WriteElementString("InitDuration", iterationResult.InitDuration().ToString(@"hh\:mm\:ss\.fff"));
+
+        writer.WriteElementString("ExecuteStartTime", iterationResult.ExecuteStartTime.ToString("o"));
+        writer.WriteElementString("ExecuteEndTime", iterationResult.ExecuteEndTime.ToString("o"));
+        writer.WriteElementString("ExecuteDuration", iterationResult.ExecuteDuration().ToString(@"hh\:mm\:ss\.fff"));
+
+        writer.WriteElementString("CleanupStartTime", iterationResult.CleanupStartTime.ToString("o"));
+        writer.WriteElementString("CleanupEndTime", iterationResult.CleanupEndTime.ToString("o"));
+        writer.WriteElementString("CleanupDuration", iterationResult.CleanupDuration().ToString(@"hh\:mm\:ss\.fff"));
 
         WriteSteps(writer, iterationResult.StepResults.Values.ToList());
 
@@ -187,6 +256,9 @@ internal class StandardXmlReportWriter : IStandardReport
         writer.WriteElementString("Id", step.Id);
         writer.WriteElementString("Status", step.Status.ToString());
         writer.WriteElementString("Duration", step.Duration.ToString(@"hh\:mm\:ss\.fff"));
+
+        if (step.Status == StepStatus.Failed && step.Exception != null)
+            WriteFailure(writer, step.Exception);
 
         if (step.Comments != null && step.Comments.Count > 0)
         {
@@ -218,5 +290,79 @@ internal class StandardXmlReportWriter : IStandardReport
             WriteSteps(writer, step.StepResults);
 
         writer.WriteEndElement();
+    }
+
+    private void WriteFailure(XmlWriter writer, Exception exception)
+    {
+        writer.WriteStartElement("Failure");
+        WriteExceptionBody(writer, exception);
+        writer.WriteEndElement();
+    }
+
+    private void WriteExceptionBody(XmlWriter writer, Exception exception)
+    {
+        writer.WriteElementString("Message", exception.Message);
+        writer.WriteElementString("Type", exception.GetType().FullName);
+        if (exception.StackTrace != null)
+            writer.WriteElementString("StackTrace", exception.StackTrace);
+        if (exception.InnerException != null)
+        {
+            writer.WriteStartElement("InnerException");
+            WriteExceptionBody(writer, exception.InnerException);
+            writer.WriteEndElement();
+        }
+    }
+
+    private static Summary ComputeSummary(IEnumerable<GroupResult> groupResults)
+    {
+        var summary = new Summary();
+        foreach (var group in groupResults)
+            Accumulate(summary, group);
+        return summary;
+    }
+
+    private static Summary ComputeSummary(GroupResult groupResult)
+    {
+        var summary = new Summary();
+        Accumulate(summary, groupResult);
+        return summary;
+    }
+
+    private static void Accumulate(Summary summary, GroupResult groupResult)
+    {
+        foreach (var test in groupResult.TestResults.Values)
+        {
+            summary.Total++;
+            switch (test.Status)
+            {
+                case TestStatus.Passed:
+                    summary.Passed++;
+                    break;
+                case TestStatus.Failed:
+                    summary.Failed++;
+                    break;
+                case TestStatus.Skipped:
+                    summary.Skipped++;
+                    break;
+            }
+        }
+    }
+
+    private static void WriteSummary(XmlWriter writer, Summary summary)
+    {
+        writer.WriteStartElement("Summary");
+        writer.WriteElementString("Total", summary.Total.ToString());
+        writer.WriteElementString("Passed", summary.Passed.ToString());
+        writer.WriteElementString("Failed", summary.Failed.ToString());
+        writer.WriteElementString("Skipped", summary.Skipped.ToString());
+        writer.WriteEndElement();
+    }
+
+    private sealed class Summary
+    {
+        public int Total;
+        public int Passed;
+        public int Failed;
+        public int Skipped;
     }
 }
