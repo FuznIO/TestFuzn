@@ -21,6 +21,8 @@ dotnet test src/TestFuzn.Tests.DefaultHttpClient/TestFuzn.Tests.DefaultHttpClien
 dotnet test src/TestFuzn.Tests/TestFuzn.Tests.csproj --filter "FullyQualifiedName~TestMethodName"
 ```
 
+**Always run `dotnet test src/TestFuzn.Tests/TestFuzn.Tests.csproj` before reporting a task as complete.** A clean build is not enough — the suite must pass.
+
 `TestWebApp` and `SampleApp.WebApp` run as services in Kubernetes — the user manages those; don't try to `dotnet run` them. TestWebApp listens on `https://localhost:7058` and `http://localhost:7059`.
 
 ## Target Framework
