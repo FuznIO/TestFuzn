@@ -23,6 +23,63 @@
 - ✅ **MSTest compatible**  
   Built-in support for the widely used MSTest framework — reuse what you already know and love.
 
+## 🚀 A Quick Look
+
+A standard test — a scenario made of named steps:
+
+```csharp
+[TestClass]
+public class ProductTests : Test
+{
+    [Test]
+    public async Task Verify_product_can_be_created_and_read()
+    {
+        await Scenario<Product>()
+            .Step("Create a product", async (context) =>
+            {
+                context.Model.Id = Guid.NewGuid();
+                context.Model.Name = "Keyboard";
+                context.Model.Price = 49;
+
+                var response = await context.CreateHttpRequest("https://localhost:5001/api/products")
+                    .WithContent(context.Model)
+                    .Post();
+
+                Assert.IsTrue(response.IsSuccessful);
+            })
+            .Step("Read the product back", async (context) =>
+            {
+                var response = await context.CreateHttpRequest($"https://localhost:5001/api/products/{context.Model.Id}")
+                    .Get<Product>();
+
+                Assert.IsTrue(response.IsSuccessful);
+                Assert.AreEqual("Keyboard", response.Data!.Name);
+            })
+            .Run();
+    }
+}
+```
+
+Now make it a load test — same scenario, same steps, two extra lines:
+
+```csharp
+        await Scenario<Product>()
+            .Step("Create a product", async (context) => { /* unchanged */ })
+            .Step("Read the product back", async (context) => { /* unchanged */ })
+
+            // 50 iterations per second for 30 seconds
+            .Load().Simulations((context, simulations) =>
+                simulations.FixedLoad(rate: 50, duration: TimeSpan.FromSeconds(30)))
+            .Load().AssertWhenDone((context, stats) =>
+                Assert.AreEqual(0, stats.Failed.RequestCount))
+
+            .Run();
+```
+
+That's the whole idea: the test you already wrote becomes the load test. No second tool, no rewriting your scenario in another DSL — and you get response-time percentiles, throughput and an HTML report out of it.
+
+Other simulations include `OneTimeLoad`, `GradualLoadIncrease`, `FixedConcurrentLoad` and `RandomLoadPerSecond`. See [Load Testing](docs/load-testing.md) for the full set.
+
 ## 📦 NuGet Packages
 
 | Package | Description |

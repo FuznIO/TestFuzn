@@ -155,5 +155,4 @@ Use the built-in logger for structured logging:
 
 ---
 
-```markdown
 [← Back to Table of Contents](README.md)

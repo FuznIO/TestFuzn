@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path="../.gitignore" />
+    <File Path="../AGENTS.md" />
     <File Path="../CLAUDE.md" />
     <File Path="Directory.Build.props" />
     <File Path="../.github/workflows/publish-package.yml" />
@@ -41,7 +42,4 @@
   <Project Path="TestFuzn.Tests.DefaultHttpClient/TestFuzn.Tests.DefaultHttpClient.csproj" />
   <Project Path="TestFuzn.Tests.Runner/TestFuzn.Tests.Runner.csproj" />
   <Project Path="TestWebApp/TestWebApp.csproj" />
-  <Project Path="docker-compose.dcproj">
-    <Build />
-  </Project>
 </Solution>

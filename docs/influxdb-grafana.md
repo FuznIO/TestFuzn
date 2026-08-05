@@ -83,5 +83,4 @@ You can also create custom Grafana dashboards to visualize additional metrics as
 
 ---
 
-```markdown
 [← Back to Table of Contents](README.md)

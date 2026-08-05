@@ -1,4 +1,4 @@
-﻿# Test Reports
+# Test Reports
 
 TestFuzn automatically generates HTML and XML reports for both standard tests and load tests.
 

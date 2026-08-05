@@ -408,3 +408,6 @@ FodyWeavers.xsd
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# MSYS2/Cygwin (Git Bash) crash dumps
+*.stackdump

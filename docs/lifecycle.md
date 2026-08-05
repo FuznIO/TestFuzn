@@ -111,5 +111,4 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
 
 ---
 
-```markdown
 [← Back to Table of Contents](README.md)

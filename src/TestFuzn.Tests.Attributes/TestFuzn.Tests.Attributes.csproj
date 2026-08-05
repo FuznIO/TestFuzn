@@ -1,4 +1,4 @@
-<Project Sdk="MSTest.Sdk/4.0.0">
+<Project Sdk="MSTest.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -38,7 +38,6 @@
     <ProjectReference Include="..\TestFuzn.Plugins.WebSocket\TestFuzn.Plugins.WebSocket.csproj" />
     <ProjectReference Include="..\TestFuzn.Sinks.InfluxDB\TestFuzn.Sinks.InfluxDB.csproj" />
     <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
-    <ProjectReference Include="..\TestWebApp\TestWebApp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -57,26 +56,6 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="18.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.Testing.Extensions.CodeCoverage" Version="18.1.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.Testing.Extensions.TrxReport" Version="2.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="MSTest.TestAdapter" Version="4.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="MSTest.TestFramework" Version="4.0.0" />
   </ItemGroup>
 
 </Project>

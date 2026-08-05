@@ -141,5 +141,4 @@ Example JSON (`TestData/products.json`):
 
 ---
 
-```markdown
 [← Back to Table of Contents](README.md)

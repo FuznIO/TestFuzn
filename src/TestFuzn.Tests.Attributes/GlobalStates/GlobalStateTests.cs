@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace Fuzn.TestFuzn.Tests.Attributes.GlobalStates;
+﻿namespace Fuzn.TestFuzn.Tests.Attributes.GlobalStates;
 
 [TestClass]
 public class GlobalStateTests
