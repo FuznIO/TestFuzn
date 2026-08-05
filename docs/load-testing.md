@@ -1,4 +1,4 @@
-﻿# Load Testing
+# Load Testing
 
 Load tests are defined by adding `Load().Simulations()` to a scenario. This changes the test from a standard test to a load test.
 

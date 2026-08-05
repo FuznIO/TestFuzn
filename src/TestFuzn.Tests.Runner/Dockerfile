@@ -10,6 +10,8 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY ["Directory.Build.props", "."]
+COPY ["Directory.Packages.props", "."]
 COPY ["TestFuzn.Tests.Runner/TestFuzn.Tests.Runner.csproj", "TestFuzn.Tests.Runner/"]
 RUN dotnet restore "./TestFuzn.Tests.Runner/TestFuzn.Tests.Runner.csproj"
 COPY . .

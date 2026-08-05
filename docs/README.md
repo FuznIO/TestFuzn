@@ -1,4 +1,4 @@
-﻿# TestFuzn Documentation
+# TestFuzn Documentation
 
 **TestFuzn** (pronounced "testfusion") is a unified testing framework that brings together **unit tests**, **end-to-end tests**, and **load tests** in a single, streamlined experience.
 

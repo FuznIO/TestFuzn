@@ -78,5 +78,4 @@ public async Task Custom_context_example()
 
 ---
 
-```markdown
 [← Back to Table of Contents](README.md)

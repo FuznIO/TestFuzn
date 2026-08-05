@@ -26,7 +26,7 @@ TestFuzn is **100% free** — for personal, organizational, and commercial use.
 ## Requirements
 
 - **.NET 10** or later
-- **MSTest v4** (included via `MSTest.Sdk/4.0.0`)
+- **MSTest v4** (included via `MSTest.Sdk`)
 
 ---
 
@@ -62,9 +62,10 @@ dotnet add package Fuzn.TestFuzn.Sinks.InfluxDB
 Your test project should use `MSTest.Sdk`:
 
 ```xml
-<Project Sdk="MSTest.Sdk/4.0.0">
+<Project Sdk="MSTest.Sdk/4.3.3">
 
   <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
@@ -73,13 +74,23 @@ Your test project should use `MSTest.Sdk`:
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
-    <ProjectReference Include="..\TestFuzn.Adapters.MSTest\TestFuzn.Adapters.MSTest.csproj" />
-    <ProjectReference Include="..\TestFuzn.Plugins.Http\TestFuzn.Plugins.Http.csproj" />
+    <PackageReference Include="Fuzn.TestFuzn" Version="0.7.3" />
+    <PackageReference Include="Fuzn.TestFuzn.Adapters.MSTest" Version="0.7.3" />
+    <PackageReference Include="Fuzn.TestFuzn.Plugins.Http" Version="0.7.3" />
   </ItemGroup>
 
 </Project>
 ```
+
+### Microsoft.Testing.Platform
+
+`EnableMSTestRunner` runs your tests on [Microsoft.Testing.Platform](https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro), Microsoft's lightweight, portable alternative to VSTest and the runner MSTest v4 is built around. It's embedded directly in your test project — no `vstest.console`, no external runner. Your test project simply compiles to an executable you can run anywhere, including CI.
+
+### IDE setup
+
+**JetBrains Rider** does not discover Testing Platform tests until you turn that support on, so your tests simply never appear in the Unit Tests window. Enable it once in **Settings | Build, Execution, Deployment | Unit Testing | Testing Platform** (`Ctrl+Alt+S`), using the option at the top of that page, then reload the solution.
+
+**Visual Studio**, **VS Code** (with the C# Dev Kit extension) and `dotnet test` need no extra setup.
 
 ---
 

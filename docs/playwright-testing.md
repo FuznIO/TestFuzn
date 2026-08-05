@@ -1,4 +1,4 @@
-﻿# Web UI Testing with Playwright
+# Web UI Testing with Playwright
 
 TestFuzn integrates with Microsoft Playwright for browser automation.
 

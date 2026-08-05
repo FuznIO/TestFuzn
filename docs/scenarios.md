@@ -6,7 +6,7 @@ TestFuzn supports two types of tests:
 
 ### Standard Test
 
-A test that executes a single scenario **once**, or **multiple times** sequentially with different input data, without parallel iterations�ideal for functional, integration, and end-to-end testing.
+A test that executes a single scenario **once**, or **multiple times** sequentially with different input data, without parallel iterations—ideal for functional, integration, and end-to-end testing.
 
 ```csharp
 [Test]

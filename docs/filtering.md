@@ -43,5 +43,4 @@ public async Task Test_that_should_not_run_in_production() { ... }
 
 ---
 
-```markdown
 [← Back to Table of Contents](README.md)

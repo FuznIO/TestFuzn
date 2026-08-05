@@ -1,4 +1,4 @@
-﻿# HTTP Testing
+# HTTP Testing
 
 TestFuzn provides HTTP testing capabilities through the [Fuzn.FluentHttp](https://github.com/FuznIO/FluentHttp) NuGet package, which offers a clean, chainable API for building and sending HTTP requests.
 

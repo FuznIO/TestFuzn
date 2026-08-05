@@ -13,6 +13,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Directory.Build.props", "."]
+COPY ["Directory.Packages.props", "."]
 COPY ["SampleApp.WebApp/SampleApp.WebApp.csproj", "SampleApp.WebApp/"]
 RUN dotnet restore "./SampleApp.WebApp/SampleApp.WebApp.csproj"
 COPY . .
