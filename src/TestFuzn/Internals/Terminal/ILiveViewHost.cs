@@ -12,7 +12,11 @@ internal interface ILiveViewHost
     /// <summary>Resolves the terminal's capabilities; asked once, when live output is about to start.</summary>
     TerminalCapabilities DetectCapabilities();
 
-    /// <summary>The writer the dashboard renders to; only asked for when the capabilities support the live view.</summary>
+    /// <summary>
+    /// The writer the live view writes to: the dashboard's frames when the capabilities support
+    /// the live view, the plain stats lines otherwise — on which path its dimensions are never
+    /// read, since a redirected output has none.
+    /// </summary>
     ITerminalWriter CreateTerminalWriter();
 
     /// <summary>

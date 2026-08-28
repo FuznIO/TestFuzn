@@ -8,7 +8,9 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// and every read is counted so a test can pin how often a caller reads them;
 /// <see cref="FrameRenderer"/> itself never reads them — it renders at the size passed to
 /// <see cref="FrameRenderer.Render"/>. A dimension read can be made to throw, the way
-/// <c>Console.WindowWidth</c> does on a closed or console-less output.
+/// <c>Console.WindowWidth</c> does on a closed or console-less output, and so can a write, the
+/// way writing to a closed pipe does — a failed write records nothing, as nothing reached the
+/// terminal.
 /// </summary>
 internal sealed class FakeTerminalWriter : ITerminalWriter
 {
@@ -47,6 +49,12 @@ internal sealed class FakeTerminalWriter : ITerminalWriter
     /// <summary>When set, reading either dimension throws it (after counting the read).</summary>
     public Exception? WindowSizeReadFailure { get; set; }
 
+    /// <summary>When set, every write throws it before recording anything (after counting the attempt in <see cref="FailedWriteCount"/>).</summary>
+    public Exception? WriteFailure { get; set; }
+
+    /// <summary>How many writes have thrown <see cref="WriteFailure"/>.</summary>
+    public int FailedWriteCount { get; private set; }
+
     /// <summary>Called with every written text, so a test can merge terminal writes into a wider event log.</summary>
     public Action<string>? WriteObserver { get; set; }
 
@@ -55,6 +63,12 @@ internal sealed class FakeTerminalWriter : ITerminalWriter
 
     public void Write(string text)
     {
+        if (WriteFailure != null)
+        {
+            FailedWriteCount++;
+            throw WriteFailure;
+        }
+
         _writes.Add(text);
 
         if (WriteObserver != null)

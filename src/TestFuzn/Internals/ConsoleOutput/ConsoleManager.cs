@@ -9,42 +9,57 @@ namespace Fuzn.TestFuzn.Internals.Logger;
 
 /// <summary>
 /// Drives the standalone runner's real-time console output for load tests and writes the final
-/// summary. On a terminal that supports the live view, a background loop samples every
-/// scenario's load collector at 1 Hz into its <see cref="ScenarioLiveMetrics"/> model and
-/// renders the <see cref="LiveDashboard"/> at ~4 fps, from before init until after cleanup.
+/// summary. A background loop samples every scenario's load collector at 1 Hz into its
+/// <see cref="ScenarioLiveMetrics"/> model, from before init until after cleanup, and shows the
+/// samples in one of two ways, chosen once from the terminal's capabilities: on a terminal that
+/// supports the live view, the <see cref="LiveDashboard"/> rendered at ~4 fps on the alternate
+/// screen; on any terminal without live view support — a redirected or non-ANSI output (docker
+/// logs, CI, a dumb terminal), or an ANSI output whose input is redirected (stdin from
+/// /dev/null, as several CI runners do) — the plain stats lines of a
+/// <see cref="LiveStatsWriter"/> — one line per scenario per sample plus the phase transitions,
+/// with no escape sequence at all, the terminal size never read and no key polled, since a
+/// redirected output has no size and a redirected input no keys.
 /// Stopping — on completion, cancellation or an exception, via
 /// <see cref="StopRealtimeConsoleOutput"/> from the test runner's finally — makes one last
 /// force-refreshed sample (the tick that lands the "completed" phase and freezes the run
-/// duration; it is not painted, since leaving the alternate screen would discard the frame)
-/// and restores the terminal. <see cref="Complete"/> then writes the summary to the normal
-/// screen buffer, after the alternate screen has been left, so it lands in scrollback.
-/// While the live view runs, the loop also polls the keyboard on every tick: the quit key
+/// duration; not painted on the dashboard, since leaving the alternate screen would discard the
+/// frame, but written by the stats writer as its final line with the run's outcome) and restores
+/// the terminal when the dashboard was shown. <see cref="Complete"/> then writes the summary to
+/// the normal screen buffer, after the alternate screen has been left, so it lands in scrollback.
+/// While the dashboard runs, the loop also polls the keyboard on every tick: the quit key
 /// (<see cref="LiveDashboardLayout.QuitKey"/>, either case) requests a graceful stop through
 /// the same cancellation path Ctrl+C takes (<see cref="TestExecutionState.RequestStop"/>), so
 /// the run winds down exactly as after Ctrl+C while the loop keeps rendering through cleanup
 /// (the request runs the run's cancellation callbacks off the loop thread, and the stop
 /// observes its outcome); every other key is drained and ignored, and keys are read nowhere
-/// else, so input is never touched without a live view.
-/// Frameworks without real-time output (MSTest), standard tests and redirected or non-ANSI
-/// output get no live view, only the summary. A failure inside the live view never hides the
-/// results: the terminal is restored at once and the run continues without a live view, the
-/// summary is still written, and the failure is then always printed to the normal buffer —
-/// and rethrown from Complete only when the run has no failure of its own, so a step or assert
-/// failure stays the reported outcome and the runner's own follow-ups still happen. The
-/// terminal and the clock come from an <see cref="ILiveViewHost"/>: the real console and wall
-/// clock in production, fakes in tests.
+/// else, so input is never touched without the dashboard.
+/// Frameworks without real-time output (MSTest) and standard tests get no live view, only the
+/// summary. A failure inside the live view never hides the results: the terminal is restored
+/// at once and the run continues without a live view, the summary is still written, and the
+/// failure is then always printed to the normal buffer — and rethrown from Complete only when
+/// the run has no failure of its own, so a step or assert failure stays the reported outcome
+/// and the runner's own follow-ups still happen. The terminal and the clock come from an
+/// <see cref="ILiveViewHost"/>: the real console and wall clock in production, fakes in tests.
 /// </summary>
 internal class ConsoleManager
 {
     /// <summary>The data cadence: one force-refreshed collector snapshot per scenario per second.</summary>
     private static readonly TimeSpan SampleInterval = TimeSpan.FromSeconds(1);
 
+    /// <summary>
+    /// The loop cadence in both output modes: the dashboard's render interval. The stats writer
+    /// has nothing to do on a tick between samples, and one cadence keeps the sampling — the
+    /// due-time check below — identical in both modes.
+    /// </summary>
+    private static readonly TimeSpan TickInterval = LiveDashboard.RenderInterval;
+
     private readonly TestExecutionState _testExecutionState;
     private readonly ConsoleWriter _consoleWriter;
     private readonly ILiveViewHost _liveViewHost;
     private readonly CancellationTokenSource _ctSource = new CancellationTokenSource();
-    private Task? _realtimeLogging;
+    private Task? _liveViewLoop;
     private LiveDashboard? _liveDashboard;
+    private LiveStatsWriter? _liveStatsWriter;
     private ScenarioLiveMetrics?[] _liveMetrics = Array.Empty<ScenarioLiveMetrics?>();
     private LiveMetricsSnapshot[] _liveSnapshots = Array.Empty<LiveMetricsSnapshot>();
     private DateTime _nextSampleTime;
@@ -78,8 +93,8 @@ internal class ConsoleManager
 
     /// <summary>
     /// The scenarios' current live views, in scenario order — exactly what the dashboard
-    /// renders. Empty until live output starts; each entry is replaced by a fresh immutable
-    /// snapshot on every sample.
+    /// renders and the stats writer writes. Empty until live output starts; each entry is replaced
+    /// by a fresh immutable snapshot on every sample.
     /// </summary>
     internal IReadOnlyList<LiveMetricsSnapshot> LiveSnapshots => _liveSnapshots;
 
@@ -90,6 +105,13 @@ internal class ConsoleManager
     /// </summary>
     internal Task? StopRequest => _stopRequest;
 
+    /// <summary>
+    /// The live view loop's task, once one has started (null before): completes when the loop
+    /// has ended, on Stop's cancellation or on a failure of its own, which it records rather
+    /// than faults with — so a test can wait for a loop that ended by itself.
+    /// </summary>
+    internal Task? LiveViewLoop => _liveViewLoop;
+
     public void StartRealtimeConsoleOutputIfEnabled()
     {
         if (!_testExecutionState.TestFramework.SupportsRealTimeConsoleOutput
@@ -97,17 +119,26 @@ internal class ConsoleManager
             return;
 
         // Gate before anything reads the console dimensions: a redirected output fabricates a
-        // size and a console-less Windows process throws on reading it. Redirected or non-ANSI
-        // output gets no live view for now — only the summary.
+        // size and a console-less Windows process throws on reading it.
         var capabilities = _liveViewHost.DetectCapabilities();
-        if (!capabilities.SupportsLiveView)
-            return;
 
         var scenarioCount = _testExecutionState.Scenarios.Count;
         _liveMetrics = new ScenarioLiveMetrics?[scenarioCount];
         _liveSnapshots = new LiveMetricsSnapshot[scenarioCount];
         for (var index = 0; index < scenarioCount; index++)
             _liveSnapshots[index] = CreateInitSnapshot(_testExecutionState.Scenarios[index].Name, TimeSpan.Zero);
+
+        if (!capabilities.SupportsLiveView)
+        {
+            // No live view support — a redirected or non-ANSI output, or a redirected input:
+            // the same samples as plain stats lines. The writer is only ever written to — its
+            // size is never read — and no reader is created: reading keys from a redirected
+            // input throws, and nothing polls one here.
+            var liveStatsWriter = new LiveStatsWriter(_liveViewHost.CreateTerminalWriter(), scenarioCount);
+            _liveStatsWriter = liveStatsWriter;
+            _liveViewLoop = Task.Run(() => RunLiveView(null, null, liveStatsWriter, _ctSource.Token));
+            return;
+        }
 
         // Keys are polled behind this same gate and nowhere else: the live view requires an
         // interactive terminal, so input is a TTY here, whereas reading keys from a redirected
@@ -118,41 +149,52 @@ internal class ConsoleManager
 
         // The dashboard reads the snapshot array on every render; the sampling loop replaces
         // entries with fresh immutable snapshots, so a frame never sees a torn view.
-        _liveDashboard = new LiveDashboard(_liveViewHost.CreateTerminalWriter(), capabilities, () => _liveSnapshots);
-        _realtimeLogging = Task.Run(() => RunLiveDashboard(_liveDashboard, terminalReader, _ctSource.Token));
+        var liveDashboard = new LiveDashboard(_liveViewHost.CreateTerminalWriter(), capabilities, () => _liveSnapshots);
+        _liveDashboard = liveDashboard;
+        _liveViewLoop = Task.Run(() => RunLiveView(liveDashboard, terminalReader, null, _ctSource.Token));
     }
 
     /// <summary>
-    /// The live view loop: on every ~4 fps tick handles the keys pressed since the last one,
-    /// samples when the 1 Hz cadence is due and renders, until cancelled. A failure restores
-    /// the terminal right away — the run keeps going without a live view instead of leaving a
-    /// frozen alternate screen — and is kept for <see cref="Complete"/> to report after the
-    /// summary; the task itself never faults.
+    /// The live view loop, one for both output modes: on every tick handles the keys pressed
+    /// since the last one and renders (the dashboard mode), and samples when the 1 Hz cadence
+    /// is due, writing the sample's stats lines (the stats writer mode), until cancelled. The
+    /// stats writer mode never touches keys or the terminal size and does nothing on a tick
+    /// between samples. A failure ends the loop: the dashboard's terminal is restored right
+    /// away — the run keeps going without a live view instead of leaving a frozen alternate
+    /// screen — and the failure is kept for <see cref="Complete"/> to report after the summary;
+    /// the task itself never faults.
     /// </summary>
-    private async Task RunLiveDashboard(LiveDashboard liveDashboard, ITerminalReader terminalReader, CancellationToken cancellationToken)
+    private async Task RunLiveView(LiveDashboard? liveDashboard, ITerminalReader? terminalReader, LiveStatsWriter? liveStatsWriter, CancellationToken cancellationToken)
     {
         try
         {
-            liveDashboard.Start();
+            if (liveDashboard != null)
+                liveDashboard.Start();
+
             _nextSampleTime = _liveViewHost.UtcNow;
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                HandleKeys(terminalReader);
+                if (terminalReader != null)
+                    HandleKeys(terminalReader);
 
                 var utcNow = _liveViewHost.UtcNow;
                 if (utcNow >= _nextSampleTime)
                 {
                     SampleLiveMetrics(utcNow);
                     ScheduleNextSample(utcNow);
+
+                    if (liveStatsWriter != null)
+                        liveStatsWriter.WriteSample(_liveSnapshots);
                 }
 
-                liveDashboard.Render();
+                if (liveDashboard != null)
+                    liveDashboard.Render();
 
                 // Returns normally on cancellation (DelayHelper.Delay swallows the
                 // TaskCanceledException) — load-bearing: a normal stop must not take the
                 // exception path below, or the final Record after cleanup would be skipped.
-                await _liveViewHost.Delay(LiveDashboard.RenderInterval, cancellationToken);
+                await _liveViewHost.Delay(TickInterval, cancellationToken);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -162,7 +204,8 @@ internal class ConsoleManager
         catch (Exception exception)
         {
             _liveViewException = exception;
-            RestoreTerminal(liveDashboard);
+            if (liveDashboard != null)
+                RestoreTerminal(liveDashboard);
         }
     }
 
@@ -268,22 +311,23 @@ internal class ConsoleManager
     }
 
     /// <summary>
-    /// Stops the live view, if one is running, and restores the terminal: cancels the loop,
-    /// waits for it, makes the final force-refreshed sample and leaves the alternate screen.
-    /// Safe to call more than once and when no live view was started, and never throws — the
-    /// test runner calls it from its finally, where a console failure must not mask the run's
-    /// own outcome; a failure is kept for <see cref="Complete"/> to report after the summary.
+    /// Stops the live view, if one is running: cancels the loop, waits for it, makes the final
+    /// force-refreshed sample — the stats writer's final line — and, when the dashboard was shown,
+    /// leaves the alternate screen. Safe to call more than once and when no live view was
+    /// started, and never throws — the test runner calls it from its finally, where a console
+    /// failure must not mask the run's own outcome; a failure is kept for <see cref="Complete"/>
+    /// to report after the summary.
     /// </summary>
     public async Task StopRealtimeConsoleOutput()
     {
-        if (_liveDashboard == null || _realtimeLogging == null || _isLiveViewStopped)
+        if (_liveViewLoop == null || _isLiveViewStopped)
             return;
 
         _isLiveViewStopped = true;
         try
         {
             await _ctSource.CancelAsync();
-            await _realtimeLogging;
+            await _liveViewLoop;
 
             // The quit key's stop request, if one was made: by the time the runner stops the
             // live view its callbacks have run (the run reached cleanup on them), so awaiting
@@ -293,11 +337,18 @@ internal class ConsoleManager
                 await _stopRequest;
 
             // The final tick, after cleanup has completed: the one force-refreshed Record that
-            // lands the "completed" phase label and freezes the run duration. Not painted — the
-            // terminal is restored right after, and leaving the alternate screen would discard
-            // the frame anyway.
+            // lands the "completed" phase label and freezes the run duration. Not painted on
+            // the dashboard — the terminal is restored right after, and leaving the alternate
+            // screen would discard the frame anyway — but the stats writer writes it as its final
+            // line, with the run's outcome: stopped when the run was, by Ctrl+C, the quit key
+            // or an assert that stops the run.
             if (_liveViewException == null)
+            {
                 SampleLiveMetrics(_liveViewHost.UtcNow);
+
+                if (_liveStatsWriter != null)
+                    _liveStatsWriter.WriteFinal(_liveSnapshots, _testExecutionState.ExecutionStatus == ExecutionStatus.Stopped);
+            }
         }
         catch (Exception exception)
         {
@@ -305,7 +356,8 @@ internal class ConsoleManager
         }
         finally
         {
-            RestoreTerminal(_liveDashboard);
+            if (_liveDashboard != null)
+                RestoreTerminal(_liveDashboard);
         }
     }
 

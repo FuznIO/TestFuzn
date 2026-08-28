@@ -299,7 +299,7 @@ internal static class LiveDashboardLayout
         if (series.Count == 0)
             return NoDataMarkup;
 
-        return FormatRate(series[series.Count - 1]);
+        return RateMarkup(series[series.Count - 1]);
     }
 
     // The newest per-interval p95, guarded because the series holds raw doubles: a value no
@@ -393,9 +393,9 @@ internal static class LiveDashboardLayout
         var sample = samples[samples.Count - 1];
         var total = (double)sample.OkDelta + sample.FailedDelta;
         if (total == 0)
-            return (FormatRate(0), FormatRate(0));
+            return (RateMarkup(0), RateMarkup(0));
 
-        return (FormatRate(sample.RequestsPerSecond * sample.OkDelta / total), FormatRate(sample.RequestsPerSecond * sample.FailedDelta / total));
+        return (RateMarkup(sample.RequestsPerSecond * sample.OkDelta / total), RateMarkup(sample.RequestsPerSecond * sample.FailedDelta / total));
     }
 
     private static string?[] RequestsRow(string label, string style, LiveStats stats, string rateMarkup)
@@ -424,7 +424,7 @@ internal static class LiveDashboardLayout
             {
                 MarkupParser.Escape(step.Name),
                 FormatCount((long)step.RequestCountOk + step.RequestCountFailed),
-                FormatRate(step.RequestsPerSecond),
+                RateMarkup(step.RequestsPerSecond),
                 step.ResponseTimeMean.ToTestFuznResponseTime(),
                 step.ResponseTimePercentile95.ToTestFuznResponseTime(),
                 FormatCount(step.RequestCountFailed),
@@ -488,9 +488,14 @@ internal static class LiveDashboardLayout
             + new string('░', FailureBarCellCount - filledCount) + "[/] " + FormatPercent(fraction);
     }
 
-    // hh:mm:ss with unbounded hours, so runs past 24 hours keep counting instead of wrapping;
-    // a negative duration displays as zero instead of as negative fields.
-    private static string FormatClock(TimeSpan duration)
+    // The number formatters are shared with the plain stats lines (LiveStatsWriter), so a value
+    // reads the same on the dashboard and in a redirected log.
+
+    /// <summary>
+    /// A clock value as hh:mm:ss with unbounded hours, so runs past 24 hours keep counting
+    /// instead of wrapping; a negative duration displays as zero instead of as negative fields.
+    /// </summary>
+    internal static string FormatClock(TimeSpan duration)
     {
         if (duration < TimeSpan.Zero)
             duration = TimeSpan.Zero;
@@ -500,22 +505,34 @@ internal static class LiveDashboardLayout
             + ":" + duration.Seconds.ToString("00", CultureInfo.InvariantCulture);
     }
 
-    // One decimal below 10 so slow-step rates stay readable, whole numbers above; a rate that
-    // is not finite is no data, not zero.
-    private static string FormatRate(double rate)
+    /// <summary>
+    /// A finite rate with one decimal below 10, so slow-step rates stay readable, and as a whole
+    /// number from 10 up. The precondition is in the name: there is no guard here (a rate that is
+    /// not finite would format as NaN or Infinity), and whether a rate is data at all is the
+    /// caller's call — the dashboard (<see cref="RateMarkup"/>) and the stats writer both show a
+    /// rate that is not finite as no data, never as a number.
+    /// </summary>
+    internal static string FormatFiniteRate(double rate)
     {
-        if (!double.IsFinite(rate))
-            return NoDataMarkup;
-
         if (rate < 10)
             return rate.ToString("0.0", CultureInfo.InvariantCulture);
 
         return rate.ToString("0", CultureInfo.InvariantCulture);
     }
 
-    private static string FormatCount(long count)
+    /// <summary>A request count, plain and culture-invariant.</summary>
+    internal static string FormatCount(long count)
     {
         return count.ToString(CultureInfo.InvariantCulture);
+    }
+
+    // A rate as the dashboard shows it: no data when it is not finite, not a fake zero.
+    private static string RateMarkup(double rate)
+    {
+        if (!double.IsFinite(rate))
+            return NoDataMarkup;
+
+        return FormatFiniteRate(rate);
     }
 
     // One decimal below 10% and from 99.5% up, whole numbers between, with both ends kept

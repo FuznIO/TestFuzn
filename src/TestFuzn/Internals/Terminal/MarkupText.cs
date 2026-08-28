@@ -104,11 +104,17 @@ internal static class MarkupText
         return sanitized;
     }
 
-    // Replaces every C0 control (0x00-0x1F) and DEL (0x7F) with a single space, collapsing a
-    // \r\n pair to one, so sanitized text is break-free, exactly one column per character, and
-    // free of ESC bytes.
-    private static string SanitizeControlCharacters(string text)
+    /// <summary>
+    /// Replaces every C0 control (0x00-0x1F) and DEL (0x7F) with a single space, collapsing a
+    /// \r\n pair to one, so sanitized text is break-free, exactly one column per character, and
+    /// free of ESC bytes. The same sanitization the markup renders apply, for plain text that
+    /// bypasses markup — the redirected-output stats lines.
+    /// </summary>
+    internal static string SanitizeControlCharacters(string text)
     {
+        if (text == null)
+            throw new ArgumentNullException(nameof(text), "Text cannot be null.");
+
         if (!ContainsControlCharacter(text))
             return text;
 

@@ -24,7 +24,11 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// once on every exit path with the summary written afterwards, the live view's own failure
 /// being reported without displacing the run's failure, and the keys polled on every tick —
 /// the quit key landing in the Ctrl+C stop path while the loop renders on until Stop, other
-/// keys drained and ignored, and the reader never consulted without a live view.
+/// keys drained and ignored, and the reader never consulted without a live view. On a
+/// redirected or non-ANSI output the same loop writes plain stats lines instead: pinned are
+/// the exact lines per sample and per phase transition with hand-derived numbers from the real
+/// collector, the final line's outcome vocabulary, the summary following the final line, and
+/// that neither a key nor the terminal size is ever read there.
 /// </summary>
 [TestClass]
 public class ConsoleManagerTests : Test
@@ -308,7 +312,7 @@ public class ConsoleManagerTests : Test
     }
 
     [Test]
-    public async Task Verify_no_live_view_without_real_time_support_or_a_live_terminal()
+    public async Task Verify_no_live_view_without_real_time_support()
     {
         await Scenario()
             .Step("A framework without real-time output gets no live view and only the summary, and never reads a key", async context =>
@@ -331,26 +335,249 @@ public class ConsoleManagerTests : Test
                 Assert.AreEqual(1, harness.Host.Reader.PendingKeyCount);
                 Assert.AreEqual(ExecutionStatus.Running, harness.State.ExecutionStatus);
             })
-            .Step("A terminal without live view support (redirected output and input) gets no live view and only the summary, and never reads a key", async context =>
-            {
-                var harness = new Harness();
-                harness.Host.Capabilities = TerminalCapabilities.Resolve(isOutputRedirected: true, isInputRedirected: true, isVirtualTerminalEnabled: true, term: "xterm-256color", colorTerm: null, noColor: null);
-                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
-                harness.CompleteInitAndStartMeasurement(At(1));
-                harness.CompleteMeasurementAndCleanup(At(2), At(3));
-                harness.Host.Reader.Press('q');
+            .Run();
+    }
 
+    [Test]
+    public async Task Verify_redirected_output_gets_plain_stats_lines_without_escape_sequences()
+    {
+        await Scenario()
+            .Step("Redirected output: a phase line at every label change and one stats line per sample with the collector's numbers, nothing between samples, the final line then the summary — no escape byte, no key read, no size read", async context =>
+            {
+                var harness = new Harness(isOutputRedirected: true, ScenarioName);
+                harness.Host.Reader.Press('q');
                 harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+
+                // The first sample, before init has even started: the placeholder at zero.
+                CollectionAssert.AreEqual(new[]
+                {
+                    "[Checkout flow] phase: init",
+                    "[Checkout flow] elapsed 00:00:00  total 0  ok 0  failed 0  rps N/A  p95 N/A"
+                }, harness.PlainLines());
+
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+                await harness.Host.RunTick(At(1));
+                Assert.AreEqual("[Checkout flow] elapsed 00:00:01  total 0  ok 0  failed 0  rps N/A  p95 N/A", harness.PlainLines()[2]);
+                Assert.HasCount(3, harness.Writer.Writes);
+
+                // A quarter second later is not a sample tick: nothing is written between samples.
+                await harness.Host.RunTick(At(1.25));
+                Assert.HasCount(3, harness.Writer.Writes);
+
+                // Init completes with a 10 s fixed load: the label changes and the baseline
+                // sample has no closed interval yet, so the rate is not data; p95 is the
+                // cumulative Ok p95 of the three 10 ms requests.
+                harness.CompleteInitAndStartMeasurement(At(1.5));
+                harness.RecordIterations(3);
+                await harness.Host.RunTick(At(2));
+                harness.RecordIterations(5);
+                await harness.Host.RunTick(At(3));
+                harness.CompleteMeasurementAndStartCleanup(At(10));
+                await harness.Host.RunTick(At(11));
+
+                CollectionAssert.AreEqual(new[]
+                {
+                    "[Checkout flow] phase: Fixed Load 5 rps",
+                    "[Checkout flow] elapsed 00:00:02 / 00:00:10  total 3  ok 3  failed 0  rps N/A  p95 10 ms",
+                    "[Checkout flow] elapsed 00:00:03 / 00:00:10  total 8  ok 8  failed 0  rps 5.0  p95 10 ms",
+                    "[Checkout flow] phase: cleanup",
+                    "[Checkout flow] elapsed 00:00:11 / 00:00:10  total 8  ok 8  failed 0  rps 0.0  p95 10 ms"
+                }, harness.PlainLines().Skip(3).ToList());
+
+                harness.CompleteCleanup(At(12));
+                harness.Host.UtcNow = At(13);
                 await harness.ConsoleManager.Complete();
 
-                Assert.IsEmpty(harness.Writer.Writes);
-                Assert.IsEmpty(harness.ConsoleManager.LiveSnapshots);
+                // The final Record lands "completed" and the frozen duration; it is written as
+                // the final line, not as a phase line, and the summary follows it.
+                var lines = harness.PlainLines();
+                Assert.HasCount(9, lines);
+                Assert.AreEqual("[Checkout flow] completed  elapsed 00:00:12  total 8  ok 8  failed 0  p95 10 ms", lines[8]);
+                Assert.AreEqual("completed", harness.ConsoleManager.LiveSnapshots[0].PhaseLabel);
+                harness.AssertSummaryFollowsLastTerminalWrite();
+                Assert.IsEmpty(harness.MarkupEvents());
+
                 Assert.AreEqual(1, harness.Host.DetectCapabilitiesCallCount);
-                Assert.AreEqual(1, harness.Events.Count(eventName => eventName == SummaryEvent));
                 Assert.AreEqual(0, harness.Host.CreateTerminalReaderCallCount);
                 Assert.AreEqual(0, harness.Host.Reader.TryReadKeyCallCount);
                 Assert.AreEqual(1, harness.Host.Reader.PendingKeyCount);
+                Assert.AreEqual(0, harness.Writer.WindowWidthReadCount);
+                Assert.AreEqual(0, harness.Writer.WindowHeightReadCount);
                 Assert.AreEqual(ExecutionStatus.Running, harness.State.ExecutionStatus);
+            })
+            .Step("An interactive terminal without ANSI support (TERM=dumb) gets the plain lines too: the gate is live view support, not interactivity", async context =>
+            {
+                var harness = new Harness();
+                harness.Host.Capabilities = TerminalCapabilities.Resolve(isOutputRedirected: false, isInputRedirected: false, isVirtualTerminalEnabled: true, term: "dumb", colorTerm: null, noColor: null);
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+
+                CollectionAssert.AreEqual(new[]
+                {
+                    "[Checkout flow] phase: init",
+                    "[Checkout flow] elapsed 00:00:00  total 0  ok 0  failed 0  rps N/A  p95 N/A"
+                }, harness.PlainLines());
+                Assert.AreEqual(0, harness.Host.CreateTerminalReaderCallCount);
+                Assert.AreEqual(0, harness.Writer.WindowWidthReadCount);
+                Assert.AreEqual(0, harness.Writer.WindowHeightReadCount);
+
+                await harness.ConsoleManager.StopRealtimeConsoleOutput();
+            })
+            .Step("A run stopped through the framework token keeps logging until Stop and ends with the stopped line, then the summary", async context =>
+            {
+                var harness = new Harness(isOutputRedirected: true, ScenarioName);
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+                harness.TestFramework.Cancel();
+                harness.AssertStoppedLikeCtrlC();
+
+                await harness.Host.RunTick(At(1));
+                Assert.AreEqual("[Checkout flow] elapsed 00:00:01  total 0  ok 0  failed 0  rps N/A  p95 N/A", harness.PlainLines()[2]);
+
+                harness.CompleteInitAndStartMeasurement(At(1.5));
+                harness.CompleteMeasurementAndCleanup(At(2), At(3));
+                harness.Host.UtcNow = At(4);
+                await harness.ConsoleManager.Complete();
+
+                var lines = harness.PlainLines();
+                Assert.HasCount(4, lines);
+                Assert.AreEqual("[Checkout flow] stopped  elapsed 00:00:03  total 0  ok 0  failed 0  p95 N/A", lines[3]);
+                harness.AssertSummaryFollowsLastTerminalWrite();
+                Assert.IsEmpty(harness.MarkupEvents());
+            })
+            .Step("A scenario failed by an assert logs the reason once when it appears and ends with the failed line carrying it — failed wins over the stop the assert caused", async context =>
+            {
+                var harness = new Harness(isOutputRedirected: true, ScenarioName);
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+                harness.CompleteInitAndStartMeasurement(At(1));
+                harness.RecordIterations(2);
+                await harness.Host.RunTick(At(2));
+
+                harness.FailScenario(harness.Collector, "Assert while running failed: p95 above 5 ms");
+                await harness.Host.RunTick(At(3));
+                await harness.Host.RunTick(At(4));
+
+                CollectionAssert.AreEqual(new[]
+                {
+                    "[Checkout flow] phase: Fixed Load 5 rps",
+                    "[Checkout flow] elapsed 00:00:02 / 00:00:10  total 2  ok 2  failed 0  rps N/A  p95 10 ms",
+                    "[Checkout flow] failed: Assert while running failed: p95 above 5 ms",
+                    "[Checkout flow] elapsed 00:00:03 / 00:00:10  total 2  ok 2  failed 0  rps 0.0  p95 10 ms",
+                    "[Checkout flow] elapsed 00:00:04 / 00:00:10  total 2  ok 2  failed 0  rps 0.0  p95 10 ms"
+                }, harness.PlainLines().Skip(2).ToList());
+
+                harness.CompleteMeasurementAndCleanup(At(5), At(6));
+                harness.Host.UtcNow = At(7);
+                await harness.ConsoleManager.Complete();
+
+                var lines = harness.PlainLines();
+                Assert.HasCount(8, lines);
+                Assert.AreEqual("[Checkout flow] failed  elapsed 00:00:06  total 2  ok 2  failed 0  p95 10 ms  reason: Assert while running failed: p95 above 5 ms", lines[7]);
+                Assert.AreEqual(ExecutionStatus.Stopped, harness.State.ExecutionStatus);
+                harness.AssertSummaryFollowsLastTerminalWrite();
+                Assert.IsEmpty(harness.MarkupEvents());
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_redirected_output_writes_one_line_per_scenario_per_sample_in_scenario_order()
+    {
+        await Scenario()
+            .Step("Two scenarios: every sample writes each scenario's lines in scenario order, transitions tracked per scenario, and the final lines follow the same order", async context =>
+            {
+                var harness = new Harness(isOutputRedirected: true, ScenarioName, "Search flow");
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+
+                CollectionAssert.AreEqual(new[]
+                {
+                    "[Checkout flow] phase: init",
+                    "[Checkout flow] elapsed 00:00:00  total 0  ok 0  failed 0  rps N/A  p95 N/A",
+                    "[Search flow] phase: init",
+                    "[Search flow] elapsed 00:00:00  total 0  ok 0  failed 0  rps N/A  p95 N/A"
+                }, harness.PlainLines());
+
+                foreach (var collector in harness.Collectors)
+                    collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+
+                harness.CompleteInitAndStartMeasurement(At(1));
+                harness.RecordIterations(harness.Collectors[0], 3);
+                harness.RecordIterations(harness.Collectors[1], 1);
+                await harness.Host.RunTick(At(2));
+                harness.RecordIterations(harness.Collectors[1], 2);
+                await harness.Host.RunTick(At(3));
+
+                CollectionAssert.AreEqual(new[]
+                {
+                    "[Checkout flow] phase: Fixed Load 5 rps",
+                    "[Checkout flow] elapsed 00:00:02 / 00:00:10  total 3  ok 3  failed 0  rps N/A  p95 10 ms",
+                    "[Search flow] phase: Fixed Load 5 rps",
+                    "[Search flow] elapsed 00:00:02 / 00:00:10  total 1  ok 1  failed 0  rps N/A  p95 10 ms",
+                    "[Checkout flow] elapsed 00:00:03 / 00:00:10  total 3  ok 3  failed 0  rps 0.0  p95 10 ms",
+                    "[Search flow] elapsed 00:00:03 / 00:00:10  total 3  ok 3  failed 0  rps 2.0  p95 10 ms"
+                }, harness.PlainLines().Skip(4).ToList());
+
+                harness.CompleteMeasurementAndCleanup(At(10), At(12));
+                harness.Host.UtcNow = At(13);
+                await harness.ConsoleManager.Complete();
+
+                var lines = harness.PlainLines();
+                Assert.HasCount(12, lines);
+                Assert.AreEqual("[Checkout flow] completed  elapsed 00:00:12  total 3  ok 3  failed 0  p95 10 ms", lines[10]);
+                Assert.AreEqual("[Search flow] completed  elapsed 00:00:12  total 3  ok 3  failed 0  p95 10 ms", lines[11]);
+                harness.AssertSummaryFollowsLastTerminalWrite();
+                Assert.AreEqual(0, harness.Host.CreateTerminalReaderCallCount);
+                Assert.AreEqual(0, harness.Writer.WindowWidthReadCount);
+                Assert.AreEqual(0, harness.Writer.WindowHeightReadCount);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_plain_lines_write_failure_ends_the_live_view_and_is_reported_after_the_summary()
+    {
+        await Scenario()
+            .Step("A failing write ends the loop on that sample, the run goes on without a final line, and Complete writes the summary, reports the failure and rethrows it since the run has no failure of its own", async context =>
+            {
+                var harness = new Harness(isOutputRedirected: true, ScenarioName);
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                Assert.HasCount(2, harness.Writer.Writes);
+
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+                harness.Writer.WriteFailure = new IOException("Broken pipe");
+                harness.Host.UtcNow = At(1);
+                harness.Host.Release();
+                await harness.WaitForLiveViewLoopToEnd();
+
+                // The sample was taken before its first write failed: the view moved on, the
+                // log did not, and nothing was retried.
+                Assert.AreEqual(1, harness.Writer.FailedWriteCount);
+                Assert.HasCount(2, harness.Writer.Writes);
+                Assert.AreEqual(TimeSpan.FromSeconds(1), harness.ConsoleManager.LiveSnapshots[0].Duration);
+                Assert.AreEqual(ExecutionStatus.Running, harness.State.ExecutionStatus);
+
+                harness.CompleteInitAndStartMeasurement(At(2));
+                harness.CompleteMeasurementAndCleanup(At(3), At(4));
+                harness.Host.UtcNow = At(5);
+                var thrown = await Assert.ThrowsExactlyAsync<IOException>(async () => await harness.ConsoleManager.Complete());
+                Assert.AreEqual("Broken pipe", thrown.Message);
+
+                // No final Record on a failed live view, so no final line was attempted either.
+                Assert.AreEqual(1, harness.Writer.FailedWriteCount);
+                Assert.HasCount(2, harness.Writer.Writes);
+                Assert.AreEqual(TimeSpan.FromSeconds(1), harness.ConsoleManager.LiveSnapshots[0].Duration);
+                Assert.AreEqual(1, harness.Events.Count(eventName => eventName == SummaryEvent));
+                var failureLine = Assert.ContainsSingle(harness.MarkupEvents());
+                Assert.AreEqual("[red]Live view failed: IOException: Broken pipe[/]", failureLine);
+                Assert.IsGreaterThan(harness.Events.IndexOf(SummaryEvent), harness.Events.IndexOf(MarkupEventPrefix + failureLine));
             })
             .Run();
     }
@@ -581,11 +808,12 @@ public class ConsoleManagerTests : Test
     }
 
     /// <summary>
-    /// One hermetic console manager over a real in-memory collector: the execution state (which
-    /// owns the scenario's <see cref="ScenarioLoadCollector"/>), the fake host and framework
+    /// One hermetic console manager over real in-memory collectors: the execution state (which
+    /// owns each scenario's <see cref="ScenarioLoadCollector"/>), the fake host and framework
     /// adapter, and the shared event log both write to — terminal writes prefixed
     /// <c>terminal:</c>, the adapter's summary as <c>summary</c> and its markup lines prefixed
-    /// <c>markup:</c> — so ordering across the two can be asserted.
+    /// <c>markup:</c> — so ordering across the two can be asserted. One scenario by default;
+    /// the phase helpers drive every scenario in lockstep, as the managers do.
     /// </summary>
     private sealed class Harness
     {
@@ -594,16 +822,32 @@ public class ConsoleManagerTests : Test
         public List<string> Events { get; } = new List<string>();
         public FakeLiveViewHost Host { get; }
         public FakeTestFrameworkAdapter TestFramework { get; }
-        public Scenario Scenario { get; }
+        public IReadOnlyList<Scenario> Scenarios { get; }
         public TestExecutionState State { get; }
-        public ScenarioLoadCollector Collector { get; }
+        public IReadOnlyList<ScenarioLoadCollector> Collectors { get; }
         public ConsoleManager ConsoleManager { get; }
+
+        /// <summary>The first scenario's collector.</summary>
+        public ScenarioLoadCollector Collector => Collectors[0];
 
         public FakeTerminalWriter Writer => Host.Writer;
 
         public Harness()
+            : this(isOutputRedirected: false, ScenarioName)
+        {
+        }
+
+        /// <summary>
+        /// <paramref name="isOutputRedirected"/> resolves the host's capabilities as a redirected
+        /// output and input do (docker logs, CI) — no live view support — instead of the
+        /// interactive default; one scenario per name, each with one step.
+        /// </summary>
+        public Harness(bool isOutputRedirected, params string[] scenarioNames)
         {
             Host = new FakeLiveViewHost();
+            if (isOutputRedirected)
+                Host.Capabilities = TerminalCapabilities.Resolve(isOutputRedirected: true, isInputRedirected: true, isVirtualTerminalEnabled: true, term: "xterm-256color", colorTerm: null, noColor: null);
+
             Host.Writer.WriteObserver = text =>
             {
                 lock (Events)
@@ -614,12 +858,19 @@ public class ConsoleManagerTests : Test
             };
             TestFramework = new FakeTestFrameworkAdapter(Events);
 
-            Scenario = new Scenario(ScenarioName);
-            Scenario.Id = "checkout-flow";
-            Scenario.Steps.Add(new Step { Name = StepName, Id = "checkout-step" });
-            // A simulations action is what makes a scenario a load test; the simulations
-            // themselves are added when init completes, as SetupSimulations does.
-            Scenario.SimulationsAction = (scenarioContext, simulations) => Task.CompletedTask;
+            var scenarios = new List<Scenario>();
+            foreach (var scenarioName in scenarioNames)
+            {
+                var scenario = new Scenario(scenarioName);
+                scenario.Id = scenarioName.ToLowerInvariant().Replace(' ', '-');
+                scenario.Steps.Add(new Step { Name = StepName, Id = "checkout-step" });
+                // A simulations action is what makes a scenario a load test; the simulations
+                // themselves are added when init completes, as SetupSimulations does.
+                scenario.SimulationsAction = (scenarioContext, simulations) => Task.CompletedTask;
+                scenarios.Add(scenario);
+            }
+
+            Scenarios = scenarios;
 
             // The summary's non-realtime branch links to the report directory, which the real
             // session init would have set.
@@ -628,28 +879,57 @@ public class ConsoleManagerTests : Test
             testSession.TestRunId = "console-manager-tests-run";
 
             State = new TestExecutionState(testSession);
-            State.Init(TestFramework, new FakeTest(), Scenario);
-            Collector = State.LoadCollectors[ScenarioName];
+            State.Init(TestFramework, new FakeTest(), scenarios.ToArray());
+
+            var collectors = new List<ScenarioLoadCollector>();
+            foreach (var scenario in scenarios)
+                collectors.Add(State.LoadCollectors[scenario.Name]);
+
+            Collectors = collectors;
             ConsoleManager = new ConsoleManager(State, new ConsoleWriter(), Host);
         }
 
-        /// <summary>Init completes with the plan in place (a 10 s fixed load) and measurement starts, as the init manager does.</summary>
+        /// <summary>Init completes with the plan in place (a 10 s fixed load) and measurement starts for every scenario, as the init manager does.</summary>
         public void CompleteInitAndStartMeasurement(DateTime at)
         {
-            Scenario.SimulationsInternal.Add(new FixedLoadConfiguration(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10)));
-            Collector.MarkPhaseAsCompleted(LoadTestPhase.Init, at);
-            Collector.MarkPhaseAsStarted(LoadTestPhase.Measurement, at);
+            for (var index = 0; index < Scenarios.Count; index++)
+            {
+                Scenarios[index].SimulationsInternal.Add(new FixedLoadConfiguration(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10)));
+                Collectors[index].MarkPhaseAsCompleted(LoadTestPhase.Init, at);
+                Collectors[index].MarkPhaseAsStarted(LoadTestPhase.Measurement, at);
+            }
         }
 
         public void CompleteMeasurementAndCleanup(DateTime measurementEnd, DateTime cleanupEnd)
         {
-            Collector.MarkPhaseAsCompleted(LoadTestPhase.Measurement, measurementEnd);
-            Collector.MarkPhaseAsStarted(LoadTestPhase.Cleanup, measurementEnd);
-            Collector.MarkPhaseAsCompleted(LoadTestPhase.Cleanup, cleanupEnd);
+            CompleteMeasurementAndStartCleanup(measurementEnd);
+            CompleteCleanup(cleanupEnd);
         }
 
-        /// <summary>Records passed measurement iterations whose single step passed, 10 ms each.</summary>
+        /// <summary>Measurement completes and cleanup starts for every scenario, as the consumer manager and the cleanup manager do.</summary>
+        public void CompleteMeasurementAndStartCleanup(DateTime at)
+        {
+            foreach (var collector in Collectors)
+            {
+                collector.MarkPhaseAsCompleted(LoadTestPhase.Measurement, at);
+                collector.MarkPhaseAsStarted(LoadTestPhase.Cleanup, at);
+            }
+        }
+
+        public void CompleteCleanup(DateTime at)
+        {
+            foreach (var collector in Collectors)
+                collector.MarkPhaseAsCompleted(LoadTestPhase.Cleanup, at);
+        }
+
+        /// <summary>Records passed measurement iterations on the first scenario whose single step passed, 10 ms each.</summary>
         public void RecordIterations(int count)
+        {
+            RecordIterations(Collector, count);
+        }
+
+        /// <summary>Records passed measurement iterations on the given scenario's collector whose single step passed, 10 ms each.</summary>
+        public void RecordIterations(ScenarioLoadCollector collector, int count)
         {
             for (var index = 0; index < count; index++)
             {
@@ -664,14 +944,61 @@ public class ConsoleManagerTests : Test
                 stepResult.Duration = TimeSpan.FromMilliseconds(10);
                 iterationResult.StepResults.Add(StepName, stepResult);
 
-                Collector.RecordMeasurement(TestStatus.Passed, iterationResult);
+                collector.RecordMeasurement(TestStatus.Passed, iterationResult);
             }
+        }
+
+        /// <summary>
+        /// Fails a scenario the way an assert-while-running failure does in the scenario message
+        /// handler: the execution stops with the assert exception as its reason and first
+        /// exception, and the collector records the exception and the Failed status.
+        /// </summary>
+        public void FailScenario(ScenarioLoadCollector collector, string reason)
+        {
+            var exception = new InvalidOperationException(reason);
+            State.ExecutionStatus = ExecutionStatus.Stopped;
+            State.ExecutionStoppedReason = exception;
+            State.FirstException = exception;
+            collector.SetAssertWhileRunningException(exception);
+            collector.SetStatus(TestStatus.Failed);
         }
 
         /// <summary>Waits until the restore sequence has been written — the render loop's own restore after a failure.</summary>
         public async Task WaitForRestore()
         {
             await _restored.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+
+        /// <summary>Waits until the live view loop has ended by itself — the plain-lines loop after a failure, which restores nothing. Throws when no live view was started.</summary>
+        public async Task WaitForLiveViewLoopToEnd()
+        {
+            var liveViewLoop = ConsoleManager.LiveViewLoop;
+            if (liveViewLoop == null)
+                throw new InvalidOperationException("No live view loop has started.");
+
+            await liveViewLoop.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+
+        /// <summary>
+        /// The lines written so far, in order, each write checked to be one plain line: no
+        /// escape byte anywhere, ending in exactly one line terminator and carrying no other
+        /// line break. Returned without the terminators.
+        /// </summary>
+        public List<string> PlainLines()
+        {
+            var lines = new List<string>();
+            foreach (var write in Writer.Writes)
+            {
+                Assert.DoesNotContain("\u001b", write);
+                Assert.EndsWith(Environment.NewLine, write);
+
+                var line = write.Substring(0, write.Length - Environment.NewLine.Length);
+                Assert.DoesNotContain("\n", line);
+                Assert.DoesNotContain("\r", line);
+                lines.Add(line);
+            }
+
+            return lines;
         }
 
         public List<string> MarkupEvents()
@@ -699,6 +1026,19 @@ public class ConsoleManagerTests : Test
 
             Assert.AreEqual(1, events.Count(eventName => eventName == SummaryEvent));
             Assert.IsGreaterThan(events.IndexOf(TerminalEventPrefix + RestoreSequence), events.IndexOf(SummaryEvent));
+        }
+
+        /// <summary>The summary was written exactly once, after the last terminal write — the plain lines' final line.</summary>
+        public void AssertSummaryFollowsLastTerminalWrite()
+        {
+            List<string> events;
+            lock (Events)
+                events = Events.ToList();
+
+            Assert.AreEqual(1, events.Count(eventName => eventName == SummaryEvent));
+            var lastTerminalWrite = events.FindLastIndex(eventName => eventName.StartsWith(TerminalEventPrefix, StringComparison.Ordinal));
+            Assert.IsGreaterThanOrEqualTo(0, lastTerminalWrite);
+            Assert.IsGreaterThan(lastTerminalWrite, events.IndexOf(SummaryEvent));
         }
 
         /// <summary>
