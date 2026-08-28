@@ -24,7 +24,7 @@ internal class StandaloneRunnerCore
     {
     }
 
-    /// <param name="liveViewHost">The host the live view demo runs over: the real console and clock in production, a fake in tests.</param>
+    /// <param name="liveViewHost">The host the test selection menu and the live view demo run over: the real console and clock in production, a fake in tests.</param>
     internal StandaloneRunnerCore(ILiveViewHost liveViewHost)
     {
         if (liveViewHost == null)
@@ -59,10 +59,18 @@ internal class StandaloneRunnerCore
 
         if (string.IsNullOrEmpty(testName))
         {
-            testName = new TestSelectionMenu().DisplayAndSelectTest(tests);
+            // No test named: the selection menu picks one. The menu runs over the same adapter
+            // the picked test then runs on — the adapter's Ctrl+C handler cancels the token the
+            // menu polls, and a second adapter would register a second handler. A quit, by
+            // Escape, an empty line or Ctrl+C, completes with nothing run: exit code 0.
+            return await RunWithAdapter(testFrameworkInstanceCreator, async adapter =>
+            {
+                var selectedTest = await new TestSelectionMenu(_liveViewHost).SelectTest(tests, adapter.CancellationToken);
+                if (selectedTest == null)
+                    return;
 
-            if (testName == null)
-                return 0;
+                await new StandaloneTestRunner().RunTest<TStartup>(args, adapter, selectedTest);
+            });
         }
 
         var testInfo = tests.SingleOrDefault(t => t.Name == testName);

@@ -55,6 +55,9 @@ internal sealed class FakeTerminalWriter : ITerminalWriter
     /// <summary>How many writes have thrown <see cref="WriteFailure"/>.</summary>
     public int FailedWriteCount { get; private set; }
 
+    /// <summary>Called with the failed write's ordinal after it is counted and before its failure is thrown, so a test can change what the next write throws.</summary>
+    public Action<int>? FailedWriteObserver { get; set; }
+
     /// <summary>Called with every written text, so a test can merge terminal writes into a wider event log.</summary>
     public Action<string>? WriteObserver { get; set; }
 
@@ -65,8 +68,12 @@ internal sealed class FakeTerminalWriter : ITerminalWriter
     {
         if (WriteFailure != null)
         {
+            var failure = WriteFailure;
             FailedWriteCount++;
-            throw WriteFailure;
+            if (FailedWriteObserver != null)
+                FailedWriteObserver(FailedWriteCount);
+
+            throw failure;
         }
 
         _writes.Add(text);
