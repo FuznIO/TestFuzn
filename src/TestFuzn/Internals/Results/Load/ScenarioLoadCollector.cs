@@ -23,10 +23,11 @@ internal class ScenarioLoadCollector
     private Dictionary<string, StepLoadCollector> _steps = new();
     private int _requestsPerSecond = 0;
     private int _requestCount = 0;
-    private StatsCollector _ok = new();
+    private StatsCollector _ok = new(trackIntervalLatency: true);
     private StatsCollector _failed = new();
     private int _warmupRequestCountOk = 0;
     private int _warmupRequestCountFailed = 0;
+    private TimeSpan _intervalResponseTimePercentile95;
     private ScenarioLoadResult _cachedCurrentResult;
     private DateTime _lastUpdated;
     private Exception _assertWhileWarmingUpException;
@@ -181,6 +182,14 @@ internal class ScenarioLoadCollector
                         return _cachedCurrentResult;
                 }
             }
+            else
+            {
+                // Only a force-refresh closes an interval on the interval histogram — the 1 Hz
+                // dashboard tick owns the interval cadence. Cache-miss rebuilds (e.g. the
+                // per-iteration AssertWhileRunning path) reuse the last closed interval's value
+                // so they cannot drain the histogram between dashboard ticks.
+                _intervalResponseTimePercentile95 = _ok.GetIntervalResponseTimePercentile95();
+            }
 
             var result = new ScenarioLoadResult();
             result.ScenarioName = _scenarioName;
@@ -205,6 +214,7 @@ internal class ScenarioLoadCollector
             result.RequestCount = _requestCount;
             result.Ok = _ok.GetCurrentResult();
             result.Failed = _failed.GetCurrentResult();
+            result.IntervalResponseTimePercentile95 = _intervalResponseTimePercentile95;
             result.Steps = new Dictionary<string, StepLoadResult>();
             foreach (var step in _steps)
             {

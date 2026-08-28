@@ -28,6 +28,15 @@ internal class ScenarioLoadResult
     public TestStatus Status { get; internal set; }
     public Stats Ok { get; internal set; }
     public Stats Failed { get; internal set; }
+
+    /// <summary>
+    /// The 95th-percentile response time of successful requests recorded since the previous
+    /// force-refreshed result — the live dashboard's per-interval p95, as opposed to the
+    /// cumulative <see cref="Stats.ResponseTimePercentile95"/> on <see cref="Ok"/>. Only a
+    /// force-refresh closes an interval; results built in between carry the most recently
+    /// closed interval's value. Zero when that interval had no successful requests.
+    /// </summary>
+    public TimeSpan IntervalResponseTimePercentile95 { get; internal set; }
     public int WarmupRequestCountOk { get; internal set; }
     public int WarmupRequestCountFailed { get; internal set; }
     public Dictionary<string, StepLoadResult> Steps { get; internal set; } = new();
