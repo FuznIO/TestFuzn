@@ -88,6 +88,10 @@ internal class TestRunner
         }
         finally
         {
+            // Every exit path — completion, cancellation, exceptions — restores the terminal:
+            // the live view must never leave the alternate screen behind. A no-op when Complete
+            // already stopped it or no live view was started.
+            await _consoleManager.StopRealtimeConsoleOutput();
             _testExecutionState.Dispose();
         }
     }

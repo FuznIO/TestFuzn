@@ -314,10 +314,28 @@ public class MarkupParserTests : Test
     }
 
     [Test]
+    public async Task Verify_escape_makes_bracketed_text_render_literally()
+    {
+        await Scenario()
+            .Step("Escaped brackets survive a round trip through the parser as literal text", context =>
+            {
+                Assert.AreEqual("a [[b]] c", MarkupParser.Escape("a [b] c"));
+                Assert.AreEqual("a [b] c", MarkupParser.StripMarkup("[red]" + MarkupParser.Escape("a [b] c") + "[/]"));
+                Assert.AreEqual("[red]x[/]", MarkupParser.StripMarkup(MarkupParser.Escape("[red]x[/]")));
+            })
+            .Step("Text without brackets is returned unchanged, and null is rejected", context =>
+            {
+                Assert.AreSame("plain text", MarkupParser.Escape("plain text"));
+                Assert.ThrowsExactly<ArgumentNullException>(() => MarkupParser.Escape(null!));
+            })
+            .Run();
+    }
+
+    [Test]
     public async Task Verify_strip_markup_matches_markup_helper_for_repo_constant_strings()
     {
-        // The CONSTANT markup strings the framework writes today (ConsoleWriter,
-        // LiveLoadTestDisplay, BaseStandaloneRunnerAdapter, StandaloneTestRunner,
+        // The CONSTANT markup strings the framework writes today (ConsoleWriter, the former
+        // Spectre LiveLoadTestDisplay, BaseStandaloneRunnerAdapter, StandaloneTestRunner,
         // TestSelectionMenu, StandaloneRunnerCore, HttpPlugin), with bracket-free representative
         // values for the interpolated parts. The MSTest adapter keeps stripping through
         // MarkupHelper, so both strip paths must agree on these. Interpolated templates whose

@@ -144,6 +144,22 @@ internal static class MarkupParser
         return text.ToString();
     }
 
+    /// <summary>
+    /// Escapes text for embedding in markup: doubles every [ and ] so user-supplied text
+    /// (names, messages) renders literally instead of being parsed as tags — the inverse of the
+    /// [[ and ]] unescaping <see cref="Parse"/> performs. Text without brackets is returned as is.
+    /// </summary>
+    public static string Escape(string text)
+    {
+        if (text == null)
+            throw new ArgumentNullException(nameof(text), "Text cannot be null.");
+
+        if (text.IndexOf('[') < 0 && text.IndexOf(']') < 0)
+            return text;
+
+        return text.Replace("[", "[[").Replace("]", "]]");
+    }
+
     private static void FlushSpan(List<StyledSpan> spans, StringBuilder text, TerminalStyle style)
     {
         if (text.Length == 0)

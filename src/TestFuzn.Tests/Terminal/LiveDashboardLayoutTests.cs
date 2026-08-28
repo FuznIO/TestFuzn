@@ -765,6 +765,46 @@ public class LiveDashboardLayoutTests : Test
             .Run();
     }
 
+    [Test]
+    public async Task Verify_spinner_glyph_animates_only_the_running_badge()
+    {
+        await Scenario()
+            .Step("A running scenario's badge draws the given spinner glyph in place of the dot", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { IndeterminateSnapshot() }, 78, 24, ColorMode.None, SparklineGlyphSet.Braille, "⠙");
+
+                AssertLine("Browse catalog  ⠙ Running", 25, lines[0]);
+            })
+            .Step("The logo still fits beside a spinning title", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.None, SparklineGlyphSet.Braille, "⠹");
+
+                AssertLine("Checkout flow  ⠹ Running" + new string(' ', 83) + "  ⚡ TestFuzn", 120, lines[0]);
+            })
+            .Step("Failed and passed badges keep their dot regardless of the glyph", context =>
+            {
+                var failed = LiveDashboardLayout.Render(new[] { FailedSnapshot() }, 78, 24, ColorMode.None, SparklineGlyphSet.Braille, "⠙");
+                AssertLine("Checkout flow  ● Failed", 23, failed[0]);
+
+                var passed = new LiveMetricsSnapshot { ScenarioName = "Checkout flow", PhaseLabel = "completed", IsCompleted = true };
+                var completed = LiveDashboardLayout.Render(new[] { passed }, 78, 24, ColorMode.None, SparklineGlyphSet.Braille, "⠙");
+                AssertLine("Checkout flow  ● Passed", 23, completed[0]);
+            })
+            .Step("No glyph keeps the dot on the running badge", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { IndeterminateSnapshot() }, 78, 24, ColorMode.None, SparklineGlyphSet.Braille, null);
+
+                AssertLine("Browse catalog  ● Running", 25, lines[0]);
+            })
+            .Step("A glyph carrying markup brackets renders literally", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { IndeterminateSnapshot() }, 78, 24, ColorMode.None, SparklineGlyphSet.Braille, "[");
+
+                AssertLine("Browse catalog  [ Running", 25, lines[0]);
+            })
+            .Run();
+    }
+
     private static void AssertLine(string expectedText, int expectedWidth, RenderedLine actualLine)
     {
         Assert.AreEqual(expectedText, actualLine.Text);

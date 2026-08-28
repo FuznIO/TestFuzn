@@ -123,9 +123,12 @@ internal static class LiveDashboardLayout
     /// <paramref name="height"/> rows for a height of 1 or more, the content clipped or padded
     /// to the rows above the footer on the last row; the unclipped content plus the footer for
     /// a smaller height. A width below 1 renders nothing. The glyph set is passed through to the
-    /// sparkline panels so the caller can match it to the terminal's font support.
+    /// sparkline panels so the caller can match it to the terminal's font support. The spinner
+    /// glyph, when given, is drawn in place of the dot on a running scenario's status badge — a
+    /// single-column glyph the caller's render loop advances per frame; null keeps the dot, and
+    /// finished badges (passed, failed, skipped) always keep theirs.
     /// </summary>
-    public static IReadOnlyList<RenderedLine> Render(IReadOnlyList<LiveMetricsSnapshot> snapshots, int width, int height, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet = SparklineGlyphSet.Braille)
+    public static IReadOnlyList<RenderedLine> Render(IReadOnlyList<LiveMetricsSnapshot> snapshots, int width, int height, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet = SparklineGlyphSet.Braille, string? spinnerGlyph = null)
     {
         if (snapshots == null)
             throw new ArgumentNullException(nameof(snapshots), "Snapshots cannot be null.");
@@ -139,7 +142,7 @@ internal static class LiveDashboardLayout
             if (index > 0)
                 lines.Add(BlankLine);
 
-            AddScenarioSection(lines, snapshots[index], width, colorMode, sparklineGlyphSet, includeLogo: index == 0 && width >= MinimumWidthForLogo);
+            AddScenarioSection(lines, snapshots[index], width, colorMode, sparklineGlyphSet, spinnerGlyph, includeLogo: index == 0 && width >= MinimumWidthForLogo);
         }
 
         // The footer owns the last row: content is cut to the rows above it (a frame taller
@@ -158,13 +161,13 @@ internal static class LiveDashboardLayout
         return lines;
     }
 
-    private static void AddScenarioSection(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet, bool includeLogo)
+    private static void AddScenarioSection(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet, string? spinnerGlyph, bool includeLogo)
     {
-        lines.Add(RenderTitleLine(snapshot, width, colorMode, includeLogo));
+        lines.Add(RenderTitleLine(snapshot, width, colorMode, spinnerGlyph, includeLogo));
         lines.Add(RenderTimingLine(snapshot, width, colorMode));
 
         if (snapshot.StatusDetail != null)
-            lines.Add(MarkupText.RenderTruncated("[" + FailedStyle + "]✗ " + EscapeMarkup(snapshot.StatusDetail) + "[/]", width, colorMode));
+            lines.Add(MarkupText.RenderTruncated("[" + FailedStyle + "]✗ " + MarkupParser.Escape(snapshot.StatusDetail) + "[/]", width, colorMode));
 
         lines.Add(BlankLine);
 
@@ -183,9 +186,9 @@ internal static class LiveDashboardLayout
     // The scenario name and status badge, with the compact logo right-aligned on the same row
     // when requested — the title is fitted to the columns left of the reserved logo area, so
     // the two can never overlap.
-    private static RenderedLine RenderTitleLine(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode, bool includeLogo)
+    private static RenderedLine RenderTitleLine(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode, string? spinnerGlyph, bool includeLogo)
     {
-        var titleMarkup = "[bold]" + EscapeMarkup(snapshot.ScenarioName) + "[/]  " + StatusBadgeMarkup(snapshot);
+        var titleMarkup = "[bold]" + MarkupParser.Escape(snapshot.ScenarioName) + "[/]  " + StatusBadgeMarkup(snapshot, spinnerGlyph);
         if (!includeLogo)
             return MarkupText.RenderTruncated(titleMarkup, width, colorMode);
 
@@ -194,7 +197,9 @@ internal static class LiveDashboardLayout
         return new RenderedLine(title.Text + new string(' ', ColumnGap) + logo[0].Text, width);
     }
 
-    private static string StatusBadgeMarkup(LiveMetricsSnapshot snapshot)
+    // The status badge; only the running badge animates — its dot gives way to the caller's
+    // spinner glyph when one is given.
+    private static string StatusBadgeMarkup(LiveMetricsSnapshot snapshot, string? spinnerGlyph)
     {
         if (snapshot.Status == TestStatus.Failed)
             return "[" + FailedStyle + "]● Failed[/]";
@@ -205,7 +210,11 @@ internal static class LiveDashboardLayout
         if (snapshot.IsCompleted)
             return "[" + OkStyle + "]● Passed[/]";
 
-        return "[" + RunningStyle + "]● Running[/]";
+        var runningGlyph = "●";
+        if (spinnerGlyph != null)
+            runningGlyph = MarkupParser.Escape(spinnerGlyph);
+
+        return "[" + RunningStyle + "]" + runningGlyph + " Running[/]";
     }
 
     // Elapsed first (truncated only at degenerate widths), then in importance order the planned
@@ -239,7 +248,7 @@ internal static class LiveDashboardLayout
             fits = AppendIfFits(line, ref usedWidth, "  [" + SecondaryStyle + "]eta[/] " + FormatClock(snapshot.EstimatedTimeRemaining.Value), width, colorMode);
 
         if (fits && snapshot.PhaseLabel.Length > 0)
-            AppendIfFits(line, ref usedWidth, "  [" + SecondaryStyle + "]·[/] [" + PhaseStyle + "]" + EscapeMarkup(snapshot.PhaseLabel) + "[/]", width, colorMode);
+            AppendIfFits(line, ref usedWidth, "  [" + SecondaryStyle + "]·[/] [" + PhaseStyle + "]" + MarkupParser.Escape(snapshot.PhaseLabel) + "[/]", width, colorMode);
 
         return new RenderedLine(line.ToString(), usedWidth);
     }
@@ -410,7 +419,7 @@ internal static class LiveDashboardLayout
         {
             rows.Add(new[]
             {
-                EscapeMarkup(step.Name),
+                MarkupParser.Escape(step.Name),
                 FormatCount((long)step.RequestCountOk + step.RequestCountFailed),
                 FormatRate(step.RequestsPerSecond),
                 step.ResponseTimeMean.ToTestFuznResponseTime(),
@@ -441,7 +450,7 @@ internal static class LiveDashboardLayout
         foreach (var error in errors)
         {
             content.Add("[" + FailedStyle + "]" + FormatCount(error.Count).PadLeft(countWidth) + "×[/] [bold]"
-                + EscapeMarkup(error.StepName) + "[/] [" + SecondaryStyle + "]·[/] " + EscapeMarkup(error.Message));
+                + MarkupParser.Escape(error.StepName) + "[/] [" + SecondaryStyle + "]·[/] " + MarkupParser.Escape(error.Message));
         }
 
         lines.AddRange(PanelWidget.Render("[" + PanelHeaderStyle + "]Errors[/]", content, width, colorMode));
@@ -521,15 +530,5 @@ internal static class LiveDashboardLayout
             return percent.ToString("0.0", CultureInfo.InvariantCulture) + "%";
 
         return percent.ToString("0", CultureInfo.InvariantCulture) + "%";
-    }
-
-    // Doubles the markup brackets so user-supplied text (scenario and step names, error and
-    // assert messages) renders literally instead of being parsed as tags.
-    private static string EscapeMarkup(string text)
-    {
-        if (text.IndexOf('[') < 0 && text.IndexOf(']') < 0)
-            return text;
-
-        return text.Replace("[", "[[").Replace("]", "]]");
     }
 }
