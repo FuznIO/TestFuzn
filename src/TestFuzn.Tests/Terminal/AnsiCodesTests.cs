@@ -50,6 +50,12 @@ public class AnsiCodesTests : Test
             { "HideCursor", ("\u001b[?25l", AnsiCodes.HideCursor) }
         };
 
+        var expectedAutoWrapSequences = new Dictionary<string, (string Expected, string Actual)>
+        {
+            { "EnableAutoWrap", ("\u001b[?7h", AnsiCodes.EnableAutoWrap) },
+            { "DisableAutoWrap", ("\u001b[?7l", AnsiCodes.DisableAutoWrap) }
+        };
+
         var expectedEraseSequences = new Dictionary<string, (string Expected, string Actual)>
         {
             { "EraseLine", ("\u001b[2K", AnsiCodes.EraseLine) },
@@ -69,6 +75,10 @@ public class AnsiCodesTests : Test
             .Step("Cursor visibility uses DEC private mode 25", context =>
             {
                 AssertSequences(expectedCursorVisibilitySequences);
+            })
+            .Step("Auto-wrap uses DEC private mode 7 (DECAWM)", context =>
+            {
+                AssertSequences(expectedAutoWrapSequences);
             })
             .Step("Erase operations emit the expected sequences", context =>
             {

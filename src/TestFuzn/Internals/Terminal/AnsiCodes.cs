@@ -41,6 +41,10 @@ internal static class AnsiCodes
     public const string ShowCursor = Csi + "?25h";
     public const string HideCursor = Csi + "?25l";
 
+    // DEC private mode: auto-wrap (?7, DECAWM)
+    public const string EnableAutoWrap = Csi + "?7h";
+    public const string DisableAutoWrap = Csi + "?7l";
+
     /// <summary>
     /// Moves the cursor to the given 1-based row and column.
     /// </summary>
