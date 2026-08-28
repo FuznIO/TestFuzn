@@ -145,6 +145,39 @@ public class TableWidgetTests : Test
             .Run();
     }
 
+    [Test]
+    public async Task Verify_table_natural_width_is_the_width_at_which_nothing_shrinks()
+    {
+        await Scenario()
+            .Step("The natural width equals the rendered width when the table fits, measured on stripped markup", context =>
+            {
+                var columns = new[] { new TableColumn("Name"), new TableColumn("[dim]Count[/]") { Alignment = TextAlignment.Right } };
+                var rows = new[] { new[] { "alpha", "[green]10[/]" }, new[] { "b", "5" } };
+
+                var naturalWidth = TableWidget.MeasureNaturalWidth(columns, rows);
+
+                Assert.AreEqual(12, naturalWidth);
+                Assert.AreEqual(naturalWidth, TableWidget.Render(columns, rows, 40, ColorMode.None)[0].Width);
+                Assert.DoesNotContain("…", TableWidget.Render(columns, rows, naturalWidth, ColorMode.None)[1].Text);
+                Assert.Contains("…", TableWidget.Render(columns, rows, naturalWidth - 1, ColorMode.None)[1].Text);
+            })
+            .Step("A column's cap and the one-column minimum apply, and no columns measure zero", context =>
+            {
+                var columns = new[] { new TableColumn("Name") { MaxWidth = 3 }, new TableColumn(string.Empty) };
+                var rows = new[] { new[] { "alpha", string.Empty } };
+
+                Assert.AreEqual(6, TableWidget.MeasureNaturalWidth(columns, rows));
+                Assert.AreEqual(0, TableWidget.MeasureNaturalWidth(Array.Empty<TableColumn>(), rows));
+            })
+            .Step("Null columns, rows, or a null row are rejected", context =>
+            {
+                Assert.ThrowsExactly<ArgumentNullException>(() => TableWidget.MeasureNaturalWidth(null!, Array.Empty<IReadOnlyList<string>>()));
+                Assert.ThrowsExactly<ArgumentNullException>(() => TableWidget.MeasureNaturalWidth(new[] { new TableColumn("A") }, null!));
+                Assert.ThrowsExactly<ArgumentNullException>(() => TableWidget.MeasureNaturalWidth(new[] { new TableColumn("A") }, new IReadOnlyList<string>[] { null! }));
+            })
+            .Run();
+    }
+
     private static void AssertLines(IReadOnlyList<string> expectedLines, IReadOnlyList<RenderedLine> actualLines)
     {
         Assert.HasCount(expectedLines.Count, actualLines);

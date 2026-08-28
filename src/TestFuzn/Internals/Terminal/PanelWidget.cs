@@ -20,8 +20,12 @@ internal static class PanelWidget
 {
     private const int MinimumWidth = 4;
 
-    // The borders and their one-space padding around a content row: "│ " before it, " │" after.
-    private const int ContentOverhead = 4;
+    /// <summary>
+    /// Columns a panel adds around a content row — the borders and their one-space padding
+    /// ("│ " before it, " │" after it) — so layouts derive a panel's inner width as the panel
+    /// width minus this instead of hardcoding the border math.
+    /// </summary>
+    public const int ContentOverhead = 4;
 
     // The top border's fixed columns around a header: "╭─ " before it, " " after it, "╮" last.
     private const int HeaderOverhead = 5;

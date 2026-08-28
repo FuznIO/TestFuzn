@@ -17,8 +17,9 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// trailing columns drop entirely. Headers and cells truncate with an ellipsis and pad to
 /// their column width per the column's alignment, so every emitted line has the same display
 /// width, never more than the given width. Missing cells in a short row render empty and extra
-/// cells are ignored; a width below 1 or an empty column list renders nothing. Stateless and
-/// thread-safe.
+/// cells are ignored; a width below 1 or an empty column list renders nothing.
+/// <see cref="MeasureNaturalWidth"/> answers, without rendering, the width at which nothing
+/// shrinks, so a layout can choose between column sets by content. Stateless and thread-safe.
 /// </summary>
 internal static class TableWidget
 {
@@ -26,15 +27,7 @@ internal static class TableWidget
 
     public static IReadOnlyList<RenderedLine> Render(IReadOnlyList<TableColumn> columns, IReadOnlyList<IReadOnlyList<string?>> rows, int width, ColorMode colorMode)
     {
-        if (columns == null)
-            throw new ArgumentNullException(nameof(columns), "Columns cannot be null.");
-        if (rows == null)
-            throw new ArgumentNullException(nameof(rows), "Rows cannot be null.");
-        foreach (var row in rows)
-        {
-            if (row == null)
-                throw new ArgumentNullException(nameof(rows), "Rows cannot contain a null row.");
-        }
+        ValidateArguments(columns, rows);
 
         if (width < 1 || columns.Count == 0)
             return Array.Empty<RenderedLine>();
@@ -61,6 +54,39 @@ internal static class TableWidget
         return lines;
     }
 
+    /// <summary>
+    /// Measures the width the table takes with every column at its natural width — the widest
+    /// of its header and cells, capped by <see cref="TableColumn.MaxWidth"/> and at least one —
+    /// plus the separators: the narrowest width at which <see cref="Render"/> shrinks or drops
+    /// nothing. An empty column list measures zero.
+    /// </summary>
+    public static int MeasureNaturalWidth(IReadOnlyList<TableColumn> columns, IReadOnlyList<IReadOnlyList<string?>> rows)
+    {
+        ValidateArguments(columns, rows);
+
+        if (columns.Count == 0)
+            return 0;
+
+        var totalWidth = (columns.Count - 1) * ColumnSeparator.Length;
+        foreach (var naturalWidth in NaturalWidths(columns, rows))
+            totalWidth += naturalWidth;
+
+        return totalWidth;
+    }
+
+    private static void ValidateArguments(IReadOnlyList<TableColumn> columns, IReadOnlyList<IReadOnlyList<string?>> rows)
+    {
+        if (columns == null)
+            throw new ArgumentNullException(nameof(columns), "Columns cannot be null.");
+        if (rows == null)
+            throw new ArgumentNullException(nameof(rows), "Rows cannot be null.");
+        foreach (var row in rows)
+        {
+            if (row == null)
+                throw new ArgumentNullException(nameof(rows), "Rows cannot contain a null row.");
+        }
+    }
+
     private static RenderedLine RenderRow(IReadOnlyList<string?> cells, IReadOnlyList<TableColumn> columns, IReadOnlyList<int> columnWidths, ColorMode colorMode)
     {
         var row = new StringBuilder();
@@ -85,6 +111,21 @@ internal static class TableWidget
     // of the visible columns; trailing columns that cannot fit are not in the list.
     private static List<int> LayoutColumnWidths(IReadOnlyList<TableColumn> columns, IReadOnlyList<IReadOnlyList<string?>> rows, int width)
     {
+        var naturalWidths = NaturalWidths(columns, rows);
+
+        for (var visibleCount = columns.Count; visibleCount >= 1; visibleCount--)
+        {
+            var columnWidths = TryLayout(naturalWidths, visibleCount, width);
+            if (columnWidths != null)
+                return columnWidths;
+        }
+
+        // Unreachable for width >= 1: a single column always shrinks down to fit.
+        return new List<int>();
+    }
+
+    private static int[] NaturalWidths(IReadOnlyList<TableColumn> columns, IReadOnlyList<IReadOnlyList<string?>> rows)
+    {
         var naturalWidths = new int[columns.Count];
         for (var index = 0; index < columns.Count; index++)
         {
@@ -104,15 +145,7 @@ internal static class TableWidget
             naturalWidths[index] = natural;
         }
 
-        for (var visibleCount = columns.Count; visibleCount >= 1; visibleCount--)
-        {
-            var columnWidths = TryLayout(naturalWidths, visibleCount, width);
-            if (columnWidths != null)
-                return columnWidths;
-        }
-
-        // Unreachable for width >= 1: a single column always shrinks down to fit.
-        return new List<int>();
+        return naturalWidths;
     }
 
     private static List<int>? TryLayout(int[] naturalWidths, int visibleCount, int width)
