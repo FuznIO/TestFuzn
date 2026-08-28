@@ -27,6 +27,8 @@ public static class TestFuznHost
     /// Runs a test using the standalone runner with real-time console output.
     /// The test is selected via <c>--test-name=&lt;name&gt;</c>, the <c>TESTFUZN_TEST_NAME</c>
     /// environment variable, or an interactive selection menu when neither is provided.
+    /// <c>--demo</c> runs the live view demo instead: a scripted synthetic load run of about
+    /// twenty seconds that needs no test, Startup or target system.
     /// </summary>
     /// <typeparam name="TStartup">The <see cref="IStartup"/> implementation to configure the suite.</typeparam>
     /// <param name="testAssembly">The assembly containing the test classes to discover and run.</param>

@@ -38,8 +38,8 @@ public class ConsoleManagerTests : Test
     private const string EnterSequence = AnsiCodes.EnterAlternateScreen + AnsiCodes.HideCursor + AnsiCodes.DisableAutoWrap;
     private const string RestoreSequence = AnsiCodes.Reset + AnsiCodes.EnableAutoWrap + AnsiCodes.ShowCursor + AnsiCodes.ExitAlternateScreen;
     private const string TerminalEventPrefix = "terminal:";
-    private const string SummaryEvent = "summary";
-    private const string MarkupEventPrefix = "markup:";
+    private const string SummaryEvent = FakeTestFrameworkAdapter.SummaryEvent;
+    private const string MarkupEventPrefix = FakeTestFrameworkAdapter.MarkupEventPrefix;
 
     private static DateTime At(double seconds)
     {
@@ -1183,108 +1183,5 @@ public class ConsoleManagerTests : Test
             using (cancellationToken.Register(() => cancelled.TrySetResult()))
                 await Task.WhenAny(release, cancelled.Task);
         }
-    }
-
-    /// <summary>A standalone-style adapter (real-time output supported) that records its summary and markup writes into the shared event log.</summary>
-    private sealed class FakeTestFrameworkAdapter : ITestFrameworkAdapter
-    {
-        private readonly List<string> _events;
-        private readonly CancellationTokenSource _cancellation = new CancellationTokenSource();
-
-        public FakeTestFrameworkAdapter(List<string> events)
-        {
-            _events = events;
-        }
-
-        public bool SupportsRealTimeConsoleOutput { get; set; } = true;
-
-        public CancellationToken CancellationToken => _cancellation.Token;
-
-        public ConsoleColor ForegroundColor { get; set; }
-
-        public ConsoleColor BackgroundColor { get; set; }
-
-        public int WindowWidth => 80;
-
-        public string TestResultsDirectory => Path.GetTempPath();
-
-        /// <summary>What Ctrl+C does on the standalone adapter.</summary>
-        public void Cancel()
-        {
-            _cancellation.Cancel();
-        }
-
-        public Task ExecuteTestMethod(ITest test, MethodInfo methodInfo)
-        {
-            return Task.CompletedTask;
-        }
-
-        public CursorPosition GetCursorPosition()
-        {
-            return new CursorPosition(0, 0);
-        }
-
-        public void SetCursorPosition(int left, int top)
-        {
-        }
-
-        public void Write(string message, params object?[] args)
-        {
-            Record("write:" + message);
-        }
-
-        public void WriteTable(TableData table)
-        {
-            Record("table");
-        }
-
-        public void WriteMarkup(string text)
-        {
-            Record(MarkupEventPrefix + text);
-        }
-
-        public void WritePanel(string[] messages, string header)
-        {
-            Record("panel:" + header);
-        }
-
-        public void WriteAdvancedTable(AdvancedTable table)
-        {
-            Record("advanced-table");
-        }
-
-        public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults)
-        {
-            Record(SummaryEvent);
-        }
-
-        public void SetCurrentTestAsSkipped()
-        {
-        }
-
-        public void ThrowTestFuznIsNotInitializedException()
-        {
-            throw new InvalidOperationException("TestFuzn is not initialized.");
-        }
-
-        private void Record(string eventName)
-        {
-            lock (_events)
-                _events.Add(eventName);
-        }
-    }
-
-    private sealed class FakeTest : ITest
-    {
-        public object TestFramework { get; set; } = null!;
-
-        public MethodInfo TestMethodInfo { get; set; } = null!;
-
-        public TestInfo TestInfo { get; set; } = new TestInfo
-        {
-            Name = "Checkout_load",
-            FullName = "Fuzn.TestFuzn.Tests.Terminal.ConsoleManagerTests.Checkout_load",
-            Id = "checkout-load"
-        };
     }
 }
