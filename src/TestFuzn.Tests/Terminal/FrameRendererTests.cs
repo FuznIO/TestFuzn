@@ -277,6 +277,60 @@ public class FrameRendererTests : Test
     }
 
     [Test]
+    public async Task Verify_multi_line_styled_markup_addresses_every_physical_row()
+    {
+        await Scenario()
+            .Step("One AddLine call carrying a rendered multi-line assert message paints one row per physical line", context =>
+            {
+                var writer = new FakeTerminalWriter();
+                var renderer = new FrameRenderer(writer);
+                var frame = new FrameBuffer();
+                frame.AddLine("Summary");
+                frame.AddLine(MarkupRenderer.Render("  [red]Expected:\r\n  <5>\r\n  Actual:\r\n  <7>[/]", ColorMode.Colors16));
+                frame.AddLine("Tail");
+
+                renderer.Render(frame, 80, 24);
+
+                var flush = Assert.ContainsSingle(writer.Writes);
+                Assert.AreEqual(
+                    SynchronizedFlush(
+                        AnsiCodes.DisableAutoWrap,
+                        AnsiCodes.Reset,
+                        AnsiCodes.EraseScreen,
+                        AnsiCodes.MoveCursor(1, 1), "Summary",
+                        AnsiCodes.MoveCursor(2, 1), "  \u001b[91mExpected:\u001b[0m",
+                        AnsiCodes.MoveCursor(3, 1), "\u001b[91m  <5>\u001b[0m",
+                        AnsiCodes.MoveCursor(4, 1), "\u001b[91m  Actual:\u001b[0m",
+                        AnsiCodes.MoveCursor(5, 1), "\u001b[91m  <7>\u001b[0m",
+                        AnsiCodes.MoveCursor(6, 1), "Tail"),
+                    flush);
+            })
+            .Step("A change inside the multi-line message repaints only its own physical row", context =>
+            {
+                var writer = new FakeTerminalWriter();
+                var renderer = new FrameRenderer(writer);
+                var frame = new FrameBuffer();
+                frame.AddLine("Summary");
+                frame.AddLine(MarkupRenderer.Render("  [red]Expected:\r\n  <5>\r\n  Actual:\r\n  <7>[/]", ColorMode.Colors16));
+                frame.AddLine("Tail");
+                renderer.Render(frame, 80, 24);
+                writer.ClearWrites();
+
+                var changedFrame = new FrameBuffer();
+                changedFrame.AddLine("Summary");
+                changedFrame.AddLine(MarkupRenderer.Render("  [red]Expected:\r\n  <5>\r\n  Actual:\r\n  <8>[/]", ColorMode.Colors16));
+                changedFrame.AddLine("Tail");
+                renderer.Render(changedFrame, 80, 24);
+
+                var flush = Assert.ContainsSingle(writer.Writes);
+                Assert.AreEqual(
+                    SynchronizedFlush(AnsiCodes.MoveCursor(5, 1), AnsiCodes.Reset, AnsiCodes.EraseLine, "\u001b[91m  <8>\u001b[0m"),
+                    flush);
+            })
+            .Run();
+    }
+
+    [Test]
     public async Task Verify_frame_taller_than_window_is_clipped()
     {
         await Scenario()

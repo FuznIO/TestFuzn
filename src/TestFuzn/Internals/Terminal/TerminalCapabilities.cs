@@ -19,7 +19,11 @@ internal sealed class TerminalCapabilities
     /// <summary>The live view can render: the terminal is interactive and ANSI sequences can be emitted.</summary>
     public bool SupportsLiveView => IsInteractive && SupportsAnsi;
 
-    /// <summary>Color depth to render with. NO_COLOR disables color without disabling ANSI.</summary>
+    /// <summary>
+    /// Color depth to render with. NO_COLOR disables color without disabling ANSI: it resolves
+    /// to Monochrome, which keeps decoration SGR while dropping colors. None is resolved exactly
+    /// when ANSI cannot be emitted at all, so None always means zero escape bytes.
+    /// </summary>
     public ColorMode ColorMode { get; }
 
     public TerminalCapabilities(bool isInteractive, bool supportsAnsi, ColorMode colorMode)
@@ -67,10 +71,14 @@ internal sealed class TerminalCapabilities
         var isInteractive = !isOutputRedirected && !isInputRedirected;
         var supportsAnsi = !isOutputRedirected && isVirtualTerminalEnabled && !IsDumbTerminal(term);
 
+        // ColorMode.None is reserved for the no-ANSI paths, so None always means zero escape
+        // bytes; NO_COLOR on an ANSI terminal drops colors but keeps decorations.
         var colorMode = ColorMode.None;
-        if (supportsAnsi && !IsNoColorRequested(noColor))
+        if (supportsAnsi)
         {
-            if (IsTrueColorTerm(colorTerm))
+            if (IsNoColorRequested(noColor))
+                colorMode = ColorMode.Monochrome;
+            else if (IsTrueColorTerm(colorTerm))
                 colorMode = ColorMode.TrueColor;
             else
                 colorMode = ColorMode.Colors16;

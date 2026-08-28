@@ -47,6 +47,65 @@ public class FrameBufferTests : Test
     }
 
     [Test]
+    public async Task Verify_line_breaks_split_into_one_entry_per_row()
+    {
+        await Scenario()
+            .Step("AddLine splits text on mixed line break kinds into one entry per physical line", context =>
+            {
+                var frame = new FrameBuffer();
+
+                frame.AddLine("a\r\nb\nc\rd");
+
+                Assert.HasCount(4, frame.Lines);
+                Assert.AreEqual("a", frame.Lines[0]);
+                Assert.AreEqual("b", frame.Lines[1]);
+                Assert.AreEqual("c", frame.Lines[2]);
+                Assert.AreEqual("d", frame.Lines[3]);
+            })
+            .Step("A trailing line break terminates the final line without opening an empty one", context =>
+            {
+                var frame = new FrameBuffer();
+
+                frame.AddLine("Status: Completed successfully.\r\n");
+
+                Assert.ContainsSingle(frame.Lines);
+                Assert.AreEqual("Status: Completed successfully.", frame.Lines[0]);
+            })
+            .Step("Consecutive breaks keep the blank line between them", context =>
+            {
+                var frame = new FrameBuffer();
+
+                frame.AddLine("a\n\nb");
+
+                Assert.HasCount(3, frame.Lines);
+                Assert.AreEqual("a", frame.Lines[0]);
+                Assert.AreEqual("", frame.Lines[1]);
+                Assert.AreEqual("b", frame.Lines[2]);
+            })
+            .Step("A line break on its own stores one empty row", context =>
+            {
+                var frame = new FrameBuffer();
+
+                frame.AddLine("\r\n");
+
+                Assert.ContainsSingle(frame.Lines);
+                Assert.AreEqual("", frame.Lines[0]);
+            })
+            .Step("AddLines splits each line the same way AddLine does", context =>
+            {
+                var frame = new FrameBuffer();
+
+                frame.AddLines(new[] { "x\ny", "z" });
+
+                Assert.HasCount(3, frame.Lines);
+                Assert.AreEqual("x", frame.Lines[0]);
+                Assert.AreEqual("y", frame.Lines[1]);
+                Assert.AreEqual("z", frame.Lines[2]);
+            })
+            .Run();
+    }
+
+    [Test]
     public async Task Verify_clear_empties_the_buffer()
     {
         await Scenario()

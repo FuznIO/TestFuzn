@@ -1,30 +1,62 @@
 namespace Fuzn.TestFuzn.Internals.Terminal;
 
 /// <summary>
-/// A frame of styled lines built in memory before rendering. Each line is a fully rendered
-/// string with any SGR styling already embedded; <see cref="FrameRenderer"/> diffs whole lines
-/// by string equality, so two lines differing only in styling count as changed. Each line must
-/// fit the window width the frame was laid out for: the renderer disables terminal auto-wrap as
-/// a defense (an overlong line overwrites its last column instead of wrapping into the next
-/// row) but does not otherwise wrap-protect.
+/// A frame of styled lines built in memory before rendering. One stored line is one terminal
+/// row by construction: <see cref="AddLine"/> splits text containing line breaks into one entry
+/// per physical line, and <see cref="MarkupRenderer"/> never lets styling span a line break, so
+/// every stored row is independently style-complete. Each line is a fully rendered string with
+/// any SGR styling already embedded; <see cref="FrameRenderer"/> diffs whole lines by string
+/// equality, so two lines differing only in styling count as changed. Each line must fit the
+/// window width the frame was laid out for: the renderer disables terminal auto-wrap as a
+/// defense (an overlong line overwrites its last column instead of wrapping into the next row)
+/// but does not otherwise wrap-protect.
 /// </summary>
 internal sealed class FrameBuffer
 {
+    private static readonly char[] LineBreakCharacters = { '\r', '\n' };
+
     private readonly List<string> _lines = new();
 
-    /// <summary>The lines of the frame, top to bottom.</summary>
+    /// <summary>The lines of the frame, top to bottom, one entry per terminal row.</summary>
     public IReadOnlyList<string> Lines => _lines;
 
-    /// <summary>Appends one line to the bottom of the frame.</summary>
+    /// <summary>
+    /// Appends text to the bottom of the frame, splitting on line breaks (\r\n, \n or a lone
+    /// \r) so that one stored entry is one terminal row. A trailing line break terminates the
+    /// final line without opening an empty one, so "a\r\n" stores one entry while "a\n\nb"
+    /// stores three; text without a line break, including an empty string, stores one entry.
+    /// </summary>
     public void AddLine(string line)
     {
         if (line == null)
             throw new ArgumentNullException(nameof(line), "Line cannot be null.");
 
-        _lines.Add(line);
+        var position = 0;
+        while (true)
+        {
+            var breakIndex = line.IndexOfAny(LineBreakCharacters, position);
+            if (breakIndex < 0)
+            {
+                if (position == 0 || position < line.Length)
+                    _lines.Add(line.Substring(position));
+
+                return;
+            }
+
+            _lines.Add(line.Substring(position, breakIndex - position));
+
+            var breakLength = 1;
+            if (line[breakIndex] == '\r' && breakIndex + 1 < line.Length && line[breakIndex + 1] == '\n')
+                breakLength = 2;
+
+            position = breakIndex + breakLength;
+        }
     }
 
-    /// <summary>Appends multiple lines to the bottom of the frame, e.g. a widget's output.</summary>
+    /// <summary>
+    /// Appends multiple lines to the bottom of the frame, e.g. a widget's output. Each line is
+    /// split the same way <see cref="AddLine"/> splits.
+    /// </summary>
     public void AddLines(IEnumerable<string> lines)
     {
         if (lines == null)

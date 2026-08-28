@@ -316,7 +316,7 @@ public class TerminalCapabilitiesTests : Test
     public async Task Verify_no_color_disables_color_but_not_ansi()
     {
         await Scenario()
-            .Step("NO_COLOR set to a non-empty value disables color", context =>
+            .Step("NO_COLOR set to a non-empty value resolves Monochrome, winning over COLORTERM", context =>
             {
                 var capabilities = TerminalCapabilities.Resolve(
                     isOutputRedirected: false,
@@ -326,7 +326,7 @@ public class TerminalCapabilitiesTests : Test
                     colorTerm: "truecolor",
                     noColor: "1");
 
-                Assert.AreEqual(ColorMode.None, capabilities.ColorMode);
+                Assert.AreEqual(ColorMode.Monochrome, capabilities.ColorMode);
             })
             .Step("NO_COLOR keeps ansi support for cursor control", context =>
             {
@@ -340,7 +340,7 @@ public class TerminalCapabilitiesTests : Test
 
                 Assert.IsTrue(capabilities.SupportsAnsi);
             })
-            .Step("NO_COLOR disables color regardless of its value", context =>
+            .Step("NO_COLOR resolves Monochrome regardless of its value", context =>
             {
                 var capabilities = TerminalCapabilities.Resolve(
                     isOutputRedirected: false,
@@ -350,7 +350,7 @@ public class TerminalCapabilitiesTests : Test
                     colorTerm: null,
                     noColor: "false");
 
-                Assert.AreEqual(ColorMode.None, capabilities.ColorMode);
+                Assert.AreEqual(ColorMode.Monochrome, capabilities.ColorMode);
             })
             .Step("NO_COLOR set to an empty string does not disable color", context =>
             {
@@ -363,6 +363,19 @@ public class TerminalCapabilitiesTests : Test
                     noColor: "");
 
                 Assert.AreEqual(ColorMode.TrueColor, capabilities.ColorMode);
+            })
+            .Step("Without ansi support NO_COLOR still resolves None, never Monochrome", context =>
+            {
+                var capabilities = TerminalCapabilities.Resolve(
+                    isOutputRedirected: true,
+                    isInputRedirected: false,
+                    isVirtualTerminalEnabled: true,
+                    term: "xterm-256color",
+                    colorTerm: null,
+                    noColor: "1");
+
+                Assert.IsFalse(capabilities.SupportsAnsi);
+                Assert.AreEqual(ColorMode.None, capabilities.ColorMode);
             })
             .Run();
     }
