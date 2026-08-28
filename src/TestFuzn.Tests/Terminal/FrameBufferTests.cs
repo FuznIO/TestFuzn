@@ -102,6 +102,16 @@ public class FrameBufferTests : Test
                 Assert.AreEqual("y", frame.Lines[1]);
                 Assert.AreEqual("z", frame.Lines[2]);
             })
+            .Step("AddLines stores pre-rendered widget lines as-is, one entry per line", context =>
+            {
+                var frame = new FrameBuffer();
+
+                frame.AddLines(StatTileWidget.Render("Requests", "128", 12, ColorMode.None));
+
+                Assert.HasCount(2, frame.Lines);
+                Assert.AreEqual("Requests", frame.Lines[0]);
+                Assert.AreEqual("128", frame.Lines[1]);
+            })
             .Run();
     }
 
@@ -135,8 +145,9 @@ public class FrameBufferTests : Test
             {
                 var frame = new FrameBuffer();
 
-                Assert.ThrowsExactly<ArgumentNullException>(() => frame.AddLines(null!));
+                Assert.ThrowsExactly<ArgumentNullException>(() => frame.AddLines((IEnumerable<string>)null!));
                 Assert.ThrowsExactly<ArgumentNullException>(() => frame.AddLines(new[] { "Valid line", null! }));
+                Assert.ThrowsExactly<ArgumentNullException>(() => frame.AddLines((IEnumerable<RenderedLine>)null!));
             })
             .Run();
     }

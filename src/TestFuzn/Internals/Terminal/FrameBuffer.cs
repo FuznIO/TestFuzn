@@ -54,8 +54,8 @@ internal sealed class FrameBuffer
     }
 
     /// <summary>
-    /// Appends multiple lines to the bottom of the frame, e.g. a widget's output. Each line is
-    /// split the same way <see cref="AddLine"/> splits.
+    /// Appends multiple plain lines to the bottom of the frame. Each line is split the same way
+    /// <see cref="AddLine"/> splits.
     /// </summary>
     public void AddLines(IEnumerable<string> lines)
     {
@@ -64,6 +64,20 @@ internal sealed class FrameBuffer
 
         foreach (var line in lines)
             AddLine(line);
+    }
+
+    /// <summary>
+    /// Appends a widget's pre-rendered lines to the bottom of the frame. A
+    /// <see cref="RenderedLine"/> is break-free by construction, so each one is stored as-is —
+    /// one entry per line, no split scan.
+    /// </summary>
+    public void AddLines(IEnumerable<RenderedLine> lines)
+    {
+        if (lines == null)
+            throw new ArgumentNullException(nameof(lines), "Lines cannot be null.");
+
+        foreach (var line in lines)
+            _lines.Add(line.Text);
     }
 
     /// <summary>Removes all lines so the buffer can be reused to build the next frame.</summary>
