@@ -10,8 +10,11 @@ internal class ConfigurationLoader : IConfigurationLoader
     {
         lock (_configLocker)
         {
+            // Base path is the test assembly's output directory, where appsettings files
+            // are copied to. The current directory is not reliable: it depends on where
+            // the test executable was launched from (e.g. "dotnet run" from a repo root).
             var builder = new ConfigurationBuilder()
-                                .SetBasePath(Directory.GetCurrentDirectory())
+                                .SetBasePath(AppContext.BaseDirectory)
                                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
 
             if (!string.IsNullOrEmpty(executionEnvironment))

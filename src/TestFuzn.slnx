@@ -23,6 +23,7 @@
     <File Path="../docs/scenarios.md" />
     <File Path="../docs/shared-data.md" />
     <File Path="../docs/shared-steps.md" />
+    <File Path="../docs/standalone-runner.md" />
     <File Path="../docs/steps.md" />
     <File Path="../docs/test-reports.md" />
   </Folder>
@@ -39,7 +40,6 @@
   <Project Path="TestFuzn.Tests/TestFuzn.Tests.csproj" />
   <Project Path="TestFuzn.Tests.Attributes/TestFuzn.Tests.Attributes.csproj" />
   <Project Path="TestFuzn.Tests.DefaultHttpClient/TestFuzn.Tests.DefaultHttpClient.csproj" />
-  <Project Path="TestFuzn.Tests.Runner/TestFuzn.Tests.Runner.csproj" />
   <Project Path="TestWebApp/TestWebApp.csproj" />
   <Project Path="docker-compose.dcproj">
     <Build />

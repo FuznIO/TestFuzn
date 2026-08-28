@@ -9,6 +9,7 @@
 ### Getting Started
 - [Getting Started](getting-started.md) — Installation, project setup, quick start
 - [MSTest Compatibility](mstest.md) — Attribute mapping, lifecycle, what's supported
+- [Standalone Runner](standalone-runner.md) — Real-time console output from the test project's own entry point
 
 ### Writing Tests
 - [Scenarios](scenarios.md) — Standard vs load tests, `[Test]` attribute, execution flow

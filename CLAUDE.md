@@ -68,7 +68,7 @@ Tests are built with `ScenarioBuilder<TModel>` which chains `.Step()`, `.InputDa
 TestFuzn abstracts the test runner via `ITestFrameworkAdapter` so tests can run under different hosts:
 
 - **MSTest runner** (`MsTestRunnerAdapter`) -- Good for standard tests and simple load tests. Also works for long-running tests, but MSTest does not support real-time console output during execution.
-- **Standalone runner** (`BaseStandaloneRunnerAdapter`) -- Provides real-time console output, useful for complex/long-running load tests where live feedback matters.
+- **Standalone runner** (`BaseStandaloneRunnerAdapter`) -- Provides real-time console output, useful for complex/long-running load tests where live feedback matters. Hosted by the test project itself (no separate runner project): the test project sets `GenerateTestingPlatformEntryPoint=false` and provides a custom `Main` that routes the `run` verb to `TestFuznHost.RunStandalone` and everything else to the MSTest runner. See `src/TestFuzn.Tests/Program.cs` and `docs/standalone-runner.md`. Run with `dotnet run --project src/TestFuzn.Tests -- run --test-name=<FullyQualifiedName>`.
 
 This is why tests should avoid depending on MSTest-specific APIs (e.g. `TestContext`, MSTest assertions). Use TestFuzn's own abstractions (`Context`, `[Test]` attribute, etc.) so tests remain portable across MSTest, the standalone runner, and any future framework adapters.
 
@@ -87,7 +87,7 @@ This is why tests should avoid depending on MSTest-specific APIs (e.g. `TestCont
 | TestFuzn.Plugins.WebSocket | Yes | WebSocket testing |
 | TestFuzn.Sinks.InfluxDB | Yes | Real-time metrics to InfluxDB |
 
-Test/sample projects: `TestFuzn.Tests`, `TestFuzn.Tests.Attributes`, `TestFuzn.Tests.DefaultHttpClient`, `TestFuzn.Tests.CustomHttpClient`, `TestFuzn.Tests.Failing`, `TestFuzn.Tests.Runner`, `SampleApp.Tests`, `SampleApp.WebApp`, `TestWebApp`.
+Test/sample projects: `TestFuzn.Tests`, `TestFuzn.Tests.Attributes`, `TestFuzn.Tests.DefaultHttpClient`, `TestFuzn.Tests.CustomHttpClient`, `TestFuzn.Tests.Failing`, `SampleApp.Tests`, `SampleApp.WebApp`, `TestWebApp`.
 
 ## Key Conventions
 
