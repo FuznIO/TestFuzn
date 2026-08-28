@@ -74,6 +74,33 @@ internal class TestExecutionState : IDisposable
         }
     }
 
+    /// <summary>
+    /// Requests a graceful stop of the run from inside the process — the live view's quit key —
+    /// through the same cancellation path Ctrl+C takes: the state's token is cancelled, which
+    /// marks the execution status <see cref="ExecutionStatus.Stopped"/> and winds the
+    /// producer-consumer pipeline down exactly as the framework's cancellation does, with
+    /// cleanup and the summary still to follow; no <see cref="ExecutionStoppedReason"/> is set,
+    /// as none is for Ctrl+C. The token transitions at once; the registered callbacks — one per
+    /// in-flight delay, consumer and request on a load run — run off the caller's thread, so a
+    /// live view's render loop is not stalled by the teardown (Ctrl+C runs them on the signal
+    /// thread), and the returned task completes once they have all run, faulting when one of
+    /// them threw. A stop already requested, here or through the framework's token, is left as
+    /// it is and a completed task is returned. Safe to call from any thread and more than once
+    /// while the run is alive: the runner joins the live view loop before <see cref="Dispose"/>,
+    /// which disposes the token source. Throws before <see cref="Init"/>, when there is no run
+    /// to stop.
+    /// </summary>
+    public Task RequestStop()
+    {
+        if (_cancellationTokenSource == null)
+            throw new InvalidOperationException("The test execution state has not been initialized; there is no run to stop.");
+
+        if (_cancellationTokenSource.IsCancellationRequested)
+            return Task.CompletedTask;
+
+        return _cancellationTokenSource.CancelAsync();
+    }
+
     public void EnqueueScenarioExecution(ExecuteScenarioMessage message)
     {
         MessageQueue.Add(message);

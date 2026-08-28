@@ -18,6 +18,13 @@ namespace Fuzn.TestFuzn.Internals.Logger;
 /// duration; it is not painted, since leaving the alternate screen would discard the frame)
 /// and restores the terminal. <see cref="Complete"/> then writes the summary to the normal
 /// screen buffer, after the alternate screen has been left, so it lands in scrollback.
+/// While the live view runs, the loop also polls the keyboard on every tick: the quit key
+/// (<see cref="LiveDashboardLayout.QuitKey"/>, either case) requests a graceful stop through
+/// the same cancellation path Ctrl+C takes (<see cref="TestExecutionState.RequestStop"/>), so
+/// the run winds down exactly as after Ctrl+C while the loop keeps rendering through cleanup
+/// (the request runs the run's cancellation callbacks off the loop thread, and the stop
+/// observes its outcome); every other key is drained and ignored, and keys are read nowhere
+/// else, so input is never touched without a live view.
 /// Frameworks without real-time output (MSTest), standard tests and redirected or non-ANSI
 /// output get no live view, only the summary. A failure inside the live view never hides the
 /// results: the terminal is restored at once and the run continues without a live view, the
@@ -43,6 +50,7 @@ internal class ConsoleManager
     private DateTime _nextSampleTime;
     private bool _isLiveViewStopped;
     private Exception? _liveViewException;
+    private Task? _stopRequest;
 
     public ConsoleManager(
         TestExecutionState testExecutionState,
@@ -75,6 +83,13 @@ internal class ConsoleManager
     /// </summary>
     internal IReadOnlyList<LiveMetricsSnapshot> LiveSnapshots => _liveSnapshots;
 
+    /// <summary>
+    /// The quit key's stop request, once one has been made (null before): completes when the
+    /// run's cancellation callbacks have run, off the loop thread, and faults when one of them
+    /// threw — observed by <see cref="StopRealtimeConsoleOutput"/>.
+    /// </summary>
+    internal Task? StopRequest => _stopRequest;
+
     public void StartRealtimeConsoleOutputIfEnabled()
     {
         if (!_testExecutionState.TestFramework.SupportsRealTimeConsoleOutput
@@ -94,19 +109,27 @@ internal class ConsoleManager
         for (var index = 0; index < scenarioCount; index++)
             _liveSnapshots[index] = CreateInitSnapshot(_testExecutionState.Scenarios[index].Name, TimeSpan.Zero);
 
+        // Keys are polled behind this same gate and nowhere else: the live view requires an
+        // interactive terminal, so input is a TTY here, whereas reading keys from a redirected
+        // input throws. A host without a reader fails here, loud, before the alternate screen.
+        var terminalReader = _liveViewHost.CreateTerminalReader();
+        if (terminalReader == null)
+            throw new InvalidOperationException("The live view host returned no terminal reader.");
+
         // The dashboard reads the snapshot array on every render; the sampling loop replaces
         // entries with fresh immutable snapshots, so a frame never sees a torn view.
         _liveDashboard = new LiveDashboard(_liveViewHost.CreateTerminalWriter(), capabilities, () => _liveSnapshots);
-        _realtimeLogging = Task.Run(() => RunLiveDashboard(_liveDashboard, _ctSource.Token));
+        _realtimeLogging = Task.Run(() => RunLiveDashboard(_liveDashboard, terminalReader, _ctSource.Token));
     }
 
     /// <summary>
-    /// The live view loop: samples on the 1 Hz cadence and renders on every ~4 fps tick until
-    /// cancelled. A failure restores the terminal right away — the run keeps going without a
-    /// live view instead of leaving a frozen alternate screen — and is kept for
-    /// <see cref="Complete"/> to report after the summary; the task itself never faults.
+    /// The live view loop: on every ~4 fps tick handles the keys pressed since the last one,
+    /// samples when the 1 Hz cadence is due and renders, until cancelled. A failure restores
+    /// the terminal right away — the run keeps going without a live view instead of leaving a
+    /// frozen alternate screen — and is kept for <see cref="Complete"/> to report after the
+    /// summary; the task itself never faults.
     /// </summary>
-    private async Task RunLiveDashboard(LiveDashboard liveDashboard, CancellationToken cancellationToken)
+    private async Task RunLiveDashboard(LiveDashboard liveDashboard, ITerminalReader terminalReader, CancellationToken cancellationToken)
     {
         try
         {
@@ -115,6 +138,8 @@ internal class ConsoleManager
 
             while (!cancellationToken.IsCancellationRequested)
             {
+                HandleKeys(terminalReader);
+
                 var utcNow = _liveViewHost.UtcNow;
                 if (utcNow >= _nextSampleTime)
                 {
@@ -139,6 +164,44 @@ internal class ConsoleManager
             _liveViewException = exception;
             RestoreTerminal(liveDashboard);
         }
+    }
+
+    /// <summary>
+    /// Drains every key pressed since the last tick — the reader never blocks, so the loop keeps
+    /// its cadence — and acts on the quit key: a stop request on the state, the same
+    /// cancellation path Ctrl+C takes, so producers stop, in-flight iterations and cleanup
+    /// complete and the summary follows, as after Ctrl+C. The request runs the run's
+    /// cancellation callbacks off this thread — one per in-flight delay, consumer and request
+    /// on a real load run — so the loop keeps painting while the pipeline tears down, as it
+    /// does when Ctrl+C runs them on the signal thread; the request's task is kept for
+    /// <see cref="StopRealtimeConsoleOutput"/> to observe. Every other key is ignored, and the
+    /// loop itself is not stopped here: it keeps rendering through cleanup until the runner's
+    /// Stop. A repeated quit key finds the stop already requested and is a no-op. Runs on the
+    /// loop thread; the request is safe against the runner thread stopping the live view at the
+    /// same time.
+    /// </summary>
+    private void HandleKeys(ITerminalReader terminalReader)
+    {
+        while (terminalReader.TryReadKey(out var key))
+        {
+            if (!IsQuitKey(key))
+                continue;
+
+            if (_stopRequest == null)
+                _stopRequest = _testExecutionState.RequestStop();
+        }
+    }
+
+    /// <summary>
+    /// The quit key in either case — Shift is what makes it upper case — but not a chord with
+    /// Alt or Control: on a pty Alt+q arrives as ESC q and reads as q with the Alt modifier.
+    /// </summary>
+    private static bool IsQuitKey(ConsoleKeyInfo key)
+    {
+        if ((key.Modifiers & (ConsoleModifiers.Alt | ConsoleModifiers.Control)) != 0)
+            return false;
+
+        return char.ToLowerInvariant(key.KeyChar) == LiveDashboardLayout.QuitKey;
     }
 
     /// <summary>
@@ -221,6 +284,13 @@ internal class ConsoleManager
         {
             await _ctSource.CancelAsync();
             await _realtimeLogging;
+
+            // The quit key's stop request, if one was made: by the time the runner stops the
+            // live view its callbacks have run (the run reached cleanup on them), so awaiting
+            // it here only surfaces a callback that threw — as a live view failure, reported
+            // after the summary, rather than an unobserved task.
+            if (_stopRequest != null)
+                await _stopRequest;
 
             // The final tick, after cleanup has completed: the one force-refreshed Record that
             // lands the "completed" phase label and freezes the run duration. Not painted — the

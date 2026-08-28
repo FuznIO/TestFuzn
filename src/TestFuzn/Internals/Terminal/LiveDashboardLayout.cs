@@ -76,7 +76,10 @@ internal static class LiveDashboardLayout
 
     private static readonly RenderedLine BlankLine = new RenderedLine(string.Empty, 0);
 
-    private static readonly KeyHint[] FooterHints = { new KeyHint("q", "quit") };
+    /// <summary>The key the footer advertises for a graceful stop of the run; the console manager acts on it in either case.</summary>
+    public const char QuitKey = 'q';
+
+    private static readonly KeyHint[] FooterHints = { new KeyHint(QuitKey.ToString(), "quit") };
 
     private static readonly TableColumn[] RequestsColumns =
     {

@@ -21,8 +21,10 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// thread-pool task but advances only when the test releases its delay — so every assertion
 /// runs with the loop parked. Pinned: the 1 Hz sampling gated on init completion over 4 fps
 /// rendering, the single force-refreshed Record after cleanup, the terminal restored exactly
-/// once on every exit path with the summary written afterwards, and the live view's own
-/// failure being reported without displacing the run's failure.
+/// once on every exit path with the summary written afterwards, the live view's own failure
+/// being reported without displacing the run's failure, and the keys polled on every tick —
+/// the quit key landing in the Ctrl+C stop path while the loop renders on until Stop, other
+/// keys drained and ignored, and the reader never consulted without a live view.
 /// </summary>
 [TestClass]
 public class ConsoleManagerTests : Test
@@ -204,7 +206,7 @@ public class ConsoleManagerTests : Test
 
                 harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
                 harness.TestFramework.Cancel();
-                Assert.AreEqual(ExecutionStatus.Stopped, harness.State.ExecutionStatus);
+                harness.AssertStoppedLikeCtrlC();
 
                 // The loop is driven by the manager's own stop, not by the run's cancellation:
                 // it keeps rendering through cleanup after Ctrl+C.
@@ -309,13 +311,14 @@ public class ConsoleManagerTests : Test
     public async Task Verify_no_live_view_without_real_time_support_or_a_live_terminal()
     {
         await Scenario()
-            .Step("A framework without real-time output gets no live view and only the summary", async context =>
+            .Step("A framework without real-time output gets no live view and only the summary, and never reads a key", async context =>
             {
                 var harness = new Harness();
                 harness.TestFramework.SupportsRealTimeConsoleOutput = false;
                 harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
                 harness.CompleteInitAndStartMeasurement(At(1));
                 harness.CompleteMeasurementAndCleanup(At(2), At(3));
+                harness.Host.Reader.Press('q');
 
                 harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
                 await harness.ConsoleManager.Complete();
@@ -323,14 +326,19 @@ public class ConsoleManagerTests : Test
                 Assert.IsEmpty(harness.Writer.Writes);
                 Assert.IsEmpty(harness.ConsoleManager.LiveSnapshots);
                 Assert.AreEqual(0, harness.Host.DetectCapabilitiesCallCount);
+                Assert.AreEqual(0, harness.Host.CreateTerminalReaderCallCount);
+                Assert.AreEqual(0, harness.Host.Reader.TryReadKeyCallCount);
+                Assert.AreEqual(1, harness.Host.Reader.PendingKeyCount);
+                Assert.AreEqual(ExecutionStatus.Running, harness.State.ExecutionStatus);
             })
-            .Step("A terminal without live view support (redirected output) gets no live view and only the summary", async context =>
+            .Step("A terminal without live view support (redirected output and input) gets no live view and only the summary, and never reads a key", async context =>
             {
                 var harness = new Harness();
                 harness.Host.Capabilities = TerminalCapabilities.Resolve(isOutputRedirected: true, isInputRedirected: true, isVirtualTerminalEnabled: true, term: "xterm-256color", colorTerm: null, noColor: null);
                 harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
                 harness.CompleteInitAndStartMeasurement(At(1));
                 harness.CompleteMeasurementAndCleanup(At(2), At(3));
+                harness.Host.Reader.Press('q');
 
                 harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
                 await harness.ConsoleManager.Complete();
@@ -338,6 +346,235 @@ public class ConsoleManagerTests : Test
                 Assert.IsEmpty(harness.Writer.Writes);
                 Assert.IsEmpty(harness.ConsoleManager.LiveSnapshots);
                 Assert.AreEqual(1, harness.Host.DetectCapabilitiesCallCount);
+                Assert.AreEqual(1, harness.Events.Count(eventName => eventName == SummaryEvent));
+                Assert.AreEqual(0, harness.Host.CreateTerminalReaderCallCount);
+                Assert.AreEqual(0, harness.Host.Reader.TryReadKeyCallCount);
+                Assert.AreEqual(1, harness.Host.Reader.PendingKeyCount);
+                Assert.AreEqual(ExecutionStatus.Running, harness.State.ExecutionStatus);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_quit_key_requests_the_same_stop_as_Ctrl_C_and_the_loop_renders_on_until_Stop()
+    {
+        await Scenario()
+            .Step("q on a tick lands in the Ctrl+C stop path, and the loop renders on through cleanup until Stop restores once, then the summary", async context =>
+            {
+                var harness = new Harness();
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                Assert.AreEqual(1, harness.Host.CreateTerminalReaderCallCount);
+                Assert.AreEqual(ExecutionStatus.Running, harness.State.ExecutionStatus);
+
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+                harness.Host.Reader.Press('q');
+                await harness.Host.RunTick(At(1));
+
+                // The stop request runs the run's cancellation callbacks off the loop thread;
+                // once they have run, the state reads exactly as after Ctrl+C.
+                await harness.WaitForStopRequest();
+                harness.AssertStoppedLikeCtrlC();
+                Assert.AreEqual(0, harness.Host.Reader.PendingKeyCount);
+                // The tick went on to sample and render after the key.
+                Assert.HasCount(3, harness.Writer.Writes);
+                Assert.AreEqual(TimeSpan.FromSeconds(1), harness.ConsoleManager.LiveSnapshots[0].Duration);
+
+                // The loop is driven by the manager's own stop, not by the run's cancellation:
+                // it keeps rendering and sampling through cleanup, as after Ctrl+C.
+                await harness.Host.RunTick(At(1.25));
+                Assert.HasCount(4, harness.Writer.Writes);
+
+                harness.CompleteInitAndStartMeasurement(At(1.5));
+                await harness.Host.RunTick(At(2));
+                Assert.HasCount(5, harness.Writer.Writes);
+                Assert.AreEqual(LoadTestPhase.Measurement, harness.ConsoleManager.LiveSnapshots[0].Phase);
+
+                harness.CompleteMeasurementAndCleanup(At(3), At(4));
+                harness.Host.UtcNow = At(5);
+                await harness.ConsoleManager.StopRealtimeConsoleOutput();
+                harness.AssertEnteredAndRestoredOnce();
+                Assert.AreEqual("completed", harness.ConsoleManager.LiveSnapshots[0].PhaseLabel);
+
+                await harness.ConsoleManager.Complete();
+                harness.AssertEnteredAndRestoredOnce();
+                harness.AssertSummaryFollowsRestore();
+                Assert.IsEmpty(harness.MarkupEvents());
+            })
+            .Step("Q, with Shift held, stops the same way", async context =>
+            {
+                var harness = new Harness();
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+
+                harness.Host.Reader.Press('Q');
+                await harness.Host.RunTick(At(1));
+
+                await harness.WaitForStopRequest();
+                harness.AssertStoppedLikeCtrlC();
+
+                await harness.ConsoleManager.Complete();
+                harness.AssertEnteredAndRestoredOnce();
+                harness.AssertSummaryFollowsRestore();
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_other_keys_are_drained_and_ignored_and_a_repeated_quit_key_is_a_no_op()
+    {
+        await Scenario()
+            .Step("Other keys are drained on the tick and change nothing: the run keeps going", async context =>
+            {
+                var harness = new Harness();
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+                var readsBefore = harness.Host.Reader.TryReadKeyCallCount;
+
+                harness.Host.Reader.Press('x');
+                harness.Host.Reader.Press(' ');
+                harness.Host.Reader.Press(new ConsoleKeyInfo('\r', ConsoleKey.Enter, shift: false, alt: false, control: false));
+                harness.Host.Reader.Press(new ConsoleKeyInfo('\0', ConsoleKey.UpArrow, shift: false, alt: false, control: false));
+                // Ctrl+Q is not the quit key: the typed character is what counts.
+                harness.Host.Reader.Press(new ConsoleKeyInfo('\u0011', ConsoleKey.Q, shift: false, alt: false, control: true));
+                // Nor is a chord with Alt or Control that still carries the character: on a pty
+                // Alt+q arrives as ESC q and reads as q with the Alt modifier, and some hosts
+                // report Ctrl+q as q with Control rather than as the control character.
+                harness.Host.Reader.Press(new ConsoleKeyInfo('q', ConsoleKey.Q, shift: false, alt: true, control: false));
+                harness.Host.Reader.Press(new ConsoleKeyInfo('q', ConsoleKey.Q, shift: false, alt: false, control: true));
+                await harness.Host.RunTick(At(1));
+
+                // Seven keys read, then the read that found the buffer empty.
+                Assert.AreEqual(readsBefore + 8, harness.Host.Reader.TryReadKeyCallCount);
+                Assert.IsNull(harness.ConsoleManager.StopRequest);
+                Assert.AreEqual(0, harness.Host.Reader.PendingKeyCount);
+                Assert.AreEqual(ExecutionStatus.Running, harness.State.ExecutionStatus);
+                Assert.IsFalse(harness.State.CancellationToken.IsCancellationRequested);
+                Assert.IsNull(harness.State.ExecutionStoppedReason);
+                Assert.HasCount(3, harness.Writer.Writes);
+
+                await harness.ConsoleManager.StopRealtimeConsoleOutput();
+            })
+            .Step("A repeated q — twice on one tick, again on a later one — leaves the stop as it is, and a key pressed once the live view has stopped is never read", async context =>
+            {
+                var harness = new Harness();
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+
+                harness.Host.Reader.Press('q');
+                harness.Host.Reader.Press('q');
+                await harness.Host.RunTick(At(1));
+                await harness.WaitForStopRequest();
+                harness.AssertStoppedLikeCtrlC();
+                Assert.AreEqual(0, harness.Host.Reader.PendingKeyCount);
+
+                harness.Host.Reader.Press('q');
+                await harness.Host.RunTick(At(1.25));
+                harness.AssertStoppedLikeCtrlC();
+                Assert.AreEqual(0, harness.Host.Reader.PendingKeyCount);
+                Assert.HasCount(4, harness.Writer.Writes);
+
+                harness.CompleteInitAndStartMeasurement(At(1.5));
+                harness.CompleteMeasurementAndCleanup(At(2), At(3));
+                harness.Host.UtcNow = At(4);
+                await harness.ConsoleManager.StopRealtimeConsoleOutput();
+                var readsAfterStop = harness.Host.Reader.TryReadKeyCallCount;
+
+                // Only the loop reads keys: once it has stopped, a key press stays unread.
+                harness.Host.Reader.Press('q');
+                await harness.ConsoleManager.Complete();
+                Assert.AreEqual(readsAfterStop, harness.Host.Reader.TryReadKeyCallCount);
+                Assert.AreEqual(1, harness.Host.Reader.PendingKeyCount);
+                harness.AssertEnteredAndRestoredOnce();
+                harness.AssertSummaryFollowsRestore();
+            })
+            .Step("A failing key read is a live view failure like any other: the terminal is restored at once, the run goes on, and Complete reports it after the summary", async context =>
+            {
+                var harness = new Harness();
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+
+                harness.Host.Reader.ReadFailure = new InvalidOperationException("Cannot read keys when input is redirected.");
+                harness.Host.UtcNow = At(1);
+                harness.Host.Release();
+                await harness.WaitForRestore();
+
+                harness.AssertEnteredAndRestoredOnce();
+                Assert.AreEqual(ExecutionStatus.Running, harness.State.ExecutionStatus);
+
+                harness.CompleteInitAndStartMeasurement(At(2));
+                harness.CompleteMeasurementAndCleanup(At(3), At(4));
+                harness.Host.UtcNow = At(5);
+                var thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await harness.ConsoleManager.Complete());
+                Assert.AreEqual("Cannot read keys when input is redirected.", thrown.Message);
+
+                harness.AssertEnteredAndRestoredOnce();
+                harness.AssertSummaryFollowsRestore();
+                var failureLine = Assert.ContainsSingle(harness.MarkupEvents());
+                Assert.AreEqual("[red]Live view failed: InvalidOperationException: Cannot read keys when input is redirected.[/]", failureLine);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_a_failing_stop_request_is_reported_after_the_summary_and_a_missing_reader_fails_at_start()
+    {
+        await Scenario()
+            .Step("A cancellation callback that throws on the quit key's stop request does not take the loop down: it renders on, Stop observes the failure, and Complete reports it after the summary and throws it since the run has no failure of its own", async context =>
+            {
+                var harness = new Harness();
+                // Registered after Init's status registration, so it runs before it: the status
+                // still lands on Stopped and the failure is aggregated onto the request's task.
+                harness.State.CancellationToken.Register(() => throw new InvalidOperationException("Producer callback failed"));
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+
+                harness.Host.Reader.Press('q');
+                await harness.Host.RunTick(At(1));
+                await harness.WaitForStopRequest();
+                harness.AssertStoppedLikeCtrlC();
+                var stopRequest = harness.ConsoleManager.StopRequest;
+                Assert.IsNotNull(stopRequest);
+                Assert.IsTrue(stopRequest.IsFaulted);
+
+                // The loop renders on: the failure is the stop's to report, not the loop's.
+                await harness.Host.RunTick(At(1.25));
+                Assert.HasCount(4, harness.Writer.Writes);
+
+                harness.CompleteInitAndStartMeasurement(At(1.5));
+                harness.CompleteMeasurementAndCleanup(At(2), At(3));
+                harness.Host.UtcNow = At(4);
+                var thrown = await Assert.ThrowsExactlyAsync<AggregateException>(async () => await harness.ConsoleManager.Complete());
+                var callbackFailure = Assert.ContainsSingle(thrown.InnerExceptions);
+                Assert.AreEqual("Producer callback failed", callbackFailure.Message);
+
+                harness.AssertEnteredAndRestoredOnce();
+                harness.AssertSummaryFollowsRestore();
+                var failureLine = Assert.ContainsSingle(harness.MarkupEvents());
+                Assert.StartsWith("[red]Live view failed: AggregateException: ", failureLine);
+                Assert.Contains("Producer callback failed", failureLine);
+            })
+            .Step("A host that hands out no terminal reader fails loud at start, before the alternate screen is entered; a later Complete still writes the summary", async context =>
+            {
+                var harness = new Harness();
+                harness.Host.ReturnsNoReader = true;
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+
+                var thrown = Assert.ThrowsExactly<InvalidOperationException>(() => harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled());
+                Assert.AreEqual("The live view host returned no terminal reader.", thrown.Message);
+                Assert.AreEqual(1, harness.Host.CreateTerminalReaderCallCount);
+                Assert.IsEmpty(harness.Writer.Writes);
+
+                harness.CompleteInitAndStartMeasurement(At(1));
+                harness.CompleteMeasurementAndCleanup(At(2), At(3));
+                await harness.ConsoleManager.Complete();
+
+                Assert.IsEmpty(harness.Writer.Writes);
                 Assert.AreEqual(1, harness.Events.Count(eventName => eventName == SummaryEvent));
             })
             .Run();
@@ -463,13 +700,44 @@ public class ConsoleManagerTests : Test
             Assert.AreEqual(1, events.Count(eventName => eventName == SummaryEvent));
             Assert.IsGreaterThan(events.IndexOf(TerminalEventPrefix + RestoreSequence), events.IndexOf(SummaryEvent));
         }
+
+        /// <summary>
+        /// Waits until the quit key's stop request has run the run's cancellation callbacks,
+        /// whatever their outcome — the outcome is Stop's to observe. Throws when no quit key
+        /// has been handled.
+        /// </summary>
+        public async Task WaitForStopRequest()
+        {
+            var stopRequest = ConsoleManager.StopRequest;
+            if (stopRequest == null)
+                throw new InvalidOperationException("No stop request has been made: no quit key has been handled.");
+
+            await Task.WhenAny(stopRequest).WaitAsync(TimeSpan.FromSeconds(10));
+        }
+
+        /// <summary>
+        /// The state as Ctrl+C leaves it, read from the code that handles it: the standalone
+        /// adapter's CancelKeyPress handler cancels its token, which TestExecutionState.Init
+        /// links, so the state's token is cancelled and Init's registration marks the status
+        /// Stopped; neither a stopped reason nor a first exception is set — only the assert
+        /// hooks set those. The Ctrl+C step and the quit key steps assert through this one
+        /// helper, so a divergence between the two paths fails both.
+        /// </summary>
+        public void AssertStoppedLikeCtrlC()
+        {
+            Assert.AreEqual(ExecutionStatus.Stopped, State.ExecutionStatus);
+            Assert.IsTrue(State.CancellationToken.IsCancellationRequested);
+            Assert.IsNull(State.ExecutionStoppedReason);
+            Assert.IsNull(State.FirstException);
+        }
     }
 
     /// <summary>
-    /// A hermetic <see cref="ILiveViewHost"/>: a fake writer, hand-resolved live capabilities
-    /// (interactive, ANSI, no color so frames stay plain), a clock the test sets, and a delay
-    /// the test releases one tick at a time — the render loop runs on its real thread-pool task
-    /// but advances only when told to, and parks in the delay after every tick.
+    /// A hermetic <see cref="ILiveViewHost"/>: a fake writer, a fake reader the test presses
+    /// keys into, hand-resolved live capabilities (interactive, ANSI, no color so frames stay
+    /// plain), a clock the test sets, and a delay the test releases one tick at a time — the
+    /// render loop runs on its real thread-pool task but advances only when told to, and parks
+    /// in the delay after every tick, so keys pressed while it is parked are read on the next.
     /// </summary>
     private sealed class FakeLiveViewHost : ILiveViewHost
     {
@@ -482,9 +750,16 @@ public class ConsoleManagerTests : Test
 
         public FakeTerminalWriter Writer { get; } = new FakeTerminalWriter { WindowWidth = 60, WindowHeight = 8 };
 
+        public FakeTerminalReader Reader { get; } = new FakeTerminalReader();
+
         public TerminalCapabilities Capabilities { get; set; } = new TerminalCapabilities(isInteractive: true, supportsAnsi: true, colorMode: ColorMode.None);
 
         public int DetectCapabilitiesCallCount { get; private set; }
+
+        public int CreateTerminalReaderCallCount { get; private set; }
+
+        /// <summary>When set, the host hands out no reader — a broken host the manager must fail loud on.</summary>
+        public bool ReturnsNoReader { get; set; }
 
         public DateTime UtcNow
         {
@@ -509,6 +784,15 @@ public class ConsoleManagerTests : Test
         public ITerminalWriter CreateTerminalWriter()
         {
             return Writer;
+        }
+
+        public ITerminalReader CreateTerminalReader()
+        {
+            CreateTerminalReaderCallCount++;
+            if (ReturnsNoReader)
+                return null!;
+
+            return Reader;
         }
 
         public Task Delay(TimeSpan interval, CancellationToken cancellationToken)
