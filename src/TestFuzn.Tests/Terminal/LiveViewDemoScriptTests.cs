@@ -1,3 +1,4 @@
+using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Internals;
 using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 using Fuzn.TestFuzn.Internals.Results.Load;
@@ -17,7 +18,9 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// metrics model walking the phase labels in order when sampled at 1 Hz as the console manager
 /// samples and ending completed at full progress, the run's determinism, and a stop — Ctrl+C or
 /// the quit key — ending the execution at the next tick with the measurement finalized and
-/// cleanup still run in full.
+/// cleanup still run in full — and that the final summary and the live view read the same
+/// collector snapshot: an iteration failing on an early step is one failed request to both,
+/// while the steps skipped after the failure count no request in their own step totals.
 /// </summary>
 [TestClass]
 public class LiveViewDemoScriptTests : Test
@@ -347,6 +350,82 @@ public class LiveViewDemoScriptTests : Test
             .Run();
     }
 
+    [Test]
+    public async Task Verify_summary_and_live_view_read_the_same_collector_counts_and_a_skipped_step_is_not_a_request()
+    {
+        await Scenario()
+            .Step("One iteration failing on the first step with the later steps skipped — as the step handler leaves it — is one failed request to the summary's source and to the live model alike; the skipped steps count no request of their own", async context =>
+            {
+                var harness = new Harness();
+                harness.RecordIterationFailingOnFirstStep();
+
+                // The summary reads the collector's plain GetCurrentResult (ConsoleWriter.WriteSummaryLoad)
+                // and prints RequestCount, Ok.RequestCount and Failed.RequestCount as its Requests table
+                // (BaseStandaloneRunnerAdapter.WriteSummary); the live model reads the same fields of a
+                // force-refreshed result.
+                var summarySource = harness.Collector.GetCurrentResult();
+                Assert.AreEqual(1, summarySource.RequestCount);
+                Assert.AreEqual(0, summarySource.Ok.RequestCount);
+                Assert.AreEqual(1, summarySource.Failed.RequestCount);
+
+                var metrics = new ScenarioLiveMetrics(harness.Scenario.Name, harness.Scenario.SimulationsInternal.ToArray());
+                metrics.Record(harness.Collector.GetCurrentResult(true), At(1));
+                Assert.AreEqual(0, metrics.Current.RequestCountOk);
+                Assert.AreEqual(1, metrics.Current.RequestCountFailed);
+
+                // Per step the summary prints Ok + Failed as the step's total (StepLoadResult.RequestCount):
+                // the failed step ran once; a skipped step ran nothing and is counted as skipped instead.
+                var browse = summarySource.Steps["Browse products"];
+                Assert.AreEqual(1, browse.RequestCount);
+                Assert.AreEqual(1, browse.Failed.RequestCount);
+                Assert.AreEqual(0, browse.SkippedCount);
+                var browseError = Assert.ContainsSingle(browse.Errors);
+                Assert.AreEqual("HTTP 500 Internal Server Error", browseError.Key);
+                foreach (var stepName in new[] { "Add to cart", "Place order" })
+                {
+                    var step = summarySource.Steps[stepName];
+                    Assert.AreEqual(0, step.RequestCount, stepName);
+                    Assert.AreEqual(0, step.Failed.RequestCount, stepName);
+                    Assert.AreEqual(1, step.SkippedCount, stepName);
+                    Assert.IsNull(step.Errors, stepName);
+                }
+            })
+            .Step("After the whole script the summary's snapshot is the very one the final live Record used — 840 / 807 / 33 to both — and each step's total is the iterations minus those skipped at that step: 840, 834, 828", async context =>
+            {
+                var harness = new Harness();
+                await harness.RunScript();
+
+                // The final Record after cleanup force-refreshes; the summary's plain GetCurrentResult
+                // right after hits the cache: the same snapshot object.
+                var finalRecord = harness.Collector.GetCurrentResult(true);
+                var summarySource = harness.Collector.GetCurrentResult();
+                Assert.AreSame(finalRecord, summarySource);
+
+                var metrics = new ScenarioLiveMetrics(harness.Scenario.Name, harness.Scenario.SimulationsInternal.ToArray());
+                metrics.Record(finalRecord, At(19));
+                var live = metrics.Current;
+                Assert.AreEqual(MeasurementIterationCount, summarySource.RequestCount);
+                Assert.AreEqual(summarySource.RequestCount, live.RequestCountOk + live.RequestCountFailed);
+                Assert.AreEqual(summarySource.Ok.RequestCount, live.RequestCountOk);
+                Assert.AreEqual(summarySource.Failed.RequestCount, live.RequestCountFailed);
+                Assert.AreEqual(807, live.RequestCountOk);
+                Assert.AreEqual(33, live.RequestCountFailed);
+
+                var browse = summarySource.Steps["Browse products"];
+                var addToCart = summarySource.Steps["Add to cart"];
+                var placeOrder = summarySource.Steps["Place order"];
+                Assert.AreEqual(840, browse.RequestCount);
+                Assert.AreEqual(0, browse.SkippedCount);
+                Assert.AreEqual(834, addToCart.RequestCount);
+                Assert.AreEqual(6, addToCart.SkippedCount);
+                Assert.AreEqual(828, placeOrder.RequestCount);
+                Assert.AreEqual(12, placeOrder.SkippedCount);
+                foreach (var step in summarySource.Steps.Values)
+                    Assert.AreEqual(MeasurementIterationCount, step.RequestCount + step.SkippedCount, step.Name);
+            })
+            .Run();
+    }
+
     /// <summary>
     /// The demo script over a real execution state — the demo scenario, a fake standalone-style
     /// adapter whose token Ctrl+C would cancel, and the fake clock host — plus the state's
@@ -381,6 +460,40 @@ public class LiveViewDemoScriptTests : Test
             await Script.Init();
             await Script.Execute();
             await Script.Cleanup();
+        }
+
+        /// <summary>
+        /// Records one measurement iteration shaped as the step handler leaves it when the first
+        /// step throws — that step Failed with its exception, every later step Skipped, the
+        /// scenario status Failed — as the scenario message handler records it.
+        /// </summary>
+        public void RecordIterationFailingOnFirstStep()
+        {
+            var iterationResult = new IterationResult();
+            iterationResult.ExecuteStartTime = SyntheticLoadSnapshots.BaseTime;
+            iterationResult.ExecuteEndTime = SyntheticLoadSnapshots.BaseTime + TimeSpan.FromMilliseconds(80);
+
+            for (var index = 0; index < LiveViewDemoScript.Steps.Count; index++)
+            {
+                var stepResult = new StepStandardResult();
+                stepResult.Name = LiveViewDemoScript.Steps[index].Name;
+                stepResult.Id = LiveViewDemoScript.Steps[index].Id;
+                if (index == 0)
+                {
+                    stepResult.Status = StepStatus.Failed;
+                    stepResult.Exception = new InvalidOperationException("HTTP 500 Internal Server Error");
+                    stepResult.Duration = TimeSpan.FromMilliseconds(80);
+                }
+                else
+                {
+                    stepResult.Status = StepStatus.Skipped;
+                    stepResult.Duration = TimeSpan.Zero;
+                }
+
+                iterationResult.StepResults.Add(stepResult.Name, stepResult);
+            }
+
+            Collector.RecordMeasurement(TestStatus.Failed, iterationResult);
         }
 
         /// <summary>The state as Ctrl+C leaves it — the same shape the console manager tests pin for the quit key.</summary>
