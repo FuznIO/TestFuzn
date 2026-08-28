@@ -26,8 +26,12 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
     [AssemblyCleanup]
     public static async Task Cleanup(TestContext testContext)
     {
-        Assert.AreEqual(1, ClassLifecycleTests.BeforeClassCallCount, "IBeforeClass.BeforeClass should be called exactly once.");
-        Assert.IsTrue(ClassLifecycleTests.AfterClassCalled, "IAfterClass.AfterClass was not called.");
+        // Only enforced when ClassLifecycleTests ran; filtered runs may exclude it entirely.
+        if (ClassLifecycleTests.BeforeClassCallCount > 0)
+        {
+            Assert.AreEqual(1, ClassLifecycleTests.BeforeClassCallCount, "IBeforeClass.BeforeClass should be called exactly once.");
+            Assert.IsTrue(ClassLifecycleTests.AfterClassCalled, "IAfterClass.AfterClass was not called.");
+        }
 
         await TestFuznIntegration.Cleanup(testContext);
         Assert.IsTrue(AfterSuiteExecuted);
