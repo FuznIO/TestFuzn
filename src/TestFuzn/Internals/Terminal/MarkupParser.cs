@@ -4,19 +4,22 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 
 /// <summary>
 /// Parses the framework's markup syntax ([green]...[/], [bold white on blue]...[/], [[ and ]]
-/// literal-bracket escapes) into styled spans. Color names resolve to the same xterm-256 palette
-/// entries Spectre.Console maps them to, so [green] is dark green (palette 2) and [red] is
-/// bright red (palette 9); tags nest, with [/] restoring the enclosing style. Unlike
-/// Spectre.Console the parser never throws on malformed markup: an unclosed tag styles to the
-/// end of the string, a stray [/] is ignored, a tag with an unknown color or style word renders
-/// as literal text including its brackets, an unterminated bracket is literal text, and a lone ]
-/// is literal text. Stateless and thread-safe.
+/// literal-bracket escapes) into styled spans. The syntax is the markup dialect of the console
+/// library the standalone runner used before this engine (rendered output was verified
+/// byte-for-byte against its 0.50 release): color names resolve to the same xterm-256 palette
+/// entries that library maps them to, so [green] is dark green (palette 2) and [red] is bright
+/// red (palette 9); tags nest, with [/] restoring the enclosing style. Unlike that library the
+/// parser never throws on malformed markup: an unclosed tag styles to the end of the string, a
+/// stray [/] is ignored, a tag with an unknown color or style word renders as literal text
+/// including its brackets, an unterminated bracket is literal text, and a lone ] is literal
+/// text. Stateless and thread-safe.
 /// </summary>
 internal static class MarkupParser
 {
-    // Markup color names with the xterm-256 palette entry (index + canonical RGB) Spectre.Console
-    // resolves them to: the standard 16, a gray spelling alias, and darkgreen (used by the
-    // standalone runner summaries). Unknown names fall through to the literal-text tolerance.
+    // Markup color names with the xterm-256 palette entry (index + canonical RGB) the previous
+    // console library resolves them to: the standard 16, a gray spelling alias, and darkgreen
+    // (used by the standalone runner summaries). Unknown names fall through to the literal-text
+    // tolerance.
     private static readonly Dictionary<string, TerminalColor> NamedColors = new(StringComparer.OrdinalIgnoreCase)
     {
         { "black", TerminalColor.FromPalette(0, 0, 0, 0) },
@@ -215,7 +218,7 @@ internal static class MarkupParser
             return false;
         }
 
-        // A dangling "on" with no color after it is dropped, matching Spectre.Console.
+        // A dangling "on" with no color after it is dropped, matching the previous console library.
         return true;
     }
 
@@ -257,7 +260,7 @@ internal static class MarkupParser
             return true;
         }
 
-        // Recognized no-ops, so [default] and [none] stay valid tags like in Spectre.Console.
+        // Recognized no-ops, so [default] and [none] stay valid tags as in the previous console library.
         if (word.Equals("default", StringComparison.OrdinalIgnoreCase) || word.Equals("none", StringComparison.OrdinalIgnoreCase))
             return true;
 
@@ -281,7 +284,7 @@ internal static class MarkupParser
         if (word[0] != '#')
             return false;
 
-        // #rgb doubles each digit (#f80 is #ff8800), like CSS and Spectre.Console.
+        // #rgb doubles each digit (#f80 is #ff8800), like CSS and the previous console library.
         if (word.Length == 4)
         {
             if (!TryParseHexDigit(word[1], out var red)

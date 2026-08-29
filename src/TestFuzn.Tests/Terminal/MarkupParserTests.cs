@@ -18,7 +18,7 @@ public class MarkupParserTests : Test
                 Assert.AreEqual("Requests per second", spans[0].Text);
                 Assert.IsTrue(spans[0].Style.IsPlain);
             })
-            .Step("A color tag styles its content with the Spectre palette entry", context =>
+            .Step("A color tag styles its content with the xterm palette entry", context =>
             {
                 var spans = MarkupParser.Parse("[green]Passed[/]");
 

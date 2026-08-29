@@ -4,28 +4,29 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 
 /// <summary>
 /// Renders markup or pre-parsed styled spans to a string with embedded SGR sequences for the
-/// given <see cref="ColorMode"/>, matching what Spectre.Console emits for the same markup:
-/// palette colors render as 38;5;N / 48;5;N in <see cref="ColorMode.TrueColor"/> and as the
-/// classic 30-37/90-97 codes (+10 for backgrounds) in <see cref="ColorMode.Colors16"/>, where
-/// palette entries outside the standard 16 and RGB colors downgrade to the closest standard
-/// color; RGB colors render as 38;2;R;G;B / 48;2;R;G;B in true color.
+/// given <see cref="ColorMode"/>, matching what the console library the standalone runner used
+/// before this engine emits for the same markup (verified byte-for-byte against its 0.50
+/// release): palette colors render as 38;5;N / 48;5;N in <see cref="ColorMode.TrueColor"/> and
+/// as the classic 30-37/90-97 codes (+10 for backgrounds) in <see cref="ColorMode.Colors16"/>,
+/// where palette entries outside the standard 16 and RGB colors downgrade to the closest
+/// standard color; RGB colors render as 38;2;R;G;B / 48;2;R;G;B in true color.
 /// <see cref="ColorMode.Monochrome"/> emits decoration SGR (bold, dim, italic, underline,
-/// reverse, strikethrough) but drops foreground/background colors, matching Spectre.Console's
+/// reverse, strikethrough) but drops foreground/background colors, matching that library's
 /// NoColors color system on an ANSI terminal; <see cref="ColorMode.None"/> renders plain text
 /// with no escape codes at all. Every styled span is closed with <see cref="AnsiCodes.Reset"/>,
 /// and styling never spans a line break: when a styled span's text contains line breaks
 /// (\r\n, \n or a lone \r) the style is closed before each break and reopened after it, with
 /// the break characters preserved verbatim, so every physical line is independently
 /// style-complete and the rows <see cref="FrameBuffer.AddLine"/> splits rendered text into
-/// carry their own styling. (Spectre.Console closes styles around \n the same way, but it also
-/// normalizes \r\n to \n — TextWriter behavior, not styling, and not copied here — and leaves
-/// a lone \r inside the styled run.) Stateless and thread-safe.
+/// carry their own styling. (The previous library closes styles around \n the same way, but it
+/// also normalizes \r\n to \n — TextWriter behavior, not styling, and not copied here — and
+/// leaves a lone \r inside the styled run.) Stateless and thread-safe.
 /// </summary>
 internal static class MarkupRenderer
 {
     // The standard 16-color palette (xterm indices 0-15) used to downgrade other colors in
-    // Colors16 mode. RGB values match Spectre.Console's palette so downgrades pick the same
-    // standard color it would.
+    // Colors16 mode. RGB values match the previous console library's palette so downgrades pick
+    // the same standard color it would.
     private static readonly (byte Red, byte Green, byte Blue)[] StandardPalette =
     {
         (0, 0, 0),        // 0 black
@@ -203,8 +204,9 @@ internal static class MarkupRenderer
         return (byte)closestIndex;
     }
 
-    // The low-cost weighted RGB distance Spectre.Console uses (https://stackoverflow.com/a/9085524),
-    // kept identical (square root omitted; comparisons only) so downgrades pick the same color.
+    // The low-cost weighted RGB distance ("redmean", https://stackoverflow.com/a/9085524) the
+    // previous console library uses, kept identical (square root omitted; comparisons only) so
+    // downgrades pick the same color.
     private static int ColorDistance(byte firstRed, byte firstGreen, byte firstBlue, byte secondRed, byte secondGreen, byte secondBlue)
     {
         var redMean = (firstRed + secondRed) / 2.0;

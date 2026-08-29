@@ -6,9 +6,10 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 public class MarkupRendererTests : Test
 {
     // Per color name: the 16-color foreground SGR code and the xterm palette index, both
-    // captured from Spectre.Console 0.50 rendering the same markup. Names map to Spectre's
-    // palette, NOT to ConsoleColor: green is dark (32, palette 2) while red is bright
-    // (91, palette 9). Backgrounds are the foreground code + 10 and 48;5;N respectively.
+    // captured from the console library the standalone runner used before the engine (its 0.50
+    // release) rendering the same markup. Names map to that library's xterm palette, NOT to
+    // ConsoleColor: green is dark (32, palette 2) while red is bright (91, palette 9).
+    // Backgrounds are the foreground code + 10 and 48;5;N respectively.
     private static readonly Dictionary<string, (int Colors16Code, int PaletteIndex)> ExpectedNameCodes = new()
     {
         { "black", (30, 0) },
@@ -30,10 +31,10 @@ public class MarkupRendererTests : Test
     };
 
     [Test]
-    public async Task Verify_color_names_render_spectre_palette_codes()
+    public async Task Verify_color_names_render_xterm_palette_codes()
     {
         await Scenario()
-            .Step("Foregrounds in 16-color mode use Spectre's palette codes", context =>
+            .Step("Foregrounds in 16-color mode use the xterm palette codes", context =>
             {
                 Assert.HasCount(16, ExpectedNameCodes);
 
@@ -79,7 +80,7 @@ public class MarkupRendererTests : Test
                 Assert.AreEqual("\u001b[38;5;22mx\u001b[0m", MarkupRenderer.Render("[darkgreen]x[/]", ColorMode.TrueColor));
                 Assert.AreEqual("\u001b[48;5;22mx\u001b[0m", MarkupRenderer.Render("[on darkgreen]x[/]", ColorMode.TrueColor));
             })
-            .Step("16-color mode downgrades darkgreen to green like Spectre does", context =>
+            .Step("16-color mode downgrades darkgreen to green like the previous console library does", context =>
             {
                 Assert.AreEqual("\u001b[32mx\u001b[0m", MarkupRenderer.Render("[darkgreen]x[/]", ColorMode.Colors16));
                 Assert.AreEqual("\u001b[42mx\u001b[0m", MarkupRenderer.Render("[on darkgreen]x[/]", ColorMode.Colors16));
@@ -122,7 +123,7 @@ public class MarkupRendererTests : Test
                 Assert.AreEqual("\u001b[1;4mx\u001b[0m", MarkupRenderer.Render("[u bold]x[/]", ColorMode.Colors16));
                 Assert.AreEqual("\u001b[7;9mx\u001b[0m", MarkupRenderer.Render("[s reverse]x[/]", ColorMode.Colors16));
             })
-            .Step("default and none are valid no-op words like in Spectre", context =>
+            .Step("default and none are valid no-op words as in the previous console library", context =>
             {
                 Assert.AreEqual("x", MarkupRenderer.Render("[default]x[/]", ColorMode.Colors16));
                 Assert.AreEqual("x", MarkupRenderer.Render("[none]x[/]", ColorMode.TrueColor));
@@ -131,10 +132,10 @@ public class MarkupRendererTests : Test
     }
 
     [Test]
-    public async Task Verify_repo_markup_matches_spectre_output()
+    public async Task Verify_repo_markup_matches_previous_library_output()
     {
-        // Expected strings are byte-for-byte what Spectre.Console 0.50 emits for the same markup
-        // with ANSI forced, in TrueColor and Standard color systems respectively.
+        // Expected strings are byte-for-byte what the previous console library (0.50) emits for
+        // the same markup with ANSI forced, in its TrueColor and Standard color systems respectively.
         await Scenario()
             .Step("Panel headers with decoration, foreground and background", context =>
             {
@@ -163,7 +164,7 @@ public class MarkupRendererTests : Test
     }
 
     [Test]
-    public async Task Verify_nested_markup_matches_spectre_output()
+    public async Task Verify_nested_markup_matches_previous_library_output()
     {
         await Scenario()
             .Step("An inner color temporarily overrides the outer color", context =>
@@ -199,9 +200,9 @@ public class MarkupRendererTests : Test
             })
             .Step("A lone carriage return is a break too, so FrameBuffer rows stay style-complete", context =>
             {
-                // Deliberate divergence from Spectre, which leaves a lone \r inside the styled
-                // run: FrameBuffer.AddLine splits on \r as well, so the renderer must close the
-                // style around it for every stored row to carry its own styling.
+                // Deliberate divergence from the previous console library, which leaves a lone \r
+                // inside the styled run: FrameBuffer.AddLine splits on \r as well, so the renderer
+                // must close the style around it for every stored row to carry its own styling.
                 Assert.AreEqual(
                     "\u001b[32ma\u001b[0m\r\u001b[32mb\u001b[0m",
                     MarkupRenderer.Render("[green]a\rb[/]", ColorMode.Colors16));
@@ -280,7 +281,7 @@ public class MarkupRendererTests : Test
             {
                 Assert.AreEqual("\u001b[38;2;255;136;0mx\u001b[0m", MarkupRenderer.Render("[#f80]x[/]", ColorMode.TrueColor));
             })
-            .Step("16-color mode downgrades hex to the closest standard color like Spectre does", context =>
+            .Step("16-color mode downgrades hex to the closest standard color like the previous console library does", context =>
             {
                 Assert.AreEqual("\u001b[33mx\u001b[0m", MarkupRenderer.Render("[#ff8800]x[/]", ColorMode.Colors16));
                 Assert.AreEqual("\u001b[32mx\u001b[0m", MarkupRenderer.Render("[#005f00]x[/]", ColorMode.Colors16));
