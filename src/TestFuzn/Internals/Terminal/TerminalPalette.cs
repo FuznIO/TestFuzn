@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Fuzn.TestFuzn.Internals.Terminal;
 
 /// <summary>
@@ -11,9 +13,10 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// <see cref="StateStyle"/> — Ok to <see cref="OkStyle"/>, Warning to <see cref="WarningStyle"/>,
 /// Critical to <see cref="FailedStyle"/>, Neutral to no style at all (the default foreground) —
 /// so a tile in the critical state is the same red as a failed request row. Every constant is
-/// markup tag words for the [style]...[/] dialect; the logo endpoints, which the logo
-/// interpolates per column, are also carried as <see cref="TerminalColor"/> values parsed from
-/// the same hex strings, so retheming them is still one edit.
+/// markup tag words for the [style]...[/] dialect; the logo endpoints are also carried as
+/// <see cref="TerminalColor"/> values parsed from the same hex strings, and
+/// <see cref="LogoGradientColor"/> / <see cref="LogoGradientStyle"/> interpolate between them —
+/// the logo per banner column, the timeline per bar column — so retheming them is still one edit.
 /// </summary>
 internal static class TerminalPalette
 {
@@ -95,6 +98,42 @@ internal static class TerminalPalette
             case StatTileState.Critical: return FailedStyle;
             default: throw new ArgumentOutOfRangeException(nameof(state), state, "Unknown stat tile state.");
         }
+    }
+
+    /// <summary>
+    /// The logo gradient's colour at <paramref name="position"/> along it — <see cref="LogoGradientStart"/>
+    /// at 0, <see cref="LogoGradientEnd"/> at 1, every channel interpolated linearly and rounded
+    /// half away from zero, the way the logo colours its banner columns. A position outside 0..1
+    /// clamps to the nearer end, and NaN reads as 0.
+    /// </summary>
+    public static TerminalColor LogoGradientColor(double position)
+    {
+        if (double.IsNaN(position) || position < 0)
+            position = 0;
+        else if (position > 1)
+            position = 1;
+
+        return TerminalColor.FromRgb(
+            InterpolateChannel(LogoGradientStart.Red, LogoGradientEnd.Red, position),
+            InterpolateChannel(LogoGradientStart.Green, LogoGradientEnd.Green, position),
+            InterpolateChannel(LogoGradientStart.Blue, LogoGradientEnd.Blue, position));
+    }
+
+    /// <summary>
+    /// <see cref="LogoGradientColor"/> as markup tag words ("#FF9636"), for the widgets that
+    /// render through markup rather than composing escapes.
+    /// </summary>
+    public static string LogoGradientStyle(double position)
+    {
+        var color = LogoGradientColor(position);
+        return "#" + color.Red.ToString("X2", CultureInfo.InvariantCulture)
+            + color.Green.ToString("X2", CultureInfo.InvariantCulture)
+            + color.Blue.ToString("X2", CultureInfo.InvariantCulture);
+    }
+
+    private static byte InterpolateChannel(byte start, byte end, double position)
+    {
+        return (byte)Math.Round(start + ((end - start) * position), MidpointRounding.AwayFromZero);
     }
 
     // "#RRGGBB" to its colour; the palette's own hex constants are the only input.

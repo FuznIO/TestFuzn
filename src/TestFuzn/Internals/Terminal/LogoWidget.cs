@@ -41,10 +41,9 @@ internal static class LogoWidget
     /// <summary>Row count of the compact variant.</summary>
     public const int CompactHeight = 1;
 
-    // Warm gradient endpoints (omarchy-style): deep orange at the banner's left edge sweeping
-    // to warm amber at the right. Retheme the logo in TerminalPalette.
+    // The warm gradient's left edge (omarchy-style deep orange), the compact ⚡'s colour; the
+    // banner sweeps from it to the palette's warm amber. Retheme the logo in TerminalPalette.
     private static readonly TerminalColor GradientStart = TerminalPalette.LogoGradientStart;
-    private static readonly TerminalColor GradientEnd = TerminalPalette.LogoGradientEnd;
 
     // The single warm accent for Colors16 mode: bright yellow (SGR 93).
     private static readonly string Colors16Accent = AnsiCodes.Foreground(ConsoleColor.Yellow);
@@ -116,9 +115,9 @@ internal static class LogoWidget
         }
     }
 
-    // Colors one art row for TrueColor: every glyph takes the foreground interpolated for its
-    // column, emitted per character (the logo renders once per frame and unchanged rows cost
-    // nothing in the frame diff), while space runs stay bare to keep the bytes down.
+    // Colors one art row for TrueColor: every glyph takes the foreground the palette interpolates
+    // for its column, emitted per character (the logo renders once per frame and unchanged rows
+    // cost nothing in the frame diff), while space runs stay bare to keep the bytes down.
     private static string RenderGradientRow(string artRow)
     {
         var row = new StringBuilder(artRow.Length * 20);
@@ -131,20 +130,12 @@ internal static class LogoWidget
                 continue;
             }
 
-            var position = (double)column / (BannerWidth - 1);
-            row.Append(AnsiCodes.ForegroundTrueColor(
-                InterpolateChannel(GradientStart.Red, GradientEnd.Red, position),
-                InterpolateChannel(GradientStart.Green, GradientEnd.Green, position),
-                InterpolateChannel(GradientStart.Blue, GradientEnd.Blue, position)));
+            var color = TerminalPalette.LogoGradientColor((double)column / (BannerWidth - 1));
+            row.Append(AnsiCodes.ForegroundTrueColor(color.Red, color.Green, color.Blue));
             row.Append(glyph);
         }
 
         return row.Append(AnsiCodes.Reset).ToString();
-    }
-
-    private static byte InterpolateChannel(byte start, byte end, double position)
-    {
-        return (byte)Math.Round(start + ((end - start) * position), MidpointRounding.AwayFromZero);
     }
 
     private static RenderedLine RenderCompact(ColorMode colorMode)
