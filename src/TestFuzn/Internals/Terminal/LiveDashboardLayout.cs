@@ -41,17 +41,20 @@ internal static class LiveDashboardLayout
     public const int MinimumWidthForSparklines = 60;
 
     // The dashboard's palette as markup style constants, so retheming is a one-place edit. The
-    // warm accents stay inside the logo gradient family (#FF5C00 → #FFCF6B).
-    private const string PanelHeaderStyle = "bold #ff9d3d";
+    // warm accents stay inside the logo gradient family (#FF5C00 → #FFCF6B). The panel header,
+    // ok, failed and secondary styles are shared with the final summary
+    // (<see cref="LoadSummaryLayout"/>), so the summary in the scrollback reads as the
+    // dashboard's sibling.
+    internal const string PanelHeaderStyle = "bold #ff9d3d";
     private const string ProgressBarStyle = "#ff9d3d";
     private const string RequestsSparklineStyle = "#ff9d3d";
     private const string ResponseTimeSparklineStyle = "#ffcf6b";
     private const string PhaseStyle = "#ffcf6b";
-    private const string OkStyle = "green";
-    private const string FailedStyle = "red";
+    internal const string OkStyle = "green";
+    internal const string FailedStyle = "red";
     private const string RunningStyle = "yellow";
-    private const string WarningStyle = "yellow";
-    private const string SecondaryStyle = "dim";
+    internal const string WarningStyle = "yellow";
+    internal const string SecondaryStyle = "dim";
 
     // What every place with no number to show renders: a value that is absent (no sample yet)
     // or not finite.

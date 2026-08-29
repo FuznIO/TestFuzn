@@ -140,7 +140,7 @@ public class LiveViewDemoTests : Test
                 Assert.AreEqual(At(7.25), harness.Host.UtcNow);
                 Assert.IsEmpty(harness.MarkupEvents());
             })
-            .Step("The runner core maps the stopped demo to exit code 1", async context =>
+            .Step("The runner core maps the stopped demo to exit code 1 and writes the single stopped line after the restore, in place of a trace", async context =>
             {
                 var harness = new Harness(supportsLiveView: true);
                 harness.PressQuitKeyAt(At(6));
@@ -148,7 +148,7 @@ public class LiveViewDemoTests : Test
                 var exitCode = await harness.RunDemoThroughRunnerCore();
 
                 Assert.AreEqual(1, exitCode);
-                harness.AssertEnteredAndRestoredOnce();
+                harness.AssertEnteredAndRestoredOnceThenStoppedLine();
                 harness.AssertSummaryFollowsRestore();
                 Assert.AreEqual(0, harness.Host.PendingWaiterCount);
             })
@@ -282,6 +282,21 @@ public class LiveViewDemoTests : Test
             Assert.AreEqual(1, Writer.Writes.Count(write => write == EnterSequence));
             Assert.AreEqual(1, Writer.Writes.Count(write => write == RestoreSequence));
             Assert.AreEqual(RestoreSequence, Writer.Writes[Writer.Writes.Count - 1]);
+        }
+
+        /// <summary>
+        /// As <see cref="AssertEnteredAndRestoredOnce"/>, except that the runner core's stopped
+        /// line — plain, since the harness host renders without color — is the one write after
+        /// the restore: the stop is reported as a line, not traced.
+        /// </summary>
+        public void AssertEnteredAndRestoredOnceThenStoppedLine()
+        {
+            AssertBannerFirst();
+            Assert.AreEqual(EnterSequence, Writer.Writes[StartupBanner.Height]);
+            Assert.AreEqual(1, Writer.Writes.Count(write => write == EnterSequence));
+            Assert.AreEqual(1, Writer.Writes.Count(write => write == RestoreSequence));
+            Assert.AreEqual(RestoreSequence, Writer.Writes[Writer.Writes.Count - 2]);
+            Assert.AreEqual(StandaloneRunnerCore.RunStoppedMessage + Environment.NewLine, Writer.Writes[Writer.Writes.Count - 1]);
         }
 
         /// <summary>The summary was written exactly once, after the terminal was restored.</summary>

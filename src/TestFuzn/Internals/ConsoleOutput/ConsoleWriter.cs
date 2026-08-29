@@ -11,7 +11,6 @@ namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 internal class ConsoleWriter
 {
     private TestExecutionState _testExecutionState = null!;
-    private CursorPosition? _cursorPosition;
 
     public void WriteSummary(TestExecutionState testExecutionState)
     {
@@ -201,9 +200,9 @@ internal class ConsoleWriter
     {
         var testFramework = _testExecutionState.TestFramework;
 
-        if (_cursorPosition == null)
-            _cursorPosition = testFramework.GetCursorPosition();
-
+        // The standalone adapter renders the whole summary itself from the collectors' results;
+        // the terminal is never queried for anything (no cursor position — a terminal that does
+        // not answer such a query would stall the summary).
         if (testFramework.SupportsRealTimeConsoleOutput)
         {
             var loadtestResults = new Dictionary<Scenario, ScenarioLoadResult>();
@@ -223,9 +222,18 @@ internal class ConsoleWriter
         if (_testExecutionState.IsConsumingCompleted || _testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
         {
             if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
-                testFramework.WriteMarkup($"[red]Status: Stopped, reason: {_testExecutionState.ExecutionStoppedReason.Message}[/]\r\n");
+            {
+                // A run stopped without a reason — Ctrl+C, the quit key — has no message to show.
+                var stoppedReason = _testExecutionState.ExecutionStoppedReason;
+                if (stoppedReason == null)
+                    testFramework.WriteMarkup("[red]Status: Stopped[/]\r\n");
+                else
+                    testFramework.WriteMarkup($"[red]Status: Stopped, reason: {stoppedReason.Message}[/]\r\n");
+            }
             else
+            {
                 testFramework.WriteMarkup("[green]Status: Completed successfully.[/]\r\n");
+            }
         }
 
         foreach (var scenario in _testExecutionState.Scenarios)

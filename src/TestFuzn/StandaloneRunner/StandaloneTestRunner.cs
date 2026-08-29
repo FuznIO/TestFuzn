@@ -1,7 +1,6 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals;
 using Fuzn.TestFuzn.Internals.Terminal;
-using Spectre.Console;
 
 namespace Fuzn.TestFuzn.StandaloneRunner;
 
@@ -63,17 +62,12 @@ internal class StandaloneTestRunner
 
         WriteStartupBanner(testInfo);
 
+        // A class that could not be instantiated is caught here too: the instance is then not
+        // an ITest either.
         var testClassInstance = Activator.CreateInstance(testInfo.Class);
         var iTestClassInstance = testClassInstance as ITest;
         if (iTestClassInstance == null)
             throw new Exception($"Test class '{testInfo.Class.Name}' must implement {nameof(ITest)} interface.");
-
-        if (testClassInstance == null)
-        {
-            AnsiConsole.Write(new Markup($"[red]Could not create instance of test class '{testInfo.Class.Name}'.[/]"));
-            AnsiConsole.WriteLine();
-            return;
-        }
 
         var testSession = new TestSession("default");
         TestSession.Default = testSession;

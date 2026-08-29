@@ -18,7 +18,9 @@ namespace Fuzn.TestFuzn.Tests.StandaloneRunner;
 /// menu has restored the terminal (or after the prompt fallback's lines), never for a name
 /// that names no test. The banner runs here name a class that is not a test class, so the run
 /// fails right after the banner with exit 1 — before the process-wide default session, which
-/// the suite's own tests resolve in parallel, is touched.
+/// the suite's own tests resolve in parallel, is touched — and that failure is written through
+/// the same host after the banner: the exception's headline and its frames, plain on every
+/// output the tests use.
 /// </summary>
 [TestClass]
 public class StandaloneRunnerCoreTests : Test
@@ -35,6 +37,10 @@ public class StandaloneRunnerCoreTests : Test
     private static readonly string BannerLogoWrite = "⚡ TestFuzn" + Environment.NewLine;
     private static readonly string BannerTitleWrite = StandaloneTestRunner.RunningTestLabel + " " + FakeTestName + Environment.NewLine;
     private const string BannerDetailStart = "Assembly: Fuzn.TestFuzn.Tests · Target environment: ";
+
+    // The rejection the fake test's class earns right after the banner, as the exception
+    // renderer heads it; its frames follow, one write each.
+    private static readonly string RejectionHeadlineWrite = "Exception: Test class 'NotATestClass' must implement ITest interface." + Environment.NewLine;
 
     private static FakeLiveViewHost LiveHost()
     {
@@ -54,15 +60,30 @@ public class StandaloneRunnerCoreTests : Test
         return new StandaloneRunnerCore(host, new FakeDiscoverTests(FakeTestName));
     }
 
-    /// <summary>The three banner writes are the last writes, plain, with nothing after them.</summary>
-    private static void AssertBannerIsLastWrites(FakeTerminalWriter writer)
+    /// <summary>
+    /// The three banner writes are at the given position, plain, followed by the run's failure
+    /// — the rejection's headline, then at least one stack frame, each a plain line — and
+    /// nothing else. Returns the index of the headline.
+    /// </summary>
+    private static int AssertBannerThenRejection(FakeTerminalWriter writer, int bannerStart)
     {
-        Assert.IsGreaterThanOrEqualTo(StartupBanner.Height, writer.Writes.Count);
-        var bannerStart = writer.Writes.Count - StartupBanner.Height;
+        Assert.IsGreaterThan(bannerStart + StartupBanner.Height, writer.Writes.Count);
         Assert.AreEqual(BannerLogoWrite, writer.Writes[bannerStart]);
         Assert.AreEqual(BannerTitleWrite, writer.Writes[bannerStart + 1]);
         Assert.StartsWith(BannerDetailStart, writer.Writes[bannerStart + 2]);
         Assert.EndsWith(Environment.NewLine, writer.Writes[bannerStart + 2]);
+
+        var headline = bannerStart + StartupBanner.Height;
+        Assert.AreEqual(RejectionHeadlineWrite, writer.Writes[headline]);
+        Assert.IsGreaterThan(headline + 1, writer.Writes.Count);
+        Assert.StartsWith("   at ", writer.Writes[headline + 1]);
+        for (var index = headline; index < writer.Writes.Count; index++)
+        {
+            Assert.EndsWith(Environment.NewLine, writer.Writes[index]);
+            Assert.DoesNotContain(AnsiCodes.Escape, writer.Writes[index]);
+        }
+
+        return headline;
     }
 
     [Test]
@@ -115,7 +136,7 @@ public class StandaloneRunnerCoreTests : Test
     public async Task Verify_the_startup_banner_is_written_once_the_test_is_resolved_on_both_paths()
     {
         await Scenario()
-            .Step("Direct run: the banner is the only terminal output before the run starts — no alternate screen, no reader, no size read — and the run then fails on its test class with exit 1", async context =>
+            .Step("Direct run: the banner is the only terminal output before the run starts — no alternate screen, no reader, no size read — and the run then fails on its test class with exit 1, the failure written after the banner", async context =>
             {
                 var host = LiveHost();
                 var events = new List<string>();
@@ -124,17 +145,17 @@ public class StandaloneRunnerCoreTests : Test
                 var exitCode = await CoreOverFakeTest(host).Run<FakeStartup>(typeof(StandaloneRunnerCoreTests).Assembly, new[] { "run", "--test-name=" + FakeTestName }, () => new FakeTestFrameworkAdapter(events));
 
                 Assert.AreEqual(1, exitCode);
-                Assert.HasCount(StartupBanner.Height, host.Writer.Writes);
-                AssertBannerIsLastWrites(host.Writer);
+                AssertBannerThenRejection(host.Writer, 0);
                 Assert.DoesNotContain(EnterSequence, host.Writer.Writes);
                 Assert.IsEmpty(events);
                 Assert.AreSame(defaultSessionBefore, TestSession.Default);
-                Assert.AreEqual(1, host.DetectCapabilitiesCallCount);
+                // Once for the banner, once for the failure.
+                Assert.AreEqual(2, host.DetectCapabilitiesCallCount);
                 Assert.AreEqual(0, host.CreateTerminalReaderCallCount);
                 Assert.AreEqual(0, host.Writer.WindowWidthReadCount);
                 Assert.AreEqual(0, host.Writer.WindowHeightReadCount);
             })
-            .Step("Menu pick: the menu's restore sequence precedes the banner, which lands on the normal screen buffer as the last writes", async context =>
+            .Step("Menu pick: the menu's restore sequence precedes the banner, which lands on the normal screen buffer, the failure after it", async context =>
             {
                 var host = LiveHost();
                 host.OnDelay = tick => host.Reader.Press(ConsoleKey.Enter);
@@ -146,8 +167,8 @@ public class StandaloneRunnerCoreTests : Test
                 Assert.IsEmpty(events);
                 Assert.AreEqual(EnterSequence, host.Writer.Writes[0]);
                 Assert.AreEqual(1, host.Writer.Writes.Count(write => write == RestoreSequence));
-                Assert.AreEqual(host.Writer.Writes.Count - StartupBanner.Height - 1, host.Writer.Writes.ToList().IndexOf(RestoreSequence));
-                AssertBannerIsLastWrites(host.Writer);
+                var restore = host.Writer.Writes.ToList().IndexOf(RestoreSequence);
+                AssertBannerThenRejection(host.Writer, restore + 1);
                 // The menu's reader is the only one; the banner creates none.
                 Assert.AreEqual(1, host.CreateTerminalReaderCallCount);
             })
@@ -161,8 +182,10 @@ public class StandaloneRunnerCoreTests : Test
 
                 Assert.AreEqual(1, exitCode);
                 Assert.IsEmpty(events);
-                Assert.AreEqual(TestSelectionMenu.Prompt + Environment.NewLine, host.Writer.Writes[host.Writer.Writes.Count - StartupBanner.Height - 1]);
-                AssertBannerIsLastWrites(host.Writer);
+                var bannerStart = host.Writer.Writes.ToList().IndexOf(BannerLogoWrite);
+                Assert.IsGreaterThan(0, bannerStart);
+                Assert.AreEqual(TestSelectionMenu.Prompt + Environment.NewLine, host.Writer.Writes[bannerStart - 1]);
+                AssertBannerThenRejection(host.Writer, bannerStart);
                 foreach (var write in host.Writer.Writes)
                     Assert.DoesNotContain(AnsiCodes.Escape, write);
 
@@ -170,7 +193,7 @@ public class StandaloneRunnerCoreTests : Test
                 Assert.AreEqual(0, host.Writer.WindowWidthReadCount);
                 Assert.AreEqual(0, host.Writer.WindowHeightReadCount);
             })
-            .Step("Direct run on a redirected terminal: the plain banner with no escape byte, no reader, no size read", async context =>
+            .Step("Direct run on a redirected terminal: the plain banner and the plain failure with no escape byte, no reader, no size read", async context =>
             {
                 var host = RedirectedHost();
                 var events = new List<string>();
@@ -178,8 +201,7 @@ public class StandaloneRunnerCoreTests : Test
                 var exitCode = await CoreOverFakeTest(host).Run<FakeStartup>(typeof(StandaloneRunnerCoreTests).Assembly, new[] { "run", "--test-name=" + FakeTestName }, () => new FakeTestFrameworkAdapter(events));
 
                 Assert.AreEqual(1, exitCode);
-                Assert.HasCount(StartupBanner.Height, host.Writer.Writes);
-                AssertBannerIsLastWrites(host.Writer);
+                AssertBannerThenRejection(host.Writer, 0);
                 foreach (var write in host.Writer.Writes)
                     Assert.DoesNotContain(AnsiCodes.Escape, write);
 

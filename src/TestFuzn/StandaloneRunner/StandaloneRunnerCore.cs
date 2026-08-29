@@ -1,6 +1,5 @@
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals.Terminal;
-using Spectre.Console;
 using System.Reflection;
 using System.Text;
 
@@ -17,6 +16,19 @@ internal class StandaloneRunnerCore
     /// <summary>The invocation error for a <c>--test-name</c> given without a value — bare, or with a space instead of <c>=</c>.</summary>
     internal const string TestNameUsage = "--test-name requires a value: --test-name=<FullyQualifiedName>";
 
+    /// <summary>The line written when the test asked to be skipped; exit code 0.</summary>
+    internal const string TestSkippedMessage = "Test skipped.";
+
+    /// <summary>
+    /// The line written, in place of an exception trace, when a run ended because it was
+    /// stopped — the cancellation the test runner reports after a Ctrl+C or the quit key, once
+    /// cleanup and the summary are done; exit code 1, as for any run that did not complete.
+    /// </summary>
+    internal const string RunStoppedMessage = "Run stopped (OperationCanceledException): the run was cancelled by Ctrl+C or the quit key before it completed.";
+
+    private const string TestSkippedMarkup = "[" + LiveDashboardLayout.WarningStyle + "]" + TestSkippedMessage + "[/]";
+    private const string RunStoppedMarkup = "[" + LiveDashboardLayout.WarningStyle + "]" + RunStoppedMessage + "[/]";
+
     private readonly ILiveViewHost _liveViewHost;
     private readonly DiscoverTests _discoverTests;
 
@@ -25,13 +37,13 @@ internal class StandaloneRunnerCore
     {
     }
 
-    /// <param name="liveViewHost">The host the test selection menu, the startup banner and the live view demo run over: the real console and clock in production, a fake in tests.</param>
+    /// <param name="liveViewHost">The host the test selection menu, the startup banner, the live view demo and a failed run's exception run over: the real console and clock in production, a fake in tests.</param>
     internal StandaloneRunnerCore(ILiveViewHost liveViewHost)
         : this(liveViewHost, new DiscoverTests())
     {
     }
 
-    /// <param name="liveViewHost">The host the test selection menu, the startup banner and the live view demo run over: the real console and clock in production, a fake in tests.</param>
+    /// <param name="liveViewHost">The host the test selection menu, the startup banner, the live view demo and a failed run's exception run over: the real console and clock in production, a fake in tests.</param>
     /// <param name="discoverTests">The discovery of the assembly's tests: reflection in production, hand-made tests in unit tests.</param>
     internal StandaloneRunnerCore(ILiveViewHost liveViewHost, DiscoverTests discoverTests)
     {
@@ -100,10 +112,13 @@ internal class StandaloneRunnerCore
 
     /// <summary>
     /// Runs the given work over a fresh framework adapter and turns its outcome into the process
-    /// exit code: 0 when it completes or the test is skipped, 1 when it throws — the exception
-    /// printed. The adapter is disposed afterwards.
+    /// exit code: 0 when it completes or the test is skipped (the skip written through the
+    /// adapter), 1 when it throws — the exception written through the host's terminal by
+    /// <see cref="ExceptionRenderer"/>, or, for the cancellation a stopped run reports, as the
+    /// single <see cref="RunStoppedMessage"/> line: a stop is not a failure to trace. The
+    /// adapter is disposed afterwards.
     /// </summary>
-    private static async Task<int> RunWithAdapter(Func<ITestFrameworkAdapter> testFrameworkInstanceCreator, Func<ITestFrameworkAdapter, Task> run)
+    private async Task<int> RunWithAdapter(Func<ITestFrameworkAdapter> testFrameworkInstanceCreator, Func<ITestFrameworkAdapter, Task> run)
     {
         var adapter = testFrameworkInstanceCreator();
         try
@@ -113,12 +128,12 @@ internal class StandaloneRunnerCore
         }
         catch (Exception ex) when (IsScenarioRunModeIgnore(ex))
         {
-            AnsiConsole.MarkupLine("[yellow]Test skipped.[/]");
+            adapter.WriteMarkup(TestSkippedMarkup);
             return 0;
         }
         catch (Exception ex)
         {
-            AnsiConsole.WriteException(ex);
+            WriteRunFailure(ex);
             return 1;
         }
         finally
@@ -126,6 +141,43 @@ internal class StandaloneRunnerCore
             if (adapter is IDisposable disposable)
                 disposable.Dispose();
         }
+    }
+
+    // The failure goes to the normal screen buffer through the host's terminal — the live view
+    // has been left by now — styled on an ANSI terminal, plain with no escape byte otherwise,
+    // and never truncated: the trace is what the reader copies from the scrollback. The
+    // terminal's size is never read and no key reader is created, so a redirected output is fine.
+    private void WriteRunFailure(Exception exception)
+    {
+        var capabilities = _liveViewHost.DetectCapabilities();
+
+        var terminalWriter = _liveViewHost.CreateTerminalWriter();
+        if (terminalWriter == null)
+            throw new InvalidOperationException("The live view host returned no terminal writer.");
+
+        if (IsRunCancellation(exception))
+        {
+            terminalWriter.Write(MarkupText.RenderTruncated(RunStoppedMarkup, int.MaxValue, capabilities.ColorMode).Text + Environment.NewLine);
+            return;
+        }
+
+        ExceptionRenderer.Write(terminalWriter, exception, capabilities.ColorMode);
+    }
+
+    /// <summary>
+    /// Whether the exception is the cancellation a stopped run reports: exactly an
+    /// <see cref="OperationCanceledException"/> — the test runner and the demo throw the base
+    /// type once cleanup and the summary are done — carrying a cancelled token. A derived
+    /// cancellation from inside a test (an HTTP timeout's <see cref="TaskCanceledException"/>,
+    /// say) is a failure of the run and gets the full trace.
+    /// </summary>
+    internal static bool IsRunCancellation(Exception exception)
+    {
+        if (exception == null)
+            throw new ArgumentNullException(nameof(exception), "Exception cannot be null.");
+
+        return exception.GetType() == typeof(OperationCanceledException)
+            && ((OperationCanceledException)exception).CancellationToken.IsCancellationRequested;
     }
 
     /// <summary>

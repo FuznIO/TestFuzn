@@ -40,12 +40,6 @@ internal sealed class FakeTestFrameworkAdapter : ITestFrameworkAdapter
 
     public CancellationToken CancellationToken => _cancellation.Token;
 
-    public ConsoleColor ForegroundColor { get; set; }
-
-    public ConsoleColor BackgroundColor { get; set; }
-
-    public int WindowWidth => 80;
-
     public string TestResultsDirectory => Path.GetTempPath();
 
     /// <summary>What Ctrl+C does on the standalone adapter.</summary>
@@ -57,15 +51,6 @@ internal sealed class FakeTestFrameworkAdapter : ITestFrameworkAdapter
     public Task ExecuteTestMethod(ITest test, MethodInfo methodInfo)
     {
         return Task.CompletedTask;
-    }
-
-    public CursorPosition GetCursorPosition()
-    {
-        return new CursorPosition(0, 0);
-    }
-
-    public void SetCursorPosition(int left, int top)
-    {
     }
 
     public void Write(string message, params object?[] args)

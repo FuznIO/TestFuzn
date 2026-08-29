@@ -334,17 +334,21 @@ public class MarkupParserTests : Test
     [Test]
     public async Task Verify_strip_markup_matches_markup_helper_for_repo_constant_strings()
     {
-        // The CONSTANT markup strings the framework writes today (ConsoleWriter, the former
-        // Spectre LiveLoadTestDisplay, BaseStandaloneRunnerAdapter, StandaloneTestRunner,
-        // TestSelectionMenu, StandaloneRunnerCore, HttpPlugin), with bracket-free representative
-        // values for the interpolated parts. The MSTest adapter keeps stripping through
-        // MarkupHelper, so both strip paths must agree on these. Interpolated templates whose
-        // values carry brackets diverge deliberately — pinned in
+        // The CONSTANT markup strings the framework writes through ITestFrameworkAdapter.WriteMarkup
+        // today — ConsoleWriter's MSTest-path summary lines, ConsoleManager's live view failure,
+        // StandaloneRunnerCore's skip and invocation-error lines, HttpPlugin's captured request —
+        // and the TestSelectionMenu's prompt-fallback lines, with bracket-free representative
+        // values for the interpolated parts. The MSTest adapter strips through MarkupHelper (and
+        // its own regex), so both strip paths must agree on these; the standalone summary's own
+        // markup is rendered by the engine and never reaches a strip path. Interpolated templates
+        // whose values carry brackets diverge deliberately — pinned in
         // Verify_strip_markup_preserves_bracketed_data_unlike_markup_helper below.
         var repoMarkupStrings = new List<string>
         {
             "[red]HTTP Plugin: Latest HTTP request captured during failed step[/]",
-            "[bold]Total elapsed Time:[/] [yellow]00:00:05[/]",
+            "[grey]GET https://localhost:7058/products HTTP/1.1[/]",
+            "[bold]Total elapsed Time:[/] [yellow]00:00:05:00[/]",
+            "[red]Status: Stopped[/]\r\n",
             "[red]Status: Stopped, reason: Assert failed[/]\r\n",
             "[green]Status: Completed successfully.[/]\r\n",
             "[red]Assert exceptions:[/]",
@@ -352,45 +356,12 @@ public class MarkupParserTests : Test
             "[red]Errors by Step:[/]",
             "[red]Fetch products:[/]",
             "  [red]Connection refused (Count: 3)[/]",
-            "[bold white on blue] Metadata [/]",
-            "[bold white on green] Global Stats [/]",
-            "[bold white on blue] Load Test Summary [/]",
-            "[bold white on blue] Load Simulations [/]",
-            "[bold white on darkgreen] Step Fetch products Details [/]",
-            "[bold red] Errors by Step [/]",
-            "[bold]Global Metrics[/]",
-            "[yellow]Scenario[/]",
-            "[yellow]Duration[/]",
-            "[yellow]Status[/]",
-            "[yellow]Execution Time[/]",
-            "[yellow]Test Run Time[/]",
-            "[u]Scenario[/]",
-            "[u]Metric[/]",
-            "[u]Count[/]",
-            "[u]RPS[/]",
-            "[u]Min[/]",
-            "[u]Mean[/]",
-            "[u]Max[/]",
-            "[u]StdDev[/]",
-            "[u]Median[/]",
-            "[u]P75[/]",
-            "[u]P95[/]",
-            "[u]P99[/]",
-            "[green]OK[/]",
-            "[green]Ok[/]",
-            "[green]Passed[/]",
-            "[red]Failed[/]",
-            "[yellow]Running[/]",
-            "[green]125ms[/]",
-            "[red]2s[/]",
-            "[blue]Response Times[/]",
-            "[green]Requests[/]",
-            "[green]Running test:[/] [bold green]Fuzn.TestFuzn.Tests.LoadTests.Verify_fixed_load[/]",
-            "[red]Could not create instance of test class 'LoadTests'.[/]",
+            "[red]Live view failed: IOException: Broken pipe[/]",
+            "[yellow]Test skipped.[/]",
+            "[red]--test-name requires a value: --test-name=<FullyQualifiedName>[/]",
             "[bold green]TestFuzn Test Runner[/]",
             "[bold green]Enter the ID of the test you want to run or enter to quit:[/]",
-            "[bold red]Invalid test index.[/]",
-            "[yellow]Test skipped.[/]"
+            "[bold red]Invalid test index.[/]"
         };
 
         await Scenario()

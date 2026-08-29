@@ -1,250 +1,171 @@
-﻿using Spectre.Console;
-using System.Text;
-using Fuzn.TestFuzn.ConsoleOutput;
-using Fuzn.TestFuzn.Contracts.Results.Load;
+using System.Globalization;
 using System.Reflection;
+using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Internals.Terminal;
 
 namespace Fuzn.TestFuzn.StandaloneRunner;
 
+/// <summary>
+/// The standalone runner's framework adapter: real-time console output is supported (the live
+/// view runs), Ctrl+C cancels its token, and everything the framework writes through it — markup
+/// lines, tables, panels, the standard test's result table and the load test's final summary —
+/// renders on the terminal engine (<see cref="MarkupRenderer"/>, <see cref="TableWidget"/>,
+/// <see cref="PanelWidget"/>, <see cref="AdvancedTableLayout"/>, <see cref="LoadSummaryLayout"/>)
+/// and goes to the normal screen buffer through the terminal writer of an
+/// <see cref="ILiveViewHost"/> — the real console in production, a fake in tests. The host's
+/// capabilities, detected once on the first write, decide two things: the color mode — styled
+/// only when the output is an ANSI terminal, plain text with zero escape bytes on a redirected
+/// or non-ANSI output — and the layout width. The terminal's width is read only when the output
+/// is an ANSI terminal (a redirected output has no width to read: Unix fabricates one and a
+/// console-less Windows process throws), and only when it is at least
+/// <see cref="MinimumWidth"/> columns; otherwise everything is laid out at
+/// <see cref="DefaultWidth"/> and the terminal wraps whatever it cannot show. Tables and panels
+/// never exceed the layout width; markup lines and plain writes are never truncated. Nothing
+/// here ever queries the terminal — no cursor position, no key — so the summary cannot stall on
+/// a terminal that does not answer, and every write is one call ending in a line break.
+/// </summary>
 internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter, IDisposable
 {
+    /// <summary>
+    /// The width the summary, tables and panels are laid out at when the terminal's width is
+    /// not used: on a redirected or non-ANSI output, and on a terminal narrower than
+    /// <see cref="MinimumWidth"/>.
+    /// </summary>
+    internal const int DefaultWidth = 120;
+
+    /// <summary>
+    /// The narrowest terminal width the layouts use as given; below it — a size a pty reports
+    /// as zero, a window too narrow to read a summary in — the terminal wraps a layout at
+    /// <see cref="DefaultWidth"/> instead of the widgets degrading into unreadable fragments.
+    /// </summary>
+    internal const int MinimumWidth = 40;
+
     private readonly CancellationTokenSource _cts = new();
+    private readonly ILiveViewHost _liveViewHost;
+    private readonly ConsoleCancelEventHandler _cancelKeyPressHandler;
+    private TerminalCapabilities? _capabilities;
+    private ITerminalWriter? _terminalWriter;
+    private bool _isDisposed;
 
     protected BaseStandaloneRunnerAdapter()
+        : this(new ConsoleLiveViewHost())
     {
-        Console.CancelKeyPress += (_, e) =>
+    }
+
+    /// <param name="liveViewHost">The host whose terminal the adapter writes to: the real console in production, a fake in tests.</param>
+    protected BaseStandaloneRunnerAdapter(ILiveViewHost liveViewHost)
+    {
+        if (liveViewHost == null)
+            throw new ArgumentNullException(nameof(liveViewHost), "Live view host cannot be null.");
+
+        _liveViewHost = liveViewHost;
+
+        // Ctrl+C cancels the token instead of ending the process, so the run winds down and
+        // the summary is written. The handler is kept so Dispose can detach it: a handler left
+        // behind would cancel a disposed source on the next Ctrl+C, and an exception thrown
+        // inside a CancelKeyPress handler ends the process.
+        _cancelKeyPressHandler = (_, e) =>
         {
             e.Cancel = true;
             _cts.Cancel();
         };
+        Console.CancelKeyPress += _cancelKeyPressHandler;
     }
 
     public bool SupportsRealTimeConsoleOutput => true;
     public CancellationToken CancellationToken => _cts.Token;
 
-    public ConsoleColor ForegroundColor
-    {
-        get => Console.ForegroundColor;
-        set => Console.ForegroundColor = value;
-    }
-    public ConsoleColor BackgroundColor
-    {
-        get => Console.BackgroundColor;
-        set => Console.BackgroundColor = value;
-    }
-
-    public int WindowWidth => Console.WindowWidth;
-
     public abstract Task ExecuteTestMethod(ITest test, MethodInfo methodInfo);
 
+    /// <summary>
+    /// Writes the message as a plain line — formatted with the arguments, as a composite format
+    /// string, only when there are any, so a message written on its own is never parsed for
+    /// braces. Never truncated; line breaks in the message are written as they are.
+    /// </summary>
+    public void Write(string message, params object?[] args)
+    {
+        var text = message;
+        if (text == null)
+            text = string.Empty;
+
+        if (args != null && args.Length > 0)
+            text = string.Format(CultureInfo.CurrentCulture, text, args);
+
+        TerminalWriter.Write(text + Environment.NewLine);
+    }
+
+    /// <summary>Writes the markup as one styled line, plain on a non-ANSI output; never truncated.</summary>
+    public void WriteMarkup(string text)
+    {
+        TerminalWriter.Write(MarkupRenderer.Render(text, ColorMode) + Environment.NewLine);
+    }
+
+    /// <summary>
+    /// Writes the table in a bordered box at its natural width, narrowed to the layout width
+    /// when it is wider.
+    /// </summary>
+    public void WriteTable(TableData table)
+    {
+        if (table == null)
+            throw new ArgumentNullException(nameof(table), "Table cannot be null.");
+
+        var columns = new List<TableColumn>();
+        foreach (var column in table.Columns)
+            columns.Add(new TableColumn(TextOrEmpty(column)));
+
+        var rows = new List<IReadOnlyList<string?>>();
+        foreach (var row in table.Rows)
+            rows.Add(row);
+
+        var width = MeasureWidth();
+        var panelWidth = Math.Min(width, TableWidget.MeasureNaturalWidth(columns, rows) + PanelWidget.ContentOverhead);
+        var content = TableWidget.Render(columns, rows, panelWidth - PanelWidget.ContentOverhead, ColorMode);
+        WriteLines(PanelWidget.Render(null, content, panelWidth, ColorMode));
+    }
+
+    /// <summary>
+    /// Writes the messages in a bordered box headed by the header, sized to its content and
+    /// narrowed to the layout width when wider.
+    /// </summary>
+    public void WritePanel(string[] messages, string header)
+    {
+        if (messages == null)
+            throw new ArgumentNullException(nameof(messages), "Messages cannot be null.");
+
+        var contentWidth = 0;
+        foreach (var message in messages)
+            contentWidth = Math.Max(contentWidth, MarkupText.Measure(message));
+
+        // The header sits in the top border with its own overhead ("╭─ " before, " ╮" after).
+        var naturalWidth = Math.Max(contentWidth + PanelWidget.ContentOverhead, MarkupText.Measure(header) + 5);
+        var panelWidth = Math.Min(MeasureWidth(), naturalWidth);
+        WriteLines(PanelWidget.Render(header, messages, panelWidth, ColorMode));
+    }
+
+    /// <summary>Writes the table as a bordered box fitted to the layout width.</summary>
     public void WriteAdvancedTable(AdvancedTable table)
     {
-        int colCount = table.ColumnCount;
-        int[] colWidths = new int[colCount];
-
-        foreach (var row in table.Rows)
-        {
-            if (row.IsDivider) continue;
-            int col = 0;
-            foreach (var cell in row.Cells)
-            {
-                int span = cell.ColSpan;
-                int contentWidth = cell.GetContentWidth();
-                if (span == 1)
-                {
-                    if (contentWidth > colWidths[col])
-                        colWidths[col] = contentWidth;
-                }
-                else
-                {
-                    int perCol = (contentWidth + span - 1) / span;
-                    for (int i = 0; i < span; i++)
-                    {
-                        if (perCol > colWidths[col + i])
-                            colWidths[col + i] = perCol;
-                    }
-                }
-                col += span;
-            }
-        }
-
-        for (int i = 0; i < colWidths.Length; i++)
-            colWidths[i] += 4;
-
-        string BorderLine() => "+" + string.Join("-", colWidths.Select(w => new string('-', w))) + "+";
-        AnsiConsole.WriteLine(BorderLine());
-
-        foreach (var row in table.Rows)
-        {
-            if (row.IsDivider)
-            {
-                AnsiConsole.WriteLine(BorderLine());
-                continue;
-            }
-
-            var line = "|";
-            int col = 0;
-            foreach (var cell in row.Cells)
-            {
-                int span = cell.ColSpan;
-                int spanWidth = colWidths.Skip(col).Take(span).Sum() + (span - 1);
-                line += cell.Render(spanWidth) + "|";
-                col += span;
-            }
-            AnsiConsole.WriteLine(line);
-        }
-        AnsiConsole.WriteLine(BorderLine());
+        WriteLines(AdvancedTableLayout.Render(table, MeasureWidth(), ColorMode));
     }
 
+    /// <summary>
+    /// Writes the load test summary of every scenario, laid out at the layout width — or at
+    /// <see cref="DefaultWidth"/> when the terminal is too narrow to show every number of the
+    /// summary whole (even the layout's narrowest split of the response-time spread too wide),
+    /// as below <see cref="MinimumWidth"/>: the terminal wraps, but no number is ever cut.
+    /// </summary>
     public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults)
     {
-        //AnsiConsole.Clear();
-        foreach (var scenario in scenarioLoadResults)
-        {
-            // ── Header Panel ──────────────────────────────────────────────────────────────
-            var headerTable = new Table().Border(TableBorder.Rounded).Expand();
-            headerTable.AddColumn(new TableColumn("[yellow]Scenario[/]").Centered());
-            headerTable.AddColumn(new TableColumn("[yellow]Execution Time[/]").Centered());
-            headerTable.AddColumn(new TableColumn("[yellow]Test Run Time[/]").Centered());
-            headerTable.AddColumn(new TableColumn("[yellow]Status[/]").Centered());
+        if (scenarioLoadResults == null)
+            throw new ArgumentNullException(nameof(scenarioLoadResults), "Scenario load results cannot be null.");
 
-            headerTable.AddRow(
-                $"{scenario.Key.Name}",
-                $"{scenario.Value.TotalExecutionDuration.ToTestFuznFormattedDuration()}",
-                $"{(scenario.Value.TestRunTotalDuration()).ToTestFuznFormattedDuration()}",
-                $"{(scenario.Value.Status == TestStatus.Passed ? "[green]Passed[/]" : "[red]Failed[/]")}"
-            );
+        var width = MeasureWidth();
+        if (width < LoadSummaryLayout.MeasureMinimumWidth(scenarioLoadResults))
+            width = DefaultWidth;
 
-            AnsiConsole
-                .Write(new Panel(headerTable)
-                    .Header("[bold white on blue] Load Test Summary [/]")
-                    .Expand());
-
-            // ── Load Simulations ─────────────────────────────────────────────────────────
-            var loads = new Table { Border = TableBorder.Rounded, Expand = true };
-            loads.AddColumn("Type");
-            foreach (var simulations in scenario.Key.SimulationsInternal)
-                loads.AddRow($"{simulations.GetDescription()}");
-
-            AnsiConsole
-                .Write(new Panel(loads)
-                    .Header("[bold white on blue] Load Simulations [/]")
-                    .Expand());
-
-            // ── Global Metrics ───────────────────────────────────────────────────────────
-            var reqTable = CreateRequestsTable(scenario.Value.RequestCount, scenario.Value.Ok, scenario.Value.Failed);
-            var respTable = CreateResponseTimeTable(scenario.Value.Ok, scenario.Value.Failed);
-
-            var summaryGrid = new Grid().AddColumn().AddColumn();
-            summaryGrid.AddRow(reqTable, respTable);
-
-            AnsiConsole.Write(new Panel(summaryGrid)
-                .Header("[bold]Global Metrics[/]")
-                .Border(BoxBorder.Rounded)
-                .Expand());
-
-            // ── Per-Step Metrics ────────────────────────────────────────────────────────
-            foreach (var step in scenario.Value.Steps)
-            {
-                reqTable = CreateRequestsTable(step.Value.RequestCount, step.Value.Ok, step.Value.Failed);
-                var stepGrid = new Grid().AddColumn().AddColumn();
-                var responseTimeTable = CreateResponseTimeTable(step.Value.Ok, step.Value.Failed);
-
-                stepGrid.AddRow(reqTable, responseTimeTable);
-
-                AnsiConsole.Write(new Panel(stepGrid)
-                    .Header($"[bold white on darkgreen] Step {step.Key} Details [/]")
-                    .Border(BoxBorder.Rounded)
-                    .Expand());
-            }
-
-            // Errors
-            var errorSection = new StringBuilder();
-            foreach (var step in scenario.Value.Steps)
-            {
-                if (step.Value.Errors?.Count > 0)
-                {
-                    errorSection.AppendLine($"[red]{step.Key}:[/]");
-                    foreach (var error in step.Value.Errors)
-                        errorSection.AppendLine($"  [red]{error.Key} (Count: {error.Value.Count})[/]");
-                }
-            }
-            if (errorSection.Length > 0)
-            {
-                AnsiConsole
-                    .Write(new Panel(new Markup(errorSection.ToString()))
-                        .Header("[bold red] Errors by Step [/]")
-                        .Expand());
-            }
-        }
-    }
-
-    private Table CreateResponseTimeTable(string min, string mean, string max, string stdDev, string median, string p75, string p95, string p99)
-    {
-        var table = new Table { Border = TableBorder.Minimal };
-        table.Title("[blue]Response Times[/]");
-        table.AddColumn("[u]Min[/]");
-        table.AddColumn("[u]Mean[/]");
-        table.AddColumn("[u]Max[/]");
-        table.AddColumn("[u]StdDev[/]");
-        table.AddColumn("[u]Median[/]");
-        table.AddColumn("[u]P75[/]");
-        table.AddColumn("[u]P95[/]");
-        table.AddColumn("[u]P99[/]");
-        table.AddRow(min, mean, max, stdDev, median, p75, p95, p99);
-        return table;
-    }
-
-    private Table CreateResponseTimeTable(Stats ok, Stats failed)
-    {
-        var table = new Table { Border = TableBorder.Minimal };
-        table.Title("[blue]Response Times[/]");
-        table.AddColumn("[u]Metric[/]");
-        table.AddColumn("[u]Min[/]");
-        table.AddColumn("[u]Mean[/]");
-        table.AddColumn("[u]Max[/]");
-        table.AddColumn("[u]StdDev[/]");
-        table.AddColumn("[u]Median[/]");
-        table.AddColumn("[u]P75[/]");
-        table.AddColumn("[u]P95[/]");
-        table.AddColumn("[u]P99[/]");
-        table.AddRow(
-            $"[green]Ok[/]",
-            $"[green]{ok.ResponseTimeMin.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeMean.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeMax.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeMedian.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimePercentile75.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimePercentile95.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimePercentile99.ToTestFuznResponseTime()}[/]"
-        );
-        table.AddRow(
-            $"[red]Failed[/]",
-            $"[red]{failed.ResponseTimeMin.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeMean.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeMax.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeMedian.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimePercentile75.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimePercentile95.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimePercentile99.ToTestFuznResponseTime()}[/]"
-        );
-        return table;
-    }
-
-    private Table CreateRequestsTable(int totalRequests, Stats ok, Stats failed)
-    {
-        var table = new Table { Border = TableBorder.Minimal };
-        table.Title("[green]Requests[/]");
-        table.AddColumn("[u]Metric[/]");
-        table.AddColumn("[u]Count[/]");
-        table.AddColumn("[u]RPS[/]");
-        table.AddRow("Total", $"{totalRequests}", "");
-        table.AddRow("[green]OK[/]", $"{ok.RequestCount}", $"{ok.RequestsPerSecond}");
-        table.AddRow("[red]Failed[/]", $"{failed.RequestCount}", $"{failed.RequestsPerSecond}");
-        return table;
+        WriteLines(LoadSummaryLayout.Render(scenarioLoadResults, width, ColorMode));
     }
 
     public string TestResultsDirectory
@@ -259,47 +180,6 @@ internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter, IDi
         }
     }
 
-    public CursorPosition GetCursorPosition()
-    {
-        var cursorPosition = Console.GetCursorPosition();
-
-        return new CursorPosition(cursorPosition.Left, cursorPosition.Top);
-    }
-
-    public void SetCursorPosition(int left, int top)
-    {
-        Console.SetCursorPosition(left, top);
-    }
-
-    public void Write(string message, params object?[] args)
-    {
-        Console.WriteLine(message, args);
-    }
-
-    public void WriteTable(TableData table)
-    {
-        var t = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderColor(Color.SeaGreen1);
-        foreach (var col in table.Columns)
-            t.AddColumn(new TableColumn(col));
-        foreach (var row in table.Rows)
-            t.AddRow(row.ToArray());
-        AnsiConsole.Write(t);
-    }
-
-    public void WriteMarkup(string text)
-    {
-        AnsiConsole.MarkupLine(text);
-    }
-
-    public void WritePanel(string[] messages, string header)
-    {
-        AnsiConsole.Write(new Panel(string.Join(Environment.NewLine, messages))
-            .Border(BoxBorder.Rounded)
-            .Header(header, Justify.Center));
-    }
-
     public void SetCurrentTestAsSkipped()
     {
         throw new ScenarioRunModeIgnoreException();
@@ -310,8 +190,74 @@ internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter, IDi
         throw new NotImplementedException();
     }
 
+    /// <summary>Detaches the Ctrl+C handler and disposes the token source; safe to call more than once.</summary>
     public void Dispose()
     {
+        if (_isDisposed)
+            return;
+
+        _isDisposed = true;
+        Console.CancelKeyPress -= _cancelKeyPressHandler;
         _cts.Dispose();
+    }
+
+    // The capabilities are detected on the first write and kept: the output does not change
+    // hands during a run.
+    private TerminalCapabilities Capabilities
+    {
+        get
+        {
+            if (_capabilities == null)
+                _capabilities = _liveViewHost.DetectCapabilities();
+
+            return _capabilities;
+        }
+    }
+
+    private ITerminalWriter TerminalWriter
+    {
+        get
+        {
+            if (_terminalWriter == null)
+            {
+                var terminalWriter = _liveViewHost.CreateTerminalWriter();
+                if (terminalWriter == null)
+                    throw new InvalidOperationException("The live view host returned no terminal writer.");
+
+                _terminalWriter = terminalWriter;
+            }
+
+            return _terminalWriter;
+        }
+    }
+
+    private ColorMode ColorMode => Capabilities.ColorMode;
+
+    // The layout width for this write: the terminal's, read now so a resize between writes is
+    // honored, when the output is an ANSI terminal wide enough; the default otherwise.
+    private int MeasureWidth()
+    {
+        if (!Capabilities.SupportsAnsi)
+            return DefaultWidth;
+
+        var width = TerminalWriter.WindowWidth;
+        if (width < MinimumWidth)
+            return DefaultWidth;
+
+        return width;
+    }
+
+    private void WriteLines(IReadOnlyList<RenderedLine> lines)
+    {
+        foreach (var line in lines)
+            TerminalWriter.Write(line.Text + Environment.NewLine);
+    }
+
+    private static string TextOrEmpty(string? text)
+    {
+        if (text == null)
+            return string.Empty;
+
+        return text;
     }
 }
