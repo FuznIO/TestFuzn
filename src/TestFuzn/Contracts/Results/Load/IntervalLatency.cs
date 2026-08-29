@@ -10,21 +10,26 @@ namespace Fuzn.TestFuzn.Contracts.Results.Load;
 /// successful requests or interval tracking is off.
 ///
 /// Rounding convention: the three percentiles are HdrHistogram's highest-equivalent values at
-/// 3 significant digits (the same convention as the cumulative <see cref="Stats"/>), while
-/// <see cref="BucketCounts"/> places every recorded value by its lowest-equivalent value. A
-/// percentile that lands exactly on a bucket's upper bound can therefore read up to 0.1 % above
-/// the bound and name the NEXT bucket — never map a percentile onto a bucket index and expect
-/// the observations behind it to sit in that bucket.
+/// 3 significant digits (the same convention as the cumulative <see cref="Stats"/>), the mean
+/// is HdrHistogram's mean over the recorded values at that resolution (each value taken at the
+/// middle of its equivalent range, so the mean can sit up to half a resolution step — 0.05 % —
+/// on either side of the exact mean), while <see cref="BucketCounts"/> places every recorded
+/// value by its lowest-equivalent value. A percentile that lands exactly on a bucket's upper
+/// bound can therefore read up to 0.1 % above the bound and name the NEXT bucket — never map a
+/// percentile onto a bucket index and expect the observations behind it to sit in that bucket.
 /// </summary>
 internal sealed class IntervalLatency
 {
-    /// <summary>An interval with no requests: zero count, zero percentiles, every bucket count zero.</summary>
-    public static readonly IntervalLatency Empty = new IntervalLatency(0, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, new int[LatencyBuckets.Count]);
+    /// <summary>An interval with no requests: zero count, zero mean and percentiles, every bucket count zero.</summary>
+    public static readonly IntervalLatency Empty = new IntervalLatency(0, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, new int[LatencyBuckets.Count]);
 
     private readonly IReadOnlyList<int> _bucketCounts;
 
     /// <summary>Successful requests recorded during the interval.</summary>
     public int RequestCount { get; }
+
+    /// <summary>The mean response time of the interval's requests; zero when the interval is empty.</summary>
+    public TimeSpan ResponseTimeMean { get; }
 
     /// <summary>The median response time of the interval's requests; zero when the interval is empty.</summary>
     public TimeSpan ResponseTimeMedian { get; }
@@ -43,10 +48,12 @@ internal sealed class IntervalLatency
     public IReadOnlyList<int> BucketCounts => _bucketCounts;
 
     /// <summary>
-    /// <paramref name="bucketCounts"/> must hold exactly <see cref="LatencyBuckets.Count"/>
-    /// non-negative entries; they are copied, so the caller's array can be reused afterwards.
+    /// The response times follow the order of the cumulative <see cref="Stats"/>: the mean, then
+    /// the median, 95th and 99th percentiles. <paramref name="bucketCounts"/> must hold exactly
+    /// <see cref="LatencyBuckets.Count"/> non-negative entries; they are copied, so the caller's
+    /// array can be reused afterwards.
     /// </summary>
-    public IntervalLatency(int requestCount, TimeSpan responseTimeMedian, TimeSpan responseTimePercentile95, TimeSpan responseTimePercentile99, IReadOnlyList<int> bucketCounts)
+    public IntervalLatency(int requestCount, TimeSpan responseTimeMean, TimeSpan responseTimeMedian, TimeSpan responseTimePercentile95, TimeSpan responseTimePercentile99, IReadOnlyList<int> bucketCounts)
     {
         if (requestCount < 0)
             throw new ArgumentOutOfRangeException(nameof(requestCount), requestCount, "Request count cannot be negative.");
@@ -66,6 +73,7 @@ internal sealed class IntervalLatency
 
         _bucketCounts = Array.AsReadOnly(copy);
         RequestCount = requestCount;
+        ResponseTimeMean = responseTimeMean;
         ResponseTimeMedian = responseTimeMedian;
         ResponseTimePercentile95 = responseTimePercentile95;
         ResponseTimePercentile99 = responseTimePercentile99;

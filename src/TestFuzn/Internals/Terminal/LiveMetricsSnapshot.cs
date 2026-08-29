@@ -1,5 +1,6 @@
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Internals.Thresholds;
 
 namespace Fuzn.TestFuzn.Internals.Terminal;
 
@@ -118,6 +119,19 @@ internal sealed class LiveMetricsSnapshot
     /// for an idle interval. The cumulative spread is on <see cref="Ok"/>.
     /// </summary>
     public IntervalLatency IntervalLatency { get; init; } = IntervalLatency.Empty;
+
+    /// <summary>
+    /// The scenario's declared thresholds with their live reading at this tick, in declaration
+    /// order: each one's Current from the newest closed interval — the same numbers as the
+    /// interval fields above — its Ok/Warning/Breached state and how long the current breach
+    /// has lasted; see <see cref="ThresholdEvaluator"/> for the rules. Judged only during the
+    /// measurement phase: before it, and before its first interval closes, every threshold
+    /// reads Ok with a Current of 0, and after it the last measurement-phase readings are
+    /// re-published unchanged, so the final view agrees with the verdict. Empty when the
+    /// scenario declares none. The completion verdict is not here but on the cumulative
+    /// <see cref="ScenarioLoadResult.ThresholdResults"/>.
+    /// </summary>
+    public IReadOnlyList<LiveThreshold> Thresholds { get; init; } = Array.Empty<LiveThreshold>();
 
     /// <summary>The ring buffer's per-second samples, oldest first, newest last.</summary>
     public IReadOnlyList<LiveMetricsSample> Samples { get; init; } = Array.Empty<LiveMetricsSample>();

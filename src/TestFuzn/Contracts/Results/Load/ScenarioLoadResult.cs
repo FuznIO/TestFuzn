@@ -45,6 +45,16 @@ internal class ScenarioLoadResult
     public Exception? AssertWhileRunningException { get; internal set; }
     public Exception? AssertWhenDoneException { get; internal set; }
 
+    /// <summary>
+    /// The verdict of the scenario's declared thresholds, evaluated once on the cumulative
+    /// statistics when the load test completed, in declaration order (see
+    /// <see cref="ThresholdResult"/>). Empty until then, when the run was stopped before it
+    /// completed, and always when the scenario declares no thresholds. A violated threshold
+    /// also fails the scenario through <see cref="AssertWhenDoneException"/>, as an
+    /// AssertWhenDone failure does.
+    /// </summary>
+    public IReadOnlyList<ThresholdResult> ThresholdResults { get; internal set; } = Array.Empty<ThresholdResult>();
+
     public double OkPercentage
     {
         get

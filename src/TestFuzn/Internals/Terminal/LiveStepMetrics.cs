@@ -11,8 +11,11 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// own per-interval history, oldest first with the newest interval last, one entry per closed
 /// interval and bounded to <see cref="ScenarioLiveMetrics.SampleCapacity"/> entries — for a
 /// step the collector reports on every tick (every top-level step) they run in lockstep with
-/// the snapshot's <see cref="LiveMetricsSnapshot.Samples"/>. Fresh copies per published
-/// snapshot, never the live ring.
+/// the snapshot's <see cref="LiveMetricsSnapshot.Samples"/>. They cover measurement executions
+/// only: the collector counts a warmup iteration for the scenario and never records it per
+/// step, so every step series is zero for the whole warmup phase — while the scenario's series
+/// shows the warmup traffic — and picks up at the first measurement interval. Fresh copies per
+/// published snapshot, never the live ring.
 /// </summary>
 internal sealed class LiveStepMetrics
 {
@@ -44,13 +47,13 @@ internal sealed class LiveStepMetrics
     public TimeSpan ResponseTimeMean { get; init; }
     public TimeSpan ResponseTimePercentile95 { get; init; }
 
-    /// <summary>Per-interval current rate of this step, oldest first — its <see cref="RequestsPerSecond"/> for every closed interval, ready for a sparkline.</summary>
+    /// <summary>Per-interval current rate of this step, oldest first — its <see cref="RequestsPerSecond"/> for every closed interval, ready for a sparkline; zero across the warmup phase, like the delta series.</summary>
     public IReadOnlyList<double> RequestsPerSecondSeries { get; init; } = Array.Empty<double>();
 
-    /// <summary>Per-interval successful executions of this step, oldest first; zero for an interval in which the step was idle or skipped.</summary>
+    /// <summary>Per-interval successful executions of this step, oldest first; zero for every warmup interval (warmup iterations are counted for the scenario only, never per step) and for a measurement interval in which the step was idle or skipped.</summary>
     public IReadOnlyList<double> OkDeltaSeries { get; init; } = Array.Empty<double>();
 
-    /// <summary>Per-interval failed executions of this step, oldest first; zero for an interval in which the step was idle or skipped.</summary>
+    /// <summary>Per-interval failed executions of this step, oldest first; zero for every warmup interval (warmup iterations are counted for the scenario only, never per step) and for a measurement interval in which the step was idle or skipped.</summary>
     public IReadOnlyList<double> FailedDeltaSeries { get; init; } = Array.Empty<double>();
 
     /// <summary>

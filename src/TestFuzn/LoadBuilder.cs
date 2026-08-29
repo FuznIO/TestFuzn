@@ -121,4 +121,28 @@ public class LoadBuilder<TModel>
         _scenarioBuilder.Scenario.AssertWhenDoneAction = action;
         return _scenarioBuilder;
     }
+
+    /// <summary>
+    /// Declares pass/fail thresholds on the scenario's load statistics — the declarative
+    /// counterpart of <see cref="AssertWhenDone"/>. Each threshold holds one scenario-level
+    /// statistic of the measurement phase to a limit: a maximum mean, 95th- or 99th-percentile
+    /// response time of successful requests, a maximum error rate, or a minimum request rate
+    /// (see <see cref="ThresholdsBuilder"/>). The thresholds are evaluated once when the load
+    /// test completes, at the same point as <see cref="AssertWhenDone"/>: a violated threshold
+    /// marks the load test as failed and fails the test with a
+    /// <see cref="ThresholdViolationException"/> listing every violation; when the
+    /// <see cref="AssertWhenDone"/> assertion fails as well, its failure is the one reported.
+    /// The standalone runner's live dashboard tracks the thresholds while the test runs. May be
+    /// called more than once; each metric can be declared once per scenario.
+    /// </summary>
+    /// <param name="action">The action that declares the thresholds.</param>
+    /// <returns>The parent <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
+    public ScenarioBuilder<TModel> Thresholds(Action<ThresholdsBuilder> action)
+    {
+        if (action == null)
+            throw new ArgumentNullException(nameof(action), "Action cannot be null.");
+
+        action(new ThresholdsBuilder(_scenarioBuilder.Scenario.Thresholds));
+        return _scenarioBuilder;
+    }
 }

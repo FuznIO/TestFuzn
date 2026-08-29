@@ -224,6 +224,58 @@ public class ScenarioLiveMetricsSeriesCollectorTests : Test
     }
 
     [Test]
+    public async Task Verify_step_series_are_zero_across_warmup_while_the_scenario_series_shows_it()
+    {
+        await Scenario()
+            .Step("Warmup iterations count for the scenario only: every step series stays zero until the first measurement interval", context =>
+            {
+                var collector = CreateCollector();
+                collector.MarkPhaseAsStarted(LoadTestPhase.Init, SyntheticLoadSnapshots.At(0));
+                collector.MarkPhaseAsCompleted(LoadTestPhase.Init, SyntheticLoadSnapshots.At(0));
+                collector.MarkPhaseAsStarted(LoadTestPhase.Warmup, SyntheticLoadSnapshots.At(0));
+                var metrics = CreateMetrics();
+                Tick(collector, metrics, 0);
+
+                for (var index = 0; index < 5; index++)
+                    collector.RecordWarmup(TestStatus.Passed);
+                Tick(collector, metrics, 1);
+
+                for (var index = 0; index < 3; index++)
+                    collector.RecordWarmup(TestStatus.Passed);
+                collector.RecordWarmup(TestStatus.Failed);
+                Tick(collector, metrics, 2);
+
+                collector.MarkPhaseAsCompleted(LoadTestPhase.Warmup, SyntheticLoadSnapshots.At(2));
+                collector.MarkPhaseAsStarted(LoadTestPhase.Measurement, SyntheticLoadSnapshots.At(2));
+                RecordPassingIterations(collector, 4);
+                Tick(collector, metrics, 3);
+
+                var view = metrics.Current;
+                Assert.AreEqual(8, view.WarmupRequestCountOk);
+                Assert.AreEqual(1, view.WarmupRequestCountFailed);
+                Assert.AreEqual(4, view.RequestCountOk);
+                CollectionAssert.AreEqual(new double[] { 5, 3, 4 }, view.OkDeltaSeries.ToList());
+                CollectionAssert.AreEqual(new double[] { 0, 1, 0 }, view.FailedDeltaSeries.ToList());
+                CollectionAssert.AreEqual(new double[] { 5, 4, 4 }, view.RequestsPerSecondSeries.ToList());
+
+                Assert.HasCount(2, view.Steps);
+                foreach (var row in view.Steps)
+                {
+                    CollectionAssert.AreEqual(new double[] { 0, 0, 4 }, row.OkDeltaSeries.ToList());
+                    CollectionAssert.AreEqual(new double[] { 0, 0, 0 }, row.FailedDeltaSeries.ToList());
+                    CollectionAssert.AreEqual(new double[] { 0, 0, 4 }, row.RequestsPerSecondSeries.ToList());
+                    Assert.HasCount(3, row.ResponseTimePercentile95Series);
+                    Assert.AreEqual(0.0, row.ResponseTimePercentile95Series[0]);
+                    Assert.AreEqual(0.0, row.ResponseTimePercentile95Series[1]);
+                    Assert.AreEqual(4, row.RequestCountOk);
+                }
+                AssertResolution(10, StepRow(view, BrowseStep).ResponseTimePercentile95Series[2]);
+                AssertResolution(100, StepRow(view, OrderStep).ResponseTimePercentile95Series[2]);
+            })
+            .Run();
+    }
+
+    [Test]
     public async Task Verify_latency_series_and_newest_interval_fields_through_a_real_collector()
     {
         await Scenario()

@@ -1,5 +1,6 @@
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Internals.Execution;
+using Fuzn.TestFuzn.Internals.Thresholds;
 
 namespace Fuzn.TestFuzn.Internals.Terminal;
 
@@ -35,11 +36,26 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// does not advance past the previous one appends no sample and leaves the baseline untouched,
 /// so those requests land in the next interval instead of vanishing. A cumulative counter that
 /// moves backwards (a reset) clamps that counter's delta to zero and re-baselines at the new
-/// value. Per-step deltas follow the same rules against per-step baselines, closed on the same
-/// tick as the scenario's sample: a step that recorded nothing during an interval — idle, or
-/// skipped because an earlier step failed — gets zero deltas for that sample. Memory is bounded:
-/// one <see cref="SampleCapacity"/>-entry ring for the scenario plus one per top-level step,
-/// each allocated once when the step is first seen.
+/// value. Per-step deltas are taken against per-step baselines with the same clamping and
+/// re-baselining rules, closed on the same tick as the scenario's sample, but over measurement
+/// executions only: <c>ScenarioLoadCollector.RecordWarmup</c> bumps the scenario's warmup
+/// counters and never records into the step collectors, so while the scenario's series shows
+/// the warmup traffic every step series is zero for the whole warmup phase and picks up at the
+/// first measurement interval. A step that recorded nothing during a measurement interval —
+/// idle, or skipped because an earlier step failed — gets zero deltas for that sample. Memory
+/// is bounded: one <see cref="SampleCapacity"/>-entry ring for the scenario plus one per
+/// top-level step, each allocated once when the step is first seen.
+///
+/// Thresholds: the scenario's declared thresholds are evaluated on every Record by a
+/// <see cref="ThresholdEvaluator"/> against the newest closed interval — the same numbers the
+/// snapshot's interval fields carry — and published as <see cref="LiveMetricsSnapshot.Thresholds"/>,
+/// but judged only while the inferred phase is the measurement phase: before it (init, warmup)
+/// and before the first interval closes every threshold is published in its placeholder state,
+/// and once the phase has left measurement the last measurement-phase states are frozen and
+/// re-published unchanged, so the final frame agrees with the verdict; the evaluator documents
+/// these rules, the state rule and the breach duration. The verdict that fails a scenario is
+/// not taken here: it is evaluated once at completion on the cumulative result, where
+/// AssertWhenDone runs.
 /// </summary>
 internal sealed class ScenarioLiveMetrics
 {
@@ -58,6 +74,7 @@ internal sealed class ScenarioLiveMetrics
 
     private readonly object _gate = new object();
     private readonly SimulationPlan _plan;
+    private readonly ThresholdEvaluator _thresholdEvaluator;
     private readonly SampleRing _samples = new SampleRing();
     private readonly Dictionary<string, ErrorTrackerEntry> _errorTracker = new();
     private readonly Dictionary<string, StepTracker> _stepTrackers = new();
@@ -71,15 +88,27 @@ internal sealed class ScenarioLiveMetrics
     /// <summary>The scenario this model tracks.</summary>
     public string ScenarioName { get; }
 
+    /// <summary>A model for a scenario that declares no thresholds.</summary>
     public ScenarioLiveMetrics(string scenarioName, IReadOnlyList<ILoadConfiguration> simulations)
+        : this(scenarioName, simulations, Array.Empty<Threshold>())
+    {
+    }
+
+    /// <param name="scenarioName">The scenario this model tracks.</param>
+    /// <param name="simulations">The scenario's ordered typed simulations, the plan progress and phase labels are computed from.</param>
+    /// <param name="thresholds">The scenario's declared thresholds in declaration order, evaluated live on every Record; empty when it declares none.</param>
+    public ScenarioLiveMetrics(string scenarioName, IReadOnlyList<ILoadConfiguration> simulations, IReadOnlyList<Threshold> thresholds)
     {
         if (scenarioName == null)
             throw new ArgumentNullException(nameof(scenarioName), "Scenario name cannot be null.");
         if (simulations == null)
             throw new ArgumentNullException(nameof(simulations), "Simulations cannot be null.");
+        if (thresholds == null)
+            throw new ArgumentNullException(nameof(thresholds), "Thresholds cannot be null.");
 
         ScenarioName = scenarioName;
         _plan = new SimulationPlan(simulations);
+        _thresholdEvaluator = new ThresholdEvaluator(thresholds);
 
         double? initialProgress = null;
         TimeSpan? initialRemaining = null;
@@ -97,7 +126,8 @@ internal sealed class ScenarioLiveMetrics
             PlannedDuration = _plan.PlannedDuration,
             PlannedMeasurementDuration = _plan.PlannedMeasurementDuration,
             ProgressFraction = initialProgress,
-            EstimatedTimeRemaining = initialRemaining
+            EstimatedTimeRemaining = initialRemaining,
+            Thresholds = ThresholdEvaluator.InitialStates(thresholds)
         };
     }
 
@@ -129,6 +159,7 @@ internal sealed class ScenarioLiveMetrics
 
             var phase = InferPhase(snapshot);
             var newestInterval = ReadNewestInterval();
+            var thresholds = _thresholdEvaluator.Evaluate(phase, _samples.Count > 0, newestInterval.RequestCount, newestInterval.ErrorRate, newestInterval.RequestsPerSecond, newestInterval.Latency, timestamp);
             MaterializeSeries(_samples, out var requestsPerSecondSeries, out var okDeltaSeries, out var failedDeltaSeries, out var percentile95Series);
             MaterializeLatencySeries(_samples, out var medianSeries, out var percentile99Series, out var bucketSeries);
             var published = new LiveMetricsSnapshot
@@ -155,6 +186,7 @@ internal sealed class ScenarioLiveMetrics
                 ErrorRate = newestInterval.ErrorRate,
                 IntervalRequestsPerSecond = newestInterval.RequestsPerSecond,
                 IntervalLatency = newestInterval.Latency,
+                Thresholds = thresholds,
                 Samples = MaterializeSamples(_samples),
                 RequestsPerSecondSeries = requestsPerSecondSeries,
                 OkDeltaSeries = okDeltaSeries,

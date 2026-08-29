@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Internals.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Internals.Terminal;
+using Fuzn.TestFuzn.Internals.Thresholds;
 
 namespace Fuzn.TestFuzn.Internals.Logger;
 
@@ -126,7 +127,7 @@ internal class ConsoleManager
         _liveMetrics = new ScenarioLiveMetrics?[scenarioCount];
         _liveSnapshots = new LiveMetricsSnapshot[scenarioCount];
         for (var index = 0; index < scenarioCount; index++)
-            _liveSnapshots[index] = CreateInitSnapshot(_testExecutionState.Scenarios[index].Name, TimeSpan.Zero);
+            _liveSnapshots[index] = CreateInitSnapshot(_testExecutionState.Scenarios[index], TimeSpan.Zero);
 
         if (!capabilities.SupportsLiveView)
         {
@@ -266,8 +267,9 @@ internal class ConsoleManager
     /// from the scenario's simulations, which init fills in late (after the before-test and
     /// before-scenario hooks), and the collector marks init complete — under its lock — only
     /// once they are in place, so a snapshot carrying InitEndTime is the safe signal that the
-    /// simulations are final. Until then the scenario shows as an init placeholder with its
-    /// elapsed time.
+    /// simulations are final. The scenario's declared thresholds, fixed since the builder ran,
+    /// are handed to the model the same way, for it to evaluate live on every sample. Until then
+    /// the scenario shows as an init placeholder with its elapsed time.
     /// </summary>
     private void SampleLiveMetrics(DateTime utcNow)
     {
@@ -285,11 +287,11 @@ internal class ConsoleManager
                     if (snapshot.InitStartTime != default && utcNow > snapshot.InitStartTime)
                         elapsed = utcNow - snapshot.InitStartTime;
 
-                    _liveSnapshots[index] = CreateInitSnapshot(scenario.Name, elapsed);
+                    _liveSnapshots[index] = CreateInitSnapshot(scenario, elapsed);
                     continue;
                 }
 
-                metrics = new ScenarioLiveMetrics(scenario.Name, scenario.SimulationsInternal.ToArray());
+                metrics = new ScenarioLiveMetrics(scenario.Name, scenario.SimulationsInternal.ToArray(), scenario.Thresholds.ToArray());
                 _liveMetrics[index] = metrics;
             }
 
@@ -298,15 +300,20 @@ internal class ConsoleManager
         }
     }
 
-    /// <summary>The view shown for a scenario before its model exists: name, init phase and elapsed time.</summary>
-    private static LiveMetricsSnapshot CreateInitSnapshot(string scenarioName, TimeSpan elapsed)
+    /// <summary>
+    /// The view shown for a scenario before its model exists: name, init phase, elapsed time,
+    /// and its declared thresholds in their pre-sample state (every one Ok with a Current of
+    /// 0), so the set of thresholds on view is the same from the first frame on.
+    /// </summary>
+    private static LiveMetricsSnapshot CreateInitSnapshot(Scenario scenario, TimeSpan elapsed)
     {
         return new LiveMetricsSnapshot
         {
-            ScenarioName = scenarioName,
+            ScenarioName = scenario.Name,
             Phase = LoadTestPhase.Init,
             PhaseLabel = "init",
-            Duration = elapsed
+            Duration = elapsed,
+            Thresholds = ThresholdEvaluator.InitialStates(scenario.Thresholds.ToArray())
         };
     }
 

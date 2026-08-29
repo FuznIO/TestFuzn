@@ -11,6 +11,7 @@ using Fuzn.TestFuzn.Internals.Logger;
 using Fuzn.TestFuzn.Internals.Results.Load;
 using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Internals.Terminal;
+using Fuzn.TestFuzn.Internals.Thresholds;
 
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
@@ -175,6 +176,55 @@ public class ConsoleManagerTests : Test
                 await harness.ConsoleManager.Complete();
                 Assert.AreSame(final, harness.ConsoleManager.LiveSnapshots[0]);
                 Assert.AreEqual(TimeSpan.FromSeconds(12), harness.ConsoleManager.LiveSnapshots[0].Duration);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_declared_thresholds_reach_every_live_snapshot()
+    {
+        await Scenario()
+            .Step("The init placeholder carries the scenario's thresholds in their pre-sample state, and the model evaluates them on every sample from its first interval on", async context =>
+            {
+                var harness = new Harness();
+                new ThresholdsBuilder(harness.Scenarios[0].Thresholds)
+                    .ResponseTimePercentile95(TimeSpan.FromMilliseconds(5))
+                    .RequestsPerSecond(minimum: 2);
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+
+                var placeholder = Assert.ContainsSingle(harness.ConsoleManager.LiveSnapshots);
+                Assert.HasCount(2, placeholder.Thresholds);
+                Assert.AreEqual(ThresholdMetric.ResponseTimePercentile95, placeholder.Thresholds[0].Threshold.Metric);
+                Assert.AreEqual(ThresholdMetric.RequestsPerSecond, placeholder.Thresholds[1].Threshold.Metric);
+                foreach (var threshold in placeholder.Thresholds)
+                {
+                    Assert.AreEqual(ThresholdState.Ok, threshold.State);
+                    Assert.AreEqual(0.0, threshold.Current);
+                    Assert.AreEqual(TimeSpan.Zero, threshold.BreachedFor);
+                }
+
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+                harness.CompleteInitAndStartMeasurement(At(1));
+                await harness.Host.RunTick(At(2));
+                Assert.HasCount(2, harness.ConsoleManager.LiveSnapshots[0].Thresholds);
+
+                // Three 10 ms iterations in the first interval: the p95 is past its 5 ms
+                // limit; 3 rps is clear of the 2 rps minimum and its 2.5 rps warning band.
+                harness.RecordIterations(3);
+                await harness.Host.RunTick(At(3));
+
+                var view = harness.ConsoleManager.LiveSnapshots[0];
+                Assert.ContainsSingle(view.Samples);
+                var p95 = view.Thresholds[0];
+                Assert.IsInRange(10.0, 10.01, p95.Current);
+                Assert.AreEqual(ThresholdState.Breached, p95.State);
+                Assert.AreEqual(TimeSpan.Zero, p95.BreachedFor);
+                var rps = view.Thresholds[1];
+                Assert.AreEqual(3.0, rps.Current, 1e-9);
+                Assert.AreEqual(ThresholdState.Ok, rps.State);
+
+                await harness.ConsoleManager.StopRealtimeConsoleOutput();
             })
             .Run();
     }

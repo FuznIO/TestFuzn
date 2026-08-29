@@ -43,9 +43,9 @@ internal static class SyntheticLoadSnapshots
     /// <summary>
     /// The per-interval latency a force-refresh would have closed: <see cref="IntervalLatency.Empty"/>
     /// for zero, otherwise the honest interval of exactly one request whose response time is the
-    /// given p95 — median, p95 and p99 all at that value and a single count in its bucket — which
-    /// is all the series tests read; a test that needs a full distribution builds one through a
-    /// real collector.
+    /// given p95 — mean, median, p95 and p99 all at that value and a single count in its bucket —
+    /// which is all the series tests read; a test that needs a full distribution builds one
+    /// through a real collector.
     /// </summary>
     public static IntervalLatency BuildIntervalLatency(double percentile95Ms)
     {
@@ -55,7 +55,7 @@ internal static class SyntheticLoadSnapshots
         var percentile95 = TimeSpan.FromMilliseconds(percentile95Ms);
         var bucketCounts = new int[LatencyBuckets.Count];
         bucketCounts[LatencyBuckets.IndexOf(percentile95)] = 1;
-        return new IntervalLatency(1, percentile95, percentile95, percentile95, bucketCounts);
+        return new IntervalLatency(1, percentile95, percentile95, percentile95, percentile95, bucketCounts);
     }
 
     /// <summary>Cumulative stats with the given request count and Ok p95.</summary>

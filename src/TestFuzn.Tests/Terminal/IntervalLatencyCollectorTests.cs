@@ -93,6 +93,16 @@ public class IntervalLatencyCollectorTests : Test
         Assert.IsInRange(TimeSpan.FromMilliseconds(expectedMilliseconds), TimeSpan.FromMilliseconds(expectedMilliseconds * 1.001), actual);
     }
 
+    /// <summary>
+    /// Asserts a mean to within the same 0.1 % resolution slack, on either side: HdrHistogram's
+    /// mean takes each recorded value at the middle of its equivalent range, which can sit up to
+    /// half a resolution step below or above the recorded value.
+    /// </summary>
+    private static void AssertMeanResolution(double expectedMilliseconds, TimeSpan actual)
+    {
+        Assert.IsInRange(TimeSpan.FromMilliseconds(expectedMilliseconds * 0.999), TimeSpan.FromMilliseconds(expectedMilliseconds * 1.001), actual);
+    }
+
     [Test]
     public async Task Verify_bucket_counts_from_known_recordings()
     {
@@ -154,6 +164,45 @@ public class IntervalLatencyCollectorTests : Test
                 AssertResolution(10, latency.ResponseTimePercentile95);
                 AssertResolution(500, latency.ResponseTimePercentile99);
                 CollectionAssert.AreEqual(new[] { 0, 0, 0, 95, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0 }, latency.BucketCounts.ToList());
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_mean_from_known_recordings()
+    {
+        await Scenario()
+            .Step("The mean is the average of the interval's recordings", context =>
+            {
+                // 10, 20, ..., 200 ms once each: (10 + 200) / 2 = 105 ms.
+                var recordings = new List<(TimeSpan Duration, int Count)>();
+                for (var milliseconds = 10; milliseconds <= 200; milliseconds += 10)
+                    recordings.Add(Milliseconds(milliseconds, 1));
+
+                var latency = RecordDurations(recordings.ToArray()).GetIntervalLatency();
+                Assert.AreEqual(20, latency.RequestCount);
+                AssertMeanResolution(105, latency.ResponseTimeMean);
+            })
+            .Step("A slow tail lifts the mean while the median stays put", context =>
+            {
+                // 95 requests at 10 ms and 5 at 500 ms: (950 + 2500) / 100 = 34.5 ms.
+                var latency = RecordDurations(Milliseconds(10, 95), Milliseconds(500, 5)).GetIntervalLatency();
+                Assert.AreEqual(100, latency.RequestCount);
+                AssertMeanResolution(34.5, latency.ResponseTimeMean);
+                AssertResolution(10, latency.ResponseTimeMedian);
+            })
+            .Step("Each interval's mean covers that interval's recordings only", context =>
+            {
+                var collector = RecordDurations(Milliseconds(100, 4));
+                AssertMeanResolution(100, collector.GetIntervalLatency().ResponseTimeMean);
+
+                collector.Record(TimeSpan.FromMilliseconds(20), SyntheticLoadSnapshots.BaseTime, SyntheticLoadSnapshots.At(1));
+                collector.Record(TimeSpan.FromMilliseconds(40), SyntheticLoadSnapshots.BaseTime, SyntheticLoadSnapshots.At(1));
+                var next = collector.GetIntervalLatency();
+                Assert.AreEqual(2, next.RequestCount);
+                AssertMeanResolution(30, next.ResponseTimeMean);
+                // The cumulative mean spans both intervals: (400 + 60) / 6.
+                AssertMeanResolution(76.666, collector.GetCurrentResult().ResponseTimeMean);
             })
             .Run();
     }
@@ -289,10 +338,11 @@ public class IntervalLatencyCollectorTests : Test
     public async Task Verify_empty_semantics()
     {
         await Scenario()
-            .Step("Empty has no requests, zero percentiles and a zero count in every bucket", context =>
+            .Step("Empty has no requests, a zero mean and percentiles and a zero count in every bucket", context =>
             {
                 var empty = IntervalLatency.Empty;
                 Assert.AreEqual(0, empty.RequestCount);
+                Assert.AreEqual(TimeSpan.Zero, empty.ResponseTimeMean);
                 Assert.AreEqual(TimeSpan.Zero, empty.ResponseTimeMedian);
                 Assert.AreEqual(TimeSpan.Zero, empty.ResponseTimePercentile95);
                 Assert.AreEqual(TimeSpan.Zero, empty.ResponseTimePercentile99);
@@ -355,23 +405,25 @@ public class IntervalLatencyCollectorTests : Test
             {
                 var counts = new int[LatencyBuckets.Count];
                 counts[3] = 7;
-                var latency = new IntervalLatency(7, TimeSpan.FromMilliseconds(8), TimeSpan.FromMilliseconds(9), TimeSpan.FromMilliseconds(10), counts);
+                // The response times follow the Stats order: mean, median, p95, p99.
+                var latency = new IntervalLatency(7, TimeSpan.FromMilliseconds(7.5), TimeSpan.FromMilliseconds(8), TimeSpan.FromMilliseconds(9), TimeSpan.FromMilliseconds(10), counts);
                 counts[3] = 99;
                 Assert.AreEqual(7, latency.BucketCounts[3]);
                 Assert.HasCount(LatencyBuckets.Count, latency.BucketCounts);
                 // Genuinely read-only: neither list is a bare array a cast could mutate.
                 Assert.IsNotInstanceOfType<int[]>(IntervalLatency.Empty.BucketCounts);
                 Assert.IsNotInstanceOfType<TimeSpan[]>(LatencyBuckets.UpperBounds);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(7.5), latency.ResponseTimeMean);
                 Assert.AreEqual(TimeSpan.FromMilliseconds(8), latency.ResponseTimeMedian);
                 Assert.AreEqual(TimeSpan.FromMilliseconds(9), latency.ResponseTimePercentile95);
                 Assert.AreEqual(TimeSpan.FromMilliseconds(10), latency.ResponseTimePercentile99);
 
-                Assert.ThrowsExactly<ArgumentException>(() => new IntervalLatency(1, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, new int[3]));
-                Assert.ThrowsExactly<ArgumentNullException>(() => new IntervalLatency(1, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null!));
-                Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new IntervalLatency(-1, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, new int[LatencyBuckets.Count]));
+                Assert.ThrowsExactly<ArgumentException>(() => new IntervalLatency(1, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, new int[3]));
+                Assert.ThrowsExactly<ArgumentNullException>(() => new IntervalLatency(1, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, null!));
+                Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new IntervalLatency(-1, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, new int[LatencyBuckets.Count]));
                 var negative = new int[LatencyBuckets.Count];
                 negative[0] = -1;
-                Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new IntervalLatency(1, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, negative));
+                Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new IntervalLatency(1, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, negative));
             })
             .Run();
     }

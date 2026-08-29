@@ -53,10 +53,11 @@ internal class StatsCollector
     }
 
     /// <summary>
-    /// The response-time distribution of the measurements recorded since the previous call —
-    /// each call closes the current interval and starts a new one (read-and-reset, like the
-    /// underlying Recorder's GetIntervalHistogram), so the owning collector reads it ONCE per
-    /// force refresh and shares the result until the next one.
+    /// The response-time distribution — count, mean, median, p95, p99 and bucket counts — of the
+    /// measurements recorded since the previous call: each call closes the current interval and
+    /// starts a new one (read-and-reset, like the underlying Recorder's GetIntervalHistogram),
+    /// so the owning collector reads it ONCE per force refresh and shares the result until the
+    /// next one.
     /// <see cref="IntervalLatency.Empty"/> when the interval had no measurements or interval
     /// tracking is off. Callers serialize this with <see cref="Record"/> via the owning
     /// collector's lock; the Recorder's own write coordination keeps the buffer swap safe
@@ -73,6 +74,7 @@ internal class StatsCollector
 
         return new IntervalLatency(
             ClampToInt(_intervalHistogram.TotalCount),
+            TimeSpan.FromTicks((long) _intervalHistogram.GetMean()),
             TimeSpan.FromTicks(_intervalHistogram.GetValueAtPercentile(50)),
             TimeSpan.FromTicks(_intervalHistogram.GetValueAtPercentile(95)),
             TimeSpan.FromTicks(_intervalHistogram.GetValueAtPercentile(99)),

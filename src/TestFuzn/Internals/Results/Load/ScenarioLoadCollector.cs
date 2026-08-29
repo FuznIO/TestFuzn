@@ -33,6 +33,7 @@ internal class ScenarioLoadCollector
     private Exception _assertWhileWarmingUpException;
     private Exception _assertWhileRunningException;
     private Exception _assertWhenDoneException;
+    private IReadOnlyList<ThresholdResult> _thresholdResults = Array.Empty<ThresholdResult>();
     private List<string> _simulationDescriptions;
 
     public string ScenarioName { get => _scenarioName; set => _scenarioName = value; }
@@ -225,6 +226,7 @@ internal class ScenarioLoadCollector
             result.AssertWhileWarmingUpException = _assertWhileWarmingUpException;
             result.AssertWhileRunningException = _assertWhileRunningException;
             result.AssertWhenDoneException = _assertWhenDoneException;
+            result.ThresholdResults = _thresholdResults;
             // Cleanup phase.
             result.CleanupStartTime = _cleanupStartTime;
             result.CleanupEndTime = _cleanupEndTime;
@@ -259,6 +261,24 @@ internal class ScenarioLoadCollector
         lock (_lock)
         {
             _assertWhenDoneException = exception;
+            _lastUpdated = DateTime.UtcNow;
+        }
+    }
+
+    /// <summary>
+    /// Stores the threshold verdict evaluated at completion (the execution manager's, where
+    /// AssertWhenDone runs): an immutable list in declaration order, served as-is on every
+    /// result from here on. Never called for a scenario without thresholds, whose results stay
+    /// the empty default.
+    /// </summary>
+    internal void SetThresholdResults(IReadOnlyList<ThresholdResult> thresholdResults)
+    {
+        if (thresholdResults == null)
+            throw new ArgumentNullException(nameof(thresholdResults), "Threshold results cannot be null.");
+
+        lock (_lock)
+        {
+            _thresholdResults = thresholdResults;
             _lastUpdated = DateTime.UtcNow;
         }
     }

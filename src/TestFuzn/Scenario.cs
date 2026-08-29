@@ -28,6 +28,8 @@ internal class Scenario
     internal Func<ScenarioContext, SimulationsBuilder, Task> WarmupAction;
     internal Func<ScenarioContext, SimulationsBuilder, Task> SimulationsAction;
     internal List<ILoadConfiguration> SimulationsInternal { get; } = new();
+    /// <summary>The scenario's declared thresholds in declaration order (see <see cref="LoadBuilder{TModel}.Thresholds"/>); empty when it declares none.</summary>
+    internal List<Threshold> Thresholds { get; } = new();
     internal Action<ScenarioContext, WarmupStats>? AssertWhileWarmingUpAction;
     internal Action<ScenarioContext, AssertScenarioStats>? AssertWhileRunningAction;
     internal Action<ScenarioContext, AssertScenarioStats>? AssertWhenDoneAction;
