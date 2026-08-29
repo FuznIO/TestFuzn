@@ -45,6 +45,8 @@ internal sealed class LiveStepMetrics
     public double AverageRequestsPerSecond { get; init; }
 
     public TimeSpan ResponseTimeMean { get; init; }
+
+    /// <summary>The step's cumulative Ok p95 over the measurement phase; the dashboard renders the interval reading (the newest sample of <see cref="ResponseTimePercentile95Series"/>) and this cumulative value is kept for the model's completeness and future readers.</summary>
     public TimeSpan ResponseTimePercentile95 { get; init; }
 
     /// <summary>Per-interval current rate of this step, oldest first — its <see cref="RequestsPerSecond"/> for every closed interval, ready for a sparkline; zero across the warmup phase, like the delta series.</summary>

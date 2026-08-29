@@ -93,7 +93,7 @@ public class LiveDashboardTests : Test
                 dashboard.Render();
 
                 var flush = Assert.ContainsSingle(writer.Writes);
-                var expectedLines = LiveDashboardLayout.Render(new[] { WarmupSnapshot(42) }, 40, 6, ColorMode.None, SparklineGlyphSet.Braille, "⠋");
+                var expectedLines = LiveDashboardLayout.Render(new[] { WarmupSnapshot(42) }, LiveDashboardViewState.Default, 40, 6, ColorMode.None, SparklineGlyphSet.Braille, "⠋");
                 Assert.HasCount(6, expectedLines);
                 Assert.AreEqual(FullRedraw(expectedLines), flush);
                 // Hand-derived anchors, so the golden is not only the layout compared to itself:
@@ -128,7 +128,7 @@ public class LiveDashboardTests : Test
                 dashboard.Render();
 
                 var flush = Assert.ContainsSingle(writer.Writes);
-                var expectedLines = LiveDashboardLayout.Render(new[] { WarmupSnapshot(42) }, 50, 7, ColorMode.None, SparklineGlyphSet.Braille, "⠙");
+                var expectedLines = LiveDashboardLayout.Render(new[] { WarmupSnapshot(42) }, LiveDashboardViewState.Default, 50, 7, ColorMode.None, SparklineGlyphSet.Braille, "⠙");
                 Assert.HasCount(7, expectedLines);
                 Assert.AreEqual(FullRedraw(expectedLines), flush);
                 Assert.EndsWith(AnsiCodes.MoveCursor(7, 1) + "q quit" + AnsiCodes.EndSynchronizedOutput, flush);

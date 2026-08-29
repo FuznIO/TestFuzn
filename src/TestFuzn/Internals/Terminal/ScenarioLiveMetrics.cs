@@ -69,7 +69,8 @@ internal sealed class ScenarioLiveMetrics
     /// <summary>
     /// Maximum distinct errors in a published snapshot: the 20 most recently active. The
     /// internal tracker keeps every distinct error (the collectors cap distinct errors per
-    /// step), so recency is judged on real count changes even for errors currently unpublished.
+    /// step), so recency is judged on real count changes even for errors currently unpublished,
+    /// and its size is published as <see cref="LiveMetricsSnapshot.DistinctErrorCount"/>.
     /// </summary>
     public const int ErrorCapacity = 20;
 
@@ -199,6 +200,7 @@ internal sealed class ScenarioLiveMetrics
                 ResponseTimePercentile99Series = percentile99Series,
                 LatencyBucketSeries = bucketSeries,
                 Errors = MaterializeErrors(),
+                DistinctErrorCount = _errorTracker.Count,
                 Steps = MaterializeSteps(snapshot, timestamp)
             };
 

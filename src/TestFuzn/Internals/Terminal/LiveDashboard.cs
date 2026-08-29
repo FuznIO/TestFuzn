@@ -103,7 +103,7 @@ internal sealed class LiveDashboard : IDisposable
         _spinnerFrameIndex = (_spinnerFrameIndex + 1) % _spinnerFrames.Length;
 
         _frame.Clear();
-        _frame.AddLines(LiveDashboardLayout.Render(snapshots, width, height, _capabilities.ColorMode, _sparklineGlyphSet, spinnerGlyph));
+        _frame.AddLines(LiveDashboardLayout.Render(snapshots, LiveDashboardViewState.Default, width, height, _capabilities.ColorMode, _sparklineGlyphSet, spinnerGlyph));
         _renderer.Render(_frame, width, height);
     }
 

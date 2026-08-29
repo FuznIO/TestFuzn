@@ -189,6 +189,14 @@ internal sealed class LiveMetricsSnapshot
     /// </summary>
     public IReadOnlyList<LiveErrorEntry> Errors { get; init; } = Array.Empty<LiveErrorEntry>();
 
+    /// <summary>
+    /// How many distinct errors the model has seen across all steps, sub-steps included —
+    /// every one its tracker holds, published or not — so the ticker can say how many more
+    /// exist than <see cref="Errors"/> carries once that list is at its capacity. Never less
+    /// than the list's length on a published view; zero on a view built without a model.
+    /// </summary>
+    public int DistinctErrorCount { get; init; }
+
     /// <summary>One row per top-level step, in scenario declaration order.</summary>
     public IReadOnlyList<LiveStepMetrics> Steps { get; init; } = Array.Empty<LiveStepMetrics>();
 }

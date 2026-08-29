@@ -36,6 +36,7 @@ public class ScenarioLiveMetricsTests : Test
                 Assert.AreEqual(TimeSpan.FromSeconds(60), view.EstimatedTimeRemaining);
                 Assert.IsEmpty(view.Samples);
                 Assert.IsEmpty(view.Errors);
+                Assert.AreEqual(0, view.DistinctErrorCount);
                 Assert.IsEmpty(view.Steps);
             })
             .Step("The first Record only establishes the baseline and appends no sample", context =>
@@ -236,6 +237,7 @@ public class ScenarioLiveMetricsTests : Test
 
                 var view = metrics.Current;
                 Assert.HasCount(2, view.Errors);
+                Assert.AreEqual(2, view.DistinctErrorCount);
                 Assert.AreEqual("Timeout", view.Errors[0].Message);
                 Assert.AreEqual("HTTP 500", view.Errors[1].Message);
                 Assert.AreEqual(SyntheticLoadSnapshots.At(1), view.Errors[1].LastSeen);
@@ -290,7 +292,7 @@ public class ScenarioLiveMetricsTests : Test
                 Assert.AreEqual("Child step", entry.StepName);
                 Assert.AreEqual("boom", entry.Message);
             })
-            .Step("The published list is bounded to the most recently active distinct errors", context =>
+            .Step("The published list is bounded to the most recently active distinct errors, and the distinct count says how many the tracker holds beyond it", context =>
             {
                 var metrics = CreateMetrics();
 
@@ -303,6 +305,7 @@ public class ScenarioLiveMetricsTests : Test
 
                 var view = metrics.Current;
                 Assert.HasCount(ScenarioLiveMetrics.ErrorCapacity, view.Errors);
+                Assert.AreEqual(ScenarioLiveMetrics.ErrorCapacity + 5, view.DistinctErrorCount);
                 var messages = view.Errors.Select(error => error.Message).ToList();
                 Assert.Contains("error-" + (ScenarioLiveMetrics.ErrorCapacity + 5), messages);
                 Assert.DoesNotContain("error-1", messages);

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Internals.Thresholds;
 using Fuzn.TestFuzn.Internals.Utils;
@@ -12,8 +13,9 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// latency heatmap, a requests panel with Ok/Failed rows (count, current rate and the
 /// response-time spread), a per-step live table, and an error ticker — closed by a key-hint
 /// footer that owns the window's last row. Pure composition of the widgets in this namespace:
-/// everything shown comes from the passed <see cref="LiveMetricsSnapshot"/>s (no console, no
-/// clock — elapsed and ETA are snapshot values), so identical inputs render an identical frame,
+/// everything shown comes from the passed <see cref="LiveMetricsSnapshot"/>s and the
+/// viewer's <see cref="LiveDashboardViewState"/> (no console, no clock — elapsed, ETA and the
+/// error ticker's ages are snapshot values), so identical inputs render an identical frame,
 /// which the <see cref="FrameRenderer"/> diff depends on. Every rate on screen is one measure —
 /// the current-interval rate, on the rps tile, in the requests rows (the newest sample's ok and
 /// failed deltas over its interval) and in the step rows alike — never a lifetime average, and
@@ -95,7 +97,7 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// columns, stacked requests over latency from <see cref="MinimumWidthForCharts"/>, and are
 /// dropped below that; their bodies are <see cref="ChartHeight"/> rows from
 /// <see cref="MinimumHeightForTallCharts"/> rows of height and <see cref="CompactChartHeight"/>
-/// below.
+/// below — or when the budget compacts them (the Height order).
 /// </para>
 /// <para>
 /// <b>Heatmap.</b> A full-width "latency heatmap" panel under the charts: a
@@ -103,8 +105,64 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// <see cref="HeatmapHeight"/> rows for the fifteen <see cref="LatencyBuckets"/> — the widget
 /// merges every pair below the slowest bucket — labelled by their inclusive upper bounds,
 /// "≤ 1 ms" through "≤ 30 s" and "> 30 s" for the open-ended last one, in the secondary style.
-/// Shown only with the charts' width and from <see cref="MinimumHeightForHeatmap"/> rows of
-/// height.
+/// The budget takes its rows first, one at a time down to <see cref="MinimumHeatmapHeight"/>
+/// (the widget merges further, from the middle outward), before anything else yields. Shown
+/// only with the charts' width and from <see cref="MinimumHeightForHeatmap"/> rows of height.
+/// </para>
+/// <para>
+/// <b>Steps.</b> A "Steps" panel with a <see cref="TableWidget"/> of the snapshot's top-level
+/// steps, one row each, sorted by pain — the failure share (failed over ok + failed, the
+/// fail% column's number) descending, then the newest interval p95 descending, a step
+/// without a p95 reading after every step with one, and declaration order on a tie — so the
+/// rows a shrinking budget keeps are the ones that hurt. The columns: a pointer column and
+/// the name; count (ok + failed); rps (the step's current-interval rate, the shared no-data
+/// rule); mean (the step's cumulative Ok mean); p95 — the newest sample of the step's
+/// <see cref="LiveStepMetrics.ResponseTimePercentile95Series"/>, the interval reading, under
+/// the p95 tile's rule (an idle interval's zero and anything no TimeSpan holds are no data),
+/// so it can differ from the cumulative p95 the final summary prints; failed; fail% — a
+/// <see cref="FailureBarCellCount"/>-cell bar of the failure share (a nonzero share fills at
+/// least one cell) with the share as a percentage, both in the state the errors tile's
+/// heuristic gives that share (zero Ok, up to <see cref="ErrorRateWarningLimit"/> Warning,
+/// above it Critical; no requests at all is the empty track alone, Neutral); and trend, a
+/// <see cref="StepTrendWidth"/>-column <see cref="SparklineWidget"/> of the newest samples of
+/// the step's <see cref="LiveStepMetrics.RequestsPerSecondSeries"/> in the secondary style,
+/// windowed as the widget documents. The column set is the widest tier whose natural width
+/// fits the panel, like the requests table: the trend goes first, then mean and failed, and
+/// only when even that tier cannot fit does the widget shrink columns. The view state's
+/// <see cref="LiveDashboardViewState.SelectedStepIndex"/> — an index into the displayed,
+/// pain-sorted rows, clamped into them as the type documents — marks its row with
+/// <see cref="Pointer"/> in the pointer column and paints the whole row, padding to the
+/// panel's inner width included, in reverse video: a single plain reverse span over the
+/// row's text, so the highlight bar stays uniform where the cells' own colours would break
+/// it. Unselected rows keep the pointer column blank, so the columns line up either way, and
+/// in <see cref="ColorMode.None"/> the pointer is the whole highlight. Rows the height budget
+/// hides — the least painful — are announced by a "+N more" line under the rows, in the
+/// pointer column's indent.
+/// </para>
+/// <para>
+/// <b>Errors.</b> An "Errors" panel — the ticker — of the snapshot's distinct errors, most
+/// recently active first (<see cref="LiveErrorEntry.LastSeen"/> descending, then the count
+/// descending, the snapshot's order on a tie), one entry each: the count right-aligned across
+/// the ticker's entries with a × in the failed style, the current rate in parentheses per
+/// second ("(2.0/s)", the rate format, right-aligned likewise, no data as the em dash)
+/// between a space and two, the step name in bold (one space after the × when the rates are
+/// off), a dim middle dot, the message, and after three spaces the ages in the secondary
+/// style — "first 1m 12s ago · last 2s ago", the plan's duration
+/// format, each measured from the newest sample's timestamp (the instant the snapshot
+/// describes; never the clock) and floored at zero. Step names and messages are exception
+/// text: markup-escaped, their control characters sanitized to spaces up front, so a message
+/// can never widen a row or leak markup or an escape. An entry wraps to the panel's inner
+/// width: greedy word wrapping at the last space that fits (a run without one breaks at the
+/// width, never between a surrogate pair), the continuation lines indented under the step
+/// name unless that indent would take more than half the panel, and each line re-marked-up
+/// from its own runs, so a break never lands inside a tag or an SGR sequence; an entry
+/// keeps at most <see cref="MaximumErrorEntryLines"/> lines, the last ending in an ellipsis
+/// when the text goes on. The pieces go by width: the ages below
+/// <see cref="MinimumWidthForErrorAges"/> columns (and while the snapshot has no sample to
+/// measure them from), the rates below <see cref="MinimumWidthForErrorRates"/>. Entries the
+/// budget hides and distinct errors beyond what the snapshot carries
+/// (<see cref="LiveMetricsSnapshot.DistinctErrorCount"/> over the list) are announced
+/// together by a "+N more" line under the entries.
 /// </para>
 /// <para>
 /// <b>Width.</b> No emitted line is ever wider than the given width at any width: the logo
@@ -115,34 +173,48 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// eight-column clock or the eight-letter requests label plus the box's borders and padding;
 /// a wider value, a nine-digit count, drops its tile from the right as the widget does); the
 /// chart panels stack below <see cref="MinimumWidthForChartsSideBySide"/> and go, with the
-/// heatmap, below <see cref="MinimumWidthForCharts"/>; the requests table narrows its column
-/// set by the columns' actual content widths (min/p75/p99 go first, then p50/max) so a number
-/// is never cut short; and the remaining pieces degrade through the widgets' own narrow-width
-/// behavior down to rendering nothing at degenerate widths.
+/// heatmap, below <see cref="MinimumWidthForCharts"/>; the error ticker drops its ages below
+/// <see cref="MinimumWidthForErrorAges"/> and its rates below
+/// <see cref="MinimumWidthForErrorRates"/>; the requests and steps tables narrow their column
+/// sets by the columns' actual content widths (min/p75/p99 go first, then p50/max; the trend
+/// first, then mean/failed) so a number is never cut short; and the remaining pieces degrade
+/// through the widgets' own narrow-width behavior down to rendering nothing at degenerate
+/// widths.
 /// </para>
 /// <para>
 /// <b>Height.</b> The frame is fitted to the height: content is clipped to the rows above the
 /// footer (a frame taller than the window loses its tail, never the quit hint — each section
 /// leads with its most important lines) and padded down so the footer lands on the last row;
 /// a height below 1 leaves the frame unclipped and unpadded with every optional row in. A
-/// section gives rows back as the window shrinks in one order, cheapest first. The first four
-/// steps follow the window's height alone: the heatmap panel goes below
-/// <see cref="MinimumHeightForHeatmap"/> rows; two rows of each chart body
-/// (<see cref="ChartHeight"/> to <see cref="CompactChartHeight"/>) and the tile trends go below
-/// <see cref="MinimumHeightForTallCharts"/> (one step — <see cref="MinimumHeightForTileTrends"/>
-/// is the same height); the tile gauges (the threshold bars and the elapsed tile's progress
-/// with its time remaining) go below <see cref="MinimumHeightForTileGauges"/>; and the
-/// timeline goes below <see cref="MinimumHeightForTimeline"/>. The remaining steps are taken
-/// only while the section still overruns its budget — the rows above the footer, less what the
-/// sections before it took: the step rows go, last first, the Steps header staying; then the
-/// error rows likewise, the Errors header staying; then the Steps panel whole, then the Errors
-/// panel; then the heatmap panel (the window has the rows for it but the section does not — a
-/// section stacked under another, a wrapped tile block); then the latency chart, then the
-/// requests chart — side by side the two share their rows and go together; and last the
-/// clipping above, which cuts the requests panel from its bottom border up and never the
-/// footer. So a window of 12 to 14 rows shows the title with the phase after the badge, the
-/// two-line tiles and the requests panel whole, and one of 10 or 11 rows the requests panel
-/// cut after its header lines.
+/// section gives rows back in one order. The first four steps follow the window's height
+/// alone; the rest are taken only while the section still overruns its budget — the rows
+/// above the footer, less what the sections before it took (a section stacked under another,
+/// a wrapped tile block) — each step only while it does, so a section pays what it owes and
+/// no more wherever a step can be measured out:
+/// <list type="number">
+/// <item><description>the heatmap panel goes below <see cref="MinimumHeightForHeatmap"/> rows;</description></item>
+/// <item><description>two rows of each chart body (<see cref="ChartHeight"/> to <see cref="CompactChartHeight"/>) and the tile trends go below <see cref="MinimumHeightForTallCharts"/> (one step — <see cref="MinimumHeightForTileTrends"/> is the same height);</description></item>
+/// <item><description>the tile gauges (the threshold bars and the elapsed tile's progress with its time remaining) go below <see cref="MinimumHeightForTileGauges"/>;</description></item>
+/// <item><description>the timeline goes below <see cref="MinimumHeightForTimeline"/>;</description></item>
+/// <item><description>the heatmap body gives back a row at a time, from <see cref="HeatmapHeight"/> down to <see cref="MinimumHeatmapHeight"/> — the widget merges more buckets per row — so a small overrun costs exactly its rows;</description></item>
+/// <item><description>the heatmap panel goes whole;</description></item>
+/// <item><description>the chart bodies compact from <see cref="ChartHeight"/> to <see cref="CompactChartHeight"/> rows when the height left them tall — side by side the pair together, two rows; stacked, four;</description></item>
+/// <item><description>the step rows go, last first (the least painful), down to one row;</description></item>
+/// <item><description>the error entries go likewise, least recently active first, down to one entry;</description></item>
+/// <item><description>the latency chart goes — stacked, alone; side by side the pair splits and the requests chart spans the width, which frees no row, so the next step follows at once;</description></item>
+/// <item><description>the requests chart goes;</description></item>
+/// <item><description>the Steps panel goes whole;</description></item>
+/// <item><description>the Errors panel goes whole;</description></item>
+/// <item><description>and last the clipping above, which cuts the requests panel from its bottom border up and never the footer.</description></item>
+/// </list>
+/// A table is never a header alone: a panel that cannot keep a row is dropped whole, and
+/// hidden rows are never silent — the first row hidden costs its panel a "+N more" line, so a
+/// table whose rows are all needed gives nothing back (two rows cannot become one and a more
+/// line) and the panel goes instead. The steps are greedy and never undone: rows a table gave
+/// back stay hidden when a later step frees more than the section still owed. So a window of
+/// 12 to 14 rows shows the title with the phase after the badge, the two-line tiles and the
+/// requests panel whole, and one of 10 or 11 rows the requests panel cut after its header
+/// lines.
 /// </para>
 /// Alternate-screen entry/exit and the render loop are the caller's job. Stateless and
 /// thread-safe.
@@ -160,6 +232,12 @@ internal static class LiveDashboardLayout
 
     /// <summary>Below this width the tiles carry no trend sparkline.</summary>
     public const int MinimumWidthForTileTrends = 80;
+
+    /// <summary>Below this width the error ticker's entries carry no first-seen and last-seen ages.</summary>
+    public const int MinimumWidthForErrorAges = 80;
+
+    /// <summary>Below this width the error ticker's entries carry no current rate.</summary>
+    public const int MinimumWidthForErrorRates = 60;
 
     /// <summary>
     /// The narrowest box the tiles share one row at: the eight-column clock or requests label
@@ -189,8 +267,23 @@ internal static class LiveDashboardLayout
     /// <summary>The rows of a chart body below <see cref="MinimumHeightForTallCharts"/> rows of height.</summary>
     public const int CompactChartHeight = 4;
 
-    /// <summary>The rows of the heatmap body.</summary>
+    /// <summary>The rows of the heatmap body when the budget allows; the drop order takes them one at a time down to <see cref="MinimumHeatmapHeight"/>.</summary>
     public const int HeatmapHeight = 8;
+
+    /// <summary>The fewest rows the heatmap body keeps under the budget: a section still over at this height drops the panel whole rather than shrinking it further.</summary>
+    public const int MinimumHeatmapHeight = 4;
+
+    /// <summary>The columns of a step row's trend — its rate sparkline — in the steps table's widest column set.</summary>
+    public const int StepTrendWidth = 12;
+
+    /// <summary>The most lines one error ticker entry wraps onto; a longer entry's last line ends in an ellipsis.</summary>
+    public const int MaximumErrorEntryLines = 3;
+
+    /// <summary>The cells of a step row's fail% bar; a nonzero failure share fills at least one.</summary>
+    public const int FailureBarCellCount = 5;
+
+    /// <summary>The glyph in the pointer column of the Steps table's selected row; the column is blank on every other row.</summary>
+    public const string Pointer = "▸";
 
     /// <summary>The fewest columns the timeline bar keeps when the phase label is written after it; a label that would leave fewer is dropped.</summary>
     public const int MinimumTimelineWidth = 24;
@@ -253,10 +346,12 @@ internal static class LiveDashboardLayout
     // The rows a PanelWidget adds around its content: the top and bottom borders.
     private const int PanelFrameRows = 2;
 
-    // Cells in a step row's fail% mini-bar; failure fractions at or above
-    // SevereFailureFraction color it red, smaller nonzero fractions yellow.
-    private const int FailureBarCellCount = 5;
-    private const double SevereFailureFraction = 0.05;
+    // The pointer column of a step row while the row is not selected: one blank column, so
+    // the names line up with the selected row's.
+    private const string PointerColumnBlank = " ";
+
+    private const string StepsHeader = "[" + TerminalPalette.PanelHeaderStyle + "]Steps[/]";
+    private const string ErrorsHeader = "[" + TerminalPalette.PanelHeaderStyle + "]Errors[/]";
 
     // The largest magnitude in milliseconds a TimeSpan can hold (long.MaxValue ticks), for
     // guarding series values that never went through a TimeSpan.
@@ -304,32 +399,46 @@ internal static class LiveDashboardLayout
         new[] { 0, 1, 2, 4, 7 }
     };
 
+    // The steps table's columns; the first holds the pointer column and the step name, its
+    // header indented past the pointer column so the names line up under "step".
     private static readonly TableColumn[] StepColumns =
     {
-        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]step[/]") { MaxWidth = 32 },
+        new TableColumn(PointerColumnBlank + "[" + TerminalPalette.SecondaryStyle + "]step[/]") { MaxWidth = 32 },
         new TableColumn("[" + TerminalPalette.SecondaryStyle + "]count[/]") { Alignment = TextAlignment.Right },
         new TableColumn("[" + TerminalPalette.SecondaryStyle + "]rps[/]") { Alignment = TextAlignment.Right },
         new TableColumn("[" + TerminalPalette.SecondaryStyle + "]mean[/]") { Alignment = TextAlignment.Right },
         new TableColumn("[" + TerminalPalette.SecondaryStyle + "]p95[/]") { Alignment = TextAlignment.Right },
         new TableColumn("[" + TerminalPalette.SecondaryStyle + "]failed[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]fail%[/]")
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]fail%[/]"),
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]trend[/]")
+    };
+
+    // The steps table's column sets as indexes into StepColumns, widest first: everything,
+    // then without the trend, then without mean and failed as well — the name, count, rps,
+    // p95 and fail% always stay. Chosen by natural width like the requests table's tiers.
+    private static readonly int[][] StepColumnTiers =
+    {
+        new[] { 0, 1, 2, 3, 4, 5, 6, 7 },
+        new[] { 0, 1, 2, 3, 4, 5, 6 },
+        new[] { 0, 1, 2, 4, 6 }
     };
 
     /// <summary>
-    /// Renders the full dashboard frame for the given scenario snapshots, in order, at the
-    /// given window size. Returns one <see cref="RenderedLine"/> per terminal row, ready for
-    /// <see cref="FrameBuffer.AddLines(IEnumerable{RenderedLine})"/>: exactly
-    /// <paramref name="height"/> rows for a height of 1 or more, the content clipped or padded
-    /// to the rows above the footer on the last row, each section's optional rows given up in
-    /// the order the class summary describes; the unclipped content plus the footer, every
-    /// optional row in, for a smaller height. A width below 1 renders nothing. The glyph set is
-    /// passed through to the tile trends and the chart panels so the caller can match it to the
-    /// terminal's font support. The spinner glyph, when given, is drawn in place of the dot on
-    /// a running scenario's status badge — a single-column glyph the caller's render loop
-    /// advances per frame; null keeps the dot, and finished badges (passed, failed, skipped)
-    /// always keep theirs.
+    /// Renders the full dashboard frame for the given scenario snapshots, in order, under the
+    /// viewer's state, at the given window size. Returns one <see cref="RenderedLine"/> per
+    /// terminal row, ready for <see cref="FrameBuffer.AddLines(IEnumerable{RenderedLine})"/>:
+    /// exactly <paramref name="height"/> rows for a height of 1 or more, the content clipped
+    /// or padded to the rows above the footer on the last row, each section's optional rows
+    /// given up in the order the class summary describes; the unclipped content plus the
+    /// footer, every optional row in, for a smaller height. A width below 1 renders nothing.
+    /// The view state's step selection applies to every section alike. The glyph set is
+    /// passed through to the tile trends, the chart panels and the step trends so the caller
+    /// can match it to the terminal's font support. The spinner glyph, when given, is drawn
+    /// in place of the dot on a running scenario's status badge — a single-column glyph the
+    /// caller's render loop advances per frame; null keeps the dot, and finished badges
+    /// (passed, failed, skipped) always keep theirs.
     /// </summary>
-    public static IReadOnlyList<RenderedLine> Render(IReadOnlyList<LiveMetricsSnapshot> snapshots, int width, int height, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet = SparklineGlyphSet.Braille, string? spinnerGlyph = null)
+    public static IReadOnlyList<RenderedLine> Render(IReadOnlyList<LiveMetricsSnapshot> snapshots, LiveDashboardViewState viewState, int width, int height, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet = SparklineGlyphSet.Braille, string? spinnerGlyph = null)
     {
         if (snapshots == null)
             throw new ArgumentNullException(nameof(snapshots), "Snapshots cannot be null.");
@@ -351,7 +460,7 @@ internal static class LiveDashboardLayout
             }
 
             var sectionStart = lines.Count;
-            AddScenarioSection(lines, snapshots[index], width, height, remainingRows, colorMode, sparklineGlyphSet, spinnerGlyph, includeLogo: index == 0 && width >= MinimumWidthForLogo);
+            AddScenarioSection(lines, snapshots[index], viewState, width, height, remainingRows, colorMode, sparklineGlyphSet, spinnerGlyph, includeLogo: index == 0 && width >= MinimumWidthForLogo);
             remainingRows -= lines.Count - sectionStart;
         }
 
@@ -382,9 +491,10 @@ internal static class LiveDashboardLayout
 
     // One scenario's section: the header block (title, tiles, timeline, status detail, a
     // blank), the chart and heatmap panels, the requests panel, the steps table and the errors
-    // panel — the header and the requests panel rendered first, since the budget steps of the
-    // drop order fit the rest of the section around them.
-    private static void AddScenarioSection(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, int width, int height, int budget, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet, string? spinnerGlyph, bool includeLogo)
+    // panel — the header and the requests panel rendered first, and the step rows sorted and
+    // the error entries laid out (their line counts are what the budget trims by), since the
+    // budget steps of the drop order fit the rest of the section around them.
+    private static void AddScenarioSection(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, LiveDashboardViewState viewState, int width, int height, int budget, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet, string? spinnerGlyph, bool includeLogo)
     {
         var thresholds = new DeclaredThresholds(snapshot.Thresholds);
         var includeTimeline = snapshot.PlanEntries.Count > 0 && HasRowsFor(height, MinimumHeightForTimeline);
@@ -402,7 +512,10 @@ internal static class LiveDashboardLayout
         header.Add(BlankLine);
 
         var requests = RenderRequestsPanel(snapshot, width, colorMode);
-        var plan = PlanSection(snapshot, width, height, header.Count + requests.Count, budget);
+        var steps = SortStepsByPain(snapshot.Steps);
+        var errorEntries = RenderErrorEntries(snapshot, width, colorMode);
+        var distinctErrorCount = Math.Max(snapshot.DistinctErrorCount, snapshot.Errors.Count);
+        var plan = PlanSection(width, height, header.Count + requests.Count, budget, steps.Count, errorEntries, distinctErrorCount);
 
         lines.AddRange(header);
 
@@ -410,92 +523,188 @@ internal static class LiveDashboardLayout
             AddChartPanels(lines, snapshot, thresholds, plan, width, colorMode, sparklineGlyphSet);
 
         if (plan.IncludeHeatmap)
-            lines.AddRange(RenderHeatmapPanel(snapshot, width, colorMode));
+            lines.AddRange(RenderHeatmapPanel(snapshot, width, plan.HeatmapHeight, colorMode));
 
         lines.AddRange(requests);
 
         if (plan.IncludeSteps)
-            AddStepsPanel(lines, snapshot.Steps, plan.StepRowCount, width, colorMode);
+            AddStepsPanel(lines, steps, plan.StepRowCount, SelectedStepRow(viewState, plan.StepRowCount), width, colorMode, sparklineGlyphSet);
 
         if (plan.IncludeErrors)
-            AddErrorsPanel(lines, snapshot.Errors, plan.ErrorRowCount, width, colorMode);
+            AddErrorsPanel(lines, errorEntries, plan.ErrorEntryCount, distinctErrorCount - plan.ErrorEntryCount, width, colorMode);
     }
 
-    // Which of the section's optional pieces render and how many step and error rows: the
-    // height steps of the drop order first, from the window's height alone, then the budget
-    // steps in order, each taken only while the section's rows — fixedRows for the header block
-    // and the requests panel, plus the pieces still in — exceed the budget. Panel frames count.
-    private static SectionPlan PlanSection(LiveMetricsSnapshot snapshot, int width, int height, int fixedRows, int budget)
+    // Which of the section's optional pieces render, how tall the heatmap and chart bodies
+    // are, and how many step rows and error entries: the height steps of the drop order
+    // first, from the window's height alone, then the budget steps in the class summary's
+    // order, each taken only while the section's rows — fixedRows for the header block and
+    // the requests panel, plus the pieces still in — exceed the budget. Panel frames count,
+    // and so does the "+N more" line a trimmed table gains: a table's rows are given back one
+    // at a time while that still saves a row and a row remains, and a table that cannot keep
+    // a row goes whole. Nothing given back is taken back: a later step that frees more than
+    // the section still owed leaves the earlier ones as they are.
+    private static SectionPlan PlanSection(int width, int height, int fixedRows, int budget, int stepCount, IReadOnlyList<IReadOnlyList<RenderedLine>> errorEntries, int distinctErrorCount)
     {
         var includeCharts = width >= MinimumWidthForCharts;
         var sideBySideCharts = width >= MinimumWidthForChartsSideBySide;
         var chartBodyHeight = HasRowsFor(height, MinimumHeightForTallCharts) ? ChartHeight : CompactChartHeight;
-        var chartPanelRows = chartBodyHeight + PanelFrameRows;
         var includeRequestsChart = includeCharts;
         var includeLatencyChart = includeCharts;
-        var includeHeatmap = includeCharts && HasRowsFor(height, MinimumHeightForHeatmap);
-        var stepRowCount = snapshot.Steps.Count;
+        var heatmapHeight = includeCharts && HasRowsFor(height, MinimumHeightForHeatmap) ? HeatmapHeight : 0;
+        var stepRowCount = stepCount;
         var includeSteps = stepRowCount > 0;
-        var errorRowCount = snapshot.Errors.Count;
-        var includeErrors = errorRowCount > 0;
+        var errorEntryCount = errorEntries.Count;
+        var includeErrors = errorEntryCount > 0;
 
-        var rows = fixedRows;
-        if (includeCharts)
-            rows += sideBySideCharts ? chartPanelRows : 2 * chartPanelRows;
-        if (includeHeatmap)
-            rows += HeatmapHeight + PanelFrameRows;
+        var rows = fixedRows + ChartRows(sideBySideCharts, chartBodyHeight, includeRequestsChart, includeLatencyChart) + HeatmapRows(heatmapHeight);
         if (includeSteps)
-            rows += PanelFrameRows + 1 + stepRowCount;
+            rows += StepsPanelRows(stepRowCount, stepCount);
         if (includeErrors)
-            rows += PanelFrameRows + errorRowCount;
+            rows += ErrorsPanelRows(errorEntries, errorEntryCount, distinctErrorCount);
 
         var over = rows - budget;
 
-        if (over > 0)
+        // The heatmap body, a row at a time down to its floor — the one step that pays
+        // exactly the rows owed — and then the panel whole.
+        while (over > 0 && heatmapHeight > MinimumHeatmapHeight)
         {
-            var trimmed = Math.Min(over, stepRowCount);
-            stepRowCount -= trimmed;
-            over -= trimmed;
+            heatmapHeight--;
+            over--;
         }
 
-        if (over > 0)
+        if (over > 0 && heatmapHeight > 0)
         {
-            var trimmed = Math.Min(over, errorRowCount);
-            errorRowCount -= trimmed;
-            over -= trimmed;
+            over -= HeatmapRows(heatmapHeight);
+            heatmapHeight = 0;
+        }
+
+        // The chart bodies, when the height left them tall: side by side the pair together.
+        if (over > 0 && includeCharts && chartBodyHeight > CompactChartHeight)
+        {
+            var before = ChartRows(sideBySideCharts, chartBodyHeight, includeRequestsChart, includeLatencyChart);
+            chartBodyHeight = CompactChartHeight;
+            over -= before - ChartRows(sideBySideCharts, chartBodyHeight, includeRequestsChart, includeLatencyChart);
+        }
+
+        Func<int, int> stepsPanelRows = rowCount => StepsPanelRows(rowCount, stepCount);
+        while (over > 0 && CanTrim(stepsPanelRows, stepRowCount))
+        {
+            var before = stepsPanelRows(stepRowCount);
+            stepRowCount--;
+            over -= before - stepsPanelRows(stepRowCount);
+        }
+
+        Func<int, int> errorsPanelRows = entryCount => ErrorsPanelRows(errorEntries, entryCount, distinctErrorCount);
+        while (over > 0 && CanTrim(errorsPanelRows, errorEntryCount))
+        {
+            var before = errorsPanelRows(errorEntryCount);
+            errorEntryCount--;
+            over -= before - errorsPanelRows(errorEntryCount);
+        }
+
+        // The latency chart: stacked its rows go with it; side by side the pair splits and the
+        // requests chart takes the width — no row freed, so the requests chart follows at once.
+        if (over > 0 && includeLatencyChart)
+        {
+            var before = ChartRows(sideBySideCharts, chartBodyHeight, includeRequestsChart, includeLatencyChart);
+            includeLatencyChart = false;
+            over -= before - ChartRows(sideBySideCharts, chartBodyHeight, includeRequestsChart, includeLatencyChart);
+        }
+
+        if (over > 0 && includeRequestsChart)
+        {
+            includeRequestsChart = false;
+            over -= chartBodyHeight + PanelFrameRows;
         }
 
         if (over > 0 && includeSteps)
         {
             includeSteps = false;
-            over -= PanelFrameRows + 1;
+            over -= StepsPanelRows(stepRowCount, stepCount);
         }
 
         if (over > 0 && includeErrors)
         {
             includeErrors = false;
-            over -= PanelFrameRows;
+            over -= ErrorsPanelRows(errorEntries, errorEntryCount, distinctErrorCount);
         }
 
-        if (over > 0 && includeHeatmap)
-        {
-            includeHeatmap = false;
-            over -= HeatmapHeight + PanelFrameRows;
-        }
+        return new SectionPlan(sideBySideCharts, chartBodyHeight, includeRequestsChart, includeLatencyChart, heatmapHeight, includeSteps, stepRowCount, includeErrors, errorEntryCount);
+    }
 
-        if (over > 0 && includeLatencyChart)
-        {
-            includeLatencyChart = false;
-            if (sideBySideCharts)
-                includeRequestsChart = false;
+    // The rows the chart panels take: side by side the two share one panel's rows; stacked, or
+    // once the latency chart of a side-by-side pair is gone and the requests chart spans the
+    // width, each panel still in has its own.
+    private static int ChartRows(bool sideBySideCharts, int chartBodyHeight, bool includeRequestsChart, bool includeLatencyChart)
+    {
+        var panelRows = chartBodyHeight + PanelFrameRows;
+        if (includeRequestsChart && includeLatencyChart)
+            return sideBySideCharts ? panelRows : 2 * panelRows;
 
-            over -= chartPanelRows;
-        }
+        if (includeRequestsChart || includeLatencyChart)
+            return panelRows;
 
-        if (over > 0 && includeRequestsChart)
-            includeRequestsChart = false;
+        return 0;
+    }
 
-        return new SectionPlan(sideBySideCharts, chartBodyHeight, includeRequestsChart, includeLatencyChart, includeHeatmap, includeSteps, stepRowCount, includeErrors, errorRowCount);
+    // The rows of the heatmap panel around a body of bodyHeight rows; none without a body.
+    private static int HeatmapRows(int bodyHeight)
+    {
+        if (bodyHeight < 1)
+            return 0;
+
+        return bodyHeight + PanelFrameRows;
+    }
+
+    // Whether a table showing count of its entries can give one back to save a row — an entry
+    // that saves a row itself, or one whose successor does: the first entry given back costs
+    // the more line, so it pays only with the next. Never below one entry.
+    private static bool CanTrim(Func<int, int> panelRows, int count)
+    {
+        if (count <= 1)
+            return false;
+
+        if (panelRows(count - 1) < panelRows(count))
+            return true;
+
+        return count > 2 && panelRows(count - 2) < panelRows(count);
+    }
+
+    // The rows of the Steps panel showing the first rowCount of stepCount steps: the frame,
+    // the column header, the rows, and the more line once any step is hidden.
+    private static int StepsPanelRows(int rowCount, int stepCount)
+    {
+        var rows = PanelFrameRows + 1 + rowCount;
+        if (rowCount < stepCount)
+            rows++;
+
+        return rows;
+    }
+
+    // The rows of the Errors panel showing the first entryCount entries of distinctErrorCount
+    // distinct errors: the frame, the entries' lines, and the more line once any error is
+    // hidden — trimmed by the budget or never carried by the snapshot.
+    private static int ErrorsPanelRows(IReadOnlyList<IReadOnlyList<RenderedLine>> entries, int entryCount, int distinctErrorCount)
+    {
+        var rows = PanelFrameRows;
+        for (var index = 0; index < entryCount; index++)
+            rows += entries[index].Count;
+
+        if (entryCount < distinctErrorCount)
+            rows++;
+
+        return rows;
+    }
+
+    // The displayed row the view state's selection lands on: the index clamped into the rows
+    // shown, so a selection past the last row (one the budget trimmed) stays on the last row
+    // and a negative one lands on the first; none without a selection or without rows.
+    private static int? SelectedStepRow(LiveDashboardViewState viewState, int rowCount)
+    {
+        if (viewState.SelectedStepIndex == null || rowCount < 1)
+            return null;
+
+        return Math.Clamp(viewState.SelectedStepIndex.Value, 0, rowCount - 1);
     }
 
     // Whether the window has the rows for an optional piece; an unbounded height (below 1)
@@ -1066,10 +1275,10 @@ internal static class LiveDashboardLayout
     }
 
     // The latency bucket counts per sample as a heatmap, the fifteen buckets labelled by their
-    // bounds, in a full-width panel.
-    private static IReadOnlyList<RenderedLine> RenderHeatmapPanel(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode)
+    // bounds and merged into the plan's bodyHeight rows by the widget, in a full-width panel.
+    private static IReadOnlyList<RenderedLine> RenderHeatmapPanel(LiveMetricsSnapshot snapshot, int width, int bodyHeight, ColorMode colorMode)
     {
-        var heatmap = HeatmapWidget.Render(snapshot.LatencyBucketSeries, LatencyBucketLabels, width - PanelWidget.ContentOverhead, HeatmapHeight, colorMode, LatencyHeatmapOptions);
+        var heatmap = HeatmapWidget.Render(snapshot.LatencyBucketSeries, LatencyBucketLabels, width - PanelWidget.ContentOverhead, bodyHeight, colorMode, LatencyHeatmapOptions);
         return PanelWidget.Render(HeatmapHeader, heatmap, width, colorMode);
     }
 
@@ -1192,68 +1401,346 @@ internal static class LiveDashboardLayout
         };
     }
 
-    // The first rowCount steps as a table under the column header — every step when the budget
-    // allows, fewer when the drop order took rows, the header alone at zero.
-    private static void AddStepsPanel(List<RenderedLine> lines, IReadOnlyList<LiveStepMetrics> steps, int rowCount, int width, ColorMode colorMode)
+    // The steps by pain: the failure share first, then the newest interval p95, both
+    // descending — a step without a p95 reading after every step with one — and declaration
+    // order on a tie (the sort is stable), so the rows a shrinking budget keeps are the ones
+    // that hurt.
+    private static List<LiveStepMetrics> SortStepsByPain(IReadOnlyList<LiveStepMetrics> steps)
     {
-        var rows = new List<IReadOnlyList<string?>>(rowCount);
+        return steps.OrderByDescending(FailureFraction).ThenByDescending(PainResponseTime).ToList();
+    }
+
+    // The step's failure share, 0..1: failed over ok + failed, clamped so counts that do not
+    // add up (a negative or wrapped counter) read as no failures or all failures; zero
+    // without a request.
+    private static double FailureFraction(LiveStepMetrics step)
+    {
+        var total = (long)step.RequestCountOk + step.RequestCountFailed;
+        if (total == 0)
+            return 0;
+
+        var fraction = (double)step.RequestCountFailed / total;
+        if (fraction < 0)
+            return 0;
+        if (fraction > 1)
+            return 1;
+
+        return fraction;
+    }
+
+    // The step's newest interval p95 as a sort key: the reading, or below every reading
+    // without one.
+    private static double PainResponseTime(LiveStepMetrics step)
+    {
+        var newest = NewestResponseTimeSample(step.ResponseTimePercentile95Series);
+        if (newest == null)
+            return double.NegativeInfinity;
+
+        return newest.Value;
+    }
+
+    // The first rowCount of the pain-sorted steps as a table under the column header — every
+    // step when the budget allows, fewer with the more line when the drop order took rows —
+    // in the widest column tier whose natural width fits the panel. The selected row is
+    // painted whole in reverse video: the table is rendered once more without colour for the
+    // row's plain text, which is then re-rendered as one reverse span padded to the inner
+    // width, so the bar is uniform where the cells' own styles would break it.
+    private static void AddStepsPanel(List<RenderedLine> lines, IReadOnlyList<LiveStepMetrics> steps, int rowCount, int? selectedRow, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    {
+        var innerWidth = width - PanelWidget.ContentOverhead;
+        var rows = new string?[rowCount][];
         for (var index = 0; index < rowCount; index++)
+            rows[index] = StepRow(steps[index], isSelected: selectedRow != null && selectedRow.Value == index, sparklineGlyphSet);
+
+        var content = new List<RenderedLine>();
+        for (var tier = 0; tier < StepColumnTiers.Length; tier++)
         {
-            var step = steps[index];
-            rows.Add(new[]
+            var columns = SelectColumns(StepColumns, StepColumnTiers[tier]);
+            var tierRows = SelectCells(rows, StepColumnTiers[tier]);
+            var isNarrowestTier = tier == StepColumnTiers.Length - 1;
+            if (!isNarrowestTier && TableWidget.MeasureNaturalWidth(columns, tierRows) > innerWidth)
+                continue;
+
+            content.AddRange(TableWidget.Render(columns, tierRows, innerWidth, colorMode));
+            if (selectedRow != null && selectedRow.Value + 1 < content.Count)
             {
-                MarkupParser.Escape(step.Name),
-                FormatCount((long)step.RequestCountOk + step.RequestCountFailed),
-                RateMarkup(step.RequestsPerSecond),
-                step.ResponseTimeMean.ToTestFuznResponseTime(),
-                step.ResponseTimePercentile95.ToTestFuznResponseTime(),
-                FormatCount(step.RequestCountFailed),
-                FailureBarMarkup(step.RequestCountOk, step.RequestCountFailed)
-            });
+                var plain = TableWidget.Render(columns, tierRows, innerWidth, ColorMode.None);
+                content[selectedRow.Value + 1] = ReverseVideoRow(plain[selectedRow.Value + 1].Text, innerWidth, colorMode);
+            }
+
+            break;
         }
 
-        var table = TableWidget.Render(StepColumns, rows, width - PanelWidget.ContentOverhead, colorMode);
-        lines.AddRange(PanelWidget.Render("[" + TerminalPalette.PanelHeaderStyle + "]Steps[/]", table, width, colorMode));
+        if (rowCount < steps.Count)
+            content.Add(MarkupText.RenderTruncated(PointerColumnBlank + MoreLineMarkup(steps.Count - rowCount), innerWidth, colorMode));
+
+        lines.AddRange(PanelWidget.Render(StepsHeader, content, width, colorMode));
     }
 
-    // The first rowCount distinct errors, most recently active first, one truncating line each:
-    // the count right-aligned across the shown entries, the step name, and the message. The
-    // messages are exception text — markup-escaped here, control characters sanitized by the
-    // markup pipeline.
-    private static void AddErrorsPanel(List<RenderedLine> lines, IReadOnlyList<LiveErrorEntry> errors, int rowCount, int width, ColorMode colorMode)
+    // One step's cells in StepColumns order: the pointer column and the escaped name, the
+    // counts, the current rate, the cumulative mean, the newest interval p95, the fail% bar
+    // and the trend.
+    private static string?[] StepRow(LiveStepMetrics step, bool isSelected, SparklineGlyphSet sparklineGlyphSet)
     {
-        var countWidth = 0;
-        for (var index = 0; index < rowCount; index++)
+        return new[]
         {
-            var length = FormatCount(errors[index].Count).Length;
-            if (length > countWidth)
-                countWidth = length;
-        }
-
-        var content = new List<string?>(rowCount);
-        for (var index = 0; index < rowCount; index++)
-        {
-            var error = errors[index];
-            content.Add("[" + TerminalPalette.FailedStyle + "]" + FormatCount(error.Count).PadLeft(countWidth) + "×[/] [bold]"
-                + MarkupParser.Escape(error.StepName) + "[/] [" + TerminalPalette.SecondaryStyle + "]·[/] " + MarkupParser.Escape(error.Message));
-        }
-
-        lines.AddRange(PanelWidget.Render("[" + TerminalPalette.PanelHeaderStyle + "]Errors[/]", content, width, colorMode));
+            (isSelected ? Pointer : PointerColumnBlank) + MarkupParser.Escape(step.Name),
+            FormatCount((long)step.RequestCountOk + step.RequestCountFailed),
+            RateMarkup(step.RequestsPerSecond),
+            step.ResponseTimeMean.ToTestFuznResponseTime(),
+            StepResponseTimeMarkup(step.ResponseTimePercentile95Series),
+            FormatCount(step.RequestCountFailed),
+            FailureBarMarkup(step.RequestCountOk, step.RequestCountFailed),
+            StepTrendMarkup(step.RequestsPerSecondSeries, sparklineGlyphSet)
+        };
     }
 
-    // A fixed-width severity bar for a step's failure share: no requests renders the empty
-    // track alone, zero failures adds 0%, and a nonzero share fills at least one cell. The
-    // share is clamped to 0..1, so counts that do not add up (a negative or wrapped counter)
-    // can only render an empty or a full bar, never one of impossible length.
+    // The newest interval p95 through the shared response-time formatter, no data under the
+    // p95 tile's rule.
+    private static string StepResponseTimeMarkup(IReadOnlyList<double> series)
+    {
+        var newest = NewestResponseTimeSample(series);
+        if (newest == null)
+            return NoDataMarkup;
+
+        return TimeSpan.FromMilliseconds(newest.Value).ToTestFuznResponseTime();
+    }
+
+    // The step's rate sparkline as a table cell: the widget's glyphs — plain text without a
+    // style, a bracket-free run of braille or block glyphs and spaces — in the secondary
+    // style, the way a Neutral tile's trend renders.
+    private static string StepTrendMarkup(IReadOnlyList<double> series, SparklineGlyphSet sparklineGlyphSet)
+    {
+        var glyphs = SparklineWidget.Render(series, StepTrendWidth, ColorMode.None, sparklineGlyphSet)[0].Text;
+        return "[" + TerminalPalette.SecondaryStyle + "]" + glyphs + "[/]";
+    }
+
+    // A table row's plain text as one reverse-video span padded to the inner width: the
+    // escaped text carries no markup of its own, so the whole bar is one style.
+    private static RenderedLine ReverseVideoRow(string plainText, int innerWidth, ColorMode colorMode)
+    {
+        return MarkupText.RenderTruncated("[reverse]" + MarkupParser.Escape(plainText.PadRight(innerWidth)) + "[/]", innerWidth, colorMode);
+    }
+
+    // The line that announces the rows a panel does not show.
+    private static string MoreLineMarkup(int hiddenCount)
+    {
+        return "[" + TerminalPalette.SecondaryStyle + "]+" + FormatCount(hiddenCount) + " more[/]";
+    }
+
+    // The first entryCount ticker entries, each on its laid-out lines, and the more line for
+    // the hiddenCount errors not shown.
+    private static void AddErrorsPanel(List<RenderedLine> lines, IReadOnlyList<IReadOnlyList<RenderedLine>> entries, int entryCount, int hiddenCount, int width, ColorMode colorMode)
+    {
+        var content = new List<RenderedLine>();
+        for (var index = 0; index < entryCount; index++)
+            content.AddRange(entries[index]);
+
+        if (hiddenCount > 0)
+            content.Add(MarkupText.RenderTruncated(MoreLineMarkup(hiddenCount), width - PanelWidget.ContentOverhead, colorMode));
+
+        lines.AddRange(PanelWidget.Render(ErrorsHeader, content, width, colorMode));
+    }
+
+    // Every ticker entry laid out for the panel, most recently active first: the count and
+    // the rate right-aligned across all the entries (so the layout does not depend on which
+    // the budget keeps), the step name, the message and the ages as styled runs of sanitized
+    // text, wrapped to the panel's inner width — the pieces the width drops left out.
+    private static List<IReadOnlyList<RenderedLine>> RenderErrorEntries(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode)
+    {
+        var entries = new List<IReadOnlyList<RenderedLine>>();
+        if (snapshot.Errors.Count == 0)
+            return entries;
+
+        var errors = snapshot.Errors.OrderByDescending(error => error.LastSeen).ThenByDescending(error => error.Count).ToList();
+        var includeRates = width >= MinimumWidthForErrorRates;
+        var includeAges = width >= MinimumWidthForErrorAges && snapshot.Samples.Count > 0;
+
+        // The instant the ages are measured from: the newest sample's timestamp, which the
+        // ages are shown only when the snapshot has.
+        var reference = DateTime.MinValue;
+        if (includeAges)
+            reference = snapshot.Samples[snapshot.Samples.Count - 1].Timestamp;
+
+        var countWidth = 0;
+        var rateWidth = 0;
+        foreach (var error in errors)
+        {
+            countWidth = Math.Max(countWidth, FormatCount(error.Count).Length);
+            rateWidth = Math.Max(rateWidth, ErrorRateText(error.RatePerSecond).Length);
+        }
+
+        // Continuation lines sit under the step name: past the count and its ×, then either
+        // the rate between a space and two spaces, or one space.
+        var innerWidth = width - PanelWidget.ContentOverhead;
+        var nameSeparator = includeRates ? "  " : " ";
+        var indent = countWidth + 1 + nameSeparator.Length;
+        if (includeRates)
+            indent += 1 + rateWidth;
+        if (indent * 2 > innerWidth)
+            indent = 0;
+
+        foreach (var error in errors)
+        {
+            var runs = new List<TextRun>();
+            runs.Add(new TextRun(FormatCount(error.Count).PadLeft(countWidth) + "×", TerminalPalette.FailedStyle));
+            if (includeRates)
+            {
+                runs.Add(new TextRun(" ", null));
+                runs.Add(new TextRun(ErrorRateText(error.RatePerSecond).PadLeft(rateWidth), TerminalPalette.SecondaryStyle));
+            }
+
+            runs.Add(new TextRun(nameSeparator, null));
+            runs.Add(new TextRun(MarkupText.SanitizeControlCharacters(error.StepName), "bold"));
+            runs.Add(new TextRun(" ", null));
+            runs.Add(new TextRun("·", TerminalPalette.SecondaryStyle));
+            runs.Add(new TextRun(" ", null));
+            runs.Add(new TextRun(MarkupText.SanitizeControlCharacters(error.Message), null));
+            if (includeAges)
+            {
+                runs.Add(new TextRun("   ", null));
+                runs.Add(new TextRun("first " + FormatAge(reference - error.FirstSeen) + " ago · last " + FormatAge(reference - error.LastSeen) + " ago", TerminalPalette.SecondaryStyle));
+            }
+
+            entries.Add(WrapRuns(runs, innerWidth, indent, colorMode));
+        }
+
+        return entries;
+    }
+
+    // An error's current rate for the ticker: the rate format per second in parentheses, no
+    // data when it is not finite.
+    private static string ErrorRateText(double rate)
+    {
+        var number = NoDataText;
+        if (double.IsFinite(rate))
+            number = FormatFiniteRate(rate);
+
+        return "(" + number + "/s)";
+    }
+
+    // How long ago, in the plan's duration format; a negative age (an entry stamped after the
+    // reference) is floored at zero by the format.
+    private static string FormatAge(TimeSpan age)
+    {
+        return SimulationPlan.FormatDuration(age);
+    }
+
+    // The runs' text wrapped to the width as lines of at most MaximumErrorEntryLines: the first
+    // line at the full width, the rest indented and narrowed by the indent; each line's markup
+    // is rebuilt from the runs it covers, so no line break can split a tag or an escape. The
+    // last allowed line takes all the remaining text and is truncated with an ellipsis when
+    // that is too wide. A degenerate panel (an inner width below 1) lays the text out as if
+    // one column wide, so the loop always advances, and renders every line empty.
+    private static IReadOnlyList<RenderedLine> WrapRuns(List<TextRun> runs, int innerWidth, int indent, ColorMode colorMode)
+    {
+        var text = new StringBuilder();
+        foreach (var run in runs)
+            text.Append(run.Text);
+
+        var continuationWidth = innerWidth - indent;
+        var ranges = WrapRanges(text.ToString(), Math.Max(1, innerWidth), Math.Max(1, continuationWidth), MaximumErrorEntryLines);
+
+        var lines = new List<RenderedLine>(ranges.Count);
+        for (var index = 0; index < ranges.Count; index++)
+        {
+            var markup = RunsMarkup(runs, ranges[index].Start, ranges[index].Length);
+            if (index == 0)
+            {
+                lines.Add(MarkupText.RenderTruncated(markup, innerWidth, colorMode));
+                continue;
+            }
+
+            var rendered = MarkupText.RenderTruncated(markup, continuationWidth, colorMode);
+            if (rendered.Width == 0)
+                lines.Add(rendered);
+            else
+                lines.Add(new RenderedLine(new string(' ', indent) + rendered.Text, indent + rendered.Width));
+        }
+
+        return lines;
+    }
+
+    // Greedy word wrapping over plain text: a line breaks at the last space that lets it fit
+    // its width (the space is consumed), or at the width when it holds none — never between
+    // a high surrogate and its low half. The last allowed line takes the rest.
+    private static List<(int Start, int Length)> WrapRanges(string text, int firstWidth, int continuationWidth, int maximumLines)
+    {
+        var ranges = new List<(int Start, int Length)>();
+        var position = 0;
+        while (position < text.Length)
+        {
+            var width = ranges.Count == 0 ? firstWidth : continuationWidth;
+            var remaining = text.Length - position;
+            if (ranges.Count == maximumLines - 1 || remaining <= width)
+            {
+                ranges.Add((position, remaining));
+                break;
+            }
+
+            var end = position + width;
+            var space = text.LastIndexOf(' ', end, width);
+            if (space >= 0)
+            {
+                ranges.Add((position, space - position));
+                position = space + 1;
+                continue;
+            }
+
+            if (end - 1 > position && char.IsHighSurrogate(text[end - 1]) && char.IsLowSurrogate(text[end]))
+                end--;
+
+            ranges.Add((position, end - position));
+            position = end;
+        }
+
+        if (ranges.Count == 0)
+            ranges.Add((0, 0));
+
+        return ranges;
+    }
+
+    // The markup of the runs' text from start for length characters: each run's part escaped
+    // and wrapped in the run's style, so the styling is complete on every line.
+    private static string RunsMarkup(List<TextRun> runs, int start, int length)
+    {
+        var markup = new StringBuilder();
+        var end = start + length;
+        var runStart = 0;
+        foreach (var run in runs)
+        {
+            var runEnd = runStart + run.Text.Length;
+            var partStart = Math.Max(start, runStart);
+            var partEnd = Math.Min(end, runEnd);
+            if (partStart < partEnd)
+            {
+                var part = MarkupParser.Escape(run.Text.Substring(partStart - runStart, partEnd - partStart));
+                if (run.Style == null)
+                    markup.Append(part);
+                else
+                    markup.Append('[').Append(run.Style).Append(']').Append(part).Append("[/]");
+            }
+
+            runStart = runEnd;
+            if (runStart >= end)
+                break;
+        }
+
+        return markup.ToString();
+    }
+
+    // A fixed-width bar for a step's failure share in the share's state — the errors tile's
+    // heuristic: zero Ok, up to ErrorRateWarningLimit Warning, above it Critical — the filled
+    // cells and the percentage in the state's style over a dim track; no requests renders the
+    // empty track alone, Neutral. A nonzero share fills at least one cell, and the share is
+    // clamped to 0..1, so counts that do not add up (a negative or wrapped counter) can only
+    // render an empty or a full bar, never one of impossible length.
     private static string FailureBarMarkup(int okCount, int failedCount)
     {
-        var emptyTrack = new string('░', FailureBarCellCount);
+        var emptyTrack = "[" + TerminalPalette.SecondaryStyle + "]" + new string('░', FailureBarCellCount) + "[/]";
         var total = (long)okCount + failedCount;
         if (total == 0)
-            return "[" + TerminalPalette.SecondaryStyle + "]" + emptyTrack + "[/]";
-
-        if (failedCount == 0)
-            return "[" + TerminalPalette.SecondaryStyle + "]" + emptyTrack + "[/] 0%";
+            return emptyTrack;
 
         var fraction = (double)failedCount / total;
         if (fraction < 0)
@@ -1261,13 +1748,25 @@ internal static class LiveDashboardLayout
         else if (fraction > 1)
             fraction = 1;
 
+        var style = TerminalPalette.StateStyle(ErrorRateHeuristicState(hasReading: true, fraction));
+        if (fraction == 0)
+            return emptyTrack + " " + Styled(style, "0" + PercentUnit);
+
         var filledCount = (int)Math.Round(fraction * FailureBarCellCount, MidpointRounding.AwayFromZero);
         if (filledCount < 1)
             filledCount = 1;
 
-        var style = fraction >= SevereFailureFraction ? TerminalPalette.FailedStyle : TerminalPalette.WarningStyle;
-        return "[" + style + "]" + new string('█', filledCount) + "[/][" + TerminalPalette.SecondaryStyle + "]"
-            + new string('░', FailureBarCellCount - filledCount) + "[/] " + FormatPercent(fraction);
+        return Styled(style, new string('█', filledCount)) + "[" + TerminalPalette.SecondaryStyle + "]"
+            + new string('░', FailureBarCellCount - filledCount) + "[/] " + Styled(style, FormatPercent(fraction));
+    }
+
+    // Text in a style, or as it is without one.
+    private static string Styled(string? style, string text)
+    {
+        if (style == null)
+            return text;
+
+        return "[" + style + "]" + text + "[/]";
     }
 
     // The number formatters are shared with the plain stats lines (LiveStatsWriter), so a value
@@ -1388,33 +1887,48 @@ internal static class LiveDashboardLayout
         }
     }
 
+    // A run of the error ticker's text in one markup style (null for the default), sanitized
+    // so every character is one column: what the ticker wraps and re-marks-up per line.
+    private readonly struct TextRun
+    {
+        public string Text { get; }
+        public string? Style { get; }
+
+        public TextRun(string text, string? style)
+        {
+            Text = text;
+            Style = style;
+        }
+    }
+
     // The pieces of a section past its header block and requests panel, as the drop order
     // settled them for the window and the section's budget (see PlanSection): which panels
-    // render, how tall the chart bodies are, whether the charts share a row, and how many step
-    // and error rows their tables keep.
+    // render, how tall the chart and heatmap bodies are, whether the charts share a row, and
+    // how many step rows and error entries their tables keep.
     private sealed class SectionPlan
     {
         public bool SideBySideCharts { get; }
         public int ChartBodyHeight { get; }
         public bool IncludeRequestsChart { get; }
         public bool IncludeLatencyChart { get; }
-        public bool IncludeHeatmap { get; }
+        public int HeatmapHeight { get; }
+        public bool IncludeHeatmap => HeatmapHeight > 0;
         public bool IncludeSteps { get; }
         public int StepRowCount { get; }
         public bool IncludeErrors { get; }
-        public int ErrorRowCount { get; }
+        public int ErrorEntryCount { get; }
 
-        public SectionPlan(bool sideBySideCharts, int chartBodyHeight, bool includeRequestsChart, bool includeLatencyChart, bool includeHeatmap, bool includeSteps, int stepRowCount, bool includeErrors, int errorRowCount)
+        public SectionPlan(bool sideBySideCharts, int chartBodyHeight, bool includeRequestsChart, bool includeLatencyChart, int heatmapHeight, bool includeSteps, int stepRowCount, bool includeErrors, int errorEntryCount)
         {
             SideBySideCharts = sideBySideCharts && includeRequestsChart && includeLatencyChart;
             ChartBodyHeight = chartBodyHeight;
             IncludeRequestsChart = includeRequestsChart;
             IncludeLatencyChart = includeLatencyChart;
-            IncludeHeatmap = includeHeatmap;
+            HeatmapHeight = heatmapHeight;
             IncludeSteps = includeSteps;
             StepRowCount = stepRowCount;
             IncludeErrors = includeErrors;
-            ErrorRowCount = errorRowCount;
+            ErrorEntryCount = errorEntryCount;
         }
     }
 
