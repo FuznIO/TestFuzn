@@ -30,13 +30,14 @@ internal class ScenarioLoadResult
     public Stats Failed { get; internal set; }
 
     /// <summary>
-    /// The 95th-percentile response time of successful requests recorded since the previous
-    /// force-refreshed result — the live dashboard's per-interval p95, as opposed to the
-    /// cumulative <see cref="Stats.ResponseTimePercentile95"/> on <see cref="Ok"/>. Only a
-    /// force-refresh closes an interval; results built in between carry the most recently
-    /// closed interval's value. Zero when that interval had no successful requests.
+    /// The response-time distribution (median, p95, p99 and latency bucket counts) of the
+    /// successful requests recorded since the previous force-refreshed result — the live
+    /// dashboard's per-interval view, as opposed to the cumulative <see cref="Stats"/> on
+    /// <see cref="Ok"/>. Only a force-refresh closes an interval; results built in between
+    /// carry the most recently closed interval's value. <see cref="IntervalLatency.Empty"/>
+    /// when that interval had no successful requests.
     /// </summary>
-    public TimeSpan IntervalResponseTimePercentile95 { get; internal set; }
+    public IntervalLatency IntervalLatency { get; internal set; } = IntervalLatency.Empty;
     public int WarmupRequestCountOk { get; internal set; }
     public int WarmupRequestCountFailed { get; internal set; }
     public Dictionary<string, StepLoadResult> Steps { get; internal set; } = new();

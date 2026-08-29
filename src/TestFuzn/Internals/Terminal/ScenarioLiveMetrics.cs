@@ -185,7 +185,7 @@ internal sealed class ScenarioLiveMetrics
             failedDelta = 0;
 
         var requestsPerSecond = (okDelta + failedDelta) / intervalSeconds;
-        var sample = new LiveMetricsSample(timestamp, (int)Math.Min(okDelta, int.MaxValue), (int)Math.Min(failedDelta, int.MaxValue), requestsPerSecond, snapshot.IntervalResponseTimePercentile95);
+        var sample = new LiveMetricsSample(timestamp, (int)Math.Min(okDelta, int.MaxValue), (int)Math.Min(failedDelta, int.MaxValue), requestsPerSecond, IntervalLatencyOf(snapshot).ResponseTimePercentile95);
 
         _samples[_nextSampleIndex] = sample;
         _nextSampleIndex = (_nextSampleIndex + 1) % SampleCapacity;
@@ -254,6 +254,15 @@ internal sealed class ScenarioLiveMetrics
             return 0;
 
         return stats.RequestCount;
+    }
+
+    /// <summary>The snapshot's per-interval Ok latency; <see cref="IntervalLatency.Empty"/> when the snapshot carries none.</summary>
+    private static IntervalLatency IntervalLatencyOf(ScenarioLoadResult snapshot)
+    {
+        if (snapshot.IntervalLatency == null)
+            return IntervalLatency.Empty;
+
+        return snapshot.IntervalLatency;
     }
 
     private LiveMetricsSample[] MaterializeSamples(out double[] requestsPerSecondSeries, out double[] okDeltaSeries, out double[] failedDeltaSeries, out double[] percentile95Series)

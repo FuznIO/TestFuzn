@@ -22,8 +22,9 @@ internal static class SyntheticLoadSnapshots
     /// <summary>
     /// A snapshot with the given cumulative counters. <paramref name="okPercentile95Ms"/> is
     /// the cumulative Ok p95, <paramref name="intervalPercentile95Ms"/> the per-interval p95 a
-    /// force-refresh would have computed. Phase timestamps stay default; tests set the ones a
-    /// scenario has reached directly on the returned instance.
+    /// force-refresh would have closed (see <see cref="BuildIntervalLatency"/>). Phase
+    /// timestamps stay default; tests set the ones a scenario has reached directly on the
+    /// returned instance.
     /// </summary>
     public static ScenarioLoadResult Snapshot(int ok = 0, int failed = 0, int warmupOk = 0, int warmupFailed = 0, double okPercentile95Ms = 0, double intervalPercentile95Ms = 0)
     {
@@ -34,9 +35,27 @@ internal static class SyntheticLoadSnapshots
         result.WarmupRequestCountOk = warmupOk;
         result.WarmupRequestCountFailed = warmupFailed;
         result.RequestCount = ok + failed;
-        result.IntervalResponseTimePercentile95 = TimeSpan.FromMilliseconds(intervalPercentile95Ms);
+        result.IntervalLatency = BuildIntervalLatency(intervalPercentile95Ms);
         result.Steps = new Dictionary<string, StepLoadResult>();
         return result;
+    }
+
+    /// <summary>
+    /// The per-interval latency a force-refresh would have closed: <see cref="IntervalLatency.Empty"/>
+    /// for zero, otherwise the honest interval of exactly one request whose response time is the
+    /// given p95 — median, p95 and p99 all at that value and a single count in its bucket — which
+    /// is all the series tests read; a test that needs a full distribution builds one through a
+    /// real collector.
+    /// </summary>
+    public static IntervalLatency BuildIntervalLatency(double percentile95Ms)
+    {
+        if (percentile95Ms == 0)
+            return IntervalLatency.Empty;
+
+        var percentile95 = TimeSpan.FromMilliseconds(percentile95Ms);
+        var bucketCounts = new int[LatencyBuckets.Count];
+        bucketCounts[LatencyBuckets.IndexOf(percentile95)] = 1;
+        return new IntervalLatency(1, percentile95, percentile95, percentile95, bucketCounts);
     }
 
     /// <summary>Cumulative stats with the given request count and Ok p95.</summary>

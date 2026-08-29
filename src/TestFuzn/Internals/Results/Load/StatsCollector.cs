@@ -18,8 +18,9 @@ internal class StatsCollector
     /// <summary>
     /// <paramref name="trackIntervalLatency"/> additionally records every measurement into a
     /// double-buffered interval histogram (HdrHistogram's Recorder), so
-    /// <see cref="GetIntervalResponseTimePercentile95"/> can report per-interval percentiles for
-    /// the live dashboard. Off by default — only the scenario-level Ok collector needs it.
+    /// <see cref="GetIntervalLatency"/> can report per-interval percentiles and bucket counts for
+    /// the live dashboard. Off by default — the scenario-level and per-step Ok collectors turn it
+    /// on; the Failed collectors do not.
     /// </summary>
     public StatsCollector(bool trackIntervalLatency = false)
     {
@@ -52,23 +53,55 @@ internal class StatsCollector
     }
 
     /// <summary>
-    /// The 95th-percentile response time of the measurements recorded since the previous call —
+    /// The response-time distribution of the measurements recorded since the previous call —
     /// each call closes the current interval and starts a new one (read-and-reset, like the
-    /// underlying Recorder's GetIntervalHistogram). Zero when the interval had no measurements
-    /// or interval tracking is off. Callers serialize this with <see cref="Record"/> via the
-    /// owning collector's lock; the Recorder's own write coordination keeps the buffer swap safe
+    /// underlying Recorder's GetIntervalHistogram), so the owning collector reads it ONCE per
+    /// force refresh and shares the result until the next one.
+    /// <see cref="IntervalLatency.Empty"/> when the interval had no measurements or interval
+    /// tracking is off. Callers serialize this with <see cref="Record"/> via the owning
+    /// collector's lock; the Recorder's own write coordination keeps the buffer swap safe
     /// regardless, without adding any locking to the recording hot path.
     /// </summary>
-    public TimeSpan GetIntervalResponseTimePercentile95()
+    public IntervalLatency GetIntervalLatency()
     {
         if (_intervalRecorder == null)
-            return TimeSpan.Zero;
+            return IntervalLatency.Empty;
 
         _intervalHistogram = _intervalRecorder.GetIntervalHistogram(_intervalHistogram);
         if (_intervalHistogram.TotalCount == 0)
-            return TimeSpan.Zero;
+            return IntervalLatency.Empty;
 
-        return TimeSpan.FromTicks(_intervalHistogram.GetValueAtPercentile(95));
+        return new IntervalLatency(
+            ClampToInt(_intervalHistogram.TotalCount),
+            TimeSpan.FromTicks(_intervalHistogram.GetValueAtPercentile(50)),
+            TimeSpan.FromTicks(_intervalHistogram.GetValueAtPercentile(95)),
+            TimeSpan.FromTicks(_intervalHistogram.GetValueAtPercentile(99)),
+            CountBuckets(_intervalHistogram));
+    }
+
+    /// <summary>
+    /// Distributes a closed interval histogram's values over the <see cref="LatencyBuckets"/>.
+    /// The histogram keeps values to 3 significant digits, so it is walked one equivalent-value
+    /// range at a time (only the non-empty ranges) and each range is placed by its lowest value:
+    /// a value on a bucket bound always counts toward the bucket it bounds, and a value less
+    /// than one resolution step (at most 0.1 %) above the bound counts with it.
+    /// </summary>
+    private static int[] CountBuckets(HistogramBase histogram)
+    {
+        var counts = new int[LatencyBuckets.Count];
+        foreach (var recorded in histogram.RecordedValues())
+        {
+            var lowestEquivalentValue = histogram.LowestEquivalentValue(recorded.ValueIteratedTo);
+            var index = LatencyBuckets.IndexOf(TimeSpan.FromTicks(lowestEquivalentValue));
+            counts[index] = ClampToInt(counts[index] + recorded.CountAtValueIteratedTo);
+        }
+
+        return counts;
+    }
+
+    private static int ClampToInt(long value)
+    {
+        return (int) Math.Min(value, int.MaxValue);
     }
 
     public Stats GetCurrentResult()

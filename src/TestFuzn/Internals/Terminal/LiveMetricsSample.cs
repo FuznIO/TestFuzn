@@ -9,9 +9,10 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// the current-interval rate — the combined delta divided by the interval's actual length in
 /// seconds, so a late or early tick still yields an honest rate. <see cref="ResponseTimePercentile95"/>
 /// is the per-interval Ok p95 reported by the snapshot that closed the interval (its
-/// IntervalResponseTimePercentile95 — the p95 of just the requests recorded since the previous
-/// force-refreshed snapshot, which in the 1 Hz wiring is exactly this sample's interval),
-/// carried per sample so a p95-over-time sparkline reacts to latency shifts within one tick.
+/// IntervalLatency's ResponseTimePercentile95 — the p95 of just the requests recorded since the
+/// previous force-refreshed snapshot, which in the 1 Hz wiring is exactly this sample's
+/// interval), carried per sample so a p95-over-time sparkline reacts to latency shifts within
+/// one tick.
 /// </summary>
 internal readonly struct LiveMetricsSample
 {
