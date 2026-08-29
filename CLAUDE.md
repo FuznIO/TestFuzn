@@ -68,9 +68,21 @@ Tests are built with `ScenarioBuilder<TModel>` which chains `.Step()`, `.InputDa
 TestFuzn abstracts the test runner via `ITestFrameworkAdapter` so tests can run under different hosts:
 
 - **MSTest runner** (`MsTestRunnerAdapter`) -- Good for standard tests and simple load tests. Also works for long-running tests, but MSTest does not support real-time console output during execution.
-- **Standalone runner** (`BaseStandaloneRunnerAdapter`) -- Provides real-time console output, useful for complex/long-running load tests where live feedback matters. Hosted by the test project itself (no separate runner project): the test project sets `GenerateTestingPlatformEntryPoint=false` and provides a custom `Main` that routes the `run` verb to `TestFuznHost.RunStandalone` and everything else to the MSTest runner. See `src/TestFuzn.Tests/Program.cs` and `docs/standalone-runner.md`. Run with `dotnet run --project src/TestFuzn.Tests -- run --test-name=<FullyQualifiedName>`.
+- **Standalone runner** (`BaseStandaloneRunnerAdapter`) -- Provides real-time console output: a full-screen live dashboard for load tests on an interactive ANSI terminal (plain per-second stats lines when output or input is redirected), an interactive test picker, and the final summaries, all rendered by the terminal engine below. Hosted by the test project itself (no separate runner project): the test project sets `GenerateTestingPlatformEntryPoint=false` and provides a custom `Main` that routes the `run` verb to `TestFuznHost.RunStandalone` and everything else to the MSTest runner. See `src/TestFuzn.Tests/Program.cs` and `docs/standalone-runner.md`. Run with `dotnet run --project src/TestFuzn.Tests -- run --test-name=<FullyQualifiedName>`; `dotnet run --project src/TestFuzn.Tests -- run --demo` plays a scripted synthetic load through the real dashboard with no Startup, config or target system.
 
 This is why tests should avoid depending on MSTest-specific APIs (e.g. `TestContext`, MSTest assertions). Use TestFuzn's own abstractions (`Context`, `[Test]` attribute, etc.) so tests remain portable across MSTest, the standalone runner, and any future framework adapters.
+
+### Terminal Rendering Engine
+
+`src/TestFuzn/Internals/Terminal/` (namespace `Fuzn.TestFuzn.Internals.Terminal`, all internal) is an in-repo ANSI/VT rendering engine with no third-party console dependency -- `Fuzn.TestFuzn` depends only on HdrHistogram and `Microsoft.Extensions.*`.
+
+- **Capabilities** -- `TerminalCapabilities` (`Detect`/`Resolve`: interactive = neither stdin nor stdout redirected; ANSI unless output is redirected, `TERM=dumb`, or Windows VT enablement fails; `ColorMode` None / Monochrome (`NO_COLOR`) / Colors16 / TrueColor (`COLORTERM`)). `SupportsLiveView` = interactive && ANSI gates every alternate-screen path. `AnsiCodes`, `WindowsVirtualTerminal`.
+- **Frame pipeline** -- `FrameBuffer` + `FrameRenderer`: whole-line diff against the previous frame, DEC synchronized output, full redraw on resize. Callers own the alternate screen and pass the size they laid out for.
+- **Markup** -- `MarkupParser`/`MarkupRenderer`/`MarkupText`: the `[bold green]...[/]` dialect used by `ConsoleWriter` and the adapters; unknown tags render literally, never throws.
+- **Widgets and layouts** -- `PanelWidget`, `TableWidget`, `ProgressBarWidget`, `SparklineWidget`, `StatTileWidget`, `KeyHintBarWidget`, `LogoWidget` return `RenderedLine`s of known display width. `LiveDashboardLayout`, `TestSelectionMenuLayout`, `LoadSummaryLayout`, `AdvancedTableLayout`, `StartupBanner` and `ExceptionRenderer` are pure functions of their inputs (no console, no clock), so identical inputs render identical frames.
+- **Live view** -- `ConsoleManager` (`Internals/ConsoleOutput/`) runs one loop (250 ms tick, 1 Hz force-refreshed collector samples into `ScenarioLiveMetrics`) driving either `LiveDashboard` (alternate screen; `q` calls `TestExecutionState.RequestStop()`, the same path as Ctrl+C) or `LiveStatsWriter` (plain lines, zero escapes). `TestSelectionMenu`, `LiveViewDemo` and `LiveViewDemoScript` live in `StandaloneRunner/`.
+- **Seams** -- `ITerminalWriter`, `ITerminalReader`, `ILiveViewHost` (production: `ConsoleTerminalWriter`, `ConsoleTerminalReader`, `ConsoleLiveViewHost`). These and `TerminalCapabilities.Detect` are the engine's only `System.Console` touchpoints; everything else takes the seam, so it runs without a TTY. The terminal size is read only on an ANSI output and keys only behind `SupportsLiveView` (a redirected output fabricates a size, a console-less Windows process throws, a redirected input throws on a key read).
+- **Tests** -- `src/TestFuzn.Tests/Terminal/` are hermetic golden tests over `FakeTerminalWriter`/`FakeTerminalReader`/`FakeLiveViewHost` (no TestWebApp, InfluxDB or Playwright): `dotnet test src/TestFuzn.Tests/TestFuzn.Tests.csproj -- --filter "FullyQualifiedName~Terminal"`. `run --demo` is the dev loop for the dashboard's looks.
 
 ### State & Cancellation
 
@@ -94,7 +106,7 @@ Test/sample projects: `TestFuzn.Tests`, `TestFuzn.Tests.Attributes`, `TestFuzn.T
 - Thread safety is critical in load test paths -- no shared mutable state between iterations
 - Use `[Test]` attribute (TestFuzn's own), not raw MSTest attributes for test methods
 - Use descriptive step/scenario names, never "Test1" or vague titles
-- Avoid `Console.WriteLine` -- use the framework's logging via `Context.Logger`
+- Avoid `Console.WriteLine` -- use the framework's logging via `Context.Logger`. Console output in the framework goes through the `ITestFrameworkAdapter` or the terminal engine's `ITerminalWriter`/`ILiveViewHost` seams, never `System.Console` directly (see Terminal Rendering Engine)
 - PR reviews should focus on core framework and plugins, not test projects or TestWebApp
 - Use MSTest v4 assertion syntax. Prefer specific assertions over `Assert.IsTrue` with expressions:
   - **Comparison:** `Assert.IsLessThan`, `Assert.IsGreaterThan`, `Assert.IsLessThanOrEqualTo`, `Assert.IsGreaterThanOrEqualTo`, `Assert.IsInRange`

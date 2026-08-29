@@ -22,6 +22,8 @@
   Write all your tests in C#. Leverages the power of .NET to keep things fast and flexible.
 - ✅ **MSTest compatible**  
   Built-in support for the widely used MSTest framework — reuse what you already know and love.
+- 🖥️ **Live load test dashboard**  
+  Run load tests from the test project's own entry point and watch progress, ETA, sparklines, per-step stats and errors live in the terminal — rendered by TestFuzn's own terminal engine, with no third-party console dependency.
 
 ## 📦 NuGet Packages
 
