@@ -26,14 +26,20 @@ internal static class TerminalPalette
     /// <summary>The filled cells of the dashboard's progress bar.</summary>
     public const string ProgressBarStyle = "#ff9d3d";
 
-    /// <summary>The dashboard's requests-per-second sparkline.</summary>
-    public const string RequestsSparklineStyle = "#ff9d3d";
-
-    /// <summary>The dashboard's response-time sparkline.</summary>
-    public const string ResponseTimeSparklineStyle = "#ffcf6b";
-
-    /// <summary>The simulation phase label on the dashboard's timing line.</summary>
+    /// <summary>The simulation phase label on the dashboard's timeline and title line.</summary>
     public const string PhaseStyle = "#ffcf6b";
+
+    // The latency chart's three bands, deepest for the slowest percentile: the logo gradient's
+    // deep orange, the warm accent, the logo gradient's warm amber.
+
+    /// <summary>The latency chart's p99 band: the logo gradient's deep orange.</summary>
+    public const string ResponseTimePercentile99Style = LogoGradientStartStyle;
+
+    /// <summary>The latency chart's p95 band: the warm accent.</summary>
+    public const string ResponseTimePercentile95Style = "#ff9d3d";
+
+    /// <summary>The latency chart's median (p50) band: the logo gradient's warm amber.</summary>
+    public const string ResponseTimeMedianStyle = LogoGradientEndStyle;
 
     /// <summary>Ok requests, a passed scenario, a change in the good direction, a tile in the ok state.</summary>
     public const string OkStyle = "green";

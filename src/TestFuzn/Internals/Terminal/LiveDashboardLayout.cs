@@ -8,17 +8,16 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// <summary>
 /// Lays out the standalone runner's full-screen live load dashboard as one section per scenario
 /// — a title line (scenario name, status badge, the compact logo top-right when the width
-/// allows), a KPI tile row, the plan's timeline, RPS and interval-p95 sparkline panels, a
-/// requests panel with Ok/Failed rows (count, current rate and the response-time spread), a
-/// per-step live table, and an error ticker — closed by a key-hint footer that owns the
-/// window's last row. Pure composition of the widgets in this namespace: everything shown
-/// comes from the passed <see cref="LiveMetricsSnapshot"/>s (no console, no clock — elapsed and
-/// ETA are snapshot values), so identical inputs render an identical frame, which the
-/// <see cref="FrameRenderer"/> diff depends on. Every rate on screen is one measure — the
-/// current-interval rate, on the rps tile, in the sparkline header, the requests rows (the
-/// newest sample's ok and failed deltas over its interval) and the step rows alike — never a
-/// lifetime average, and a value that is absent or not finite renders as an em dash instead of
-/// a fake zero.
+/// allows), a KPI tile row, the plan's timeline, a requests chart and a latency chart, a
+/// latency heatmap, a requests panel with Ok/Failed rows (count, current rate and the
+/// response-time spread), a per-step live table, and an error ticker — closed by a key-hint
+/// footer that owns the window's last row. Pure composition of the widgets in this namespace:
+/// everything shown comes from the passed <see cref="LiveMetricsSnapshot"/>s (no console, no
+/// clock — elapsed and ETA are snapshot values), so identical inputs render an identical frame,
+/// which the <see cref="FrameRenderer"/> diff depends on. Every rate on screen is one measure —
+/// the current-interval rate, on the rps tile, in the requests rows (the newest sample's ok and
+/// failed deltas over its interval) and in the step rows alike — never a lifetime average, and
+/// a value that is absent or not finite renders as an em dash instead of a fake zero.
 /// <para>
 /// <b>Tiles.</b> A <see cref="TileRowWidget"/> row of <see cref="StatTile"/>s: rps (the newest
 /// interval's rate), p95 (the newest interval's Ok p95), errors (the newest interval's failed
@@ -51,14 +50,61 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// show when they fit, as the widget documents.
 /// </para>
 /// <para>
-/// <b>Timeline.</b> One <see cref="TimelineWidget"/> line (two with its legend) built from the
-/// snapshot's plan entries one to one with the progress fraction as the position; only a
-/// snapshot that carries a plan has one. The marker's segment is the phase, so the phase
+/// <b>Timeline and phase.</b> One <see cref="TimelineWidget"/> line (two with its legend) built
+/// from the snapshot's plan entries one to one with the progress fraction as the position;
+/// only a snapshot that carries a plan has one. The marker's segment is the phase, so the phase
 /// label is written after the bar only when the plan gives the marker no position (an
 /// indeterminate plan), and only while the bar keeps <see cref="MinimumTimelineWidth"/>
-/// columns beside it. A Failed status is never reason-less on screen —
+/// columns beside it. The phase is never invisible: when the section renders no timeline — a
+/// snapshot without plan entries (the console manager's init placeholder) or a height below
+/// <see cref="MinimumHeightForTimeline"/> — the phase label follows the status badge on the
+/// title line after a dim middle dot, as long as the title keeps its full width with it: the
+/// name and the badge come first, so a label that would truncate the line is dropped, the way
+/// the timeline drops its own. A Failed status is never reason-less on screen —
 /// <see cref="LiveMetricsSnapshot.StatusDetail"/> renders as its own styled line under the
 /// timeline.
+/// </para>
+/// <para>
+/// <b>Charts.</b> Two <see cref="ChartWidget"/> panels over the whole sample window — stretched
+/// from the first sample and scrolling once the window outgrows the body, with no time window
+/// until one is chosen interactively — in a <see cref="PanelWidget"/> frame each, the axis in
+/// the secondary style. Each panel's header is its chart's legend: the series named top-down,
+/// which is their paint order, so the first name is always the series whose newest value the
+/// ▶ annotation shows (the widget annotates its first series). "requests — ok / failed": the
+/// per-interval ok and failed counts (<see cref="LiveMetricsSnapshot.OkDeltaSeries"/>,
+/// <see cref="LiveMetricsSnapshot.FailedDeltaSeries"/>) as two areas on one count scale, ok
+/// first and failed painted over it in the failed colour — a line at the scale's floor would
+/// replace the fill's bottom row, and a second scale would misstate the ratio, so a small
+/// failed count is sub-cell and the legend is what names the colours — with the count format
+/// on the axis and on the annotation, which is the newest ok count: the ok requests of the
+/// interval, not the rps tile's rate (ok and failed together over the interval's length), so
+/// the two need not read the same. "latency — p99 / p95 / p50": the per-interval p99 and p95
+/// series as two areas, the p99 painted first and the p95 over it so each band shows where it
+/// owns the cell, under the median as a line painted last — a flat median is a thin
+/// median-coloured line along the scale's floor and a moving one a line through the bands, a
+/// cell the line passes showing only the line's dots, as the widget composes — in the
+/// palette's three response-time styles, with the response-time format on the axis and on the
+/// annotation, which is the newest p99. An interval reading that is not a latency — an idle
+/// interval's zero, a value no TimeSpan holds — is a gap in every band and in the line, never
+/// a dip to zero: the p95 tile's own rule. A declared p95 or p99 threshold adds its limit as a
+/// flat line over the p95 series' samples, <see cref="TerminalPalette.WarningStyle"/> for the
+/// p95 limit and <see cref="TerminalPalette.FailedStyle"/> for the p99 one, both when both are
+/// declared; the line shares the scale, which is what puts the bands in proportion to the
+/// limit, and the title names it in the line's style ("· limit 500 ms", "· limits 500 ms /
+/// 800 ms"). The panels sit side by side from <see cref="MinimumWidthForChartsSideBySide"/>
+/// columns, stacked requests over latency from <see cref="MinimumWidthForCharts"/>, and are
+/// dropped below that; their bodies are <see cref="ChartHeight"/> rows from
+/// <see cref="MinimumHeightForTallCharts"/> rows of height and <see cref="CompactChartHeight"/>
+/// below.
+/// </para>
+/// <para>
+/// <b>Heatmap.</b> A full-width "latency heatmap" panel under the charts: a
+/// <see cref="HeatmapWidget"/> over <see cref="LiveMetricsSnapshot.LatencyBucketSeries"/>,
+/// <see cref="HeatmapHeight"/> rows for the fifteen <see cref="LatencyBuckets"/> — the widget
+/// merges every pair below the slowest bucket — labelled by their inclusive upper bounds,
+/// "≤ 1 ms" through "≤ 30 s" and "> 30 s" for the open-ended last one, in the secondary style.
+/// Shown only with the charts' width and from <see cref="MinimumHeightForHeatmap"/> rows of
+/// height.
 /// </para>
 /// <para>
 /// <b>Width.</b> No emitted line is ever wider than the given width at any width: the logo
@@ -68,20 +114,35 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// (<see cref="MinimumWidthForSingleTileRow"/> — 64 for the five standard tiles: the
 /// eight-column clock or the eight-letter requests label plus the box's borders and padding;
 /// a wider value, a nine-digit count, drops its tile from the right as the widget does); the
-/// sparkline panels drop below <see cref="MinimumWidthForSparklines"/>; the requests table
-/// narrows its column set by the columns' actual content widths (min/p75/p99 go first, then
-/// p50/max) so a number is never cut short; and the remaining pieces degrade through the
-/// widgets' own narrow-width behavior down to rendering nothing at degenerate widths.
+/// chart panels stack below <see cref="MinimumWidthForChartsSideBySide"/> and go, with the
+/// heatmap, below <see cref="MinimumWidthForCharts"/>; the requests table narrows its column
+/// set by the columns' actual content widths (min/p75/p99 go first, then p50/max) so a number
+/// is never cut short; and the remaining pieces degrade through the widgets' own narrow-width
+/// behavior down to rendering nothing at degenerate widths.
 /// </para>
 /// <para>
 /// <b>Height.</b> The frame is fitted to the height: content is clipped to the rows above the
 /// footer (a frame taller than the window loses its tail, never the quit hint — each section
 /// leads with its most important lines) and padded down so the footer lands on the last row;
-/// a height below 1 leaves the frame unclipped and unpadded with every optional row in. The
-/// header gives rows back as the window shrinks, cheapest first: the tile trends go below
-/// <see cref="MinimumHeightForTileTrends"/> rows, the gauges (the threshold bars and the
-/// elapsed tile's progress with its time remaining) below <see cref="MinimumHeightForTileGauges"/>,
-/// and the timeline below <see cref="MinimumHeightForTimeline"/>.
+/// a height below 1 leaves the frame unclipped and unpadded with every optional row in. A
+/// section gives rows back as the window shrinks in one order, cheapest first. The first four
+/// steps follow the window's height alone: the heatmap panel goes below
+/// <see cref="MinimumHeightForHeatmap"/> rows; two rows of each chart body
+/// (<see cref="ChartHeight"/> to <see cref="CompactChartHeight"/>) and the tile trends go below
+/// <see cref="MinimumHeightForTallCharts"/> (one step — <see cref="MinimumHeightForTileTrends"/>
+/// is the same height); the tile gauges (the threshold bars and the elapsed tile's progress
+/// with its time remaining) go below <see cref="MinimumHeightForTileGauges"/>; and the
+/// timeline goes below <see cref="MinimumHeightForTimeline"/>. The remaining steps are taken
+/// only while the section still overruns its budget — the rows above the footer, less what the
+/// sections before it took: the step rows go, last first, the Steps header staying; then the
+/// error rows likewise, the Errors header staying; then the Steps panel whole, then the Errors
+/// panel; then the heatmap panel (the window has the rows for it but the section does not — a
+/// section stacked under another, a wrapped tile block); then the latency chart, then the
+/// requests chart — side by side the two share their rows and go together; and last the
+/// clipping above, which cuts the requests panel from its bottom border up and never the
+/// footer. So a window of 12 to 14 rows shows the title with the phase after the badge, the
+/// two-line tiles and the requests panel whole, and one of 10 or 11 rows the requests panel
+/// cut after its header lines.
 /// </para>
 /// Alternate-screen entry/exit and the render loop are the caller's job. Stateless and
 /// thread-safe.
@@ -91,8 +152,11 @@ internal static class LiveDashboardLayout
     /// <summary>Below this width the compact logo is dropped from the first section's title line.</summary>
     public const int MinimumWidthForLogo = 80;
 
-    /// <summary>Below this width the sparkline panels are dropped.</summary>
-    public const int MinimumWidthForSparklines = 60;
+    /// <summary>Below this width the chart panels and the heatmap panel are dropped.</summary>
+    public const int MinimumWidthForCharts = 60;
+
+    /// <summary>From this width the requests and latency chart panels sit side by side; below it they stack.</summary>
+    public const int MinimumWidthForChartsSideBySide = 100;
 
     /// <summary>Below this width the tiles carry no trend sparkline.</summary>
     public const int MinimumWidthForTileTrends = 80;
@@ -104,7 +168,13 @@ internal static class LiveDashboardLayout
     /// </summary>
     public const int MinimumTileBoxWidth = 12;
 
-    /// <summary>Below this height the tiles carry no trend sparkline.</summary>
+    /// <summary>Below this height the heatmap panel is dropped.</summary>
+    public const int MinimumHeightForHeatmap = 36;
+
+    /// <summary>Below this height the chart bodies shrink from <see cref="ChartHeight"/> to <see cref="CompactChartHeight"/> rows — the same step as the tile trends.</summary>
+    public const int MinimumHeightForTallCharts = 30;
+
+    /// <summary>Below this height the tiles carry no trend sparkline — the same step as the chart bodies.</summary>
     public const int MinimumHeightForTileTrends = 30;
 
     /// <summary>Below this height the tiles carry no gauge — neither the threshold bars nor the elapsed tile's progress and time remaining.</summary>
@@ -112,6 +182,15 @@ internal static class LiveDashboardLayout
 
     /// <summary>Below this height the timeline is dropped.</summary>
     public const int MinimumHeightForTimeline = 15;
+
+    /// <summary>The rows of a chart body from <see cref="MinimumHeightForTallCharts"/> rows of height.</summary>
+    public const int ChartHeight = 6;
+
+    /// <summary>The rows of a chart body below <see cref="MinimumHeightForTallCharts"/> rows of height.</summary>
+    public const int CompactChartHeight = 4;
+
+    /// <summary>The rows of the heatmap body.</summary>
+    public const int HeatmapHeight = 8;
 
     /// <summary>The fewest columns the timeline bar keeps when the phase label is written after it; a label that would leave fewer is dropped.</summary>
     public const int MinimumTimelineWidth = 24;
@@ -152,13 +231,27 @@ internal static class LiveDashboardLayout
     private const string WarmupUnitPrefix = "warmup ";
     private const string PlannedUnitPrefix = "/ ";
 
+    // The chart panel headers double as the charts' legends: the widget has none, so the
+    // series' words are written here in the series' styles, top-down in the series' paint
+    // order — the first word names the series the widget's ▶ annotation reads.
+    private const string RequestsChartHeader = "[" + TerminalPalette.PanelHeaderStyle + "]requests[/] [" + TerminalPalette.SecondaryStyle + "]—[/] ["
+        + TerminalPalette.OkStyle + "]ok[/] [" + TerminalPalette.SecondaryStyle + "]/[/] [" + TerminalPalette.FailedStyle + "]failed[/]";
+    private const string LatencyChartHeaderPrefix = "[" + TerminalPalette.PanelHeaderStyle + "]latency[/] [" + TerminalPalette.SecondaryStyle + "]—[/] ["
+        + TerminalPalette.ResponseTimePercentile99Style + "]p99[/] [" + TerminalPalette.SecondaryStyle + "]/[/] ["
+        + TerminalPalette.ResponseTimePercentile95Style + "]p95[/] [" + TerminalPalette.SecondaryStyle + "]/[/] ["
+        + TerminalPalette.ResponseTimeMedianStyle + "]p50[/]";
+    private const string HeatmapHeader = "[" + TerminalPalette.PanelHeaderStyle + "]latency heatmap[/]";
+
     // The tiles every scenario has, in row order: rps, p95, errors, requests, elapsed; a
     // declared p99 or mean threshold adds its tile after them.
     private const int StandardTileCount = 5;
 
-    // Columns between horizontally adjacent pieces: title and logo, the two sparkline panels,
-    // and the timeline bar and the phase label after it.
+    // Columns between horizontally adjacent pieces: title and logo, the two chart panels, and
+    // the timeline bar and the phase label after it.
     private const int ColumnGap = 2;
+
+    // The rows a PanelWidget adds around its content: the top and bottom borders.
+    private const int PanelFrameRows = 2;
 
     // Cells in a step row's fail% mini-bar; failure fractions at or above
     // SevereFailureFraction color it red, smaller nonzero fractions yellow.
@@ -175,6 +268,14 @@ internal static class LiveDashboardLayout
     public const char QuitKey = 'q';
 
     private static readonly KeyHint[] FooterHints = { new KeyHint(QuitKey.ToString(), "quit") };
+
+    private static readonly ChartOptions RequestsChartOptions = new ChartOptions { ValueFormatter = FormatCountLabel, AxisStyle = TerminalPalette.SecondaryStyle };
+    private static readonly ChartOptions LatencyChartOptions = new ChartOptions { ValueFormatter = FormatResponseTimeLabel, AxisStyle = TerminalPalette.SecondaryStyle };
+    private static readonly HeatmapOptions LatencyHeatmapOptions = new HeatmapOptions { LabelStyle = TerminalPalette.SecondaryStyle };
+
+    // The heatmap's row labels, one per latency bucket in bucket order: each bucket's inclusive
+    // upper bound, the open-ended last bucket as everything above the last bound.
+    private static readonly string[] LatencyBucketLabels = BuildLatencyBucketLabels();
 
     private static readonly TableColumn[] RequestsColumns =
     {
@@ -219,10 +320,10 @@ internal static class LiveDashboardLayout
     /// given window size. Returns one <see cref="RenderedLine"/> per terminal row, ready for
     /// <see cref="FrameBuffer.AddLines(IEnumerable{RenderedLine})"/>: exactly
     /// <paramref name="height"/> rows for a height of 1 or more, the content clipped or padded
-    /// to the rows above the footer on the last row, the header's optional rows given up as
-    /// the class summary describes; the unclipped content plus the footer, every optional row
-    /// in, for a smaller height. A width below 1 renders nothing. The glyph set is passed
-    /// through to the tile trends and the sparkline panels so the caller can match it to the
+    /// to the rows above the footer on the last row, each section's optional rows given up in
+    /// the order the class summary describes; the unclipped content plus the footer, every
+    /// optional row in, for a smaller height. A width below 1 renders nothing. The glyph set is
+    /// passed through to the tile trends and the chart panels so the caller can match it to the
     /// terminal's font support. The spinner glyph, when given, is drawn in place of the dot on
     /// a running scenario's status badge — a single-column glyph the caller's render loop
     /// advances per frame; null keeps the dot, and finished badges (passed, failed, skipped)
@@ -236,13 +337,22 @@ internal static class LiveDashboardLayout
         if (width < 1)
             return Array.Empty<RenderedLine>();
 
+        // The rows above the footer, handed to the sections in order: each one is fitted into
+        // what the ones before it left. An unbounded height has rows for everything.
+        var remainingRows = height >= 1 ? height - 1 : int.MaxValue;
+
         var lines = new List<RenderedLine>();
         for (var index = 0; index < snapshots.Count; index++)
         {
             if (index > 0)
+            {
                 lines.Add(BlankLine);
+                remainingRows--;
+            }
 
-            AddScenarioSection(lines, snapshots[index], width, height, colorMode, sparklineGlyphSet, spinnerGlyph, includeLogo: index == 0 && width >= MinimumWidthForLogo);
+            var sectionStart = lines.Count;
+            AddScenarioSection(lines, snapshots[index], width, height, remainingRows, colorMode, sparklineGlyphSet, spinnerGlyph, includeLogo: index == 0 && width >= MinimumWidthForLogo);
+            remainingRows -= lines.Count - sectionStart;
         }
 
         // The footer owns the last row: content is cut to the rows above it (a frame taller
@@ -270,29 +380,122 @@ internal static class LiveDashboardLayout
         return (tileCount * MinimumTileBoxWidth) + ((tileCount - 1) * TileRowWidget.Gap);
     }
 
-    private static void AddScenarioSection(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, int width, int height, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet, string? spinnerGlyph, bool includeLogo)
+    // One scenario's section: the header block (title, tiles, timeline, status detail, a
+    // blank), the chart and heatmap panels, the requests panel, the steps table and the errors
+    // panel — the header and the requests panel rendered first, since the budget steps of the
+    // drop order fit the rest of the section around them.
+    private static void AddScenarioSection(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, int width, int height, int budget, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet, string? spinnerGlyph, bool includeLogo)
     {
-        lines.Add(RenderTitleLine(snapshot, width, colorMode, spinnerGlyph, includeLogo));
-        AddTileRows(lines, snapshot, width, height, colorMode, sparklineGlyphSet);
+        var thresholds = new DeclaredThresholds(snapshot.Thresholds);
+        var includeTimeline = snapshot.PlanEntries.Count > 0 && HasRowsFor(height, MinimumHeightForTimeline);
 
-        if (snapshot.PlanEntries.Count > 0 && HasRowsFor(height, MinimumHeightForTimeline))
-            AddTimeline(lines, snapshot, width, colorMode);
+        var header = new List<RenderedLine>();
+        header.Add(RenderTitleLine(snapshot, width, colorMode, spinnerGlyph, includeLogo, includePhaseLabel: !includeTimeline));
+        AddTileRows(header, snapshot, thresholds, width, height, colorMode, sparklineGlyphSet);
+
+        if (includeTimeline)
+            AddTimeline(header, snapshot, width, colorMode);
 
         if (snapshot.StatusDetail != null)
-            lines.Add(MarkupText.RenderTruncated("[" + TerminalPalette.FailedStyle + "]✗ " + MarkupParser.Escape(snapshot.StatusDetail) + "[/]", width, colorMode));
+            header.Add(MarkupText.RenderTruncated("[" + TerminalPalette.FailedStyle + "]✗ " + MarkupParser.Escape(snapshot.StatusDetail) + "[/]", width, colorMode));
 
-        lines.Add(BlankLine);
+        header.Add(BlankLine);
 
-        if (width >= MinimumWidthForSparklines)
-            AddSparklinePanels(lines, snapshot, width, colorMode, sparklineGlyphSet);
+        var requests = RenderRequestsPanel(snapshot, width, colorMode);
+        var plan = PlanSection(snapshot, width, height, header.Count + requests.Count, budget);
 
-        AddRequestsPanel(lines, snapshot, width, colorMode);
+        lines.AddRange(header);
 
-        if (snapshot.Steps.Count > 0)
-            AddStepsPanel(lines, snapshot.Steps, width, colorMode);
+        if (plan.IncludeRequestsChart || plan.IncludeLatencyChart)
+            AddChartPanels(lines, snapshot, thresholds, plan, width, colorMode, sparklineGlyphSet);
 
-        if (snapshot.Errors.Count > 0)
-            AddErrorsPanel(lines, snapshot.Errors, width, colorMode);
+        if (plan.IncludeHeatmap)
+            lines.AddRange(RenderHeatmapPanel(snapshot, width, colorMode));
+
+        lines.AddRange(requests);
+
+        if (plan.IncludeSteps)
+            AddStepsPanel(lines, snapshot.Steps, plan.StepRowCount, width, colorMode);
+
+        if (plan.IncludeErrors)
+            AddErrorsPanel(lines, snapshot.Errors, plan.ErrorRowCount, width, colorMode);
+    }
+
+    // Which of the section's optional pieces render and how many step and error rows: the
+    // height steps of the drop order first, from the window's height alone, then the budget
+    // steps in order, each taken only while the section's rows — fixedRows for the header block
+    // and the requests panel, plus the pieces still in — exceed the budget. Panel frames count.
+    private static SectionPlan PlanSection(LiveMetricsSnapshot snapshot, int width, int height, int fixedRows, int budget)
+    {
+        var includeCharts = width >= MinimumWidthForCharts;
+        var sideBySideCharts = width >= MinimumWidthForChartsSideBySide;
+        var chartBodyHeight = HasRowsFor(height, MinimumHeightForTallCharts) ? ChartHeight : CompactChartHeight;
+        var chartPanelRows = chartBodyHeight + PanelFrameRows;
+        var includeRequestsChart = includeCharts;
+        var includeLatencyChart = includeCharts;
+        var includeHeatmap = includeCharts && HasRowsFor(height, MinimumHeightForHeatmap);
+        var stepRowCount = snapshot.Steps.Count;
+        var includeSteps = stepRowCount > 0;
+        var errorRowCount = snapshot.Errors.Count;
+        var includeErrors = errorRowCount > 0;
+
+        var rows = fixedRows;
+        if (includeCharts)
+            rows += sideBySideCharts ? chartPanelRows : 2 * chartPanelRows;
+        if (includeHeatmap)
+            rows += HeatmapHeight + PanelFrameRows;
+        if (includeSteps)
+            rows += PanelFrameRows + 1 + stepRowCount;
+        if (includeErrors)
+            rows += PanelFrameRows + errorRowCount;
+
+        var over = rows - budget;
+
+        if (over > 0)
+        {
+            var trimmed = Math.Min(over, stepRowCount);
+            stepRowCount -= trimmed;
+            over -= trimmed;
+        }
+
+        if (over > 0)
+        {
+            var trimmed = Math.Min(over, errorRowCount);
+            errorRowCount -= trimmed;
+            over -= trimmed;
+        }
+
+        if (over > 0 && includeSteps)
+        {
+            includeSteps = false;
+            over -= PanelFrameRows + 1;
+        }
+
+        if (over > 0 && includeErrors)
+        {
+            includeErrors = false;
+            over -= PanelFrameRows;
+        }
+
+        if (over > 0 && includeHeatmap)
+        {
+            includeHeatmap = false;
+            over -= HeatmapHeight + PanelFrameRows;
+        }
+
+        if (over > 0 && includeLatencyChart)
+        {
+            includeLatencyChart = false;
+            if (sideBySideCharts)
+                includeRequestsChart = false;
+
+            over -= chartPanelRows;
+        }
+
+        if (over > 0 && includeRequestsChart)
+            includeRequestsChart = false;
+
+        return new SectionPlan(sideBySideCharts, chartBodyHeight, includeRequestsChart, includeLatencyChart, includeHeatmap, includeSteps, stepRowCount, includeErrors, errorRowCount);
     }
 
     // Whether the window has the rows for an optional piece; an unbounded height (below 1)
@@ -302,17 +505,27 @@ internal static class LiveDashboardLayout
         return height < 1 || height >= minimumHeight;
     }
 
-    // The scenario name and status badge, with the compact logo right-aligned on the same row
-    // when requested — the title is fitted to the columns left of the reserved logo area, so
-    // the two can never overlap.
-    private static RenderedLine RenderTitleLine(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode, string? spinnerGlyph, bool includeLogo)
+    // The scenario name and status badge — the phase label after them when the section shows no
+    // timeline and the line keeps its full width with it — with the compact logo right-aligned
+    // on the same row when requested: the title is fitted to the columns left of the reserved
+    // logo area, so the two can never overlap.
+    private static RenderedLine RenderTitleLine(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode, string? spinnerGlyph, bool includeLogo, bool includePhaseLabel)
     {
+        var titleWidth = includeLogo ? width - LogoWidget.CompactWidth - ColumnGap : width;
         var titleMarkup = "[bold]" + MarkupParser.Escape(snapshot.ScenarioName) + "[/]  " + StatusBadgeMarkup(snapshot, spinnerGlyph);
+
+        if (includePhaseLabel && snapshot.PhaseLabel.Length > 0)
+        {
+            var withPhase = titleMarkup + " [" + TerminalPalette.SecondaryStyle + "]·[/] [" + TerminalPalette.PhaseStyle + "]" + MarkupParser.Escape(snapshot.PhaseLabel) + "[/]";
+            if (MarkupText.Measure(withPhase) <= titleWidth)
+                titleMarkup = withPhase;
+        }
+
         if (!includeLogo)
             return MarkupText.RenderTruncated(titleMarkup, width, colorMode);
 
         var logo = LogoWidget.Render(LogoWidget.CompactWidth, LogoWidget.CompactHeight, colorMode);
-        var title = MarkupText.RenderFitted(titleMarkup, width - LogoWidget.CompactWidth - ColumnGap, colorMode);
+        var title = MarkupText.RenderFitted(titleMarkup, titleWidth, colorMode);
         return new RenderedLine(title.Text + new string(' ', ColumnGap) + logo[0].Text, width);
     }
 
@@ -339,12 +552,11 @@ internal static class LiveDashboardLayout
     // The tile row: the five standard tiles and one per added threshold on one row while every
     // box can be MinimumTileBoxWidth wide, else on two rows with the first taking the larger
     // half; each tile is built for the inner width the widget will give its box.
-    private static void AddTileRows(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, int width, int height, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    private static void AddTileRows(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, int width, int height, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
         var options = new TileOptions(
             includeTrends: width >= MinimumWidthForTileTrends && HasRowsFor(height, MinimumHeightForTileTrends),
             includeGauges: HasRowsFor(height, MinimumHeightForTileGauges));
-        var thresholds = new DeclaredThresholds(snapshot.Thresholds);
         var count = StandardTileCount + thresholds.Added.Count;
 
         if (width >= MinimumWidthForSingleTileRow(count))
@@ -507,18 +719,21 @@ internal static class LiveDashboardLayout
         return new StatTileDelta(change, FormatCount((long)Math.Abs(change)) + " " + ResponseTimeUnit, upIsGood: false);
     }
 
-    // The trailing samples with every non-latency (an idle interval's zero, a value no TimeSpan
-    // holds) as a gap, so the trend never dips to a fake zero.
+    // The trailing samples with every non-latency as a gap, so the trend never dips to a fake zero.
     private static double[] ResponseTimeTrend(IReadOnlyList<double> series)
     {
-        var trend = Trailing(series, TrendSampleCount);
-        for (var index = 0; index < trend.Length; index++)
-        {
-            if (!IsResponseTimeSample(trend[index]))
-                trend[index] = double.NaN;
-        }
+        return ResponseTimeGaps(Trailing(series, TrendSampleCount));
+    }
 
-        return trend;
+    // The series with every value that is not a latency (an idle interval's zero, a value no
+    // TimeSpan holds) as a gap, as a fresh array.
+    private static double[] ResponseTimeGaps(IReadOnlyList<double> series)
+    {
+        var values = new double[series.Count];
+        for (var index = 0; index < values.Length; index++)
+            values[index] = IsResponseTimeSample(series[index]) ? series[index] : double.NaN;
+
+        return values;
     }
 
     // Warning when the newest p95 is above ResponseTimeSpikeFactor times the median of the
@@ -755,59 +970,135 @@ internal static class LiveDashboardLayout
         }
     }
 
-    // Two side-by-side panels: current-interval RPS on the left, per-interval Ok p95 on the
-    // right, each headed by the series' newest value. The panel widths sum to the full width
-    // with the gap, and each sparkline renders at its panel's inner width, so the joined rows
-    // are exactly the frame width.
-    private static void AddSparklinePanels(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    // The chart panels the plan kept: side by side, the requests chart on the left and the
+    // latency chart on the right with the panel widths summing to the full width less the gap,
+    // so the joined rows are exactly the frame width; stacked, each at the full width, requests
+    // first.
+    private static void AddChartPanels(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, SectionPlan plan, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
-        var leftWidth = (width - ColumnGap) / 2;
-        var rightWidth = width - ColumnGap - leftWidth;
+        if (plan.SideBySideCharts)
+        {
+            var leftWidth = (width - ColumnGap) / 2;
+            var rightWidth = width - ColumnGap - leftWidth;
+            var left = RenderRequestsChartPanel(snapshot, leftWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet);
+            var right = RenderLatencyChartPanel(snapshot, thresholds, rightWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet);
 
-        var requestsHeader = "[" + TerminalPalette.PanelHeaderStyle + "]rps[/] " + CurrentRateLabel(snapshot.RequestsPerSecondSeries);
-        var responseTimeHeader = "[" + TerminalPalette.PanelHeaderStyle + "]p95[/] " + CurrentResponseTimeLabel(snapshot.ResponseTimePercentile95Series);
+            for (var row = 0; row < left.Count; row++)
+                lines.Add(new RenderedLine(left[row].Text + new string(' ', ColumnGap) + right[row].Text, width));
 
-        var left = RenderSparklinePanel(requestsHeader, snapshot.RequestsPerSecondSeries, TerminalPalette.RequestsSparklineStyle, leftWidth, colorMode, sparklineGlyphSet);
-        var right = RenderSparklinePanel(responseTimeHeader, snapshot.ResponseTimePercentile95Series, TerminalPalette.ResponseTimeSparklineStyle, rightWidth, colorMode, sparklineGlyphSet);
+            return;
+        }
 
-        for (var row = 0; row < left.Count; row++)
-            lines.Add(new RenderedLine(left[row].Text + new string(' ', ColumnGap) + right[row].Text, width));
+        if (plan.IncludeRequestsChart)
+            lines.AddRange(RenderRequestsChartPanel(snapshot, width, plan.ChartBodyHeight, colorMode, sparklineGlyphSet));
+
+        if (plan.IncludeLatencyChart)
+            lines.AddRange(RenderLatencyChartPanel(snapshot, thresholds, width, plan.ChartBodyHeight, colorMode, sparklineGlyphSet));
     }
 
-    private static IReadOnlyList<RenderedLine> RenderSparklinePanel(string header, IReadOnlyList<double> series, string style, int panelWidth, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    // The per-interval ok and failed counts as two areas on one count scale, failed painted
+    // over ok so a failed count shows at the bottom in its own colour; the annotation is the
+    // first series' — the newest ok count.
+    private static IReadOnlyList<RenderedLine> RenderRequestsChartPanel(LiveMetricsSnapshot snapshot, int panelWidth, int bodyHeight, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
-        var sparkline = SparklineWidget.Render(series, panelWidth - PanelWidget.ContentOverhead, colorMode, sparklineGlyphSet, style);
-        return PanelWidget.Render(header, sparkline, panelWidth, colorMode);
+        var series = new[]
+        {
+            new ChartSeries(snapshot.OkDeltaSeries) { Style = TerminalPalette.OkStyle },
+            new ChartSeries(snapshot.FailedDeltaSeries) { Style = TerminalPalette.FailedStyle }
+        };
+
+        var chart = ChartWidget.Render(series, panelWidth - PanelWidget.ContentOverhead, bodyHeight, colorMode, sparklineGlyphSet, RequestsChartOptions);
+        return PanelWidget.Render(RequestsChartHeader, chart, panelWidth, colorMode);
     }
 
-    private static string CurrentRateLabel(IReadOnlyList<double> series)
+    // The per-interval p99 and p95 as two areas, tallest first so each band shows where it
+    // owns the cell, and the median as a line painted last, so it stays visible over both —
+    // a cell the line passes shows only the line's dots — every non-latency reading a gap; a
+    // declared p95 or p99 limit as a flat line over the p95 series' samples, so it spans the
+    // same columns and shares the scale, in the style the title's legend gives it.
+    private static IReadOnlyList<RenderedLine> RenderLatencyChartPanel(LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, int panelWidth, int bodyHeight, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
-        if (series.Count == 0)
-            return NoDataMarkup;
+        var series = new List<ChartSeries>
+        {
+            new ChartSeries(ResponseTimeGaps(snapshot.ResponseTimePercentile99Series)) { Style = TerminalPalette.ResponseTimePercentile99Style },
+            new ChartSeries(ResponseTimeGaps(snapshot.ResponseTimePercentile95Series)) { Style = TerminalPalette.ResponseTimePercentile95Style },
+            new ChartSeries(ResponseTimeGaps(snapshot.ResponseTimeMedianSeries)) { Style = TerminalPalette.ResponseTimeMedianStyle, Kind = ChartSeriesKind.Line }
+        };
 
-        return RateMarkup(series[series.Count - 1]);
+        var sampleCount = snapshot.ResponseTimePercentile95Series.Count;
+        if (thresholds.ResponseTimePercentile95 != null)
+            series.Add(LimitLine(thresholds.ResponseTimePercentile95, sampleCount, TerminalPalette.WarningStyle));
+
+        if (thresholds.ResponseTimePercentile99 != null)
+            series.Add(LimitLine(thresholds.ResponseTimePercentile99, sampleCount, TerminalPalette.FailedStyle));
+
+        var chart = ChartWidget.Render(series, panelWidth - PanelWidget.ContentOverhead, bodyHeight, colorMode, sparklineGlyphSet, LatencyChartOptions);
+        return PanelWidget.Render(LatencyChartHeader(thresholds), chart, panelWidth, colorMode);
     }
 
-    // The newest per-interval p95, guarded because the series holds raw doubles: a value no
-    // TimeSpan can hold (not finite, or beyond the tick range) shows as no data instead of
-    // throwing out of the render loop.
-    private static string CurrentResponseTimeLabel(IReadOnlyList<double> series)
+    private static ChartSeries LimitLine(LiveThreshold threshold, int sampleCount, string style)
     {
-        if (series.Count == 0)
-            return NoDataMarkup;
+        var values = new double[sampleCount];
+        Array.Fill(values, threshold.Threshold.Limit);
+        return new ChartSeries(values) { Style = style, Kind = ChartSeriesKind.Line };
+    }
 
-        var milliseconds = series[series.Count - 1];
-        if (!double.IsFinite(milliseconds) || Math.Abs(milliseconds) > MaxResponseTimeMilliseconds)
-            return NoDataMarkup;
+    // The latency chart's header: the bands' legend, then the declared p95 and p99 limits as
+    // the thresholds format them, each in its line's style.
+    private static string LatencyChartHeader(DeclaredThresholds thresholds)
+    {
+        var percentile95 = thresholds.ResponseTimePercentile95;
+        var percentile99 = thresholds.ResponseTimePercentile99;
+        if (percentile95 == null && percentile99 == null)
+            return LatencyChartHeaderPrefix;
 
-        return TimeSpan.FromMilliseconds(milliseconds).ToTestFuznResponseTime();
+        var header = LatencyChartHeaderPrefix + " [" + TerminalPalette.SecondaryStyle + "]· " + (percentile95 != null && percentile99 != null ? "limits" : "limit") + "[/]";
+        if (percentile95 != null)
+            header += " [" + TerminalPalette.WarningStyle + "]" + ThresholdFormat.FormatValue(percentile95.Threshold.Metric, percentile95.Threshold.Limit) + "[/]";
+
+        if (percentile95 != null && percentile99 != null)
+            header += " [" + TerminalPalette.SecondaryStyle + "]/[/]";
+
+        if (percentile99 != null)
+            header += " [" + TerminalPalette.FailedStyle + "]" + ThresholdFormat.FormatValue(percentile99.Threshold.Metric, percentile99.Threshold.Limit) + "[/]";
+
+        return header;
+    }
+
+    // The latency bucket counts per sample as a heatmap, the fifteen buckets labelled by their
+    // bounds, in a full-width panel.
+    private static IReadOnlyList<RenderedLine> RenderHeatmapPanel(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode)
+    {
+        var heatmap = HeatmapWidget.Render(snapshot.LatencyBucketSeries, LatencyBucketLabels, width - PanelWidget.ContentOverhead, HeatmapHeight, colorMode, LatencyHeatmapOptions);
+        return PanelWidget.Render(HeatmapHeader, heatmap, width, colorMode);
+    }
+
+    private static string[] BuildLatencyBucketLabels()
+    {
+        var bounds = LatencyBuckets.UpperBounds;
+        var labels = new string[bounds.Count + 1];
+        for (var index = 0; index < bounds.Count; index++)
+            labels[index] = "≤ " + FormatBucketBound(bounds[index]);
+
+        labels[bounds.Count] = "> " + FormatBucketBound(bounds[bounds.Count - 1]);
+        return labels;
+    }
+
+    // A bucket bound in whole units where the bounds are whole: milliseconds below a second,
+    // seconds from one up.
+    private static string FormatBucketBound(TimeSpan bound)
+    {
+        if (bound < TimeSpan.FromSeconds(1))
+            return bound.TotalMilliseconds.ToString("0.#", CultureInfo.InvariantCulture) + " " + ResponseTimeUnit;
+
+        return bound.TotalSeconds.ToString("0.#", CultureInfo.InvariantCulture) + " s";
     }
 
     // The measurement totals as a table — Ok and Failed rows with the count, the current rate
     // and the response-time spread — prefixed by a warmup headline once any warmup requests
     // exist. The column set is the widest tier whose natural width fits the panel; only when
     // even the narrowest tier cannot fit does the table widget shrink columns.
-    private static void AddRequestsPanel(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, int width, ColorMode colorMode)
+    private static IReadOnlyList<RenderedLine> RenderRequestsPanel(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode)
     {
         var innerWidth = width - PanelWidget.ContentOverhead;
         var content = new List<RenderedLine>();
@@ -839,7 +1130,7 @@ internal static class LiveDashboardLayout
             }
         }
 
-        lines.AddRange(PanelWidget.Render("[" + TerminalPalette.PanelHeaderStyle + "]Requests[/]", content, width, colorMode));
+        return PanelWidget.Render("[" + TerminalPalette.PanelHeaderStyle + "]Requests[/]", content, width, colorMode);
     }
 
     private static TableColumn[] SelectColumns(TableColumn[] columns, int[] columnIndexes)
@@ -867,10 +1158,10 @@ internal static class LiveDashboardLayout
     }
 
     // The current-interval ok and failed rates from the newest sample: its combined rate (the
-    // sparkline header's value) split in proportion to its deltas. The sample's rate is
+    // rps tile's value) split in proportion to its deltas. The sample's rate is
     // (ok + failed) / interval, so ok / interval is ok × rate / (ok + failed) — exact without
     // the interval length, which the sample does not carry, and the two always sum to the
-    // header's rate. No sample yet renders no data.
+    // tile's rate. No sample yet renders no data.
     private static (string Ok, string Failed) CurrentRateLabels(IReadOnlyList<LiveMetricsSample> samples)
     {
         if (samples.Count == 0)
@@ -901,11 +1192,14 @@ internal static class LiveDashboardLayout
         };
     }
 
-    private static void AddStepsPanel(List<RenderedLine> lines, IReadOnlyList<LiveStepMetrics> steps, int width, ColorMode colorMode)
+    // The first rowCount steps as a table under the column header — every step when the budget
+    // allows, fewer when the drop order took rows, the header alone at zero.
+    private static void AddStepsPanel(List<RenderedLine> lines, IReadOnlyList<LiveStepMetrics> steps, int rowCount, int width, ColorMode colorMode)
     {
-        var rows = new List<IReadOnlyList<string?>>(steps.Count);
-        foreach (var step in steps)
+        var rows = new List<IReadOnlyList<string?>>(rowCount);
+        for (var index = 0; index < rowCount; index++)
         {
+            var step = steps[index];
             rows.Add(new[]
             {
                 MarkupParser.Escape(step.Name),
@@ -922,22 +1216,24 @@ internal static class LiveDashboardLayout
         lines.AddRange(PanelWidget.Render("[" + TerminalPalette.PanelHeaderStyle + "]Steps[/]", table, width, colorMode));
     }
 
-    // The distinct errors, most recently active first, one truncating line each: the count
-    // right-aligned across entries, the step name, and the message. The messages are exception
-    // text — markup-escaped here, control characters sanitized by the markup pipeline.
-    private static void AddErrorsPanel(List<RenderedLine> lines, IReadOnlyList<LiveErrorEntry> errors, int width, ColorMode colorMode)
+    // The first rowCount distinct errors, most recently active first, one truncating line each:
+    // the count right-aligned across the shown entries, the step name, and the message. The
+    // messages are exception text — markup-escaped here, control characters sanitized by the
+    // markup pipeline.
+    private static void AddErrorsPanel(List<RenderedLine> lines, IReadOnlyList<LiveErrorEntry> errors, int rowCount, int width, ColorMode colorMode)
     {
         var countWidth = 0;
-        foreach (var error in errors)
+        for (var index = 0; index < rowCount; index++)
         {
-            var length = FormatCount(error.Count).Length;
+            var length = FormatCount(errors[index].Count).Length;
             if (length > countWidth)
                 countWidth = length;
         }
 
-        var content = new List<string?>(errors.Count);
-        foreach (var error in errors)
+        var content = new List<string?>(rowCount);
+        for (var index = 0; index < rowCount; index++)
         {
+            var error = errors[index];
             content.Add("[" + TerminalPalette.FailedStyle + "]" + FormatCount(error.Count).PadLeft(countWidth) + "×[/] [bold]"
                 + MarkupParser.Escape(error.StepName) + "[/] [" + TerminalPalette.SecondaryStyle + "]·[/] " + MarkupParser.Escape(error.Message));
         }
@@ -1021,6 +1317,29 @@ internal static class LiveDashboardLayout
         return FormatFiniteRate(rate);
     }
 
+    // The requests chart's axis and annotation format: a count, whole — the scale's midpoint can
+    // land between two counts — rounded half away from zero, and past what a long holds (a
+    // series value that never was a count) printed as it is rather than wrapped.
+    private static string FormatCountLabel(double value)
+    {
+        var rounded = Math.Round(value, MidpointRounding.AwayFromZero);
+        if (Math.Abs(rounded) < long.MaxValue)
+            return FormatCount((long)rounded);
+
+        return rounded.ToString("0", CultureInfo.InvariantCulture);
+    }
+
+    // The latency chart's axis and annotation format: the p95 tile's number with its unit for a
+    // value a TimeSpan holds, a plain whole number of milliseconds for one it does not (a
+    // declared limit past the tick range) — the widget formats only finite values.
+    private static string FormatResponseTimeLabel(double milliseconds)
+    {
+        if (Math.Abs(milliseconds) <= MaxResponseTimeMilliseconds)
+            return FormatResponseTimeValue(TimeSpan.FromMilliseconds(milliseconds)) + " " + ResponseTimeUnit;
+
+        return FormatCountLabel(milliseconds) + " " + ResponseTimeUnit;
+    }
+
     // The number of a positive response time as the shared formatter (ToTestFuznResponseTime)
     // prints it — whole milliseconds, "<1" below one — for a tile that shows the unit on its own.
     private static string FormatResponseTimeValue(TimeSpan duration)
@@ -1069,13 +1388,44 @@ internal static class LiveDashboardLayout
         }
     }
 
-    // The scenario's declared thresholds sorted onto the tiles: the one on each standard tile's
-    // metric (the last declared, should a metric repeat) and, in declaration order, those that
-    // add a tile of their own.
+    // The pieces of a section past its header block and requests panel, as the drop order
+    // settled them for the window and the section's budget (see PlanSection): which panels
+    // render, how tall the chart bodies are, whether the charts share a row, and how many step
+    // and error rows their tables keep.
+    private sealed class SectionPlan
+    {
+        public bool SideBySideCharts { get; }
+        public int ChartBodyHeight { get; }
+        public bool IncludeRequestsChart { get; }
+        public bool IncludeLatencyChart { get; }
+        public bool IncludeHeatmap { get; }
+        public bool IncludeSteps { get; }
+        public int StepRowCount { get; }
+        public bool IncludeErrors { get; }
+        public int ErrorRowCount { get; }
+
+        public SectionPlan(bool sideBySideCharts, int chartBodyHeight, bool includeRequestsChart, bool includeLatencyChart, bool includeHeatmap, bool includeSteps, int stepRowCount, bool includeErrors, int errorRowCount)
+        {
+            SideBySideCharts = sideBySideCharts && includeRequestsChart && includeLatencyChart;
+            ChartBodyHeight = chartBodyHeight;
+            IncludeRequestsChart = includeRequestsChart;
+            IncludeLatencyChart = includeLatencyChart;
+            IncludeHeatmap = includeHeatmap;
+            IncludeSteps = includeSteps;
+            StepRowCount = stepRowCount;
+            IncludeErrors = includeErrors;
+            ErrorRowCount = errorRowCount;
+        }
+    }
+
+    // The scenario's declared thresholds sorted onto the tiles and the latency chart: the one
+    // on each standard tile's metric (the last declared, should a metric repeat), the p99 one
+    // for the chart's limit line, and, in declaration order, those that add a tile of their own.
     private sealed class DeclaredThresholds
     {
         public LiveThreshold? RequestsPerSecond { get; }
         public LiveThreshold? ResponseTimePercentile95 { get; }
+        public LiveThreshold? ResponseTimePercentile99 { get; }
         public LiveThreshold? ErrorRate { get; }
         public IReadOnlyList<LiveThreshold> Added { get; }
 
@@ -1091,6 +1441,10 @@ internal static class LiveDashboardLayout
                         break;
                     case ThresholdMetric.ResponseTimePercentile95:
                         ResponseTimePercentile95 = threshold;
+                        break;
+                    case ThresholdMetric.ResponseTimePercentile99:
+                        ResponseTimePercentile99 = threshold;
+                        added.Add(threshold);
                         break;
                     case ThresholdMetric.ErrorRate:
                         ErrorRate = threshold;
