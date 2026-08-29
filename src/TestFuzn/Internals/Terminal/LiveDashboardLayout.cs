@@ -40,25 +40,13 @@ internal static class LiveDashboardLayout
     /// <summary>Below this width the sparkline panels are dropped.</summary>
     public const int MinimumWidthForSparklines = 60;
 
-    // The dashboard's palette as markup style constants, so retheming is a one-place edit. The
-    // warm accents stay inside the logo gradient family (#FF5C00 → #FFCF6B). The panel header,
-    // ok, failed and secondary styles are shared with the final summary
-    // (<see cref="LoadSummaryLayout"/>), so the summary in the scrollback reads as the
-    // dashboard's sibling.
-    internal const string PanelHeaderStyle = "bold #ff9d3d";
-    private const string ProgressBarStyle = "#ff9d3d";
-    private const string RequestsSparklineStyle = "#ff9d3d";
-    private const string ResponseTimeSparklineStyle = "#ffcf6b";
-    private const string PhaseStyle = "#ffcf6b";
-    internal const string OkStyle = "green";
-    internal const string FailedStyle = "red";
-    private const string RunningStyle = "yellow";
-    internal const string WarningStyle = "yellow";
-    internal const string SecondaryStyle = "dim";
+    // Every style comes from <see cref="TerminalPalette"/>, which the final summary
+    // (<see cref="LoadSummaryLayout"/>) shares, so the summary in the scrollback reads as the
+    // dashboard's sibling and retheming is a one-place edit.
 
     // What every place with no number to show renders: a value that is absent (no sample yet)
     // or not finite.
-    private const string NoDataMarkup = "[" + SecondaryStyle + "]—[/]";
+    private const string NoDataMarkup = "[" + TerminalPalette.SecondaryStyle + "]—[/]";
 
     // Columns between horizontally adjacent pieces: title and logo, the two sparkline panels,
     // and the timing line's elapsed part and progress bar.
@@ -87,15 +75,15 @@ internal static class LiveDashboardLayout
     private static readonly TableColumn[] RequestsColumns =
     {
         new TableColumn(string.Empty),
-        new TableColumn("[" + SecondaryStyle + "]count[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]rps[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]min[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]mean[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]p50[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]p75[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]p95[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]p99[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]max[/]") { Alignment = TextAlignment.Right }
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]count[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]rps[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]min[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]mean[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]p50[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]p75[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]p95[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]p99[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]max[/]") { Alignment = TextAlignment.Right }
     };
 
     // The requests table's column sets as indexes into RequestsColumns, widest first: the full
@@ -113,13 +101,13 @@ internal static class LiveDashboardLayout
 
     private static readonly TableColumn[] StepColumns =
     {
-        new TableColumn("[" + SecondaryStyle + "]step[/]") { MaxWidth = 32 },
-        new TableColumn("[" + SecondaryStyle + "]count[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]rps[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]mean[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]p95[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]failed[/]") { Alignment = TextAlignment.Right },
-        new TableColumn("[" + SecondaryStyle + "]fail%[/]")
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]step[/]") { MaxWidth = 32 },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]count[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]rps[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]mean[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]p95[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]failed[/]") { Alignment = TextAlignment.Right },
+        new TableColumn("[" + TerminalPalette.SecondaryStyle + "]fail%[/]")
     };
 
     /// <summary>
@@ -173,7 +161,7 @@ internal static class LiveDashboardLayout
         lines.Add(RenderTimingLine(snapshot, width, colorMode));
 
         if (snapshot.StatusDetail != null)
-            lines.Add(MarkupText.RenderTruncated("[" + FailedStyle + "]✗ " + MarkupParser.Escape(snapshot.StatusDetail) + "[/]", width, colorMode));
+            lines.Add(MarkupText.RenderTruncated("[" + TerminalPalette.FailedStyle + "]✗ " + MarkupParser.Escape(snapshot.StatusDetail) + "[/]", width, colorMode));
 
         lines.Add(BlankLine);
 
@@ -208,19 +196,19 @@ internal static class LiveDashboardLayout
     private static string StatusBadgeMarkup(LiveMetricsSnapshot snapshot, string? spinnerGlyph)
     {
         if (snapshot.Status == TestStatus.Failed)
-            return "[" + FailedStyle + "]● Failed[/]";
+            return "[" + TerminalPalette.FailedStyle + "]● Failed[/]";
 
         if (snapshot.Status == TestStatus.Skipped)
-            return "[" + SecondaryStyle + "]● Skipped[/]";
+            return "[" + TerminalPalette.SecondaryStyle + "]● Skipped[/]";
 
         if (snapshot.IsCompleted)
-            return "[" + OkStyle + "]● Passed[/]";
+            return "[" + TerminalPalette.OkStyle + "]● Passed[/]";
 
         var runningGlyph = "●";
         if (spinnerGlyph != null)
             runningGlyph = MarkupParser.Escape(spinnerGlyph);
 
-        return "[" + RunningStyle + "]" + runningGlyph + " Running[/]";
+        return "[" + TerminalPalette.RunningStyle + "]" + runningGlyph + " Running[/]";
     }
 
     // Elapsed first (truncated only at degenerate widths), then in importance order the planned
@@ -232,17 +220,17 @@ internal static class LiveDashboardLayout
     // elapsed-only line with no fake progress.
     private static RenderedLine RenderTimingLine(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode)
     {
-        var elapsed = MarkupText.RenderTruncated("[" + SecondaryStyle + "]elapsed[/] " + FormatClock(snapshot.Duration), width, colorMode);
+        var elapsed = MarkupText.RenderTruncated("[" + TerminalPalette.SecondaryStyle + "]elapsed[/] " + FormatClock(snapshot.Duration), width, colorMode);
         var line = new StringBuilder(elapsed.Text);
         var usedWidth = elapsed.Width;
 
         var fits = true;
         if (snapshot.PlannedDuration != null)
-            fits = AppendIfFits(line, ref usedWidth, " [" + SecondaryStyle + "]/[/] " + FormatClock(snapshot.PlannedDuration.Value), width, colorMode);
+            fits = AppendIfFits(line, ref usedWidth, " [" + TerminalPalette.SecondaryStyle + "]/[/] " + FormatClock(snapshot.PlannedDuration.Value), width, colorMode);
 
         if (snapshot.ProgressFraction != null)
         {
-            var bar = ProgressBarWidget.Render(snapshot.ProgressFraction.Value, ProgressBarTotalWidth, colorMode, showPercentLabel: true, barStyle: ProgressBarStyle);
+            var bar = ProgressBarWidget.Render(snapshot.ProgressFraction.Value, ProgressBarTotalWidth, colorMode, showPercentLabel: true, barStyle: TerminalPalette.ProgressBarStyle);
             if (usedWidth + ColumnGap + bar[0].Width <= width)
             {
                 line.Append(' ', ColumnGap).Append(bar[0].Text);
@@ -251,10 +239,10 @@ internal static class LiveDashboardLayout
         }
 
         if (fits && snapshot.EstimatedTimeRemaining != null)
-            fits = AppendIfFits(line, ref usedWidth, "  [" + SecondaryStyle + "]eta[/] " + FormatClock(snapshot.EstimatedTimeRemaining.Value), width, colorMode);
+            fits = AppendIfFits(line, ref usedWidth, "  [" + TerminalPalette.SecondaryStyle + "]eta[/] " + FormatClock(snapshot.EstimatedTimeRemaining.Value), width, colorMode);
 
         if (fits && snapshot.PhaseLabel.Length > 0)
-            AppendIfFits(line, ref usedWidth, "  [" + SecondaryStyle + "]·[/] [" + PhaseStyle + "]" + MarkupParser.Escape(snapshot.PhaseLabel) + "[/]", width, colorMode);
+            AppendIfFits(line, ref usedWidth, "  [" + TerminalPalette.SecondaryStyle + "]·[/] [" + TerminalPalette.PhaseStyle + "]" + MarkupParser.Escape(snapshot.PhaseLabel) + "[/]", width, colorMode);
 
         return new RenderedLine(line.ToString(), usedWidth);
     }
@@ -281,11 +269,11 @@ internal static class LiveDashboardLayout
         var leftWidth = (width - ColumnGap) / 2;
         var rightWidth = width - ColumnGap - leftWidth;
 
-        var requestsHeader = "[" + PanelHeaderStyle + "]rps[/] " + CurrentRateLabel(snapshot.RequestsPerSecondSeries);
-        var responseTimeHeader = "[" + PanelHeaderStyle + "]p95[/] " + CurrentResponseTimeLabel(snapshot.ResponseTimePercentile95Series);
+        var requestsHeader = "[" + TerminalPalette.PanelHeaderStyle + "]rps[/] " + CurrentRateLabel(snapshot.RequestsPerSecondSeries);
+        var responseTimeHeader = "[" + TerminalPalette.PanelHeaderStyle + "]p95[/] " + CurrentResponseTimeLabel(snapshot.ResponseTimePercentile95Series);
 
-        var left = RenderSparklinePanel(requestsHeader, snapshot.RequestsPerSecondSeries, RequestsSparklineStyle, leftWidth, colorMode, sparklineGlyphSet);
-        var right = RenderSparklinePanel(responseTimeHeader, snapshot.ResponseTimePercentile95Series, ResponseTimeSparklineStyle, rightWidth, colorMode, sparklineGlyphSet);
+        var left = RenderSparklinePanel(requestsHeader, snapshot.RequestsPerSecondSeries, TerminalPalette.RequestsSparklineStyle, leftWidth, colorMode, sparklineGlyphSet);
+        var right = RenderSparklinePanel(responseTimeHeader, snapshot.ResponseTimePercentile95Series, TerminalPalette.ResponseTimeSparklineStyle, rightWidth, colorMode, sparklineGlyphSet);
 
         for (var row = 0; row < left.Count; row++)
             lines.Add(new RenderedLine(left[row].Text + new string(' ', ColumnGap) + right[row].Text, width));
@@ -331,17 +319,17 @@ internal static class LiveDashboardLayout
 
         if ((long)snapshot.WarmupRequestCountOk + snapshot.WarmupRequestCountFailed > 0)
         {
-            var warmupMarkup = "[" + SecondaryStyle + "]warmup[/] " + FormatCount(snapshot.WarmupRequestCountOk)
-                + " [" + OkStyle + "]ok[/] [" + SecondaryStyle + "]·[/] " + FormatCount(snapshot.WarmupRequestCountFailed)
-                + " [" + FailedStyle + "]failed[/]";
+            var warmupMarkup = "[" + TerminalPalette.SecondaryStyle + "]warmup[/] " + FormatCount(snapshot.WarmupRequestCountOk)
+                + " [" + TerminalPalette.OkStyle + "]ok[/] [" + TerminalPalette.SecondaryStyle + "]·[/] " + FormatCount(snapshot.WarmupRequestCountFailed)
+                + " [" + TerminalPalette.FailedStyle + "]failed[/]";
             content.Add(MarkupText.RenderTruncated(warmupMarkup, innerWidth, colorMode));
         }
 
         var rates = CurrentRateLabels(snapshot.Samples);
         var rows = new[]
         {
-            RequestsRow("ok", OkStyle, snapshot.Ok, rates.Ok),
-            RequestsRow("failed", FailedStyle, snapshot.Failed, rates.Failed)
+            RequestsRow("ok", TerminalPalette.OkStyle, snapshot.Ok, rates.Ok),
+            RequestsRow("failed", TerminalPalette.FailedStyle, snapshot.Failed, rates.Failed)
         };
 
         for (var tier = 0; tier < RequestsColumnTiers.Length; tier++)
@@ -356,7 +344,7 @@ internal static class LiveDashboardLayout
             }
         }
 
-        lines.AddRange(PanelWidget.Render("[" + PanelHeaderStyle + "]Requests[/]", content, width, colorMode));
+        lines.AddRange(PanelWidget.Render("[" + TerminalPalette.PanelHeaderStyle + "]Requests[/]", content, width, colorMode));
     }
 
     private static TableColumn[] SelectColumns(TableColumn[] columns, int[] columnIndexes)
@@ -436,7 +424,7 @@ internal static class LiveDashboardLayout
         }
 
         var table = TableWidget.Render(StepColumns, rows, width - PanelWidget.ContentOverhead, colorMode);
-        lines.AddRange(PanelWidget.Render("[" + PanelHeaderStyle + "]Steps[/]", table, width, colorMode));
+        lines.AddRange(PanelWidget.Render("[" + TerminalPalette.PanelHeaderStyle + "]Steps[/]", table, width, colorMode));
     }
 
     // The distinct errors, most recently active first, one truncating line each: the count
@@ -455,11 +443,11 @@ internal static class LiveDashboardLayout
         var content = new List<string?>(errors.Count);
         foreach (var error in errors)
         {
-            content.Add("[" + FailedStyle + "]" + FormatCount(error.Count).PadLeft(countWidth) + "×[/] [bold]"
-                + MarkupParser.Escape(error.StepName) + "[/] [" + SecondaryStyle + "]·[/] " + MarkupParser.Escape(error.Message));
+            content.Add("[" + TerminalPalette.FailedStyle + "]" + FormatCount(error.Count).PadLeft(countWidth) + "×[/] [bold]"
+                + MarkupParser.Escape(error.StepName) + "[/] [" + TerminalPalette.SecondaryStyle + "]·[/] " + MarkupParser.Escape(error.Message));
         }
 
-        lines.AddRange(PanelWidget.Render("[" + PanelHeaderStyle + "]Errors[/]", content, width, colorMode));
+        lines.AddRange(PanelWidget.Render("[" + TerminalPalette.PanelHeaderStyle + "]Errors[/]", content, width, colorMode));
     }
 
     // A fixed-width severity bar for a step's failure share: no requests renders the empty
@@ -471,10 +459,10 @@ internal static class LiveDashboardLayout
         var emptyTrack = new string('░', FailureBarCellCount);
         var total = (long)okCount + failedCount;
         if (total == 0)
-            return "[" + SecondaryStyle + "]" + emptyTrack + "[/]";
+            return "[" + TerminalPalette.SecondaryStyle + "]" + emptyTrack + "[/]";
 
         if (failedCount == 0)
-            return "[" + SecondaryStyle + "]" + emptyTrack + "[/] 0%";
+            return "[" + TerminalPalette.SecondaryStyle + "]" + emptyTrack + "[/] 0%";
 
         var fraction = (double)failedCount / total;
         if (fraction < 0)
@@ -486,8 +474,8 @@ internal static class LiveDashboardLayout
         if (filledCount < 1)
             filledCount = 1;
 
-        var style = fraction >= SevereFailureFraction ? FailedStyle : WarningStyle;
-        return "[" + style + "]" + new string('█', filledCount) + "[/][" + SecondaryStyle + "]"
+        var style = fraction >= SevereFailureFraction ? TerminalPalette.FailedStyle : TerminalPalette.WarningStyle;
+        return "[" + style + "]" + new string('█', filledCount) + "[/][" + TerminalPalette.SecondaryStyle + "]"
             + new string('░', FailureBarCellCount - filledCount) + "[/] " + FormatPercent(fraction);
     }
 

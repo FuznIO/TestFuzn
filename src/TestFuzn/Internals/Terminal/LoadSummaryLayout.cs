@@ -196,7 +196,7 @@ internal static class LoadSummaryLayout
 
         var errorLines = ErrorLines(result, innerWidth);
         if (errorLines.Count > 0)
-            lines.AddRange(PanelWidget.Render("[bold " + LiveDashboardLayout.FailedStyle + "]" + ErrorsHeader + "[/]", errorLines, width, colorMode));
+            lines.AddRange(PanelWidget.Render("[bold " + TerminalPalette.FailedStyle + "]" + ErrorsHeader + "[/]", errorLines, width, colorMode));
     }
 
     // The summary as one table row when it fits at its natural width — nothing shrinks then —
@@ -229,7 +229,7 @@ internal static class LoadSummaryLayout
 
     private static string SummaryLineMarkup(string label, string? value)
     {
-        return "[" + LiveDashboardLayout.SecondaryStyle + "]" + label.PadRight(SummaryLabelWidth) + "[/]" + SummaryLabelSeparator + value;
+        return "[" + TerminalPalette.SecondaryStyle + "]" + label.PadRight(SummaryLabelWidth) + "[/]" + SummaryLabelSeparator + value;
     }
 
     private static string?[] SummaryRow(Scenario scenario, ScenarioLoadResult result)
@@ -246,12 +246,12 @@ internal static class LoadSummaryLayout
     private static string StatusMarkup(TestStatus status)
     {
         if (status == TestStatus.Failed)
-            return "[" + LiveDashboardLayout.FailedStyle + "]Failed[/]";
+            return "[" + TerminalPalette.FailedStyle + "]Failed[/]";
 
         if (status == TestStatus.Skipped)
-            return "[" + LiveDashboardLayout.SecondaryStyle + "]Skipped[/]";
+            return "[" + TerminalPalette.SecondaryStyle + "]Skipped[/]";
 
-        return "[" + LiveDashboardLayout.OkStyle + "]Passed[/]";
+        return "[" + TerminalPalette.OkStyle + "]Passed[/]";
     }
 
     // A "Type" heading and every configured simulation's description as the simulation formats
@@ -260,7 +260,7 @@ internal static class LoadSummaryLayout
     private static List<string?> SimulationLines(Scenario scenario, int innerWidth)
     {
         var lines = new List<string?>();
-        lines.Add("[" + LiveDashboardLayout.SecondaryStyle + "]Type[/]");
+        lines.Add("[" + TerminalPalette.SecondaryStyle + "]Type[/]");
         if (scenario.SimulationsInternal == null)
             return lines;
 
@@ -422,10 +422,27 @@ internal static class LoadSummaryLayout
     {
         var rows = new List<IReadOnlyList<string?>>();
         rows.Add(new[] { "Total", LiveDashboardLayout.FormatCount(requestCount), string.Empty });
-        rows.Add(new[] { "[" + LiveDashboardLayout.OkStyle + "]OK[/]", LiveDashboardLayout.FormatCount(ok.RequestCount), LiveDashboardLayout.FormatCount(ok.RequestsPerSecond) });
-        rows.Add(new[] { "[" + LiveDashboardLayout.FailedStyle + "]Failed[/]", LiveDashboardLayout.FormatCount(failed.RequestCount), LiveDashboardLayout.FormatCount(failed.RequestsPerSecond) });
+        rows.Add(new[]
+        {
+            Styled(TerminalPalette.OkStyle, "OK"),
+            LiveDashboardLayout.FormatCount(ok.RequestCount),
+            LiveDashboardLayout.FormatCount(ok.RequestsPerSecond)
+        });
+        rows.Add(new[]
+        {
+            Styled(TerminalPalette.FailedStyle, "Failed"),
+            LiveDashboardLayout.FormatCount(failed.RequestCount),
+            LiveDashboardLayout.FormatCount(failed.RequestsPerSecond)
+        });
         if (skippedCount != null)
-            rows.Add(new[] { "[" + LiveDashboardLayout.SecondaryStyle + "]Skipped[/]", LiveDashboardLayout.FormatCount(skippedCount.Value), string.Empty });
+        {
+            rows.Add(new[]
+            {
+                Styled(TerminalPalette.SecondaryStyle, "Skipped"),
+                LiveDashboardLayout.FormatCount(skippedCount.Value),
+                string.Empty
+            });
+        }
 
         return rows;
     }
@@ -434,8 +451,8 @@ internal static class LoadSummaryLayout
     {
         return new List<IReadOnlyList<string?>>
         {
-            ResponseTimeRow("Ok", LiveDashboardLayout.OkStyle, ok),
-            ResponseTimeRow("Failed", LiveDashboardLayout.FailedStyle, failed)
+            ResponseTimeRow("Ok", TerminalPalette.OkStyle, ok),
+            ResponseTimeRow("Failed", TerminalPalette.FailedStyle, failed)
         };
     }
 
@@ -468,7 +485,7 @@ internal static class LoadSummaryLayout
             if (step.Value == null || step.Value.Errors == null || step.Value.Errors.Count == 0)
                 continue;
 
-            lines.Add(Styled(LiveDashboardLayout.FailedStyle, MarkupParser.Escape(NameOf(step.Key)) + ":"));
+            lines.Add(Styled(TerminalPalette.FailedStyle, MarkupParser.Escape(NameOf(step.Key)) + ":"));
             foreach (var error in step.Value.Errors)
             {
                 var count = 0;
@@ -480,7 +497,7 @@ internal static class LoadSummaryLayout
                 for (var index = 0; index < wrapped.Count; index++)
                 {
                     var indent = index == 0 ? ErrorIndent : ErrorContinuationIndent;
-                    lines.Add(Styled(LiveDashboardLayout.FailedStyle, indent + MarkupParser.Escape(wrapped[index])));
+                    lines.Add(Styled(TerminalPalette.FailedStyle, indent + MarkupParser.Escape(wrapped[index])));
                 }
             }
         }
@@ -548,7 +565,7 @@ internal static class LoadSummaryLayout
 
     private static string HeaderMarkup(string header)
     {
-        return "[" + LiveDashboardLayout.PanelHeaderStyle + "]" + header + "[/]";
+        return "[" + TerminalPalette.PanelHeaderStyle + "]" + header + "[/]";
     }
 
     private static string TitleMarkup(string title)
@@ -563,11 +580,11 @@ internal static class LoadSummaryLayout
 
     private static TableColumn HeaderColumn(string header)
     {
-        return new TableColumn("[" + LiveDashboardLayout.SecondaryStyle + "]" + header + "[/]");
+        return new TableColumn("[" + TerminalPalette.SecondaryStyle + "]" + header + "[/]");
     }
 
     private static TableColumn NumberColumn(string header)
     {
-        return new TableColumn("[" + LiveDashboardLayout.SecondaryStyle + "]" + header + "[/]") { Alignment = TextAlignment.Right };
+        return new TableColumn("[" + TerminalPalette.SecondaryStyle + "]" + header + "[/]") { Alignment = TextAlignment.Right };
     }
 }

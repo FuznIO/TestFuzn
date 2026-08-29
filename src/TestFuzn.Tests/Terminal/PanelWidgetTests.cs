@@ -121,7 +121,7 @@ public class PanelWidgetTests : Test
             })
             .Step("A narrower rendered line pads right to the inner width by its known width", context =>
             {
-                var tile = StatTileWidget.Render("Errors", "[red]3[/]", 10, ColorMode.TrueColor);
+                var tile = StatTileWidget.Render(new StatTile("Errors", "3") { State = StatTileState.Critical }, 10, ColorMode.TrueColor);
 
                 var lines = PanelWidget.Render(null, tile, 20, ColorMode.TrueColor);
 

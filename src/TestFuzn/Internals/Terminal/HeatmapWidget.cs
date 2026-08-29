@@ -74,9 +74,10 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// zero, and steps 1-6 for shares in (0, 1/6], (1/6, 2/6], (2/6, 3/6], (3/6, 4/6], (4/6, 5/6]
 /// and (5/6, 1]; a ramp-up brightens as its volume approaches the typical one, and a lone
 /// request among busy seconds reads as a faint step 1. A sample whose total is zero (idle,
-/// null, all negative) is a blank column in every row. TrueColor draws █ in six colors from
-/// dark ember through the logo's gradient to white-hot: #3A1400, #9C3800, #FF5C00 (the logo's
-/// gradient start), #FF9536, #FFCF6B (its end), #FFFFFF. <see cref="ColorMode.Colors16"/>
+/// null, all negative) is a blank column in every row. TrueColor draws █ in the palette's six
+/// heat stops (<see cref="TerminalPalette.HeatDarkEmberStyle"/> to
+/// <see cref="TerminalPalette.HeatWhiteHotStyle"/>): dark ember through the logo's gradient —
+/// its start, its midpoint, its end — to white-hot. <see cref="ColorMode.Colors16"/>
 /// keeps to the yellow accent with the shade blocks: ░ ▒ ▓ in dark yellow (olive) for steps
 /// 1-3, ▓ and █ in bright yellow for 4 and 5, and █ in bold white for 6.
 /// <see cref="ColorMode.None"/> and <see cref="ColorMode.Monochrome"/> use the ASCII ramp
@@ -115,9 +116,18 @@ internal static class HeatmapWidget
     private static readonly char[] ShadeGlyphs = { ' ', '░', '▒', '▓', '▓', '█', '█' };
     private static readonly string?[] ShadeStyles = { null, "olive", "olive", "olive", "yellow", "yellow", "bold white" };
 
-    // Steps 0-6 in TrueColor: dark ember through the logo's warm gradient (#FF5C00 → #FFCF6B,
-    // LogoWidget's endpoints) to white-hot. Retheme the gradient by tweaking these.
-    private static readonly string?[] GradientStyles = { null, "#3A1400", "#9C3800", "#FF5C00", "#FF9536", "#FFCF6B", "#FFFFFF" };
+    // Steps 0-6 in TrueColor: blank, then the palette's six heat stops — dark ember through the
+    // logo's warm gradient to white-hot. Retheme the gradient in TerminalPalette.
+    private static readonly string?[] GradientStyles =
+    {
+        null,
+        TerminalPalette.HeatDarkEmberStyle,
+        TerminalPalette.HeatEmberStyle,
+        TerminalPalette.HeatOrangeStyle,
+        TerminalPalette.HeatLightOrangeStyle,
+        TerminalPalette.HeatAmberStyle,
+        TerminalPalette.HeatWhiteHotStyle
+    };
 
     // Every packed-cell style by [older step][newer step] — the older's color on the newer's,
     // one color alone when the other half is blank, null when both are — built once so a
@@ -145,7 +155,7 @@ internal static class HeatmapWidget
 
         var rows = MergeRows(bucketCount, height);
         var labels = RowLabels(rows, bucketLabels);
-        var labelStyle = ResolveStyle(options.LabelStyle);
+        var labelStyle = MarkupText.ResolveStyle(options.LabelStyle);
 
         var labelWidth = 0;
         if (options.ShowLabels)
@@ -448,23 +458,6 @@ internal static class HeatmapWidget
         }
 
         return styles;
-    }
-
-    // A style the parser resolves, or null: an unresolvable tag would render as literal text
-    // and widen the row, and a bracket inside the words ("dim][red") would close or open a tag
-    // of its own and leak a style past the run it was meant for, so both are dropped up front.
-    private static string? ResolveStyle(string? style)
-    {
-        if (string.IsNullOrEmpty(style))
-            return null;
-
-        if (style.IndexOf('[') >= 0 || style.IndexOf(']') >= 0)
-            return null;
-
-        if (MarkupText.Measure("[" + style + "]x[/]") != 1)
-            return null;
-
-        return style;
     }
 
     private static void AppendStyled(StringBuilder markup, string text, string? style)

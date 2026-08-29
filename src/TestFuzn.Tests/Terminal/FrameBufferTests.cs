@@ -106,11 +106,11 @@ public class FrameBufferTests : Test
             {
                 var frame = new FrameBuffer();
 
-                frame.AddLines(StatTileWidget.Render("Requests", "128", 12, ColorMode.None));
+                frame.AddLines(StatTileWidget.Render(new StatTile("Requests", "128"), 12, ColorMode.None));
 
                 Assert.HasCount(2, frame.Lines);
-                Assert.AreEqual("Requests", frame.Lines[0]);
-                Assert.AreEqual("128", frame.Lines[1]);
+                Assert.AreEqual("Requests    ", frame.Lines[0]);
+                Assert.AreEqual("128         ", frame.Lines[1]);
             })
             .Run();
     }

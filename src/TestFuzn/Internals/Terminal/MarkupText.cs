@@ -38,6 +38,28 @@ internal static class MarkupText
     }
 
     /// <summary>
+    /// Returns the style — markup tag words such as "green" or "bold #ff8800" — when the parser
+    /// resolves it as a tag, else null: an unresolvable tag would render as literal text and
+    /// widen a row, and a bracket inside the words ("dim][red") would close or open a tag of its
+    /// own and leak a style past the run it was meant for, so widgets that take a caller's style
+    /// drop a bad one up front with this rather than rendering it. Null and empty resolve to
+    /// null.
+    /// </summary>
+    public static string? ResolveStyle(string? style)
+    {
+        if (string.IsNullOrEmpty(style))
+            return null;
+
+        if (style.IndexOf('[') >= 0 || style.IndexOf(']') >= 0)
+            return null;
+
+        if (Measure("[" + style + "]x[/]") != 1)
+            return null;
+
+        return style;
+    }
+
+    /// <summary>
     /// Renders the markup at exactly <paramref name="width"/> display columns: content that is
     /// too wide truncates with an ellipsis, narrower content pads with plain spaces on the side
     /// opposite the alignment (outside any styling). A width below 1 renders an empty line of

@@ -41,10 +41,10 @@ internal static class LogoWidget
     /// <summary>Row count of the compact variant.</summary>
     public const int CompactHeight = 1;
 
-    // Warm gradient endpoints (omarchy-style): deep orange #FF5C00 at the banner's left edge
-    // sweeping to warm amber #FFCF6B at the right. Retheme the logo by tweaking these two.
-    private static readonly TerminalColor GradientStart = TerminalColor.FromRgb(0xFF, 0x5C, 0x00);
-    private static readonly TerminalColor GradientEnd = TerminalColor.FromRgb(0xFF, 0xCF, 0x6B);
+    // Warm gradient endpoints (omarchy-style): deep orange at the banner's left edge sweeping
+    // to warm amber at the right. Retheme the logo in TerminalPalette.
+    private static readonly TerminalColor GradientStart = TerminalPalette.LogoGradientStart;
+    private static readonly TerminalColor GradientEnd = TerminalPalette.LogoGradientEnd;
 
     // The single warm accent for Colors16 mode: bright yellow (SGR 93).
     private static readonly string Colors16Accent = AnsiCodes.Foreground(ConsoleColor.Yellow);

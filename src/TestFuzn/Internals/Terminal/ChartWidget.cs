@@ -111,12 +111,12 @@ internal static class ChartWidget
         for (var index = 0; index < series.Count; index++)
         {
             windows[index] = TimeWindowed(series[index].Values, options.TimeWindow);
-            styles[index] = ResolveStyle(series[index].Style);
+            styles[index] = MarkupText.ResolveStyle(series[index].Style);
         }
 
         AlignWindows(windows);
 
-        var axisStyle = ResolveStyle(options.AxisStyle);
+        var axisStyle = MarkupText.ResolveStyle(options.AxisStyle);
 
         string? newestLabel = null;
         if (options.ShowNewestValue && windows.Length > 0 && windows[0].Length > 0 && double.IsFinite(windows[0][windows[0].Length - 1]))
@@ -304,24 +304,6 @@ internal static class ChartWidget
     private static string FormatDefault(double value)
     {
         return value.ToString(DefaultValueFormat, CultureInfo.InvariantCulture);
-    }
-
-    // A style the parser resolves, or null: an unresolvable tag would render as literal text
-    // and widen the row, and a bracket inside the words ("green][blue") would close or open a
-    // tag of its own and leak a style past the run it was meant for, so both are dropped up
-    // front.
-    private static string? ResolveStyle(string? style)
-    {
-        if (string.IsNullOrEmpty(style))
-            return null;
-
-        if (style.IndexOf('[') >= 0 || style.IndexOf(']') >= 0)
-            return null;
-
-        if (MarkupText.Measure("[" + style + "]x[/]") != 1)
-            return null;
-
-        return style;
     }
 
     private static ValueRange FiniteRange(double[][] visible)

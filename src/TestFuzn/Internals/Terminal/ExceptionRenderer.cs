@@ -24,10 +24,10 @@ internal static class ExceptionRenderer
     /// <summary>The line rendered in place of the inner exceptions below <see cref="MaximumDepth"/>.</summary>
     internal const string ElidedText = "… deeper inner exceptions omitted";
 
-    private const string TypeStyle = "bold " + LiveDashboardLayout.FailedStyle;
-    private const string MessageStyle = LiveDashboardLayout.FailedStyle;
-    private const string FrameStyle = LiveDashboardLayout.SecondaryStyle;
-    private const string InnerLabelStyle = LiveDashboardLayout.WarningStyle;
+    private const string TypeStyle = "bold " + TerminalPalette.FailedStyle;
+    private const string MessageStyle = TerminalPalette.FailedStyle;
+    private const string FrameStyle = TerminalPalette.SecondaryStyle;
+    private const string InnerLabelStyle = TerminalPalette.WarningStyle;
 
     private const string IndentPerLevel = "  ";
 

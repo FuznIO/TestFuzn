@@ -26,8 +26,8 @@ internal class StandaloneRunnerCore
     /// </summary>
     internal const string RunStoppedMessage = "Run stopped (OperationCanceledException): the run was cancelled by Ctrl+C or the quit key before it completed.";
 
-    private const string TestSkippedMarkup = "[" + LiveDashboardLayout.WarningStyle + "]" + TestSkippedMessage + "[/]";
-    private const string RunStoppedMarkup = "[" + LiveDashboardLayout.WarningStyle + "]" + RunStoppedMessage + "[/]";
+    private const string TestSkippedMarkup = "[" + TerminalPalette.WarningStyle + "]" + TestSkippedMessage + "[/]";
+    private const string RunStoppedMarkup = "[" + TerminalPalette.WarningStyle + "]" + RunStoppedMessage + "[/]";
 
     private readonly ILiveViewHost _liveViewHost;
     private readonly DiscoverTests _discoverTests;
