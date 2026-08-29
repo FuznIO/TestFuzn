@@ -74,7 +74,7 @@ internal class ArgumentsParser
         return !trimmed.Equals("false", StringComparison.OrdinalIgnoreCase) && trimmed != "0";
     }
 
-    public string GetValueFromArgsOrEnvironmentVariable(Dictionary<string, string> parsedArgs, string argsKey, string envKey)
+    public string GetValueFromArgsOrEnvironmentVariable(Dictionary<string, string>? parsedArgs, string argsKey, string envKey)
     {
         // First try to get from command arguments
         if (parsedArgs != null && parsedArgs.TryGetValue(argsKey, out var value))

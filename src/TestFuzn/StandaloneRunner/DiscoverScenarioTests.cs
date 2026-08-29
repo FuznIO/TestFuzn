@@ -4,7 +4,12 @@ namespace Fuzn.TestFuzn.StandaloneRunner;
 
 internal class DiscoverTests
 {
-    public List<DiscoveredTest> GetTests(Assembly assembly)
+    /// <summary>
+    /// Every test in the assembly — a method carrying the <c>[Test]</c> attribute on a class that
+    /// implements <see cref="ITest"/> — ordered by full name. Virtual so the runner core can be
+    /// driven over hand-made tests in unit tests.
+    /// </summary>
+    public virtual List<DiscoveredTest> GetTests(Assembly assembly)
     {
         var scenarioTests = new List<DiscoveredTest>();
 
@@ -25,7 +30,7 @@ internal class DiscoverTests
 
                 if (!hasTestAttribute)
                     continue;
-                
+
                 var test = new DiscoveredTest();
                 test.Name = type.FullName + "." +  method.Name;
                 test.Class = type;

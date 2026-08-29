@@ -23,9 +23,18 @@ namespace Fuzn.TestFuzn.StandaloneRunner;
 /// path a real run stops through, and end it the same way: the run completes its cleanup and
 /// summary and then reports its cancellation, which the runner core prints and exits 1 on, as
 /// it does for a stopped test. Only the reports are skipped: the demo has no results directory.
+/// The demo opens with the same <see cref="StartupBanner"/> a test run opens with — its
+/// scenario name as the subject — written through the host's terminal before the live view
+/// starts, so the two entry paths look alike in the scrollback.
 /// </summary>
 internal sealed class LiveViewDemo
 {
+    /// <summary>The banner's label on its title line, ahead of the demo scenario's name.</summary>
+    internal const string RunningDemoLabel = "Running demo:";
+
+    /// <summary>The banner's detail line: what the demo runs against.</summary>
+    internal const string DemoDetail = "synthetic load, no target system";
+
     private readonly ILiveViewHost _liveViewHost;
 
     /// <summary>
@@ -58,7 +67,7 @@ internal sealed class LiveViewDemo
         if (testFramework == null)
             throw new ArgumentNullException(nameof(testFramework), "Test framework adapter cannot be null.");
 
-        testFramework.WriteMarkup("[green]Running demo:[/] [bold green]" + MarkupParser.Escape(LiveViewDemoScript.ScenarioName) + "[/] — synthetic load, no target system");
+        WriteStartupBanner();
 
         var testSession = new TestSession("demo");
         var testExecutionState = new TestExecutionState(testSession);
@@ -94,6 +103,19 @@ internal sealed class LiveViewDemo
             await consoleManager.StopRealtimeConsoleOutput();
             testExecutionState.Dispose();
         }
+    }
+
+    // As the test runner writes its banner: no size read (the layout is fixed), the capabilities
+    // pick the color mode only, and a host without a terminal fails loud before the run starts.
+    private void WriteStartupBanner()
+    {
+        var capabilities = _liveViewHost.DetectCapabilities();
+
+        var terminalWriter = _liveViewHost.CreateTerminalWriter();
+        if (terminalWriter == null)
+            throw new InvalidOperationException("The live view host returned no terminal writer.");
+
+        StartupBanner.Write(terminalWriter, RunningDemoLabel, LiveViewDemoScript.ScenarioName, DemoDetail, capabilities.ColorMode);
     }
 
     /// <summary>The test the demo runs as — the state's test result and the summary need one; no test method is ever invoked.</summary>

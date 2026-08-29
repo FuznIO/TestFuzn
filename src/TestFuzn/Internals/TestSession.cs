@@ -21,6 +21,12 @@ namespace Fuzn.TestFuzn.Internals;
 
 internal class TestSession
 {
+    /// <summary>The argument that names the target environment: <c>--target-environment=&lt;name&gt;</c>.</summary>
+    internal const string TargetEnvironmentArgument = "target-environment";
+
+    /// <summary>The environment variable that names the target environment when the argument is absent.</summary>
+    internal const string TargetEnvironmentVariable = "TESTFUZN_TARGET_ENVIRONMENT";
+
     private const string MarkerFileName = ".testfuzn";
     private const int DefaultKeepLastNRuns = 10;
 
@@ -109,7 +115,7 @@ internal class TestSession
         TestRunStartTime = DateTime.UtcNow;
         TestRunId = $"{DateTime.Now:yyyy-MM-dd_HH-mm}__{Guid.NewGuid().ToString("N").Substring(0, 6)}";
         var targetEnvironment = argumentParser.GetValueFromArgsOrEnvironmentVariable(
-                                        args, "target-environment", "TESTFUZN_TARGET_ENVIRONMENT");
+                                        args, TargetEnvironmentArgument, TargetEnvironmentVariable);
         var executionEnvironment = argumentParser.GetValueFromArgsOrEnvironmentVariable(
                                         args, "execution-environment", "TESTFUZN_EXECUTION_ENVIRONMENT");
 

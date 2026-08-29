@@ -16,7 +16,10 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// and end in the completed line with the exact totals, the summary after it; the state is
 /// disposed and nothing is left waiting once Run returns; the quit key stops the run through
 /// the Ctrl+C path, the terminal restored and the cancellation reported after the summary; and
-/// the runner core maps a completed demo to exit code 0 and a stopped one to 1.
+/// the runner core maps a completed demo to exit code 0 and a stopped one to 1. On both output
+/// paths the startup banner — the same three lines a test run opens with, the demo scenario as
+/// the subject — is the first terminal output, written through the host before the live view
+/// starts; nothing goes through the adapter's markup.
 /// </summary>
 [TestClass]
 public class LiveViewDemoTests : Test
@@ -25,6 +28,14 @@ public class LiveViewDemoTests : Test
     private const string RestoreSequence = AnsiCodes.Reset + AnsiCodes.EnableAutoWrap + AnsiCodes.ShowCursor + AnsiCodes.ExitAlternateScreen;
     private const string TerminalEventPrefix = "terminal:";
     private const string ScenarioLinePrefix = "[" + LiveViewDemoScript.ScenarioName + "] ";
+
+    // The demo's banner as written on a terminal without color (both harness hosts render plain).
+    private static readonly string[] BannerWrites =
+    {
+        "⚡ TestFuzn" + Environment.NewLine,
+        LiveViewDemo.RunningDemoLabel + " " + LiveViewDemoScript.ScenarioName + Environment.NewLine,
+        LiveViewDemo.DemoDetail + Environment.NewLine
+    };
 
     private static readonly TimeSpan RunTimeout = TimeSpan.FromSeconds(30);
 
@@ -46,15 +57,16 @@ public class LiveViewDemoTests : Test
                 harness.AssertSummaryFollowsRestore();
                 harness.AssertRunLeftNothingBehind();
 
-                // The one markup line is the banner, written before the alternate screen.
-                var banner = Assert.ContainsSingle(harness.MarkupEvents());
-                Assert.StartsWith("[green]Running demo:[/]", banner);
-                Assert.IsLessThan(harness.EventIndexOf(TerminalEventPrefix + EnterSequence), harness.EventIndexOf(FakeTestFrameworkAdapter.MarkupEventPrefix + banner));
+                // The banner is the first terminal output, on the normal screen buffer before
+                // the alternate screen is entered; the adapter's markup carries nothing.
+                harness.AssertBannerFirst();
+                Assert.IsEmpty(harness.MarkupEvents());
 
-                // The script's 19 s at the 250 ms render cadence: 76 frames between entering and
-                // leaving, every one repainted (the spinner advances per frame); the loop's tick
-                // due when the run ends is cancelled before it renders.
-                Assert.HasCount(78, harness.Writer.Writes);
+                // The banner's three writes, then the script's 19 s at the 250 ms render cadence:
+                // 76 frames between entering and leaving, every one repainted (the spinner
+                // advances per frame); the loop's tick due when the run ends is cancelled before
+                // it renders.
+                Assert.HasCount(StartupBanner.Height + 78, harness.Writer.Writes);
                 Assert.AreEqual(At(19), harness.Host.UtcNow);
                 Assert.AreEqual(ExecutionStatus.Completed, harness.State.ExecutionStatus);
                 Assert.IsGreaterThan(0, harness.Host.Reader.TryReadKeyCallCount);
@@ -76,14 +88,15 @@ public class LiveViewDemoTests : Test
     public async Task Verify_demo_writes_plain_lines_on_a_redirected_output_ending_in_the_completed_line_before_the_summary()
     {
         await Scenario()
-            .Step("No escape byte anywhere: the init placeholder first, the phase transitions in order, the completed line with the exact totals last, then the summary; no key or size ever read", async context =>
+            .Step("No escape byte anywhere: the plain banner first, then the init placeholder, the phase transitions in order, the completed line with the exact totals last, then the summary; no key or size ever read", async context =>
             {
                 var harness = new Harness(supportsLiveView: false);
                 await harness.RunDemo();
 
+                harness.AssertBannerFirst();
                 var lines = harness.PlainLines();
-                Assert.AreEqual(ScenarioLinePrefix + "phase: init", lines[0]);
-                Assert.AreEqual(ScenarioLinePrefix + "elapsed 00:00:00  total 0  ok 0  failed 0  rps N/A  p95 N/A", lines[1]);
+                Assert.AreEqual(ScenarioLinePrefix + "phase: init", lines[StartupBanner.Height]);
+                Assert.AreEqual(ScenarioLinePrefix + "elapsed 00:00:00  total 0  ok 0  failed 0  rps N/A  p95 N/A", lines[StartupBanner.Height + 1]);
                 CollectionAssert.AreEqual(new[]
                 {
                     "init",
@@ -100,7 +113,7 @@ public class LiveViewDemoTests : Test
                 Assert.AreEqual(0, harness.Writer.WindowWidthReadCount);
                 Assert.AreEqual(0, harness.Writer.WindowHeightReadCount);
                 Assert.AreEqual(ExecutionStatus.Completed, harness.State.ExecutionStatus);
-                Assert.ContainsSingle(harness.MarkupEvents());
+                Assert.IsEmpty(harness.MarkupEvents());
             })
             .Run();
     }
@@ -125,7 +138,7 @@ public class LiveViewDemoTests : Test
                 Assert.IsFalse(harness.State.IsConsumingCompleted);
                 // Stopped on the loop's first tick after the key, then the full cleanup second.
                 Assert.AreEqual(At(7.25), harness.Host.UtcNow);
-                Assert.ContainsSingle(harness.MarkupEvents());
+                Assert.IsEmpty(harness.MarkupEvents());
             })
             .Step("The runner core maps the stopped demo to exit code 1", async context =>
             {
@@ -254,17 +267,18 @@ public class LiveViewDemoTests : Test
                 return Events.Where(eventName => eventName.StartsWith(FakeTestFrameworkAdapter.MarkupEventPrefix, StringComparison.Ordinal)).Select(eventName => eventName.Substring(FakeTestFrameworkAdapter.MarkupEventPrefix.Length)).ToList();
         }
 
-        public int EventIndexOf(string eventName)
+        /// <summary>The startup banner's three plain lines are the first terminal writes.</summary>
+        public void AssertBannerFirst()
         {
-            lock (Events)
-                return Events.IndexOf(eventName);
+            Assert.IsGreaterThanOrEqualTo(StartupBanner.Height, Writer.Writes.Count);
+            CollectionAssert.AreEqual(BannerWrites, Writer.Writes.Take(StartupBanner.Height).ToList());
         }
 
-        /// <summary>The alternate screen was entered once (the first write) and restored once (the last write); nothing follows the restore.</summary>
+        /// <summary>The alternate screen was entered once (the first write after the banner) and restored once (the last write); nothing follows the restore.</summary>
         public void AssertEnteredAndRestoredOnce()
         {
-            Assert.IsNotEmpty(Writer.Writes);
-            Assert.AreEqual(EnterSequence, Writer.Writes[0]);
+            AssertBannerFirst();
+            Assert.AreEqual(EnterSequence, Writer.Writes[StartupBanner.Height]);
             Assert.AreEqual(1, Writer.Writes.Count(write => write == EnterSequence));
             Assert.AreEqual(1, Writer.Writes.Count(write => write == RestoreSequence));
             Assert.AreEqual(RestoreSequence, Writer.Writes[Writer.Writes.Count - 1]);

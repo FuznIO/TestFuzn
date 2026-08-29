@@ -18,19 +18,30 @@ internal class StandaloneRunnerCore
     internal const string TestNameUsage = "--test-name requires a value: --test-name=<FullyQualifiedName>";
 
     private readonly ILiveViewHost _liveViewHost;
+    private readonly DiscoverTests _discoverTests;
 
     public StandaloneRunnerCore()
         : this(new ConsoleLiveViewHost())
     {
     }
 
-    /// <param name="liveViewHost">The host the test selection menu and the live view demo run over: the real console and clock in production, a fake in tests.</param>
+    /// <param name="liveViewHost">The host the test selection menu, the startup banner and the live view demo run over: the real console and clock in production, a fake in tests.</param>
     internal StandaloneRunnerCore(ILiveViewHost liveViewHost)
+        : this(liveViewHost, new DiscoverTests())
+    {
+    }
+
+    /// <param name="liveViewHost">The host the test selection menu, the startup banner and the live view demo run over: the real console and clock in production, a fake in tests.</param>
+    /// <param name="discoverTests">The discovery of the assembly's tests: reflection in production, hand-made tests in unit tests.</param>
+    internal StandaloneRunnerCore(ILiveViewHost liveViewHost, DiscoverTests discoverTests)
     {
         if (liveViewHost == null)
             throw new ArgumentNullException(nameof(liveViewHost), "Live view host cannot be null.");
+        if (discoverTests == null)
+            throw new ArgumentNullException(nameof(discoverTests), "Test discovery cannot be null.");
 
         _liveViewHost = liveViewHost;
+        _discoverTests = discoverTests;
     }
 
     public async Task<int> Run<TStartup>(Assembly testAssembly,
@@ -53,7 +64,7 @@ internal class StandaloneRunnerCore
         if (parsedArgs.TryGetValue(TestNameArgument, out var testNameValue) && testNameValue == ArgumentsParser.FlagValue)
             return WriteInvocationError(testFrameworkInstanceCreator, TestNameUsage);
 
-        var tests = new DiscoverTests().GetTests(testAssembly);
+        var tests = _discoverTests.GetTests(testAssembly);
 
         var testName = argumentsParser.GetValueFromArgsOrEnvironmentVariable(parsedArgs, TestNameArgument, "TESTFUZN_TEST_NAME");
 
@@ -62,17 +73,21 @@ internal class StandaloneRunnerCore
             // No test named: the selection menu picks one. The menu runs over the same adapter
             // the picked test then runs on — the adapter's Ctrl+C handler cancels the token the
             // menu polls, and a second adapter would register a second handler. A quit, by
-            // Escape, an empty line or Ctrl+C, completes with nothing run: exit code 0.
+            // Escape, an empty line or Ctrl+C, completes with nothing run: exit code 0. The
+            // picked test's startup banner goes through the same host, after the menu has
+            // restored the terminal, so it lands on the normal screen buffer.
             return await RunWithAdapter(testFrameworkInstanceCreator, async adapter =>
             {
                 var selectedTest = await new TestSelectionMenu(_liveViewHost).SelectTest(tests, adapter.CancellationToken);
                 if (selectedTest == null)
                     return;
 
-                await new StandaloneTestRunner().RunTest<TStartup>(args, adapter, selectedTest);
+                await new StandaloneTestRunner(_liveViewHost).RunTest<TStartup>(args, adapter, selectedTest);
             });
         }
 
+        // A name that names no test is reported before any adapter or banner: the banner is
+        // written only once the test is resolved.
         var testInfo = tests.SingleOrDefault(t => t.Name == testName);
         if (testInfo == null)
         {
@@ -80,7 +95,7 @@ internal class StandaloneRunnerCore
             return 1;
         }
 
-        return await RunWithAdapter(testFrameworkInstanceCreator, adapter => new StandaloneTestRunner().RunTest<TStartup>(args, adapter, testInfo));
+        return await RunWithAdapter(testFrameworkInstanceCreator, adapter => new StandaloneTestRunner(_liveViewHost).RunTest<TStartup>(args, adapter, testInfo));
     }
 
     /// <summary>
