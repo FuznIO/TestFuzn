@@ -448,7 +448,10 @@ public class ScenarioLiveMetricsTests : Test
                         if (view.Samples.Count != view.OkDeltaSeries.Count
                             || view.Samples.Count != view.FailedDeltaSeries.Count
                             || view.Samples.Count != view.RequestsPerSecondSeries.Count
-                            || view.Samples.Count != view.ResponseTimePercentile95Series.Count)
+                            || view.Samples.Count != view.ResponseTimePercentile95Series.Count
+                            || view.Samples.Count != view.ResponseTimeMedianSeries.Count
+                            || view.Samples.Count != view.ResponseTimePercentile99Series.Count
+                            || view.Samples.Count != view.LatencyBucketSeries.Count)
                             violations++;
 
                         for (var index = 0; index < view.Samples.Count; index++)

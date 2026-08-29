@@ -1,3 +1,4 @@
+using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Internals.Execution;
 
 namespace Fuzn.TestFuzn.Internals.Terminal;
@@ -5,15 +6,17 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// <summary>
 /// One coherent point-in-time view of a scenario's live load metrics, published by
 /// <see cref="ScenarioLiveMetrics"/> and read by the dashboard's render loop. Every collection
-/// on it is a fresh copy made under the writer's lock, so all values — paired ok/fail deltas,
-/// the sample list, the derived series, error and step rows, progress numbers — describe the
-/// same tick and never change after publication; a renderer can hold one instance across a
-/// whole frame. Planned duration, progress and ETA are null when any configured simulation is
-/// count-based (indeterminate — the dashboard shows elapsed only), except that once
-/// measurement has started with a determinate measurement plan, progress and ETA run against
-/// the measurement segment alone even when the warmup plan was indeterminate. The series lists
-/// are oldest-first with the newest sample last, matching the sparkline widgets'
-/// newest-at-the-right convention.
+/// on it is a fresh copy made under the writer's lock (the per-interval bucket-count vectors
+/// inside <see cref="LatencyBucketSeries"/> are immutable and shared instead), so all values —
+/// paired ok/fail deltas, the sample list, the derived series, error and step rows, the
+/// newest-interval fields, progress numbers — describe the same tick and never change after
+/// publication; a renderer can hold one instance across a whole frame. Planned duration,
+/// progress and ETA are null when any configured simulation is count-based (indeterminate —
+/// the dashboard shows elapsed only), except that once measurement has started with a
+/// determinate measurement plan, progress and ETA run against the measurement segment alone
+/// even when the warmup plan was indeterminate. The series lists are oldest-first with the
+/// newest sample last, matching the sparkline widgets' newest-at-the-right convention, and
+/// every series has exactly one entry per entry of <see cref="Samples"/>.
 /// </summary>
 internal sealed class LiveMetricsSnapshot
 {
@@ -86,6 +89,36 @@ internal sealed class LiveMetricsSnapshot
     /// <summary>Counts and response-time spread of failed measurement requests.</summary>
     public LiveStats Failed { get; init; } = LiveStats.Empty;
 
+    /// <summary>
+    /// All requests recorded during the newest sample's interval — its ok + failed deltas,
+    /// warmup and measurement alike — so the interval's total is one number a threshold can
+    /// read; zero before the first sample. Not <see cref="IntervalLatency"/>'s RequestCount,
+    /// which counts only the interval's successful requests.
+    /// </summary>
+    public int IntervalRequestCount { get; init; }
+
+    /// <summary>
+    /// The failed share of the newest sample's interval, 0..1: the newest failed delta divided by
+    /// <see cref="IntervalRequestCount"/> — the same denominator, so the two always agree. Zero
+    /// when the newest interval had no requests and before the first sample.
+    /// </summary>
+    public double ErrorRate { get; init; }
+
+    /// <summary>
+    /// The newest sample's current-interval requests per second (the last entry of
+    /// <see cref="RequestsPerSecondSeries"/>); zero before the first sample. Distinct from
+    /// <see cref="RequestsPerSecond"/>, the collector's cumulative average.
+    /// </summary>
+    public double IntervalRequestsPerSecond { get; init; }
+
+    /// <summary>
+    /// The response-time distribution of the successful requests recorded during the newest
+    /// sample's interval — median, p95, p99 and the latency bucket counts the series below are
+    /// taken from, as TimeSpans. <see cref="IntervalLatency.Empty"/> before the first sample and
+    /// for an idle interval. The cumulative spread is on <see cref="Ok"/>.
+    /// </summary>
+    public IntervalLatency IntervalLatency { get; init; } = IntervalLatency.Empty;
+
     /// <summary>The ring buffer's per-second samples, oldest first, newest last.</summary>
     public IReadOnlyList<LiveMetricsSample> Samples { get; init; } = Array.Empty<LiveMetricsSample>();
 
@@ -104,6 +137,27 @@ internal sealed class LiveMetricsSnapshot
     /// within one tick. The cumulative p95 for the latency panel is on <see cref="Ok"/>.
     /// </summary>
     public IReadOnlyList<double> ResponseTimePercentile95Series { get; init; } = Array.Empty<double>();
+
+    /// <summary>
+    /// Per-sample per-interval Ok median in milliseconds, ready for a sparkline — the same
+    /// intervals as <see cref="ResponseTimePercentile95Series"/>; zero for an idle interval.
+    /// </summary>
+    public IReadOnlyList<double> ResponseTimeMedianSeries { get; init; } = Array.Empty<double>();
+
+    /// <summary>
+    /// Per-sample per-interval Ok p99 in milliseconds, ready for a sparkline — the same
+    /// intervals as <see cref="ResponseTimePercentile95Series"/>; zero for an idle interval.
+    /// </summary>
+    public IReadOnlyList<double> ResponseTimePercentile99Series { get; init; } = Array.Empty<double>();
+
+    /// <summary>
+    /// Per-sample latency bucket counts, ready for a heatmap: one vector per sample holding
+    /// <see cref="LatencyBuckets.Count"/> counts in bucket order — how many of that interval's
+    /// successful requests fell into each <see cref="LatencyBuckets"/> bucket (all zeros for an
+    /// idle interval). Each vector is the interval's own immutable read-only list, shared
+    /// rather than copied.
+    /// </summary>
+    public IReadOnlyList<IReadOnlyList<int>> LatencyBucketSeries { get; init; } = Array.Empty<IReadOnlyList<int>>();
 
     /// <summary>
     /// Distinct errors across all steps (sub-steps included) with cumulative counts, most

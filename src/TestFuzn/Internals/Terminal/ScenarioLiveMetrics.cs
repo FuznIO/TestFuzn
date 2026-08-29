@@ -6,7 +6,8 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// <summary>
 /// Per-scenario live metrics model behind the load test dashboard: turns the cumulative
 /// <see cref="ScenarioLoadResult"/> snapshots the 1 Hz console loop reads into per-second
-/// deltas, progress/ETA numbers and ticker rows, and publishes them as one immutable
+/// deltas (for the scenario and for each of its top-level steps), per-interval latency series,
+/// progress/ETA numbers and ticker rows, and publishes them as one immutable
 /// <see cref="LiveMetricsSnapshot"/> per tick. Pure model — no rendering.
 ///
 /// Wiring contract: every snapshot fed to <see cref="Record"/> must be live — obtained with
@@ -22,8 +23,9 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// Thread safety is part of the contract: <see cref="Record"/> is called by the snapshot loop
 /// (a single writer; an internal lock additionally serializes writers), while the render loop
 /// reads <see cref="Current"/> from another thread at any rate. Each Record builds a completely
-/// new snapshot — ring contents, series, error and step rows all copied into fresh arrays under
-/// the lock — and publishes it with a volatile reference swap, so a reader always sees one
+/// new snapshot — ring contents, the scenario's and every step's series, error and step rows all
+/// copied into fresh arrays under the lock (only the immutable per-interval bucket-count vectors
+/// are shared) — and publishes it with a volatile reference swap, so a reader always sees one
 /// coherent tick (ok/fail deltas that belong together, series matching samples) and never a
 /// torn or partially updated view. A snapshot obtained from <see cref="Current"/> never changes.
 ///
@@ -33,7 +35,11 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// does not advance past the previous one appends no sample and leaves the baseline untouched,
 /// so those requests land in the next interval instead of vanishing. A cumulative counter that
 /// moves backwards (a reset) clamps that counter's delta to zero and re-baselines at the new
-/// value.
+/// value. Per-step deltas follow the same rules against per-step baselines, closed on the same
+/// tick as the scenario's sample: a step that recorded nothing during an interval — idle, or
+/// skipped because an earlier step failed — gets zero deltas for that sample. Memory is bounded:
+/// one <see cref="SampleCapacity"/>-entry ring for the scenario plus one per top-level step,
+/// each allocated once when the step is first seen.
 /// </summary>
 internal sealed class ScenarioLiveMetrics
 {
@@ -52,12 +58,9 @@ internal sealed class ScenarioLiveMetrics
 
     private readonly object _gate = new object();
     private readonly SimulationPlan _plan;
-    private readonly LiveMetricsSample[] _samples = new LiveMetricsSample[SampleCapacity];
+    private readonly SampleRing _samples = new SampleRing();
     private readonly Dictionary<string, ErrorTrackerEntry> _errorTracker = new();
-    private readonly Dictionary<string, (long Ok, long Failed)> _stepBaselines = new();
-    private readonly Dictionary<string, double> _stepIntervalRates = new();
-    private int _appendedSampleCount;
-    private int _nextSampleIndex;
+    private readonly Dictionary<string, StepTracker> _stepTrackers = new();
     private bool _hasBaseline;
     private DateTime _baselineTimestamp;
     private long _baselineOkCumulative;
@@ -125,6 +128,9 @@ internal sealed class ScenarioLiveMetrics
             UpdateErrorTracker(snapshot, timestamp);
 
             var phase = InferPhase(snapshot);
+            var newestInterval = ReadNewestInterval();
+            MaterializeSeries(_samples, out var requestsPerSecondSeries, out var okDeltaSeries, out var failedDeltaSeries, out var percentile95Series);
+            MaterializeLatencySeries(_samples, out var medianSeries, out var percentile99Series, out var bucketSeries);
             var published = new LiveMetricsSnapshot
             {
                 ScenarioName = ScenarioName,
@@ -145,11 +151,18 @@ internal sealed class ScenarioLiveMetrics
                 RequestsPerSecond = snapshot.RequestsPerSecond,
                 Ok = okStats,
                 Failed = failedStats,
-                Samples = MaterializeSamples(out var requestsPerSecondSeries, out var okDeltaSeries, out var failedDeltaSeries, out var percentile95Series),
+                IntervalRequestCount = newestInterval.RequestCount,
+                ErrorRate = newestInterval.ErrorRate,
+                IntervalRequestsPerSecond = newestInterval.RequestsPerSecond,
+                IntervalLatency = newestInterval.Latency,
+                Samples = MaterializeSamples(_samples),
                 RequestsPerSecondSeries = requestsPerSecondSeries,
                 OkDeltaSeries = okDeltaSeries,
                 FailedDeltaSeries = failedDeltaSeries,
                 ResponseTimePercentile95Series = percentile95Series,
+                ResponseTimeMedianSeries = medianSeries,
+                ResponseTimePercentile99Series = percentile99Series,
+                LatencyBucketSeries = bucketSeries,
                 Errors = MaterializeErrors(),
                 Steps = MaterializeSteps(snapshot, timestamp)
             };
@@ -185,22 +198,20 @@ internal sealed class ScenarioLiveMetrics
             failedDelta = 0;
 
         var requestsPerSecond = (okDelta + failedDelta) / intervalSeconds;
-        var sample = new LiveMetricsSample(timestamp, (int)Math.Min(okDelta, int.MaxValue), (int)Math.Min(failedDelta, int.MaxValue), requestsPerSecond, IntervalLatencyOf(snapshot).ResponseTimePercentile95);
-
-        _samples[_nextSampleIndex] = sample;
-        _nextSampleIndex = (_nextSampleIndex + 1) % SampleCapacity;
-        if (_appendedSampleCount < int.MaxValue)
-            _appendedSampleCount++;
+        var intervalLatency = IntervalLatencyOf(snapshot);
+        var sample = new LiveMetricsSample(timestamp, ClampToInt(okDelta), ClampToInt(failedDelta), requestsPerSecond, intervalLatency.ResponseTimePercentile95);
+        _samples.Append(sample, intervalLatency);
 
         _baselineTimestamp = timestamp;
         _baselineOkCumulative = okCumulative;
         _baselineFailedCumulative = failedCumulative;
-        UpdateStepIntervalRates(snapshot, intervalSeconds);
+        CloseStepIntervals(snapshot, timestamp, intervalSeconds);
     }
 
     /// <summary>
     /// Establishes per-step baselines on the first Record, so the first closed interval's step
-    /// deltas count only what happened inside it.
+    /// deltas count only what happened inside it. This is also where a step's tracker — and
+    /// its ring — is allocated, once.
     /// </summary>
     private void RebaselineSteps(ScenarioLoadResult snapshot)
     {
@@ -212,17 +223,22 @@ internal sealed class ScenarioLiveMetrics
             if (step == null)
                 continue;
 
-            _stepBaselines[step.Name] = (CumulativeCount(step.Ok), CumulativeCount(step.Failed));
+            var tracker = GetOrAddStepTracker(step.Name);
+            tracker.OkBaseline = CumulativeCount(step.Ok);
+            tracker.FailedBaseline = CumulativeCount(step.Failed);
         }
     }
 
     /// <summary>
-    /// Closes the interval for the per-step current rates: each top-level step's ok/failed
-    /// deltas against its baseline, combined and divided once by the interval length. A step
-    /// without a baseline (first seen mid-run) counts from zero; a backwards-moving counter
-    /// clamps to zero and re-baselines, mirroring the scenario-level delta rules.
+    /// Closes the interval for every top-level step the snapshot reports: each step's ok/failed
+    /// deltas against its baseline, combined and divided once by the interval length for its
+    /// current rate, appended to the step's ring as one sample together with the step's own
+    /// per-interval latency (its Ok p95; <see cref="IntervalLatency.Empty"/> when the step
+    /// recorded no successful execution in the interval). A step without a baseline (first seen
+    /// mid-run) counts from zero; a backwards-moving counter clamps to zero and re-baselines,
+    /// mirroring the scenario-level delta rules.
     /// </summary>
-    private void UpdateStepIntervalRates(ScenarioLoadResult snapshot, double intervalSeconds)
+    private void CloseStepIntervals(ScenarioLoadResult snapshot, DateTime timestamp, double intervalSeconds)
     {
         if (snapshot.Steps == null)
             return;
@@ -232,20 +248,34 @@ internal sealed class ScenarioLiveMetrics
             if (step == null)
                 continue;
 
+            var tracker = GetOrAddStepTracker(step.Name);
             var okCumulative = CumulativeCount(step.Ok);
             var failedCumulative = CumulativeCount(step.Failed);
-            _stepBaselines.TryGetValue(step.Name, out var baseline);
 
-            var okDelta = okCumulative - baseline.Ok;
+            var okDelta = okCumulative - tracker.OkBaseline;
             if (okDelta < 0)
                 okDelta = 0;
-            var failedDelta = failedCumulative - baseline.Failed;
+            var failedDelta = failedCumulative - tracker.FailedBaseline;
             if (failedDelta < 0)
                 failedDelta = 0;
 
-            _stepIntervalRates[step.Name] = (okDelta + failedDelta) / intervalSeconds;
-            _stepBaselines[step.Name] = (okCumulative, failedCumulative);
+            var requestsPerSecond = (okDelta + failedDelta) / intervalSeconds;
+            var intervalLatency = IntervalLatencyOf(step);
+            tracker.RequestsPerSecond = requestsPerSecond;
+            tracker.Samples.Append(new LiveMetricsSample(timestamp, ClampToInt(okDelta), ClampToInt(failedDelta), requestsPerSecond, intervalLatency.ResponseTimePercentile95), intervalLatency);
+            tracker.OkBaseline = okCumulative;
+            tracker.FailedBaseline = failedCumulative;
         }
+    }
+
+    private StepTracker GetOrAddStepTracker(string stepName)
+    {
+        if (_stepTrackers.TryGetValue(stepName, out var tracker))
+            return tracker;
+
+        tracker = new StepTracker();
+        _stepTrackers.Add(stepName, tracker);
+        return tracker;
     }
 
     private static long CumulativeCount(Stats stats)
@@ -254,6 +284,11 @@ internal sealed class ScenarioLiveMetrics
             return 0;
 
         return stats.RequestCount;
+    }
+
+    private static int ClampToInt(long value)
+    {
+        return (int)Math.Min(value, int.MaxValue);
     }
 
     /// <summary>The snapshot's per-interval Ok latency; <see cref="IntervalLatency.Empty"/> when the snapshot carries none.</summary>
@@ -265,12 +300,49 @@ internal sealed class ScenarioLiveMetrics
         return snapshot.IntervalLatency;
     }
 
-    private LiveMetricsSample[] MaterializeSamples(out double[] requestsPerSecondSeries, out double[] okDeltaSeries, out double[] failedDeltaSeries, out double[] percentile95Series)
+    /// <summary>The step's per-interval Ok latency; <see cref="IntervalLatency.Empty"/> when the step carries none.</summary>
+    private static IntervalLatency IntervalLatencyOf(StepLoadResult step)
     {
-        var count = _appendedSampleCount < SampleCapacity ? _appendedSampleCount : SampleCapacity;
-        var oldestIndex = _appendedSampleCount <= SampleCapacity ? 0 : _nextSampleIndex;
+        if (step.IntervalLatency == null)
+            return IntervalLatency.Empty;
 
+        return step.IntervalLatency;
+    }
+
+    /// <summary>
+    /// The count-side view of the newest closed interval, for the snapshot's interval fields:
+    /// all requests (ok + failed) of the newest sample, the failed share of that same count, the
+    /// sample's rate and the interval's latency. All zero / Empty before the first sample.
+    /// </summary>
+    private NewestInterval ReadNewestInterval()
+    {
+        var count = _samples.Count;
+        if (count == 0)
+            return new NewestInterval(0, 0.0, 0.0, IntervalLatency.Empty);
+
+        var newest = _samples.SampleAt(count - 1);
+        var requestCount = ClampToInt((long)newest.OkDelta + newest.FailedDelta);
+        var errorRate = 0.0;
+        if (requestCount > 0)
+            errorRate = (double)newest.FailedDelta / requestCount;
+
+        return new NewestInterval(requestCount, errorRate, newest.RequestsPerSecond, _samples.IntervalLatencyAt(count - 1));
+    }
+
+    private static LiveMetricsSample[] MaterializeSamples(SampleRing ring)
+    {
+        var count = ring.Count;
         var samples = new LiveMetricsSample[count];
+        for (var index = 0; index < count; index++)
+            samples[index] = ring.SampleAt(index);
+
+        return samples;
+    }
+
+    /// <summary>The four sparkline series a ring yields, oldest first — the scenario's and each step's alike.</summary>
+    private static void MaterializeSeries(SampleRing ring, out double[] requestsPerSecondSeries, out double[] okDeltaSeries, out double[] failedDeltaSeries, out double[] percentile95Series)
+    {
+        var count = ring.Count;
         requestsPerSecondSeries = new double[count];
         okDeltaSeries = new double[count];
         failedDeltaSeries = new double[count];
@@ -278,17 +350,43 @@ internal sealed class ScenarioLiveMetrics
 
         for (var index = 0; index < count; index++)
         {
-            var sample = _samples[(oldestIndex + index) % SampleCapacity];
-            samples[index] = sample;
+            var sample = ring.SampleAt(index);
             requestsPerSecondSeries[index] = sample.RequestsPerSecond;
             okDeltaSeries[index] = sample.OkDelta;
             failedDeltaSeries[index] = sample.FailedDelta;
             percentile95Series[index] = sample.ResponseTimePercentile95.TotalMilliseconds;
         }
-
-        return samples;
     }
 
+    /// <summary>
+    /// The per-interval latency series behind the scenario's median and p99 sparklines and the
+    /// heatmap, oldest first. The bucket vectors are the intervals' own immutable read-only
+    /// lists, shared rather than copied.
+    /// </summary>
+    private static void MaterializeLatencySeries(SampleRing ring, out double[] medianSeries, out double[] percentile99Series, out IReadOnlyList<int>[] bucketSeries)
+    {
+        var count = ring.Count;
+        medianSeries = new double[count];
+        percentile99Series = new double[count];
+        bucketSeries = new IReadOnlyList<int>[count];
+
+        for (var index = 0; index < count; index++)
+        {
+            var intervalLatency = ring.IntervalLatencyAt(index);
+            medianSeries[index] = intervalLatency.ResponseTimeMedian.TotalMilliseconds;
+            percentile99Series[index] = intervalLatency.ResponseTimePercentile99.TotalMilliseconds;
+            bucketSeries[index] = intervalLatency.BucketCounts;
+        }
+    }
+
+    /// <summary>
+    /// Folds the snapshot's errors into the tracker: a new key is first (and last) seen now with
+    /// a zero rate; an existing key refreshes its recency when its count changes, and — once its
+    /// timestamp has advanced past the previous observation — takes the count delta since that
+    /// observation over the actual gap as its rate, then re-baselines. A Record whose timestamp
+    /// does not advance leaves the rate baseline alone, so those occurrences count in the next
+    /// evaluation instead of vanishing (the same rule as the sample deltas).
+    /// </summary>
     private void UpdateErrorTracker(ScenarioLoadResult snapshot, DateTime timestamp)
     {
         if (snapshot.Steps == null)
@@ -308,6 +406,18 @@ internal sealed class ScenarioLiveMetrics
                     _errorSequence++;
                     tracked.Sequence = _errorSequence;
                 }
+
+                var gapSeconds = (timestamp - tracked.RateBaselineTimestamp).TotalSeconds;
+                if (gapSeconds > 0)
+                {
+                    var countDelta = pair.Value.Count - tracked.RateBaselineCount;
+                    if (countDelta < 0)
+                        countDelta = 0;
+
+                    tracked.RatePerSecond = countDelta / gapSeconds;
+                    tracked.RateBaselineCount = pair.Value.Count;
+                    tracked.RateBaselineTimestamp = timestamp;
+                }
             }
             else
             {
@@ -317,7 +427,11 @@ internal sealed class ScenarioLiveMetrics
                     StepName = pair.Value.StepName,
                     Message = pair.Value.Message,
                     Count = pair.Value.Count,
+                    FirstSeen = timestamp,
                     LastSeen = timestamp,
+                    RatePerSecond = 0.0,
+                    RateBaselineCount = pair.Value.Count,
+                    RateBaselineTimestamp = timestamp,
                     Sequence = _errorSequence
                 });
             }
@@ -368,8 +482,10 @@ internal sealed class ScenarioLiveMetrics
             {
                 StepName = entry.StepName,
                 Message = entry.Message,
-                Count = (int)Math.Min(entry.Count, int.MaxValue),
-                LastSeen = entry.LastSeen
+                Count = ClampToInt(entry.Count),
+                FirstSeen = entry.FirstSeen,
+                LastSeen = entry.LastSeen,
+                RatePerSecond = entry.RatePerSecond
             })
             .ToArray();
     }
@@ -387,17 +503,31 @@ internal sealed class ScenarioLiveMetrics
 
             var ok = CopyStats(step.Ok);
             var failed = CopyStats(step.Failed);
-            _stepIntervalRates.TryGetValue(step.Name, out var intervalRate);
+            var requestsPerSecond = 0.0;
+            double[] requestsPerSecondSeries = Array.Empty<double>();
+            double[] okDeltaSeries = Array.Empty<double>();
+            double[] failedDeltaSeries = Array.Empty<double>();
+            double[] percentile95Series = Array.Empty<double>();
+            if (_stepTrackers.TryGetValue(step.Name, out var tracker))
+            {
+                requestsPerSecond = tracker.RequestsPerSecond;
+                MaterializeSeries(tracker.Samples, out requestsPerSecondSeries, out okDeltaSeries, out failedDeltaSeries, out percentile95Series);
+            }
+
             rows.Add(new LiveStepMetrics
             {
                 Name = step.Name,
                 RequestCountOk = ok.RequestCount,
                 RequestCountFailed = failed.RequestCount,
                 SkippedCount = step.SkippedCount,
-                RequestsPerSecond = intervalRate,
+                RequestsPerSecond = requestsPerSecond,
                 AverageRequestsPerSecond = ComputeAverageRequestsPerSecond(ok.RequestCount, failed.RequestCount, snapshot, timestamp),
                 ResponseTimeMean = ok.ResponseTimeMean,
-                ResponseTimePercentile95 = ok.ResponseTimePercentile95
+                ResponseTimePercentile95 = ok.ResponseTimePercentile95,
+                RequestsPerSecondSeries = requestsPerSecondSeries,
+                OkDeltaSeries = okDeltaSeries,
+                FailedDeltaSeries = failedDeltaSeries,
+                ResponseTimePercentile95Series = percentile95Series
             });
         }
 
@@ -593,12 +723,88 @@ internal sealed class ScenarioLiveMetrics
         return value;
     }
 
+    /// <summary>
+    /// A <see cref="SampleCapacity"/>-entry ring of closed intervals — one per tick that closed
+    /// an interval — holding each interval's sample and its per-interval latency side by side,
+    /// appended together so the two can never drift apart. Allocated once; oldest-first
+    /// indexing over the entries currently held. One ring serves the scenario, and one each of
+    /// its top-level steps.
+    /// </summary>
+    private sealed class SampleRing
+    {
+        private readonly LiveMetricsSample[] _samples = new LiveMetricsSample[SampleCapacity];
+        private readonly IntervalLatency[] _intervalLatencies = new IntervalLatency[SampleCapacity];
+        private int _appendedCount;
+        private int _nextIndex;
+
+        /// <summary>Entries currently held: every appended entry until the ring fills, then <see cref="SampleCapacity"/>.</summary>
+        public int Count => _appendedCount < SampleCapacity ? _appendedCount : SampleCapacity;
+
+        public void Append(LiveMetricsSample sample, IntervalLatency intervalLatency)
+        {
+            _samples[_nextIndex] = sample;
+            _intervalLatencies[_nextIndex] = intervalLatency;
+            _nextIndex = (_nextIndex + 1) % SampleCapacity;
+            if (_appendedCount < int.MaxValue)
+                _appendedCount++;
+        }
+
+        /// <summary>The sample at the given oldest-first position, 0 being the oldest entry held.</summary>
+        public LiveMetricsSample SampleAt(int index)
+        {
+            return _samples[PhysicalIndex(index)];
+        }
+
+        /// <summary>The per-interval latency of the entry at the given oldest-first position.</summary>
+        public IntervalLatency IntervalLatencyAt(int index)
+        {
+            return _intervalLatencies[PhysicalIndex(index)];
+        }
+
+        private int PhysicalIndex(int index)
+        {
+            var oldestIndex = _appendedCount <= SampleCapacity ? 0 : _nextIndex;
+            return (oldestIndex + index) % SampleCapacity;
+        }
+    }
+
+    /// <summary>Per-step delta state: the baselines the next interval's deltas count from, the current-interval rate and the step's own ring.</summary>
+    private sealed class StepTracker
+    {
+        public long OkBaseline;
+        public long FailedBaseline;
+        public double RequestsPerSecond;
+        public readonly SampleRing Samples = new SampleRing();
+    }
+
+    /// <summary>The newest closed interval's count-side values, read once per Record for the snapshot's interval fields.</summary>
+    private readonly struct NewestInterval
+    {
+        public int RequestCount { get; }
+        public double ErrorRate { get; }
+        public double RequestsPerSecond { get; }
+        public IntervalLatency Latency { get; }
+
+        public NewestInterval(int requestCount, double errorRate, double requestsPerSecond, IntervalLatency latency)
+        {
+            RequestCount = requestCount;
+            ErrorRate = errorRate;
+            RequestsPerSecond = requestsPerSecond;
+            Latency = latency;
+        }
+    }
+
     private sealed class ErrorTrackerEntry
     {
         public string StepName = string.Empty;
         public string Message = string.Empty;
         public long Count;
+        public DateTime FirstSeen;
         public DateTime LastSeen;
+        public double RatePerSecond;
+        /// <summary>The count and time of the previous rate evaluation — the "previous sample" the next rate's delta and gap are taken against.</summary>
+        public long RateBaselineCount;
+        public DateTime RateBaselineTimestamp;
         public long Sequence;
     }
 }
