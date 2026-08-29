@@ -44,6 +44,42 @@ public class ScenarioLiveMetricsProgressTests : Test
     }
 
     [Test]
+    public async Task Verify_snapshots_carry_the_plan_entries()
+    {
+        await Scenario()
+            .Step("The initial view and every recorded view carry the plan's entries in producer order, warmup first", context =>
+            {
+                var metrics = CreateMetricsWithWarmup();
+                var initial = metrics.Current.PlanEntries;
+
+                Assert.HasCount(3, initial);
+                Assert.AreEqual("Fixed Load 5 rps", initial[0].Label);
+                Assert.AreEqual(TimeSpan.FromSeconds(10), initial[0].Duration);
+                Assert.IsTrue(initial[0].IsWarmup);
+                Assert.AreEqual("Gradual Load 10→100 rps", initial[1].Label);
+                Assert.AreEqual(TimeSpan.FromSeconds(30), initial[1].Duration);
+                Assert.IsFalse(initial[1].IsWarmup);
+                Assert.AreEqual("Fixed Load 50 rps", initial[2].Label);
+                Assert.AreEqual(TimeSpan.FromSeconds(60), initial[2].Duration);
+                Assert.IsFalse(initial[2].IsWarmup);
+
+                metrics.Record(SnapshotAtPhase(initStart: SyntheticLoadSnapshots.At(0), warmupStart: SyntheticLoadSnapshots.At(1)), SyntheticLoadSnapshots.At(5));
+
+                Assert.AreSame(initial, metrics.Current.PlanEntries);
+            })
+            .Step("A count-based simulation is an entry without a duration, and a model without simulations has no entries", context =>
+            {
+                var metrics = new ScenarioLiveMetrics("Checkout flow", new ILoadConfiguration[] { new OneTimeLoadConfiguration(500) });
+                var entry = Assert.ContainsSingle(metrics.Current.PlanEntries);
+                Assert.AreEqual("One Time Load 500 iterations", entry.Label);
+                Assert.IsNull(entry.Duration);
+
+                Assert.IsEmpty(new ScenarioLiveMetrics("Checkout flow", Array.Empty<ILoadConfiguration>()).Current.PlanEntries);
+            })
+            .Run();
+    }
+
+    [Test]
     public async Task Verify_progress_eta_and_labels_through_the_phases()
     {
         await Scenario()

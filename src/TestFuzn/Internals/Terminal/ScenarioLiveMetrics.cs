@@ -8,8 +8,9 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// Per-scenario live metrics model behind the load test dashboard: turns the cumulative
 /// <see cref="ScenarioLoadResult"/> snapshots the 1 Hz console loop reads into per-second
 /// deltas (for the scenario and for each of its top-level steps), per-interval latency series,
-/// progress/ETA numbers and ticker rows, and publishes them as one immutable
-/// <see cref="LiveMetricsSnapshot"/> per tick. Pure model — no rendering.
+/// progress/ETA numbers and ticker rows, and publishes them — with the plan's entries, for the
+/// dashboard's timeline — as one immutable <see cref="LiveMetricsSnapshot"/> per tick. Pure
+/// model — no rendering.
 ///
 /// Wiring contract: every snapshot fed to <see cref="Record"/> must be live — obtained with
 /// <c>ScenarioLoadCollector.GetCurrentResult(forceRefresh: true)</c>. The collector's plain
@@ -127,6 +128,7 @@ internal sealed class ScenarioLiveMetrics
             PlannedMeasurementDuration = _plan.PlannedMeasurementDuration,
             ProgressFraction = initialProgress,
             EstimatedTimeRemaining = initialRemaining,
+            PlanEntries = _plan.Entries,
             Thresholds = ThresholdEvaluator.InitialStates(thresholds)
         };
     }
@@ -174,6 +176,7 @@ internal sealed class ScenarioLiveMetrics
                 EstimatedTimeRemaining = ComputeEstimatedTimeRemaining(phase, snapshot, timestamp),
                 IsCompleted = snapshot.IsCompleted,
                 Status = snapshot.Status,
+                PlanEntries = _plan.Entries,
                 StatusDetail = BuildStatusDetail(snapshot),
                 RequestCountOk = okStats.RequestCount,
                 RequestCountFailed = failedStats.RequestCount,

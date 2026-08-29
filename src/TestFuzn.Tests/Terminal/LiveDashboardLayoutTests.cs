@@ -1,15 +1,68 @@
+using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Terminal;
+using Fuzn.TestFuzn.Internals.Thresholds;
 
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
+/// <summary>
+/// Golden frames for <see cref="LiveDashboardLayout"/>, derived by hand from the synthetic
+/// snapshots below. The tile row shares the width less the one-column gaps equally, the
+/// leftover columns widening the first boxes (five tiles at 120 columns: 116 / 5 = 23 and one
+/// over, so boxes of 24, 23, 23, 23, 23 with inner widths 20, 19, 19, 19, 19); a gauge's bar
+/// has the inner width less its caps, a space and its limit text in cells, filled with whole
+/// cells and one partial cell of the rounded eighths (▎▍▌▋▊▉); a braille trend packs two
+/// samples per column at four levels, newest at the right; the timeline shares its columns by
+/// duration and puts the marker at floor(share of the current segment elapsed × its columns).
+/// </summary>
 [TestClass]
 public class LiveDashboardLayoutTests : Test
 {
+    private const string Dim = "2";
+    private const string Bold = "1";
+    private const string Green = "38;5;2";
+    private const string Red = "38;5;9";
+    private const string BoldGreen = "1;38;5;2";
+    private const string BoldRed = "1;38;5;9";
+    private const string BoldYellow = "1;38;5;11";
+
+    /// <summary>The rich snapshot's plan: a 60 s warmup, a 120 s ramp and a 120 s steady simulation — 300 s, matching its planned duration.</summary>
+    private static SimulationPlanEntry[] ThreePhasePlan()
+    {
+        return new[]
+        {
+            new SimulationPlanEntry("Fixed Load 20 rps", TimeSpan.FromSeconds(60), isWarmup: true),
+            new SimulationPlanEntry("Gradual Load 10→50 rps", TimeSpan.FromSeconds(120), isWarmup: false),
+            new SimulationPlanEntry("Fixed Load 50 rps", TimeSpan.FromSeconds(120), isWarmup: false)
+        };
+    }
+
+    /// <summary>A 10 s warmup followed by a count-based simulation: the plan's total is unknown.</summary>
+    private static SimulationPlanEntry[] IndeterminatePlan()
+    {
+        return new[]
+        {
+            new SimulationPlanEntry("Fixed Load 50 rps", TimeSpan.FromSeconds(10), isWarmup: true),
+            new SimulationPlanEntry("One Time Load 500 iterations", null, isWarmup: false)
+        };
+    }
+
+    /// <summary>The steady snapshots' plan: a 10 s warmup and a 50 s measurement simulation — 60 s.</summary>
+    private static SimulationPlanEntry[] SteadyPlan()
+    {
+        return new[]
+        {
+            new SimulationPlanEntry("Fixed Load 100 rps", TimeSpan.FromSeconds(10), isWarmup: true),
+            new SimulationPlanEntry("Fixed Load 100 rps", TimeSpan.FromSeconds(50), isWarmup: false)
+        };
+    }
+
     /// <summary>
-    /// A mid-run snapshot with every dashboard element populated: determinate plan, warmup
-    /// counts, full percentile spreads, ring samples with their sparkline series, two steps and
-    /// two errors. The golden frames below are derived from these values by hand.
+    /// A mid-run snapshot with every dashboard element populated: a determinate three-phase
+    /// plan 135 s into its 300 s (0.45, in the ramp), warmup counts, full percentile spreads,
+    /// ten ring samples with their sparkline series (one short of a delta), a 0.7 % error
+    /// rate on the newest interval, two steps and two errors. The golden frames below are
+    /// derived from these values by hand.
     /// </summary>
     private static LiveMetricsSnapshot RichSnapshot()
     {
@@ -17,7 +70,7 @@ public class LiveDashboardLayoutTests : Test
         {
             ScenarioName = "Checkout flow",
             Phase = LoadTestPhase.Measurement,
-            PhaseLabel = "sim 1/2: Fixed 50 rps",
+            PhaseLabel = "sim 1/2: Gradual Load 10→50 rps",
             Duration = TimeSpan.FromSeconds(135),
             PlannedDuration = TimeSpan.FromSeconds(300),
             PlannedMeasurementDuration = TimeSpan.FromSeconds(240),
@@ -54,6 +107,9 @@ public class LiveDashboardLayoutTests : Test
                 ResponseTimePercentile99 = TimeSpan.FromMilliseconds(160),
                 ResponseTimeMax = TimeSpan.FromMilliseconds(201)
             },
+            IntervalRequestCount = 142,
+            ErrorRate = 0.007,
+            IntervalRequestsPerSecond = 142,
             Samples = new[]
             {
                 Sample(1, 88, 0, 45), Sample(2, 96, 0, 44), Sample(3, 104, 0, 42), Sample(4, 111, 1, 41), Sample(5, 120, 0, 40),
@@ -61,6 +117,7 @@ public class LiveDashboardLayoutTests : Test
             },
             RequestsPerSecondSeries = new double[] { 88, 96, 104, 112, 120, 128, 134, 138, 140, 142 },
             ResponseTimePercentile95Series = new double[] { 45, 44, 42, 41, 40, 40, 39, 39, 38, 38 },
+            PlanEntries = ThreePhasePlan(),
             Errors = new[]
             {
                 new LiveErrorEntry { StepName = "Checkout", Message = "Connection refused (localhost:7058)", Count = 30 },
@@ -99,8 +156,9 @@ public class LiveDashboardLayoutTests : Test
         {
             ScenarioName = "Browse catalog",
             Phase = LoadTestPhase.Warmup,
-            PhaseLabel = "warmup: Fixed 50 rps",
-            Duration = TimeSpan.FromSeconds(42)
+            PhaseLabel = "warmup: Fixed Load 50 rps",
+            Duration = TimeSpan.FromSeconds(42),
+            PlanEntries = IndeterminatePlan()
         };
     }
 
@@ -233,6 +291,148 @@ public class LiveDashboardLayoutTests : Test
         };
     }
 
+    /// <summary>Eleven samples at the given value followed by the newest: one more than the delta's distance, so a delta reads the newest against the first.</summary>
+    private static double[] SteadySeries(double steady, double newest)
+    {
+        var series = new double[LiveDashboardLayout.DeltaSampleDistance + 2];
+        for (var index = 0; index < series.Length - 1; index++)
+            series[index] = steady;
+
+        series[series.Length - 1] = newest;
+        return series;
+    }
+
+    /// <summary>
+    /// A steady measurement run 12 s into a 10 s warmup + 50 s plan (progress 0.2, 48 s to go)
+    /// with the given rps and p95 series (a ring sample per entry), the given error rate on the
+    /// newest interval, 1200 measurement and 100 warmup requests, the newest interval's latency
+    /// (median 100, p95 412, p99 480 ms) and the given declared thresholds.
+    /// </summary>
+    private static LiveMetricsSnapshot SteadySnapshot(double[] requestsPerSecond, double[] responseTimePercentile95, double errorRate = 0, LiveThreshold[]? thresholds = null)
+    {
+        var samples = new LiveMetricsSample[requestsPerSecond.Length];
+        for (var index = 0; index < samples.Length; index++)
+        {
+            var okDelta = 0;
+            if (double.IsFinite(requestsPerSecond[index]) && requestsPerSecond[index] > 0)
+                okDelta = (int)requestsPerSecond[index];
+
+            var percentile95 = 0.0;
+            if (double.IsFinite(responseTimePercentile95[index]) && responseTimePercentile95[index] > 0)
+                percentile95 = responseTimePercentile95[index];
+
+            samples[index] = Sample(index + 1, okDelta, 0, percentile95);
+        }
+
+        if (thresholds == null)
+            thresholds = Array.Empty<LiveThreshold>();
+
+        return new LiveMetricsSnapshot
+        {
+            ScenarioName = "Steady",
+            Phase = LoadTestPhase.Measurement,
+            PhaseLabel = "Fixed Load 100 rps",
+            Duration = TimeSpan.FromSeconds(12),
+            PlannedDuration = TimeSpan.FromSeconds(60),
+            PlannedMeasurementDuration = TimeSpan.FromSeconds(50),
+            ProgressFraction = 0.2,
+            EstimatedTimeRemaining = TimeSpan.FromSeconds(48),
+            RequestCountOk = 1195,
+            RequestCountFailed = 5,
+            WarmupRequestCountOk = 100,
+            Ok = new LiveStats { RequestCount = 1195 },
+            Failed = new LiveStats { RequestCount = 5 },
+            IntervalRequestCount = samples[samples.Length - 1].OkDelta,
+            ErrorRate = errorRate,
+            IntervalRequestsPerSecond = requestsPerSecond[requestsPerSecond.Length - 1],
+            IntervalLatency = new IntervalLatency(112, TimeSpan.FromMilliseconds(120), TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(412), TimeSpan.FromMilliseconds(480), new int[LatencyBuckets.Count]),
+            Thresholds = thresholds,
+            Samples = samples,
+            RequestsPerSecondSeries = requestsPerSecond,
+            ResponseTimePercentile95Series = responseTimePercentile95,
+            PlanEntries = SteadyPlan()
+        };
+    }
+
+    /// <summary>
+    /// The steady run with four declared thresholds in three states: p95 ≤ 500 ms reading 412
+    /// (Warning), error rate ≤ 1 % reading 0.5 % (Ok), rps ≥ 150 reading 112 (Breached for
+    /// 3 s) and p99 ≤ 800 ms reading 480 (Ok) — the last adds a tile of its own.
+    /// </summary>
+    private static LiveMetricsSnapshot ThresholdSnapshot()
+    {
+        return SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 412), errorRate: 0.005, thresholds: new[]
+        {
+            Judged(ThresholdMetric.ResponseTimePercentile95, 500, ThresholdComparison.LessThanOrEqualTo, 412, ThresholdState.Warning),
+            Judged(ThresholdMetric.ErrorRate, 0.01, ThresholdComparison.LessThanOrEqualTo, 0.005, ThresholdState.Ok),
+            Judged(ThresholdMetric.RequestsPerSecond, 150, ThresholdComparison.GreaterThanOrEqualTo, 112, ThresholdState.Breached, breachedForSeconds: 3),
+            Judged(ThresholdMetric.ResponseTimePercentile99, 800, ThresholdComparison.LessThanOrEqualTo, 480, ThresholdState.Ok)
+        });
+    }
+
+    private static LiveThreshold Judged(ThresholdMetric metric, double limit, ThresholdComparison comparison, double current, ThresholdState state, int breachedForSeconds = 0)
+    {
+        return new LiveThreshold(new Threshold(metric, limit, comparison), current, state, TimeSpan.FromSeconds(breachedForSeconds));
+    }
+
+    /// <summary>
+    /// A steady run 130 samples long — more than twice the trend window — whose p95 series is
+    /// 70 samples at 1000 ms, then 59 at 100 ms and the newest at 250 ms: a spike against the
+    /// trailing 60 (their median is 100 ms) that is none against the whole series (median
+    /// 1000 ms). The rps series holds 100 throughout, a ring sample per entry, and the newest
+    /// interval's latency is 250 ms across the board.
+    /// </summary>
+    private static LiveMetricsSnapshot LongRunSnapshot()
+    {
+        var responseTimes = Repeat(1000, 70).Concat(Repeat(100, 59)).Concat(new double[] { 250 }).ToArray();
+        var samples = new LiveMetricsSample[responseTimes.Length];
+        for (var index = 0; index < samples.Length; index++)
+            samples[index] = Sample(index + 1, 100, 0, responseTimes[index]);
+
+        return new LiveMetricsSnapshot
+        {
+            ScenarioName = "Long run",
+            Phase = LoadTestPhase.Measurement,
+            PhaseLabel = "Fixed Load 100 rps",
+            Duration = TimeSpan.FromSeconds(130),
+            RequestCountOk = 13000,
+            Ok = new LiveStats { RequestCount = 13000 },
+            IntervalRequestCount = 100,
+            IntervalRequestsPerSecond = 100,
+            IntervalLatency = new IntervalLatency(100, TimeSpan.FromMilliseconds(250), TimeSpan.FromMilliseconds(250), TimeSpan.FromMilliseconds(250), TimeSpan.FromMilliseconds(250), new int[LatencyBuckets.Count]),
+            Samples = samples,
+            RequestsPerSecondSeries = Repeat(100, responseTimes.Length),
+            ResponseTimePercentile95Series = responseTimes
+        };
+    }
+
+    /// <summary>
+    /// The view the console manager shows for a scenario before its live model exists (its
+    /// init placeholder): the name, the init phase, the elapsed time and the declared
+    /// thresholds in their placeholder state — every one Ok with a Current of 0 — and nothing
+    /// else: no sample, no series, no plan. The same four thresholds as
+    /// <see cref="ThresholdSnapshot"/>, so the p99 one adds its tile from the first frame on.
+    /// </summary>
+    private static LiveMetricsSnapshot InitSnapshot()
+    {
+        var thresholds = new[]
+        {
+            new Threshold(ThresholdMetric.ResponseTimePercentile95, 500, ThresholdComparison.LessThanOrEqualTo),
+            new Threshold(ThresholdMetric.ErrorRate, 0.01, ThresholdComparison.LessThanOrEqualTo),
+            new Threshold(ThresholdMetric.RequestsPerSecond, 150, ThresholdComparison.GreaterThanOrEqualTo),
+            new Threshold(ThresholdMetric.ResponseTimePercentile99, 800, ThresholdComparison.LessThanOrEqualTo)
+        };
+
+        return new LiveMetricsSnapshot
+        {
+            ScenarioName = "Checkout flow",
+            Phase = LoadTestPhase.Init,
+            PhaseLabel = "init",
+            Duration = TimeSpan.FromSeconds(2),
+            Thresholds = ThresholdEvaluator.InitialStates(thresholds)
+        };
+    }
+
     /// <summary>A one-second ring sample closed at the given second; its rate is the combined delta.</summary>
     private static LiveMetricsSample Sample(int second, int okDelta, int failedDelta, double percentile95Milliseconds)
     {
@@ -243,6 +443,14 @@ public class LiveDashboardLayoutTests : Test
     [Test]
     public async Task Verify_dashboard_golden_frame_at_120x40()
     {
+        // Five boxes of 24, 23, 23, 23, 23 (inner 20, 19, 19, 19, 19). The rps trend's levels
+        // 1 1 2 2 3 3 4 4 4 4 pair into ⣀⣤⣶⣿⣿ and the p95 trend's 4 4 3 2 2 2 1 1 1 1 into
+        // ⣿⣦⣤⣀⣀, each at the right of its box. "12512 warmup 1203" (17) fits the 19-wide
+        // requests box; the elapsed gauge has 19 − 2 − 7 = 10 cells, 0.45 × 10 = 4.5 — four
+        // full cells and a four-eighths cell — with no warning band and "2m 45s" after it.
+        // The timeline splits 120 columns 24 / 48 / 48; 135 s is 75 s into the ramp, so the
+        // marker is column 24 + floor(75 / 120 × 48) = 54 — the "0" of "50" in the ramp's
+        // label, which sits on columns 37-58 — and the columns before it are filled.
         await Scenario()
             .Step("The frame pads to the window height with the footer on the last row", context =>
             {
@@ -256,45 +464,55 @@ public class LiveDashboardLayoutTests : Test
             {
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.None);
 
-                AssertLine("Checkout flow  ● Running" + new string(' ', 83) + "  ⚡ TestFuzn", 120, lines[0]);
+                AssertLine("Checkout flow  ● Running" + Spaces(83) + "  ⚡ TestFuzn", 120, lines[0]);
             })
-            .Step("The timing line shows elapsed/planned, progress bar, ETA and sim phase", context =>
+            .Step("The tile row shows rps, p95, errors, requests and elapsed with trends, units and the progress gauge", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.None);
 
-                AssertLine("elapsed 00:02:15 / 00:05:00  █████████░░░░░░░░░░  45%  eta 00:02:45  · sim 1/2: Fixed 50 rps", 92, lines[1]);
-                AssertLine(string.Empty, 0, lines[2]);
+                AssertLine(Row(Top(24), Top(23), Top(23), Top(23), Top(23)), 120, lines[1]);
+                AssertLine(Row(Box("rps" + Spaces(17)), Box("p95" + Spaces(16)), Box("errors" + Spaces(13)), Box("requests" + Spaces(11)), Box("elapsed" + Spaces(12))), 120, lines[2]);
+                AssertLine(Row(Box("142" + Spaces(17)), Box("38 ms" + Spaces(14)), Box("0.7 %" + Spaces(14)), Box("12512 warmup 1203" + Spaces(2)), Box("00:02:15 / 5m" + Spaces(6))), 120, lines[3]);
+                AssertLine(Row(Box(Spaces(15) + "⣀⣤⣶⣿⣿"), Box(Spaces(14) + "⣿⣦⣤⣀⣀"), Box(Spaces(19)), Box(Spaces(19)), Box("▕████▌·····▏ 2m 45s")), 120, lines[4]);
+                AssertLine(Row(Bottom(24), Bottom(23), Bottom(23), Bottom(23), Bottom(23)), 120, lines[5]);
+            })
+            .Step("The timeline fills the warmup and the ramp up to the marker inside the ramp's label, with every label inside its segment", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.None);
+
+                AssertLine("== Fixed Load 20 rps ===" + "############ Gradual Load 10→5▼ rps ------------" + "-------------- Fixed Load 50 rps ---------------", 120, lines[6]);
+                AssertLine(string.Empty, 0, lines[7]);
             })
             .Step("The sparkline panels sit side by side, headed by the current values", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.None);
 
-                AssertLine("╭─ rps 142 " + new string('─', 47) + "╮  ╭─ p95 38 ms " + new string('─', 45) + "╮", 120, lines[3]);
-                AssertLine("│ " + new string(' ', 50) + "⣀⣤⣶⣿⣿ │  │ " + new string(' ', 50) + "⣿⣦⣤⣀⣀ │", 120, lines[4]);
+                AssertLine("╭─ rps 142 " + new string('─', 47) + "╮  ╭─ p95 38 ms " + new string('─', 45) + "╮", 120, lines[8]);
+                AssertLine("│ " + Spaces(50) + "⣀⣤⣶⣿⣿ │  │ " + Spaces(50) + "⣿⣦⣤⣀⣀ │", 120, lines[9]);
             })
             .Step("The requests panel shows the warmup headline, the current rates and the full spread", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.None);
 
-                AssertLine("╭─ Requests " + new string('─', 107) + "╮", 120, lines[6]);
-                AssertLine("│ warmup 1200 ok · 3 failed" + new string(' ', 91) + " │", 120, lines[7]);
-                AssertLine("│         count  rps    min    mean    p50     p75     p95     p99     max" + new string(' ', 44) + " │", 120, lines[8]);
-                AssertLine("│ ok      12480  141  12 ms   38 ms  35 ms   48 ms   72 ms   94 ms  312 ms" + new string(' ', 44) + " │", 120, lines[9]);
-                AssertLine("│ failed     32  1.0  88 ms  102 ms  99 ms  110 ms  140 ms  160 ms  201 ms" + new string(' ', 44) + " │", 120, lines[10]);
+                AssertLine("╭─ Requests " + new string('─', 107) + "╮", 120, lines[11]);
+                AssertLine("│ warmup 1200 ok · 3 failed" + Spaces(91) + " │", 120, lines[12]);
+                AssertLine("│         count  rps    min    mean    p50     p75     p95     p99     max" + Spaces(44) + " │", 120, lines[13]);
+                AssertLine("│ ok      12480  141  12 ms   38 ms  35 ms   48 ms   72 ms   94 ms  312 ms" + Spaces(44) + " │", 120, lines[14]);
+                AssertLine("│ failed     32  1.0  88 ms  102 ms  99 ms  110 ms  140 ms  160 ms  201 ms" + Spaces(44) + " │", 120, lines[15]);
             })
             .Step("The step table shows counts, current rate, latencies and the fail% mini-bar", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.None);
 
-                AssertLine("│ Add to cart   6252   71  18 ms  40 ms       2  █░░░░ <0.1%" + new string(' ', 58) + " │", 120, lines[14]);
-                AssertLine("│ Checkout      6260  9.6  58 ms  90 ms      30  █░░░░ 0.5%" + new string(' ', 59) + " │", 120, lines[15]);
+                AssertLine("│ Add to cart   6252   71  18 ms  40 ms       2  █░░░░ <0.1%" + Spaces(58) + " │", 120, lines[19]);
+                AssertLine("│ Checkout      6260  9.6  58 ms  90 ms      30  █░░░░ 0.5%" + Spaces(59) + " │", 120, lines[20]);
             })
             .Step("The error ticker lists distinct errors with right-aligned counts, newest first", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.None);
 
-                AssertLine("│ 30× Checkout · Connection refused (localhost:7058)" + new string(' ', 66) + " │", 120, lines[18]);
-                AssertLine("│  2× Add to cart · Timeout after 30s" + new string(' ', 81) + " │", 120, lines[19]);
+                AssertLine("│ 30× Checkout · Connection refused (localhost:7058)" + Spaces(66) + " │", 120, lines[23]);
+                AssertLine("│  2× Add to cart · Timeout after 30s" + Spaces(81) + " │", 120, lines[24]);
             })
             .Run();
     }
@@ -302,18 +520,29 @@ public class LiveDashboardLayoutTests : Test
     [Test]
     public async Task Verify_dashboard_golden_frame_at_100x30()
     {
+        // Boxes of 20, 19, 19, 19, 19 (inner 16, 15, 15, 15, 15): "12512 warmup 1203" no
+        // longer fits the requests box, so its unit goes; the elapsed gauge has 15 − 9 = 6
+        // cells, 0.45 × 6 = 2.7 — two full cells and a six-eighths cell. The timeline splits
+        // 20 / 40 / 40 with the marker on column 20 + floor(75 / 120 × 40) = 45, the "5" of
+        // "50" (the ramp's label sits on columns 29-50).
         await Scenario()
             .Step("The layout keeps its structure at 100 columns with the logo still shown", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 100, 30, ColorMode.None);
 
                 Assert.HasCount(30, lines);
-                AssertLine("Checkout flow  ● Running" + new string(' ', 63) + "  ⚡ TestFuzn", 100, lines[0]);
-                AssertLine("╭─ rps 142 " + new string('─', 37) + "╮  ╭─ p95 38 ms " + new string('─', 35) + "╮", 100, lines[3]);
-                AssertLine("│         count  rps    min    mean    p50     p75     p95     p99     max" + new string(' ', 24) + " │", 100, lines[8]);
-                AssertLine("│ step         count  rps   mean    p95  failed  fail%" + new string(' ', 44) + " │", 100, lines[13]);
-                AssertLine("│ Checkout      6260  9.6  58 ms  90 ms      30  █░░░░ 0.5%" + new string(' ', 39) + " │", 100, lines[15]);
-                AssertLine("│  2× Add to cart · Timeout after 30s" + new string(' ', 61) + " │", 100, lines[19]);
+                AssertLine("Checkout flow  ● Running" + Spaces(63) + "  ⚡ TestFuzn", 100, lines[0]);
+                AssertLine(Row(Top(20), Top(19), Top(19), Top(19), Top(19)), 100, lines[1]);
+                AssertLine(Row(Box("rps" + Spaces(13)), Box("p95" + Spaces(12)), Box("errors" + Spaces(9)), Box("requests" + Spaces(7)), Box("elapsed" + Spaces(8))), 100, lines[2]);
+                AssertLine(Row(Box("142" + Spaces(13)), Box("38 ms" + Spaces(10)), Box("0.7 %" + Spaces(10)), Box("12512" + Spaces(10)), Box("00:02:15 / 5m" + Spaces(2))), 100, lines[3]);
+                AssertLine(Row(Box(Spaces(11) + "⣀⣤⣶⣿⣿"), Box(Spaces(10) + "⣿⣦⣤⣀⣀"), Box(Spaces(15)), Box(Spaces(15)), Box("▕██▊···▏ 2m 45s")), 100, lines[4]);
+                AssertLine(Row(Bottom(20), Bottom(19), Bottom(19), Bottom(19), Bottom(19)), 100, lines[5]);
+                AssertLine(" Fixed Load 20 rps =" + "######## Gradual Load 10→▼0 rps --------" + "---------- Fixed Load 50 rps -----------", 100, lines[6]);
+                AssertLine("╭─ rps 142 " + new string('─', 37) + "╮  ╭─ p95 38 ms " + new string('─', 35) + "╮", 100, lines[8]);
+                AssertLine("│         count  rps    min    mean    p50     p75     p95     p99     max" + Spaces(24) + " │", 100, lines[13]);
+                AssertLine("│ step         count  rps   mean    p95  failed  fail%" + Spaces(44) + " │", 100, lines[18]);
+                AssertLine("│ Checkout      6260  9.6  58 ms  90 ms      30  █░░░░ 0.5%" + Spaces(39) + " │", 100, lines[20]);
+                AssertLine("│  2× Add to cart · Timeout after 30s" + Spaces(61) + " │", 100, lines[24]);
                 AssertLine("q quit", 6, lines[29]);
                 AssertMaximumWidth(100, lines);
             })
@@ -321,36 +550,449 @@ public class LiveDashboardLayoutTests : Test
     }
 
     [Test]
-    public async Task Verify_dashboard_degrades_at_narrow_widths()
+    public async Task Verify_dashboard_golden_frame_at_80x24()
+    {
+        // Boxes of 16, 15, 15, 15, 15 (inner 12, 11, 11, 11, 11) and, at 24 rows, no trends:
+        // neither unit fits its box and the elapsed gauge would need 13 columns, so every tile
+        // is two lines. The timeline splits 16 / 32 / 32 with the marker on column
+        // 16 + floor(75 / 120 × 32) = 36 — the arrow of "10→50", the label sitting on 21-42 —
+        // and the warmup label, which needs 19 columns of 16, goes to the legend line.
+        await Scenario()
+            .Step("At 80 columns and 24 rows the tiles drop their trends and units, and the timeline grows a legend", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 80, 24, ColorMode.None);
+
+                Assert.HasCount(24, lines);
+                AssertLine("Checkout flow  ● Running" + Spaces(43) + "  ⚡ TestFuzn", 80, lines[0]);
+                AssertLine(Row(Top(16), Top(15), Top(15), Top(15), Top(15)), 80, lines[1]);
+                AssertLine(Row(Box("rps" + Spaces(9)), Box("p95" + Spaces(8)), Box("errors" + Spaces(5)), Box("requests" + Spaces(3)), Box("elapsed" + Spaces(4))), 80, lines[2]);
+                AssertLine(Row(Box("142" + Spaces(9)), Box("38 ms" + Spaces(6)), Box("0.7 %" + Spaces(6)), Box("12512" + Spaces(6)), Box("00:02:15" + Spaces(3))), 80, lines[3]);
+                AssertLine(Row(Bottom(16), Bottom(15), Bottom(15), Bottom(15), Bottom(15)), 80, lines[4]);
+                AssertLine(new string('=', 16) + "#### Gradual Load 10▼50 rps ----" + "------ Fixed Load 50 rps -------", 80, lines[5]);
+                AssertLine("Fixed Load 20 rps" + Spaces(63), 80, lines[6]);
+                AssertLine(string.Empty, 0, lines[7]);
+                AssertLine("╭─ rps 142 " + new string('─', 27) + "╮  ╭─ p95 38 ms " + new string('─', 25) + "╮", 80, lines[8]);
+                AssertLine("╭─ Requests " + new string('─', 67) + "╮", 80, lines[11]);
+                AssertLine("│         count  rps    min    mean    p50     p75     p95     p99     max" + Spaces(4) + " │", 80, lines[13]);
+                AssertLine("q quit", 6, lines[23]);
+                AssertMaximumWidth(80, lines);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_dashboard_golden_frame_at_60x20()
+    {
+        // Below 64 columns the tiles wrap: rps, p95 and errors in boxes of 20, 19, 19 (inner
+        // 16, 15, 15), then requests and elapsed in boxes of 30 and 29 (inner 26 and 25), wide
+        // enough for both units and the gauge — 25 − 9 = 16 cells, 0.45 × 16 = 7.2: seven full
+        // cells and a two-eighths cell. The timeline splits 12 / 24 / 24 with the marker on
+        // column 12 + floor(75 / 120 × 24) = 27, the "0" of "10" (the ramp's label fits its 24
+        // columns exactly, on 13-34); the warmup label goes to the legend.
+        await Scenario()
+            .Step("At 60 columns the tiles wrap onto two rows and keep every unit and the gauge", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 60, 20, ColorMode.None);
+
+                Assert.HasCount(20, lines);
+                AssertLine("Checkout flow  ● Running", 24, lines[0]);
+                AssertLine(Row(Top(20), Top(19), Top(19)), 60, lines[1]);
+                AssertLine(Row(Box("rps" + Spaces(13)), Box("p95" + Spaces(12)), Box("errors" + Spaces(9))), 60, lines[2]);
+                AssertLine(Row(Box("142" + Spaces(13)), Box("38 ms" + Spaces(10)), Box("0.7 %" + Spaces(10))), 60, lines[3]);
+                AssertLine(Row(Bottom(20), Bottom(19), Bottom(19)), 60, lines[4]);
+                AssertLine(Row(Top(30), Top(29)), 60, lines[5]);
+                AssertLine(Row(Box("requests" + Spaces(18)), Box("elapsed" + Spaces(18))), 60, lines[6]);
+                AssertLine(Row(Box("12512 warmup 1203" + Spaces(9)), Box("00:02:15 / 5m" + Spaces(12))), 60, lines[7]);
+                AssertLine(Row(Box(Spaces(26)), Box("▕███████▎········▏ 2m 45s")), 60, lines[8]);
+                AssertLine(Row(Bottom(30), Bottom(29)), 60, lines[9]);
+                AssertLine(new string('=', 12) + " Gradual Load 1▼→50 rps " + "-- Fixed Load 50 rps ---", 60, lines[10]);
+                AssertLine("Fixed Load 20 rps" + Spaces(43), 60, lines[11]);
+                AssertLine(string.Empty, 0, lines[12]);
+                AssertLine("╭─ rps 142 " + new string('─', 17) + "╮  ╭─ p95 38 ms " + new string('─', 15) + "╮", 60, lines[13]);
+                AssertLine("╭─ Requests " + new string('─', 47) + "╮", 60, lines[16]);
+                AssertLine("q quit", 6, lines[19]);
+                AssertMaximumWidth(60, lines);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_thresholds_turn_tiles_into_gauges_and_add_tiles()
+    {
+        // Six boxes of 20, 19, 19, 19, 19, 19 (inner 16, 15 × 5). The rps gauge is a minimum:
+        // 16 − 2 − 8 = 6 cells over 0 → 150 / 0.8 = 187.5, 112 / 187.5 × 6 = 3.58 — three full
+        // cells and a five-eighths cell — with the band on the last cell; the p95 gauge's
+        // 412 / 500 × 6 = 4.94 rounds up to five full cells; the errors gauge has 15 − 6 = 9
+        // cells, 0.5 × 9 = 4.5, the band from cell round(7.2) = 7; the elapsed gauge has
+        // 15 − 6 = 9 cells, 0.2 × 9 = 1.8; the p99 gauge's 480 / 800 × 6 = 3.6. The deltas
+        // read the newest sample against the first: +12 rps and +372 ms. The twelve-sample
+        // trends pair the eleven low samples and the high newest into ⣀⣀⣀⣀⣀⣸.
+        await Scenario()
+            .Step("Color mode None: the p95, errors and rps tiles carry their gauges and a p99 tile is added after elapsed", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { ThresholdSnapshot() }, 120, 40, ColorMode.None);
+
+                AssertLine(Row(Top(20), Top(19), Top(19), Top(19), Top(19), Top(19)), 120, lines[1]);
+                AssertLine(Row(Box("rps" + Spaces(9) + "▲ 12"), Box("p95" + Spaces(4) + "▲ 372 ms"), Box("errors" + Spaces(9)), Box("requests" + Spaces(7)), Box("elapsed" + Spaces(8)), Box("p99" + Spaces(12))), 120, lines[2]);
+                AssertLine(Row(Box("112" + Spaces(13)), Box("412 ms" + Spaces(9)), Box("0.5 %" + Spaces(10)), Box("1200 warmup 100"), Box("00:00:12 / 1m" + Spaces(2)), Box("480 ms" + Spaces(9))), 120, lines[3]);
+                AssertLine(Row(Box("▕███▋·░▏ 150 rps"), Box("▕█████░▏ 500 ms"), Box("▕████▌··░░▏ 1 %"), Box(Spaces(15)), Box("▕█▊·······▏ 48s"), Box("▕███▋·░▏ 800 ms")), 120, lines[4]);
+                AssertLine(Row(Box(Spaces(10) + "⣀⣀⣀⣀⣀⣸"), Box(Spaces(9) + "⣀⣀⣀⣀⣀⣸"), Box(Spaces(15)), Box(Spaces(15)), Box(Spaces(15)), Box(Spaces(15))), 120, lines[5]);
+                AssertLine(Row(Bottom(20), Bottom(19), Bottom(19), Bottom(19), Bottom(19), Bottom(19)), 120, lines[6]);
+                AssertLine(" Fixed Load 100 rps " + "####▼" + new string('-', 35) + " Fixed Load 100 rps " + new string('-', 40), 120, lines[7]);
+                AssertLine(string.Empty, 0, lines[8]);
+                AssertMaximumWidth(120, lines);
+            })
+            .Step("TrueColor colours each tile by its threshold's state — breached red, warning yellow, ok green — and the deltas by their direction", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { ThresholdSnapshot() }, 120, 40, ColorMode.TrueColor);
+
+                Assert.Contains(Sgr(Green, "▲ 12"), lines[2].Text);
+                Assert.Contains(Sgr(Red, "▲ 372 ms"), lines[2].Text);
+                Assert.Contains(Sgr(BoldRed, "112"), lines[3].Text);
+                Assert.Contains(Sgr(BoldYellow, "412") + " " + Sgr(Dim, "ms"), lines[3].Text);
+                Assert.Contains(Sgr(BoldGreen, "0.5") + " " + Sgr(Dim, "%"), lines[3].Text);
+                Assert.Contains(Sgr(BoldGreen, "480") + " " + Sgr(Dim, "ms"), lines[3].Text);
+                Assert.Contains(Sgr(Dim, "▕") + Sgr(Red, "███▋") + Sgr(Dim, "·░▏ 150 rps"), lines[4].Text);
+            })
+            .Step("A single p95 threshold changes only the p95 tile: no tile is added and the others keep their heuristics", context =>
+            {
+                var snapshot = SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 412), errorRate: 0.005, thresholds: new[]
+                {
+                    Judged(ThresholdMetric.ResponseTimePercentile95, 500, ThresholdComparison.LessThanOrEqualTo, 412, ThresholdState.Breached)
+                });
+
+                var lines = LiveDashboardLayout.Render(new[] { snapshot }, 120, 40, ColorMode.TrueColor);
+
+                AssertLine(Row(Top(24), Top(23), Top(23), Top(23), Top(23)), 120, lines[1]);
+                Assert.Contains(Sgr(BoldRed, "412") + " " + Sgr(Dim, "ms"), lines[3].Text);
+                Assert.Contains(Sgr(Bold, "112"), lines[3].Text);
+                Assert.Contains(Sgr(BoldYellow, "0.5") + " " + Sgr(Dim, "%"), lines[3].Text);
+                Assert.DoesNotContain("p99", lines[2].Text);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_heuristic_states_without_thresholds()
+    {
+        // TrueColor at 120 columns; the value line is row 3. A tile's value is bold in its
+        // state's colour: green Ok, yellow Warning, red Critical, bare bold for Neutral.
+        await Scenario()
+            .Step("The error rate is Ok at zero, Warning up to one percent inclusive and Critical above it", context =>
+            {
+                Assert.Contains(Sgr(BoldGreen, "0.0") + " " + Sgr(Dim, "%"), ValueLine(SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 36), errorRate: 0)));
+                Assert.Contains(Sgr(BoldYellow, "0.5") + " " + Sgr(Dim, "%"), ValueLine(SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 36), errorRate: 0.005)));
+                Assert.Contains(Sgr(BoldYellow, "1.0") + " " + Sgr(Dim, "%"), ValueLine(SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 36), errorRate: 0.01)));
+                Assert.Contains(Sgr(BoldRed, "1.0") + " " + Sgr(Dim, "%"), ValueLine(SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 36), errorRate: 0.0101)));
+                Assert.Contains(Sgr(BoldRed, "2.0") + " " + Sgr(Dim, "%"), ValueLine(SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 36), errorRate: 0.02)));
+            })
+            .Step("An interval without requests has no failed share: the errors tile shows no data, Neutral, never a green 0.0 %", context =>
+            {
+                // The newest sample's rate of 0 is 0 requests in its interval; the rps tile keeps its true 0.0.
+                var line = ValueLine(SteadySnapshot(SteadySeries(100, 0), SteadySeries(40, 36), errorRate: 0));
+
+                Assert.Contains(Box(Sgr(Bold, "—") + Spaces(18)), line);
+                Assert.Contains(Box(Sgr(Bold, "0.0") + Spaces(17)), line);
+                Assert.DoesNotContain(Sgr(BoldGreen, "0.0"), line);
+            })
+            .Step("A declared error-rate threshold keeps its state and gauge as reported on such an interval; only the value is no data", context =>
+            {
+                // The errors box is 23 (inner 19): a 13-cell bar, empty at a Current of 0, with
+                // the band from cell round(0.8 × 13) = 10.
+                var snapshot = SteadySnapshot(SteadySeries(100, 0), SteadySeries(40, 36), errorRate: 0, thresholds: new[]
+                {
+                    Judged(ThresholdMetric.ErrorRate, 0.01, ThresholdComparison.LessThanOrEqualTo, 0, ThresholdState.Ok)
+                });
+
+                var plain = LiveDashboardLayout.Render(new[] { snapshot }, 120, 0, ColorMode.None);
+                Assert.Contains(Box("—" + Spaces(18)), plain[3].Text);
+                Assert.Contains(Box("▕··········░░░▏ 1 %"), plain[4].Text);
+
+                Assert.Contains(Box(Sgr(BoldGreen, "—") + Spaces(18)), ValueLine(snapshot));
+            })
+            .Step("The p95 is Warning above twice the trailing median and Neutral at it, and rps is always Neutral", context =>
+            {
+                Assert.Contains(Sgr(BoldYellow, "90") + " " + Sgr(Dim, "ms"), ValueLine(SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 90))));
+                Assert.Contains(Sgr(Bold, "80") + " " + Sgr(Dim, "ms"), ValueLine(SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 80))));
+                Assert.Contains(Sgr(Bold, "112"), ValueLine(SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 90))));
+            })
+            .Step("The median needs ten latencies: nine leave the spike Neutral, ten make it Warning", context =>
+            {
+                Assert.Contains(Sgr(Bold, "90") + " " + Sgr(Dim, "ms"), ValueLine(SteadySnapshot(Repeat(100, 9), Repeat(40, 8).Concat(new double[] { 90 }).ToArray())));
+                Assert.Contains(Sgr(BoldYellow, "90") + " " + Sgr(Dim, "ms"), ValueLine(SteadySnapshot(Repeat(100, 10), Repeat(40, 9).Concat(new double[] { 90 }).ToArray())));
+            })
+            .Step("Idle intervals are left out of the median: twelve zeros before nine 40 ms samples do not drag it down", context =>
+            {
+                var responseTimes = Repeat(0, 12).Concat(Repeat(40, 9)).Concat(new double[] { 50 }).ToArray();
+
+                Assert.Contains(Sgr(Bold, "50") + " " + Sgr(Dim, "ms"), ValueLine(SteadySnapshot(Repeat(100, responseTimes.Length), responseTimes)));
+            })
+            .Step("No sample yet is Neutral no data on the rps, p95 and errors tiles", context =>
+            {
+                var line = ValueLine(new LiveMetricsSnapshot { ScenarioName = "Fresh" });
+
+                Assert.Contains(Box(Sgr(Bold, "—") + Spaces(19)), line);
+                Assert.Contains(Box(Sgr(Bold, "—") + Spaces(18)), line);
+            })
+            .Run();
+    }
+
+    private static string ValueLine(LiveMetricsSnapshot snapshot)
+    {
+        return LiveDashboardLayout.Render(new[] { snapshot }, 120, 0, ColorMode.TrueColor)[3].Text;
+    }
+
+    private static double[] Repeat(double value, int count)
+    {
+        var series = new double[count];
+        Array.Fill(series, value);
+        return series;
+    }
+
+    [Test]
+    public async Task Verify_trend_and_median_use_only_the_trailing_60_samples()
     {
         await Scenario()
-            .Step("Below 80 columns the logo is dropped while the sparklines and the full spread remain", context =>
+            .Step("The spike heuristic's median is taken over the trailing 60 samples, not the whole series", context =>
             {
-                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 78, 24, ColorMode.None);
+                // The trailing 60 are 59 × 100 ms and the 250 ms newest: sorted, the 30th and
+                // 31st are both 100, so the median is 100 ms and 250 > 2 × 100 is Warning. Over
+                // all 130 the 65th and 66th sorted are both 1000 ms — a median that would leave
+                // 250 Neutral, bare bold.
+                var lines = LiveDashboardLayout.Render(new[] { LongRunSnapshot() }, 120, 40, ColorMode.TrueColor);
 
-                Assert.HasCount(24, lines);
-                AssertLine("Checkout flow  ● Running", 24, lines[0]);
-                AssertLine("elapsed 00:02:15 / 00:05:00  █████████░░░░░░░░░░  45%  eta 00:02:45", 67, lines[1]);
-                AssertLine("╭─ rps 142 " + new string('─', 26) + "╮  ╭─ p95 38 ms " + new string('─', 24) + "╮", 78, lines[3]);
-                AssertLine("│         count  rps    min    mean    p50     p75     p95     p99     max" + new string(' ', 2) + " │", 78, lines[8]);
-                AssertLine("q quit", 6, lines[23]);
-                AssertMaximumWidth(78, lines);
-
-                foreach (var line in lines)
-                    Assert.DoesNotContain("⚡", line.Text);
+                Assert.Contains(Sgr(BoldYellow, "250") + " " + Sgr(Dim, "ms"), lines[3].Text);
             })
-            .Step("Below 60 columns the sparkline panels are dropped and the requests table narrows", context =>
+            .Step("The trend holds the trailing 60 samples, newest at the right: a flat run with a single raised glyph at its end", context =>
             {
-                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 56, 24, ColorMode.None);
+                // At 120 columns a 19-wide tile windows only 38 samples in braille, so the width
+                // that tells the windows apart is one whose boxes hold more than 60: at 179 the
+                // five boxes are 35 (inner 31), 62 sample slots. The trend's 60 samples fill the
+                // 30 right columns and leave the first blank; 100 ms is the minimum (level 1, ⣀
+                // per pair) and 250 the maximum (level 4 in the last column's right half: ⣸).
+                // The whole series would put the newest 62 there instead — two at 1000 ms
+                // lifting the scale, flattening the 100s to the bottom and drawing a full-height
+                // ⣿ at the left. The steady rps trend has no spread: the middle level, ⣤, after
+                // its blank column.
+                var lines = LiveDashboardLayout.Render(new[] { LongRunSnapshot() }, 179, 40, ColorMode.None);
 
-                Assert.HasCount(24, lines);
-                AssertLine("│         count  rps    mean    p50     p95     max    │", 56, lines[5]);
-                AssertLine("│ ok      12480  141   38 ms  35 ms   72 ms  312 ms    │", 56, lines[6]);
-                AssertLine("q quit", 6, lines[23]);
-                AssertMaximumWidth(56, lines);
+                AssertLine(Row(Top(35), Top(35), Top(35), Top(35), Top(35)), 179, lines[1]);
+                AssertLine(Row(Box("100" + Spaces(28)), Box("250 ms" + Spaces(25)), Box("0.0 %" + Spaces(26)), Box("13000" + Spaces(26)), Box("00:02:10" + Spaces(23))), 179, lines[3]);
+                AssertLine(Row(Box(" " + new string('⣤', 30)), Box(" " + new string('⣀', 29) + "⣸"), Box(Spaces(31)), Box(Spaces(31)), Box(Spaces(31))), 179, lines[4]);
+                AssertLine(Row(Bottom(35), Bottom(35), Bottom(35), Bottom(35), Bottom(35)), 179, lines[5]);
+            })
+            .Run();
+    }
 
-                foreach (var line in lines)
-                    Assert.DoesNotContain("╭─ rps", line.Text);
+    [Test]
+    public async Task Verify_init_placeholder_frame_shows_no_data_over_empty_gauges()
+    {
+        // The console manager's first frame: six boxes of 20, 19, 19, 19, 19, 19 (inner 16,
+        // 15 × 5) with no sample, no series and no plan. Every declared threshold is in its
+        // placeholder state — Ok, Current 0 — so its gauge is an empty track with the band
+        // marked: the rps, p95 and p99 limits ("150 rps", "500 ms", "800 ms") leave 6 cells
+        // with the band on the last, round(0.8 × 6) = 5, and "1 %" leaves 9 with the band from
+        // cell round(7.2) = 7. The trends are blank rows and the elapsed tile has no gauge.
+        await Scenario()
+            .Step("Color mode None: the rps, p95, errors and p99 tiles show no data over empty gauges, and no timeline row follows the tiles", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { InitSnapshot() }, 120, 40, ColorMode.None);
+
+                Assert.HasCount(40, lines);
+                AssertLine("Checkout flow  ● Running" + Spaces(83) + "  ⚡ TestFuzn", 120, lines[0]);
+                AssertLine(Row(Top(20), Top(19), Top(19), Top(19), Top(19), Top(19)), 120, lines[1]);
+                AssertLine(Row(Box("rps" + Spaces(13)), Box("p95" + Spaces(12)), Box("errors" + Spaces(9)), Box("requests" + Spaces(7)), Box("elapsed" + Spaces(8)), Box("p99" + Spaces(12))), 120, lines[2]);
+                AssertLine(Row(Box("—" + Spaces(15)), Box("—" + Spaces(14)), Box("—" + Spaces(14)), Box("0" + Spaces(14)), Box("00:00:02" + Spaces(7)), Box("—" + Spaces(14))), 120, lines[3]);
+                AssertLine(Row(Box("▕·····░▏ 150 rps"), Box("▕·····░▏ 500 ms"), Box("▕·······░░▏ 1 %"), Box(Spaces(15)), Box(Spaces(15)), Box("▕·····░▏ 800 ms")), 120, lines[4]);
+                AssertLine(Row(Box(Spaces(16)), Box(Spaces(15)), Box(Spaces(15)), Box(Spaces(15)), Box(Spaces(15)), Box(Spaces(15))), 120, lines[5]);
+                AssertLine(Row(Bottom(20), Bottom(19), Bottom(19), Bottom(19), Bottom(19), Bottom(19)), 120, lines[6]);
+                AssertLine(string.Empty, 0, lines[7]);
+                AssertLine("╭─ rps — " + new string('─', 49) + "╮  ╭─ p95 — " + new string('─', 49) + "╮", 120, lines[8]);
+                AssertLine("q quit", 6, lines[39]);
+                AssertMaximumWidth(120, lines);
+            })
+            .Step("TrueColor: the same frame, every no-data value in the placeholder's Ok green and the request count bare bold", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { InitSnapshot() }, 120, 40, ColorMode.TrueColor);
+
+                Assert.HasCount(40, lines);
+                Assert.Contains(Box(Sgr(BoldGreen, "—") + Spaces(15)), lines[3].Text);
+                Assert.Contains(Box(Sgr(BoldGreen, "—") + Spaces(14)) + " " + Box(Sgr(BoldGreen, "—") + Spaces(14)), lines[3].Text);
+                Assert.Contains(Box(Sgr(Bold, "0") + Spaces(14)), lines[3].Text);
+                AssertLine(string.Empty, 0, lines[7]);
+                Assert.AreEqual(6, lines[39].Width);
+                AssertMaximumWidth(120, lines);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_idle_interval_p95_is_no_data_while_zero_rate_is_a_reading()
+    {
+        // Twelve samples at 120 columns: the p95 tile (inner 19) and the rps tile (inner 20).
+        // Eleven equal samples render at the middle level (two braille dots) and a gap is
+        // blank, so ⣤⣤⣤⣤⣤ ends in ⡄ when the newest sample is the gap and starts with it
+        // when the second is; a zero rate is the lowest level under eleven at the top: ⣿⣿⣿⣿⣿⣇.
+        await Scenario()
+            .Step("A zero newest p95 shows no data with no unit, hides the delta and leaves a gap at the end of the trend", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 0)) }, 120, 0, ColorMode.None);
+
+                Assert.Contains(Box("p95" + Spaces(16)), lines[2].Text);
+                Assert.Contains(Box("—" + Spaces(18)), lines[3].Text);
+                Assert.Contains(Box(Spaces(13) + "⣤⣤⣤⣤⣤⡄"), lines[4].Text);
+            })
+            .Step("A zero p95 at the delta's other end hides the delta too, and leaves its gap in the trend", context =>
+            {
+                var responseTimes = SteadySeries(40, 40);
+                responseTimes[1] = 0;
+
+                var lines = LiveDashboardLayout.Render(new[] { SteadySnapshot(SteadySeries(100, 112), responseTimes) }, 120, 0, ColorMode.None);
+
+                Assert.Contains(Box("p95" + Spaces(16)), lines[2].Text);
+                Assert.Contains(Box("40 ms" + Spaces(14)), lines[3].Text);
+                Assert.Contains(Box(Spaces(13) + "⡄⣤⣤⣤⣤⣤"), lines[4].Text);
+            })
+            .Step("A zero newest rate is a true reading: 0.0 with a red drop of 100 and the trend dipping to the bottom", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { SteadySnapshot(SteadySeries(100, 0), SteadySeries(40, 40)) }, 120, 0, ColorMode.None);
+
+                Assert.Contains(Box("rps" + Spaces(12) + "▼ 100"), lines[2].Text);
+                Assert.Contains(Box("0.0" + Spaces(17)), lines[3].Text);
+                Assert.Contains(Box(Spaces(14) + "⣿⣿⣿⣿⣿⣇"), lines[4].Text);
+
+                var styled = LiveDashboardLayout.Render(new[] { SteadySnapshot(SteadySeries(100, 0), SteadySeries(40, 40)) }, 120, 0, ColorMode.TrueColor);
+                Assert.Contains(Sgr(Red, "▼ 100"), styled[2].Text);
+            })
+            .Step("A p95 drop reads as a green fall and a rise as a red climb, in whole milliseconds", context =>
+            {
+                var falling = LiveDashboardLayout.Render(new[] { SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 36)) }, 120, 0, ColorMode.TrueColor);
+                Assert.Contains(Sgr(Dim, "p95") + Spaces(10) + Sgr(Green, "▼ 4 ms"), falling[2].Text);
+
+                var rising = LiveDashboardLayout.Render(new[] { SteadySnapshot(SteadySeries(100, 112), SteadySeries(40, 45.4)) }, 120, 0, ColorMode.TrueColor);
+                Assert.Contains(Sgr(Dim, "p95") + Spaces(10) + Sgr(Red, "▲ 5 ms"), rising[2].Text);
+            })
+            .Step("A delta needs a sample ten back: ten samples show none, eleven show it", context =>
+            {
+                var ten = LiveDashboardLayout.Render(new[] { SteadySnapshot(Repeat(100, 9).Concat(new double[] { 112 }).ToArray(), Repeat(40, 10)) }, 120, 0, ColorMode.None);
+                Assert.Contains(Box("rps" + Spaces(17)), ten[2].Text);
+
+                var eleven = LiveDashboardLayout.Render(new[] { SteadySnapshot(Repeat(100, 10).Concat(new double[] { 112 }).ToArray(), Repeat(40, 11)) }, 120, 0, ColorMode.None);
+                Assert.Contains(Box("rps" + Spaces(13) + "▲ 12"), eleven[2].Text);
+            })
+            .Step("A change that rounds to zero in the tile's unit shows no delta, while the first step up does", context =>
+            {
+                // +0.04 rps rounds to 0.0 and +0.4 ms to 0 ms — the numbers the tiles would show —
+                // so a steady run carries no permanent ▲ 0; +0.1 rps and +0.6 ms are a step each.
+                var steady = LiveDashboardLayout.Render(new[] { SteadySnapshot(SteadySeries(100, 100.04), SteadySeries(40, 40.4)) }, 120, 0, ColorMode.None);
+                Assert.Contains(Box("rps" + Spaces(17)), steady[2].Text);
+                Assert.Contains(Box("p95" + Spaces(16)), steady[2].Text);
+
+                var stepped = LiveDashboardLayout.Render(new[] { SteadySnapshot(SteadySeries(100, 100.1), SteadySeries(40, 40.6)) }, 120, 0, ColorMode.None);
+                Assert.Contains(Box("rps" + Spaces(12) + "▲ 0.1"), stepped[2].Text);
+                Assert.Contains(Box("p95" + Spaces(10) + "▲ 1 ms"), stepped[2].Text);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_tile_width_rules()
+    {
+        await Scenario()
+            .Step("From 80 columns the tiles carry trends (boxes of 16, 15, 15, 15, 15); at 79 they do not (five boxes of 15)", context =>
+            {
+                var withTrends = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 80, 40, ColorMode.None);
+                AssertLine(Row(Box(Spaces(7) + "⣀⣤⣶⣿⣿"), Box(Spaces(6) + "⣿⣦⣤⣀⣀"), Box(Spaces(11)), Box(Spaces(11)), Box(Spaces(11))), 80, withTrends[4]);
+                AssertLine(Row(Bottom(16), Bottom(15), Bottom(15), Bottom(15), Bottom(15)), 80, withTrends[5]);
+
+                var without = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 79, 40, ColorMode.None);
+                AssertLine(Row(Bottom(15), Bottom(15), Bottom(15), Bottom(15), Bottom(15)), 79, without[4]);
+            })
+            .Step("At 64 columns five boxes of 12 hold every label and value on one row", context =>
+            {
+                Assert.AreEqual(64, LiveDashboardLayout.MinimumWidthForSingleTileRow(5));
+
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 64, 40, ColorMode.None);
+
+                AssertLine(Row(Box("rps     "), Box("p95     "), Box("errors  "), Box("requests"), Box("elapsed ")), 64, lines[2]);
+                AssertLine(Row(Box("142     "), Box("38 ms   "), Box("0.7 %   "), Box("12512   "), Box("00:02:15")), 64, lines[3]);
+                AssertLine(Row(Bottom(12), Bottom(12), Bottom(12), Bottom(12), Bottom(12)), 64, lines[4]);
+            })
+            .Step("At 63 columns the tiles wrap: three boxes of 21, 20, 20, then two of 31 with room for the units and an 18-cell gauge", context =>
+            {
+                // 0.45 × 18 = 8.1: eight full cells, the remainder below two eighths drawing nothing.
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 63, 40, ColorMode.None);
+
+                AssertLine(Row(Box("rps" + Spaces(14)), Box("p95" + Spaces(13)), Box("errors" + Spaces(10))), 63, lines[2]);
+                AssertLine(Row(Bottom(21), Bottom(20), Bottom(20)), 63, lines[4]);
+                AssertLine(Row(Top(31), Top(31)), 63, lines[5]);
+                AssertLine(Row(Box("requests" + Spaces(19)), Box("elapsed" + Spaces(20))), 63, lines[6]);
+                AssertLine(Row(Box("12512 warmup 1203" + Spaces(10)), Box("00:02:15 / 5m" + Spaces(14))), 63, lines[7]);
+                AssertLine(Row(Box(Spaces(27)), Box("▕████████··········▏ 2m 45s")), 63, lines[8]);
+                AssertLine(Row(Bottom(31), Bottom(31)), 63, lines[9]);
+            })
+            .Step("Every standard tile is on screen at every width from 64 up", context =>
+            {
+                for (var width = 64; width <= 220; width++)
+                {
+                    var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, width, 0, ColorMode.None);
+                    foreach (var label in new[] { "│ rps ", "│ p95 ", "│ errors ", "│ requests ", "│ elapsed " })
+                        Assert.Contains(label, lines[2].Text, $"Missing {label.Trim()} at width {width}");
+                }
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_tile_height_rules()
+    {
+        await Scenario()
+            .Step("At 30 rows the tiles carry trends; at 29 they do not, while the elapsed gauge still keeps the row three lines tall", context =>
+            {
+                var withTrends = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 100, 30, ColorMode.None);
+                Assert.Contains("⣀⣤⣶⣿⣿", withTrends[4].Text);
+
+                var without = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 100, 29, ColorMode.None);
+                AssertLine(Row(Box(Spaces(16)), Box(Spaces(15)), Box(Spaces(15)), Box(Spaces(15)), Box("▕██▊···▏ 2m 45s")), 100, without[4]);
+                AssertLine(Row(Bottom(20), Bottom(19), Bottom(19), Bottom(19), Bottom(19)), 100, without[5]);
+            })
+            .Step("At 20 rows the gauges stay; at 19 they go and every tile is two lines", context =>
+            {
+                var withGauges = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 20, ColorMode.None);
+                AssertLine(Row(Box(Spaces(20)), Box(Spaces(19)), Box(Spaces(19)), Box(Spaces(19)), Box("▕████▌·····▏ 2m 45s")), 120, withGauges[4]);
+                Assert.StartsWith("== Fixed Load 20 rps ===", withGauges[6].Text);
+
+                var without = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 19, ColorMode.None);
+                AssertLine(Row(Bottom(24), Bottom(23), Bottom(23), Bottom(23), Bottom(23)), 120, without[4]);
+                Assert.StartsWith("== Fixed Load 20 rps ===", without[5].Text);
+            })
+            .Step("At 15 rows the timeline stays; at 14 it goes and the separator follows the tiles", context =>
+            {
+                var withTimeline = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 15, ColorMode.None);
+                Assert.StartsWith("== Fixed Load 20 rps ===", withTimeline[5].Text);
+                AssertLine(string.Empty, 0, withTimeline[6]);
+
+                var without = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 14, ColorMode.None);
+                AssertLine(string.Empty, 0, without[5]);
+                Assert.StartsWith("╭─ rps 142 ", without[6].Text);
+                foreach (var line in without)
+                    Assert.DoesNotContain("Fixed Load 20 rps", line.Text);
+            })
+            .Step("A threshold gauge goes with the height too, its state colour staying", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { ThresholdSnapshot() }, 120, 19, ColorMode.TrueColor);
+
+                Assert.DoesNotContain("▕", lines[3].Text);
+                Assert.StartsWith(Bottom(20) + " " + Bottom(19), lines[4].Text);
+                Assert.Contains(Sgr(BoldRed, "112"), lines[3].Text);
+            })
+            .Step("An unbounded height keeps every optional row", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 0, ColorMode.None);
+
+                Assert.Contains("⣀⣤⣶⣿⣿", lines[4].Text);
+                Assert.Contains("▕████▌·····▏ 2m 45s", lines[4].Text);
+                Assert.StartsWith("== Fixed Load 20 rps ===", lines[6].Text);
             })
             .Run();
     }
@@ -363,33 +1005,33 @@ public class LiveDashboardLayoutTests : Test
             {
                 var lines = LiveDashboardLayout.Render(new[] { HugeSnapshot() }, 120, 0, ColorMode.None);
 
-                AssertLine("│             count      rps         min        mean         p50         p75         p95         p99         max       │", 120, lines[7]);
-                AssertLine("│ ok      987654321  9999999  3600000 ms  7200000 ms  5400000 ms  6000000 ms  7200000 ms  8000000 ms  9000000 ms       │", 120, lines[8]);
+                AssertLine("│             count      rps         min        mean         p50         p75         p95         p99         max       │", 120, lines[11]);
+                AssertLine("│ ok      987654321  9999999  3600000 ms  7200000 ms  5400000 ms  6000000 ms  7200000 ms  8000000 ms  9000000 ms       │", 120, lines[12]);
             })
             .Step("At 78 columns min, p75 and p99 are dropped so the remaining numbers fit exactly", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { HugeSnapshot() }, 78, 0, ColorMode.None);
 
-                AssertLine("│             count      rps        mean         p50         p95         max │", 78, lines[7]);
-                AssertLine("│ ok      987654321  9999999  7200000 ms  5400000 ms  7200000 ms  9000000 ms │", 78, lines[8]);
-                AssertLine("│ failed  123456789      1.0   500000 ms   400000 ms   800000 ms   950000 ms │", 78, lines[9]);
+                AssertLine("│             count      rps        mean         p50         p95         max │", 78, lines[10]);
+                AssertLine("│ ok      987654321  9999999  7200000 ms  5400000 ms  7200000 ms  9000000 ms │", 78, lines[11]);
+                AssertLine("│ failed  123456789      1.0   500000 ms   400000 ms   800000 ms   950000 ms │", 78, lines[12]);
             })
             .Step("One column narrower, p50 and max go too rather than any number truncating", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { HugeSnapshot() }, 77, 0, ColorMode.None);
 
-                Assert.Contains("p95", lines[7].Text);
-                Assert.DoesNotContain("p50", lines[7].Text);
-                Assert.DoesNotContain("max", lines[7].Text);
-                Assert.Contains("987654321  9999999  7200000 ms  7200000 ms", lines[8].Text);
+                Assert.Contains("p95", lines[10].Text);
+                Assert.DoesNotContain("p50", lines[10].Text);
+                Assert.DoesNotContain("max", lines[10].Text);
+                Assert.Contains("987654321  9999999  7200000 ms  7200000 ms", lines[11].Text);
             })
             .Step("At 56 columns count, rps, mean and p95 remain, all whole", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { HugeSnapshot() }, 56, 0, ColorMode.None);
 
-                AssertLine("│             count      rps        mean         p95   │", 56, lines[4]);
-                AssertLine("│ ok      987654321  9999999  7200000 ms  7200000 ms   │", 56, lines[5]);
-                AssertLine("│ failed  123456789      1.0   500000 ms   800000 ms   │", 56, lines[6]);
+                AssertLine("│             count      rps        mean         p95   │", 56, lines[11]);
+                AssertLine("│ ok      987654321  9999999  7200000 ms  7200000 ms   │", 56, lines[12]);
+                AssertLine("│ failed  123456789      1.0   500000 ms   800000 ms   │", 56, lines[13]);
             })
             .Step("From 56 columns up no numeric cell of the requests rows is ever truncated", context =>
             {
@@ -416,14 +1058,15 @@ public class LiveDashboardLayoutTests : Test
     public async Task Verify_live_rates_share_one_measure()
     {
         await Scenario()
-            .Step("The sparkline header, the requests rows and the step row all show the current interval", context =>
+            .Step("The rps tile, the sparkline header, the requests rows and the step row all show the current interval", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { RampSnapshot() }, 100, 0, ColorMode.None);
 
-                AssertLine("╭─ rps 50 " + new string('─', 38) + "╮  ╭─ p95 40 ms " + new string('─', 35) + "╮", 100, lines[3]);
-                AssertLine("│ ok       1800   45  10 ms  20 ms  20 ms  25 ms  40 ms  60 ms  90 ms" + new string(' ', 29) + " │", 100, lines[8]);
-                AssertLine("│ failed    180  5.0  15 ms  45 ms  45 ms  55 ms  70 ms  80 ms  95 ms" + new string(' ', 29) + " │", 100, lines[9]);
-                AssertLine("│ Add to cart   1980   50  20 ms  40 ms     180  █░░░░ 9.1%" + new string(' ', 39) + " │", 100, lines[13]);
+                Assert.Contains(Box("50" + Spaces(14)), lines[3].Text);
+                AssertLine("╭─ rps 50 " + new string('─', 38) + "╮  ╭─ p95 40 ms " + new string('─', 35) + "╮", 100, lines[7]);
+                AssertLine("│ ok       1800   45  10 ms  20 ms  20 ms  25 ms  40 ms  60 ms  90 ms" + Spaces(29) + " │", 100, lines[12]);
+                AssertLine("│ failed    180  5.0  15 ms  45 ms  45 ms  55 ms  70 ms  80 ms  95 ms" + Spaces(29) + " │", 100, lines[13]);
+                AssertLine("│ Add to cart   1980   50  20 ms  40 ms     180  █░░░░ 9.1%" + Spaces(39) + " │", 100, lines[17]);
             })
             .Step("An interval without requests shows a zero rate, and no sample yet shows no data", context =>
             {
@@ -433,10 +1076,12 @@ public class LiveDashboardLayoutTests : Test
                 var idleLines = LiveDashboardLayout.Render(new[] { idle }, 100, 0, ColorMode.None);
                 var freshLines = LiveDashboardLayout.Render(new[] { fresh }, 100, 0, ColorMode.None);
 
-                Assert.StartsWith("╭─ rps 0.0 ", idleLines[3].Text);
-                AssertLine("│ ok          0  0.0  N/A   N/A  N/A  N/A  N/A  N/A  N/A" + new string(' ', 42) + " │", 100, idleLines[8]);
-                Assert.StartsWith("╭─ rps — ", freshLines[3].Text);
-                AssertLine("│ ok          0    —  N/A   N/A  N/A  N/A  N/A  N/A  N/A" + new string(' ', 42) + " │", 100, freshLines[8]);
+                Assert.Contains(Box("0.0" + Spaces(13)), idleLines[3].Text);
+                Assert.StartsWith("╭─ rps 0.0 ", idleLines[7].Text);
+                AssertLine("│ ok          0  0.0  N/A   N/A  N/A  N/A  N/A  N/A  N/A" + Spaces(42) + " │", 100, idleLines[12]);
+                Assert.Contains(Box("—" + Spaces(15)), freshLines[3].Text);
+                Assert.StartsWith("╭─ rps — ", freshLines[7].Text);
+                AssertLine("│ ok          0    —  N/A   N/A  N/A  N/A  N/A  N/A  N/A" + Spaces(42) + " │", 100, freshLines[12]);
             })
             .Run();
     }
@@ -447,14 +1092,16 @@ public class LiveDashboardLayoutTests : Test
         await Scenario()
             .Step("Sections stack in snapshot order with a blank separator and one logo", context =>
             {
+                // The first section is 26 rows at 100 columns (title, five tile rows, the
+                // timeline, a blank, three sparkline rows, six requests rows, five step rows,
+                // four error rows), then the separator; the second's sparklines start on row 36.
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot(), IndeterminateSnapshot() }, 100, 40, ColorMode.None);
 
                 Assert.HasCount(40, lines);
-                AssertLine(string.Empty, 0, lines[21]);
-                AssertLine("Browse catalog  ● Running", 25, lines[22]);
-                AssertLine("elapsed 00:00:42  · warmup: Fixed 50 rps", 40, lines[23]);
-                AssertLine("╭─ rps — " + new string('─', 39) + "╮  ╭─ p95 — " + new string('─', 39) + "╮", 100, lines[25]);
-                AssertLine("│ ok          0    —  N/A   N/A  N/A  N/A  N/A  N/A  N/A" + new string(' ', 42) + " │", 100, lines[30]);
+                AssertLine(string.Empty, 0, lines[26]);
+                AssertLine("Browse catalog  ● Running", 25, lines[27]);
+                Assert.EndsWith("▒▒▒▒▒▒▒▒  warmup: Fixed Load 50 rps", lines[33].Text);
+                AssertLine("╭─ rps — " + new string('─', 39) + "╮  ╭─ p95 — " + new string('─', 39) + "╮", 100, lines[36]);
                 AssertLine("q quit", 6, lines[39]);
                 AssertMaximumWidth(100, lines);
 
@@ -469,14 +1116,14 @@ public class LiveDashboardLayoutTests : Test
             })
             .Step("A frame taller than the window keeps the footer on the last row and cuts the content", context =>
             {
-                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot(), IndeterminateSnapshot() }, 120, 24, ColorMode.None);
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot(), IndeterminateSnapshot() }, 120, 30, ColorMode.None);
 
-                Assert.HasCount(24, lines);
-                AssertLine("Browse catalog  ● Running", 25, lines[22]);
-                AssertLine("q quit", 6, lines[23]);
+                Assert.HasCount(30, lines);
+                AssertLine("Browse catalog  ● Running", 25, lines[27]);
+                AssertLine("q quit", 6, lines[29]);
 
                 foreach (var line in lines)
-                    Assert.DoesNotContain("warmup: Fixed 50 rps", line.Text);
+                    Assert.DoesNotContain("warmup: Fixed Load 50 rps", line.Text);
             })
             .Step("A one-row window is just the footer", context =>
             {
@@ -492,17 +1139,26 @@ public class LiveDashboardLayoutTests : Test
     public async Task Verify_indeterminate_plan_and_status_detail()
     {
         await Scenario()
-            .Step("An indeterminate plan renders an elapsed-only header with no progress bar", context =>
+            .Step("An indeterminate plan renders the hatched segment with the phase label after the bar, and the elapsed tile alone", context =>
             {
+                // The label takes 25 columns and the gap 2, leaving a 73-column bar: the
+                // hatched segment its fixed 8 and the 10 s warmup the other 65, its label
+                // centred with 23 columns each side. The hatched segment's label never fits
+                // eight columns: it goes to the legend under column 65, cut at the bar's edge.
                 var lines = LiveDashboardLayout.Render(new[] { IndeterminateSnapshot() }, 100, 0, ColorMode.None);
 
-                AssertLine("elapsed 00:00:42  · warmup: Fixed 50 rps", 40, lines[1]);
-                Assert.DoesNotContain("█", lines[1].Text);
-                Assert.DoesNotContain("░", lines[1].Text);
-                Assert.DoesNotContain("eta", lines[1].Text);
+                AssertLine(Row(Box("—" + Spaces(15)), Box("—" + Spaces(14)), Box("—" + Spaces(14)), Box("0" + Spaces(14)), Box("00:00:42" + Spaces(7))), 100, lines[3]);
+                AssertLine(Row(Box(Spaces(16)), Box(Spaces(15)), Box(Spaces(15)), Box(Spaces(15)), Box(Spaces(15))), 100, lines[4]);
+                AssertLine(new string('-', 23) + " Fixed Load 50 rps " + new string('-', 23) + "▒▒▒▒▒▒▒▒" + "  warmup: Fixed Load 50 rps", 100, lines[6]);
+                AssertLine(Spaces(65) + "One Tim…", 73, lines[7]);
+                AssertLine(string.Empty, 0, lines[8]);
+                Assert.StartsWith("╭─ rps — ", lines[9].Text);
+                Assert.DoesNotContain("▼", lines[6].Text);
+                Assert.DoesNotContain("#", lines[6].Text);
             })
-            .Step("Measurement-segment progress shows the bar and ETA without a planned total", context =>
+            .Step("Measurement-segment progress shows the gauge and the time remaining without a planned total", context =>
             {
+                // 15 − 9 = 6 cells, 0.3 × 6 = 1.8: one full cell and a six-eighths cell.
                 var snapshot = new LiveMetricsSnapshot
                 {
                     ScenarioName = "Browse catalog",
@@ -514,64 +1170,70 @@ public class LiveDashboardLayoutTests : Test
 
                 var lines = LiveDashboardLayout.Render(new[] { snapshot }, 100, 0, ColorMode.None);
 
-                AssertLine("elapsed 00:00:42  ██████░░░░░░░░░░░░░  30%  eta 00:01:24  · sim 1/1: Fixed 50 rps", 81, lines[1]);
+                Assert.Contains(Box("00:00:42" + Spaces(7)), lines[3].Text);
+                Assert.Contains(Box("▕█▊····▏ 1m 24s"), lines[4].Text);
+                AssertLine(string.Empty, 0, lines[6]);
             })
-            .Step("A failed scenario shows its assert reason as a styled header line", context =>
+            .Step("A failed scenario shows its assert reason as a styled line under the header", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { FailedSnapshot() }, 100, 0, ColorMode.None);
 
-                Assert.HasCount(13, lines);
+                Assert.HasCount(17, lines);
                 Assert.Contains("● Failed", lines[0].Text);
-                AssertLine("elapsed 00:05:00  · completed", 29, lines[1]);
-                AssertLine("✗ Assert.IsLessThan failed. p95 too high: 240 ms", 48, lines[2]);
-                AssertLine("q quit", 6, lines[12]);
+                Assert.Contains(Box("00:05:00" + Spaces(7)), lines[3].Text);
+                AssertLine("✗ Assert.IsLessThan failed. p95 too high: 240 ms", 48, lines[6]);
+                AssertLine("q quit", 6, lines[16]);
             })
             .Step("The assert reason line renders red in TrueColor", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { FailedSnapshot() }, 100, 0, ColorMode.TrueColor);
 
-                AssertLine("[38;5;9m✗ Assert.IsLessThan failed. p95 too high: 240 ms[0m", 48, lines[2]);
+                AssertLine("\u001b[38;5;9m✗ Assert.IsLessThan failed. p95 too high: 240 ms\u001b[0m", 48, lines[6]);
             })
             .Run();
     }
 
     [Test]
-    public async Task Verify_timing_line_drops_tail_pieces_whole()
+    public async Task Verify_elapsed_tile_and_timeline_drop_pieces_whole()
     {
         await Scenario()
-            .Step("At 40 columns the ETA does not fit whole, so it is dropped rather than cut", context =>
+            .Step("At 89 columns (five boxes of 17) the planned total and the four-cell gauge with the time remaining fit; at 88 the elapsed box is a column short of both", context =>
             {
-                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 40, 0, ColorMode.None);
+                // 0.45 × 4 = 1.8: one full cell and a six-eighths cell.
+                var fitting = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 89, 0, ColorMode.None);
+                Assert.EndsWith(Box("00:02:15 / 5m"), fitting[3].Text);
+                Assert.EndsWith(Box("▕█▊··▏ 2m 45s"), fitting[4].Text);
 
-                AssertLine("elapsed 00:02:15 / 00:05:00", 27, lines[1]);
+                var short_ = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 88, 0, ColorMode.None);
+                Assert.EndsWith(Box("00:02:15" + Spaces(4)), short_[3].Text);
+                Assert.EndsWith(Box(Spaces(12)), short_[4].Text);
             })
-            .Step("One column more and the ETA appears whole", context =>
+            .Step("The warmup count fits the requests box from 108 columns (a 21-wide fourth box) and goes at 107", context =>
             {
-                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 41, 0, ColorMode.None);
+                Assert.Contains("12512 warmup 1203", LiveDashboardLayout.Render(new[] { RichSnapshot() }, 108, 0, ColorMode.None)[3].Text);
 
-                AssertLine("elapsed 00:02:15 / 00:05:00  eta 00:02:45", 41, lines[1]);
+                var narrower = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 107, 0, ColorMode.None)[3].Text;
+                Assert.Contains("12512", narrower);
+                Assert.DoesNotContain("warmup", narrower);
             })
-            .Step("The phase label is the first piece to go, one column short of fitting", context =>
+            .Step("The phase label follows the timeline while the bar keeps 24 columns and is dropped one column narrower", context =>
             {
-                var shortLines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 91, 0, ColorMode.None);
-                var fullLines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 92, 0, ColorMode.None);
+                // At 51 columns the bar is 24: the hatched eight and 16 for the warmup, whose
+                // label goes to the legend with the one-time label two columns after it, cut.
+                var fitting = LiveDashboardLayout.Render(new[] { IndeterminateSnapshot() }, 51, 0, ColorMode.None);
+                AssertLine(new string('-', 16) + "▒▒▒▒▒▒▒▒" + "  warmup: Fixed Load 50 rps", 51, fitting[9]);
+                AssertLine("Fixed Load 50 rps  One …", 24, fitting[10]);
 
-                AssertLine("elapsed 00:02:15 / 00:05:00  █████████░░░░░░░░░░  45%  eta 00:02:45", 67, shortLines[1]);
-                AssertLine("elapsed 00:02:15 / 00:05:00  █████████░░░░░░░░░░  45%  eta 00:02:45  · sim 1/2: Fixed 50 rps", 92, fullLines[1]);
+                var dropped = LiveDashboardLayout.Render(new[] { IndeterminateSnapshot() }, 50, 0, ColorMode.None);
+                AssertLine(new string('-', 11) + " Fixed Load 50 rps " + new string('-', 12) + "▒▒▒▒▒▒▒▒", 50, dropped[9]);
+                AssertLine(Spaces(42) + "One Tim…", 50, dropped[10]);
             })
-            .Step("The planned total is dropped whole too, leaving the bare elapsed time", context =>
+            .Step("A determinate plan shows no phase label: the marker's segment is the phase", context =>
             {
-                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 26, 0, ColorMode.None);
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 220, 0, ColorMode.None);
 
-                AssertLine("elapsed 00:02:15", 16, lines[1]);
-            })
-            .Step("A phase label that does not fit whole is dropped, never truncated", context =>
-            {
-                var shortLines = LiveDashboardLayout.Render(new[] { IndeterminateSnapshot() }, 39, 0, ColorMode.None);
-                var fullLines = LiveDashboardLayout.Render(new[] { IndeterminateSnapshot() }, 40, 0, ColorMode.None);
-
-                AssertLine("elapsed 00:00:42", 16, shortLines[1]);
-                AssertLine("elapsed 00:00:42  · warmup: Fixed 50 rps", 40, fullLines[1]);
+                Assert.AreEqual(220, lines[6].Width);
+                Assert.DoesNotContain("sim 1/2", lines[6].Text);
             })
             .Step("Negative durations display as zero instead of negative clock fields", context =>
             {
@@ -586,7 +1248,7 @@ public class LiveDashboardLayoutTests : Test
 
                 var lines = LiveDashboardLayout.Render(new[] { snapshot }, 100, 0, ColorMode.None);
 
-                AssertLine("elapsed 00:00:00 / 00:00:00  eta 00:00:00  · p", 46, lines[1]);
+                Assert.Contains(Box("00:00:00 / 0s" + Spaces(2)), lines[3].Text);
             })
             .Run();
     }
@@ -595,7 +1257,7 @@ public class LiveDashboardLayoutTests : Test
     public async Task Verify_no_data_and_out_of_range_values_render_safely()
     {
         await Scenario()
-            .Step("A p95 series value no TimeSpan can hold shows no data instead of throwing", context =>
+            .Step("A p95 series value no TimeSpan can hold shows no data on the tile and in the header instead of throwing", context =>
             {
                 var justOutOfRange = Math.BitIncrement(TimeSpan.MaxValue.TotalMilliseconds);
                 foreach (var value in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity, double.MaxValue, justOutOfRange, -justOutOfRange, 1e15 })
@@ -604,7 +1266,9 @@ public class LiveDashboardLayoutTests : Test
 
                     var lines = LiveDashboardLayout.Render(new[] { snapshot }, 100, 0, ColorMode.None);
 
-                    Assert.Contains("╭─ p95 — ", lines[3].Text, $"Unexpected p95 header for {value}");
+                    Assert.Contains(Box("—" + Spaces(14)), lines[3].Text, $"Unexpected p95 tile for {value}");
+                    Assert.DoesNotContain(" ms", lines[3].Text, $"Unexpected p95 number for {value}");
+                    Assert.Contains("╭─ p95 — ", lines[7].Text, $"Unexpected p95 header for {value}");
                 }
             })
             .Step("A representable p95 series value, up to the largest TimeSpan, renders through the shared formatter", context =>
@@ -613,11 +1277,14 @@ public class LiveDashboardLayoutTests : Test
                 var largest = new LiveMetricsSnapshot { ScenarioName = "p95", ResponseTimePercentile95Series = new[] { TimeSpan.MaxValue.TotalMilliseconds } };
                 var negative = new LiveMetricsSnapshot { ScenarioName = "p95", ResponseTimePercentile95Series = new double[] { -5 } };
 
-                Assert.Contains("╭─ p95 7200000 ms ", LiveDashboardLayout.Render(new[] { hours }, 100, 0, ColorMode.None)[3].Text);
-                Assert.Contains("╭─ p95 922337203685477 ms ", LiveDashboardLayout.Render(new[] { largest }, 100, 0, ColorMode.None)[3].Text);
-                Assert.Contains("╭─ p95 N/A ", LiveDashboardLayout.Render(new[] { negative }, 100, 0, ColorMode.None)[3].Text);
+                Assert.Contains("╭─ p95 7200000 ms ", LiveDashboardLayout.Render(new[] { hours }, 100, 0, ColorMode.None)[7].Text);
+                Assert.Contains(Box("7200000 ms" + Spaces(5)), LiveDashboardLayout.Render(new[] { hours }, 100, 0, ColorMode.None)[3].Text);
+                Assert.Contains("╭─ p95 922337203685477 ms ", LiveDashboardLayout.Render(new[] { largest }, 100, 0, ColorMode.None)[7].Text);
+                Assert.Contains("922337203685477 ms", LiveDashboardLayout.Render(new[] { largest }, 100, 0, ColorMode.None)[3].Text);
+                Assert.Contains("╭─ p95 N/A ", LiveDashboardLayout.Render(new[] { negative }, 100, 0, ColorMode.None)[7].Text);
+                Assert.Contains(Box("—" + Spaces(14)), LiveDashboardLayout.Render(new[] { negative }, 100, 0, ColorMode.None)[3].Text);
             })
-            .Step("A rate that is not finite shows no data in the header and the step table alike", context =>
+            .Step("A rate that is not finite shows no data on the tile, in the header and in the step table alike", context =>
             {
                 var snapshot = new LiveMetricsSnapshot
                 {
@@ -631,13 +1298,14 @@ public class LiveDashboardLayoutTests : Test
 
                 var lines = LiveDashboardLayout.Render(new[] { snapshot }, 100, 0, ColorMode.None);
 
-                Assert.StartsWith("╭─ rps — ", lines[3].Text);
-                AssertLine("│ S         5    —  1 ms  2 ms       0  ░░░░░ 0%" + new string(' ', 50) + " │", 100, lines[13]);
+                Assert.Contains(Box("—" + Spaces(15)), lines[3].Text);
+                Assert.StartsWith("╭─ rps — ", lines[7].Text);
+                AssertLine("│ S         5    —  1 ms  2 ms       0  ░░░░░ 0%" + Spaces(50) + " │", 100, lines[17]);
             })
             .Step("Step counts that do not add up render a clamped bar at every width instead of throwing", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { StepSnapshot(-1, 5) }, 100, 0, ColorMode.None);
-                Assert.Contains("█████ 100%", lines[13].Text);
+                Assert.Contains("█████ 100%", lines[17].Text);
 
                 foreach (var snapshot in new[] { StepSnapshot(-1, 5), StepSnapshot(5, -1), StepSnapshot(-5, 5), StepSnapshot(int.MaxValue, int.MaxValue) })
                 {
@@ -652,7 +1320,7 @@ public class LiveDashboardLayoutTests : Test
     public async Task Verify_step_counts_and_percentages_stay_honest()
     {
         await Scenario()
-            .Step("Two counts of two billion sum without wrapping in the step table and the warmup line", context =>
+            .Step("Two counts of two billion sum without wrapping in the step table and the warmup line, and stay off the requests tile's unit line", context =>
             {
                 var snapshot = new LiveMetricsSnapshot
                 {
@@ -664,18 +1332,19 @@ public class LiveDashboardLayoutTests : Test
 
                 var lines = LiveDashboardLayout.Render(new[] { snapshot }, 100, 0, ColorMode.None);
 
-                AssertLine("│ warmup 2000000000 ok · 2000000000 failed" + new string(' ', 56) + " │", 100, lines[7]);
-                AssertLine("│ S     4000000000  0.0   N/A  N/A  2000000000  ███░░ 50%" + new string(' ', 41) + " │", 100, lines[14]);
+                Assert.Contains(Box("0" + Spaces(14)), lines[3].Text);
+                AssertLine("│ warmup 2000000000 ok · 2000000000 failed" + Spaces(56) + " │", 100, lines[11]);
+                AssertLine("│ S     4000000000  0.0   N/A  N/A  2000000000  ███░░ 50%" + Spaces(41) + " │", 100, lines[18]);
             })
             .Step("A failure share below 100% never reads as 100%, mirroring the <0.1% floor", context =>
             {
-                Assert.Contains("█████ >99.9%", LiveDashboardLayout.Render(new[] { StepSnapshot(3, 9997) }, 100, 0, ColorMode.None)[13].Text);
-                Assert.Contains("█████ 99.9%", LiveDashboardLayout.Render(new[] { StepSnapshot(1, 999) }, 100, 0, ColorMode.None)[13].Text);
-                Assert.Contains("█████ 99.6%", LiveDashboardLayout.Render(new[] { StepSnapshot(4, 996) }, 100, 0, ColorMode.None)[13].Text);
-                Assert.Contains("█████ 99.5%", LiveDashboardLayout.Render(new[] { StepSnapshot(5, 995) }, 100, 0, ColorMode.None)[13].Text);
-                Assert.Contains("█████ 99%", LiveDashboardLayout.Render(new[] { StepSnapshot(6, 994) }, 100, 0, ColorMode.None)[13].Text);
-                Assert.Contains("█████ 100%", LiveDashboardLayout.Render(new[] { StepSnapshot(0, 5) }, 100, 0, ColorMode.None)[13].Text);
-                Assert.Contains("█░░░░ <0.1%", LiveDashboardLayout.Render(new[] { StepSnapshot(9999, 1) }, 100, 0, ColorMode.None)[13].Text);
+                Assert.Contains("█████ >99.9%", LiveDashboardLayout.Render(new[] { StepSnapshot(3, 9997) }, 100, 0, ColorMode.None)[17].Text);
+                Assert.Contains("█████ 99.9%", LiveDashboardLayout.Render(new[] { StepSnapshot(1, 999) }, 100, 0, ColorMode.None)[17].Text);
+                Assert.Contains("█████ 99.6%", LiveDashboardLayout.Render(new[] { StepSnapshot(4, 996) }, 100, 0, ColorMode.None)[17].Text);
+                Assert.Contains("█████ 99.5%", LiveDashboardLayout.Render(new[] { StepSnapshot(5, 995) }, 100, 0, ColorMode.None)[17].Text);
+                Assert.Contains("█████ 99%", LiveDashboardLayout.Render(new[] { StepSnapshot(6, 994) }, 100, 0, ColorMode.None)[17].Text);
+                Assert.Contains("█████ 100%", LiveDashboardLayout.Render(new[] { StepSnapshot(0, 5) }, 100, 0, ColorMode.None)[17].Text);
+                Assert.Contains("█░░░░ <0.1%", LiveDashboardLayout.Render(new[] { StepSnapshot(9999, 1) }, 100, 0, ColorMode.None)[17].Text);
             })
             .Run();
     }
@@ -702,16 +1371,16 @@ public class LiveDashboardLayoutTests : Test
             })
             .Step("Color mode None emits zero escape bytes across the whole frame", context =>
             {
-                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot(), FailedSnapshot() }, 120, 40, ColorMode.None);
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot(), ThresholdSnapshot(), IndeterminateSnapshot(), FailedSnapshot() }, 120, 0, ColorMode.None);
 
                 foreach (var line in lines)
-                    Assert.DoesNotContain("", line.Text);
+                    Assert.DoesNotContain("\u001b", line.Text);
             })
             .Step("TrueColor styles the frame with the warm accent on the panel headers", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.TrueColor);
 
-                Assert.Contains("[1;38;2;255;157;61mRequests[0m", lines[6].Text);
+                Assert.Contains("\u001b[1;38;2;255;157;61mRequests\u001b[0m", lines[11].Text);
             })
             .Run();
     }
@@ -722,7 +1391,7 @@ public class LiveDashboardLayoutTests : Test
         await Scenario()
             .Step("No line exceeds the width at any width from 1 to 130 with either glyph set", context =>
             {
-                var snapshots = new[] { RichSnapshot(), FailedSnapshot(), IndeterminateSnapshot(), HugeSnapshot(), RampSnapshot() };
+                var snapshots = new[] { RichSnapshot(), FailedSnapshot(), IndeterminateSnapshot(), HugeSnapshot(), RampSnapshot(), ThresholdSnapshot() };
                 foreach (var glyphSet in new[] { SparklineGlyphSet.Braille, SparklineGlyphSet.Blocks })
                 {
                     for (var width = 1; width <= 130; width++)
@@ -732,16 +1401,32 @@ public class LiveDashboardLayoutTests : Test
                     }
                 }
             })
-            .Step("The block glyph set passes through to the sparkline panels", context =>
+            .Step("At every width from 40 to 220 and height from 10 to 60 the frame is exactly the height, the footer owns the last row and no line exceeds the width", context =>
+            {
+                var snapshots = new[] { RichSnapshot(), ThresholdSnapshot(), IndeterminateSnapshot() };
+                for (var width = 40; width <= 220; width++)
+                {
+                    for (var height = 10; height <= 60; height++)
+                    {
+                        var lines = LiveDashboardLayout.Render(snapshots, width, height, ColorMode.TrueColor);
+
+                        Assert.HasCount(height, lines, $"Row count at {width}×{height}");
+                        Assert.AreEqual(6, lines[height - 1].Width, $"Footer at {width}×{height}");
+                        AssertMaximumWidth(width, lines);
+                    }
+                }
+            })
+            .Step("The block glyph set passes through to the tile trends and the sparkline panels", context =>
             {
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.None, SparklineGlyphSet.Blocks);
 
-                AssertLine("│ " + new string(' ', 45) + "▁▂▃▄▅▆▇▇██ │  │ " + new string(' ', 45) + "█▇▅▄▃▃▂▂▁▁ │", 120, lines[4]);
+                AssertLine(Row(Box(Spaces(10) + "▁▂▃▄▅▆▇▇██"), Box(Spaces(9) + "█▇▅▄▃▃▂▂▁▁"), Box(Spaces(19)), Box(Spaces(19)), Box("▕████▌·····▏ 2m 45s")), 120, lines[4]);
+                AssertLine("│ " + Spaces(45) + "▁▂▃▄▅▆▇▇██ │  │ " + Spaces(45) + "█▇▅▄▃▃▂▂▁▁ │", 120, lines[9]);
             })
             .Step("Identical inputs render an identical frame", context =>
             {
-                var first = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.TrueColor);
-                var second = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.TrueColor);
+                var first = LiveDashboardLayout.Render(new[] { RichSnapshot(), ThresholdSnapshot() }, 120, 40, ColorMode.TrueColor);
+                var second = LiveDashboardLayout.Render(new[] { RichSnapshot(), ThresholdSnapshot() }, 120, 40, ColorMode.TrueColor);
 
                 Assert.HasCount(first.Count, second);
                 for (var index = 0; index < first.Count; index++)
@@ -779,7 +1464,7 @@ public class LiveDashboardLayoutTests : Test
             {
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 120, 40, ColorMode.None, SparklineGlyphSet.Braille, "⠹");
 
-                AssertLine("Checkout flow  ⠹ Running" + new string(' ', 83) + "  ⚡ TestFuzn", 120, lines[0]);
+                AssertLine("Checkout flow  ⠹ Running" + Spaces(83) + "  ⚡ TestFuzn", 120, lines[0]);
             })
             .Step("Failed and passed badges keep their dot regardless of the glyph", context =>
             {
@@ -803,6 +1488,71 @@ public class LiveDashboardLayoutTests : Test
                 AssertLine("Browse catalog  [ Running", 25, lines[0]);
             })
             .Run();
+    }
+
+    [Test]
+    public async Task Verify_dashboard_degrades_at_narrow_widths()
+    {
+        await Scenario()
+            .Step("Below 80 columns the logo and the trends are dropped while the sparklines and the full spread remain", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 78, 24, ColorMode.None);
+
+                Assert.HasCount(24, lines);
+                AssertLine("Checkout flow  ● Running", 24, lines[0]);
+                AssertLine(Row(Bottom(15), Bottom(15), Bottom(15), Bottom(15), Bottom(14)), 78, lines[4]);
+                AssertLine("╭─ rps 142 " + new string('─', 26) + "╮  ╭─ p95 38 ms " + new string('─', 24) + "╮", 78, lines[8]);
+                AssertLine("│         count  rps    min    mean    p50     p75     p95     p99     max" + Spaces(2) + " │", 78, lines[13]);
+                AssertLine("q quit", 6, lines[23]);
+                AssertMaximumWidth(78, lines);
+
+                foreach (var line in lines)
+                    Assert.DoesNotContain("⚡", line.Text);
+            })
+            .Step("Below 60 columns the sparkline panels are dropped and the requests table narrows", context =>
+            {
+                var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, 56, 24, ColorMode.None);
+
+                Assert.HasCount(24, lines);
+                AssertLine("│         count  rps    mean    p50     p95     max    │", 56, lines[15]);
+                AssertLine("│ ok      12480  141   38 ms  35 ms   72 ms  312 ms    │", 56, lines[16]);
+                AssertLine("q quit", 6, lines[23]);
+                AssertMaximumWidth(56, lines);
+
+                foreach (var line in lines)
+                    Assert.DoesNotContain("╭─ rps", line.Text);
+            })
+            .Run();
+    }
+
+    private static string Row(params string[] boxes)
+    {
+        return string.Join(new string(' ', TileRowWidget.Gap), boxes);
+    }
+
+    private static string Box(string inner)
+    {
+        return "│ " + inner + " │";
+    }
+
+    private static string Top(int width)
+    {
+        return "╭" + new string('─', width - 2) + "╮";
+    }
+
+    private static string Bottom(int width)
+    {
+        return "╰" + new string('─', width - 2) + "╯";
+    }
+
+    private static string Spaces(int count)
+    {
+        return new string(' ', count);
+    }
+
+    private static string Sgr(string parameters, string text)
+    {
+        return "\u001b[" + parameters + "m" + text + "\u001b[0m";
     }
 
     private static void AssertLine(string expectedText, int expectedWidth, RenderedLine actualLine)

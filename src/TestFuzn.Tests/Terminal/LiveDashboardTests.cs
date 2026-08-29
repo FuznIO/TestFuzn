@@ -96,8 +96,10 @@ public class LiveDashboardTests : Test
                 var expectedLines = LiveDashboardLayout.Render(new[] { WarmupSnapshot(42) }, 40, 6, ColorMode.None, SparklineGlyphSet.Braille, "⠋");
                 Assert.HasCount(6, expectedLines);
                 Assert.AreEqual(FullRedraw(expectedLines), flush);
-                // Hand-derived anchors, so the golden is not only the layout compared to itself.
-                Assert.Contains(AnsiCodes.MoveCursor(1, 1) + TitleLine("⠋") + AnsiCodes.MoveCursor(2, 1) + "elapsed 00:00:42  · warmup: Fixed 50 rps", flush);
+                // Hand-derived anchors, so the golden is not only the layout compared to itself:
+                // below 64 columns the tiles wrap, and the first row's three boxes share 38
+                // columns as 13, 13 and 12.
+                Assert.Contains(AnsiCodes.MoveCursor(1, 1) + TitleLine("⠋") + AnsiCodes.MoveCursor(2, 1) + "╭───────────╮ ╭───────────╮ ╭──────────╮", flush);
                 Assert.EndsWith(AnsiCodes.MoveCursor(6, 1) + "q quit" + AnsiCodes.EndSynchronizedOutput, flush);
             })
             .Step("An unchanged data state repaints only the spinner on the title row", context =>
@@ -169,7 +171,9 @@ public class LiveDashboardTests : Test
         await Scenario()
             .Step("A snapshot published between renders is painted by the next render", context =>
             {
-                var writer = new FakeTerminalWriter { WindowWidth = 40, WindowHeight = 6 };
+                // Twelve rows show both tile rows: the elapsed clock is the value line of the
+                // second row's second box (20 and 19 columns wide), on terminal row 8.
+                var writer = new FakeTerminalWriter { WindowWidth = 40, WindowHeight = 12 };
                 var snapshots = new[] { WarmupSnapshot(42) };
                 using var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => snapshots);
                 dashboard.Start();
@@ -183,7 +187,7 @@ public class LiveDashboardTests : Test
                 Assert.AreEqual(
                     SynchronizedFlush(
                         RepaintedLine(1, TitleLine("⠙")),
-                        RepaintedLine(2, "elapsed 00:00:43  · warmup: Fixed 50 rps")),
+                        RepaintedLine(8, "│ 0" + new string(' ', 15) + " │ │ 00:00:43" + new string(' ', 7) + " │")),
                     flush);
             })
             .Step("A provider returning null fails loud instead of rendering a blank frame", context =>

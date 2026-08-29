@@ -63,6 +63,16 @@ internal sealed class LiveMetricsSnapshot
     public TestStatus Status { get; init; }
 
     /// <summary>
+    /// The simulation plan the dashboard's timeline is drawn from: every simulation in producer
+    /// order (the warmup segment first) with its compact label, its planned duration — null for
+    /// a count-based simulation, which the timeline draws hatched — and its warmup flag. The
+    /// same immutable list on every snapshot of a model (it is fixed at construction), so it is
+    /// shared rather than copied; empty for a view built without a plan, such as the init
+    /// placeholder the console manager shows before the simulations are known.
+    /// </summary>
+    public IReadOnlyList<SimulationPlanEntry> PlanEntries { get; init; } = Array.Empty<SimulationPlanEntry>();
+
+    /// <summary>
     /// The message of the assert failure that failed the scenario — the first non-null of the
     /// collector's warming-up, while-running and when-done assert exceptions. Null while no
     /// assert has failed, so a Failed <see cref="Status"/> always has its reason here.

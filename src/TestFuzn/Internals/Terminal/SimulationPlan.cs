@@ -188,9 +188,11 @@ internal sealed class SimulationPlan
     /// <summary>
     /// Formats a duration compactly for labels: whole h/m/s parts with zero parts omitted
     /// ("30s", "1m 30s", "2h", "1h 5m"), a sub-second value as fractional seconds ("0.5s"),
-    /// and zero as "0s". Invariant culture, so labels are deterministic.
+    /// and zero as "0s" (a negative duration too). Invariant culture, so labels are
+    /// deterministic. Shared with the dashboard's elapsed tile, whose planned total and time
+    /// remaining read in the same units as the plan's labels.
     /// </summary>
-    private static string FormatDuration(TimeSpan duration)
+    internal static string FormatDuration(TimeSpan duration)
     {
         if (duration > TimeSpan.Zero && duration < TimeSpan.FromSeconds(1))
             return duration.TotalSeconds.ToString("0.##", CultureInfo.InvariantCulture) + "s";
