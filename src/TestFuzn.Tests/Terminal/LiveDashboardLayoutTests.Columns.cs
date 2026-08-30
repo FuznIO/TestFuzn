@@ -581,13 +581,14 @@ public partial class LiveDashboardLayoutTests
     {
         // The rich scenario twice at 160 columns: both columns are the 160×40 golden's rich
         // column, their Steps panels on rows 30-34 with Checkout, the most painful step, on
-        // row 32. Index 0 marks that row in both columns with the pointer in place of the
-        // blank pointer column and, in colour, paints each as its own reverse-video span over
-        // the row padded to the column's 75 inner columns.
+        // row 32. Checkout is declared second, so the declaration index 1 marks that row in
+        // both columns with the pointer in place of the blank pointer column and, in colour,
+        // paints each as its own reverse-video span over the row padded to the column's 75
+        // inner columns.
         await Scenario()
-            .Step("Index 0 points at the most painful row of both columns' Steps tables and reverses each row whole", context =>
+            .Step("Declaration index 1 points at Checkout's row — the most painful, the top row — of both columns' Steps tables and reverses each row whole", context =>
             {
-                var viewState = new LiveDashboardViewState { SelectedStepIndex = 0 };
+                var viewState = new LiveDashboardViewState { SelectedStepIndex = 1 };
                 var selectedRow = LiveDashboardLayout.Pointer + CheckoutStepRow.Substring(1);
 
                 var plain = LiveDashboardLayout.Render(new[] { RichSnapshot(), RichSnapshot() }, viewState, 160, 40, ColorMode.None);

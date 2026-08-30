@@ -21,15 +21,21 @@ public partial class LiveDashboardLayoutTests
     private const string SearchPainRow = "Search        1000   10  10 ms  120 ms       0  ░░░░░ 0%               ⣤";
     private const string LogoutPainRow = "Logout        1000   10  10 ms       —       0  ░░░░░ 0%               ⣤";
 
+    /// <summary>The Add to cart row once its interval p95 has climbed to 100 ms, past Checkout's 90: the top row of the reordered pain snapshot.</summary>
+    private const string AddToCartOvertakenPainRow = "Add to cart   1000   10  10 ms  100 ms      20  █░░░░ 2.0%             ⣤";
+
     /// <summary>
-    /// Six steps, declared Login, Browse, Add to cart, Checkout, Logout, Search, whose pain
-    /// order differs from every other: Login fails 1.0 % (10 of 1000) with an interval p95 of
-    /// 50 ms, Browse and Search never fail at 120 ms, Add to cart and Checkout both fail
-    /// 2.0 % (20 of 1000) at 30 and 90 ms, and Logout never fails and has no interval p95 at
-    /// all. Every step runs at 10 rps, a two-sample flat series (one middle-level trend
-    /// column), with a 10 ms cumulative mean. No plan, no sample.
+    /// Six steps, declared Login, Browse, Add to cart, Checkout, Logout, Search — the
+    /// declaration indices 0 to 5 — whose pain order differs from every other: Login fails
+    /// 1.0 % (10 of 1000) with an interval p95 of 50 ms, Browse and Search never fail at
+    /// 120 ms, Add to cart and Checkout both fail 2.0 % (20 of 1000) at 30 (or the given
+    /// p95) and 90 ms, and Logout never fails and has no interval p95 at all. Every step
+    /// runs at 10 rps, a two-sample flat series (one middle-level trend column), with a 10 ms
+    /// cumulative mean. No plan, no sample. The displayed order is Checkout, Add to cart,
+    /// Login, Browse, Search, Logout — 3, 2, 0, 1, 5, 4 — and with Add to cart's p95 past
+    /// Checkout's the two swap.
     /// </summary>
-    private static LiveMetricsSnapshot PainSnapshot()
+    private static LiveMetricsSnapshot PainSnapshot(double addToCartPercentile95 = 30)
     {
         return new LiveMetricsSnapshot
         {
@@ -38,7 +44,7 @@ public partial class LiveDashboardLayoutTests
             {
                 PainStep("Login", 990, 10, 50),
                 PainStep("Browse", 1000, 0, 120),
-                PainStep("Add to cart", 980, 20, 30),
+                PainStep("Add to cart", 980, 20, addToCartPercentile95),
                 PainStep("Checkout", 980, 20, 90),
                 PainStep("Logout", 1000, 0, null),
                 PainStep("Search", 1000, 0, 120)
@@ -217,10 +223,13 @@ public partial class LiveDashboardLayoutTests
     [Test]
     public async Task Verify_selected_step_row_is_pointed_at_and_reversed()
     {
+        // The selection is a declaration index: 3 is Checkout, the most painful step and the
+        // top row; 4 Logout, the step without a p95 reading and the bottom row; 0 Login, the
+        // first declared, the third row.
         await Scenario()
-            .Step("Index 0 marks the most painful row with the pointer and paints the whole row, padding included, as one reverse-video span", context =>
+            .Step("Declaration index 3 marks Checkout's row — the top one — with the pointer and paints the whole row, padding included, as one reverse-video span", context =>
             {
-                var viewState = new LiveDashboardViewState { SelectedStepIndex = 0 };
+                var viewState = new LiveDashboardViewState { SelectedStepIndex = 3 };
 
                 var plain = LiveDashboardLayout.Render(new[] { PainSnapshot() }, viewState, 120, 0, ColorMode.None);
                 AssertLine(Box(LiveDashboardLayout.Pointer + CheckoutPainRow + Spaces(43)), 120, plain[32]);
@@ -235,32 +244,52 @@ public partial class LiveDashboardLayoutTests
                 var monochrome = LiveDashboardLayout.Render(new[] { PainSnapshot() }, viewState, 120, 0, ColorMode.Monochrome);
                 AssertLine("│ " + Sgr(Reverse, LiveDashboardLayout.Pointer + CheckoutPainRow + Spaces(43)) + " │", 120, monochrome[32]);
             })
-            .Step("The last index highlights the last row, the one without a p95 reading", context =>
+            .Step("The highlight follows the step, not the row: index 4 is Logout on the bottom row, index 0 Login on the third", context =>
             {
-                var lines = LiveDashboardLayout.Render(new[] { PainSnapshot() }, new LiveDashboardViewState { SelectedStepIndex = 5 }, 120, 0, ColorMode.TrueColor);
+                var logout = LiveDashboardLayout.Render(new[] { PainSnapshot() }, new LiveDashboardViewState { SelectedStepIndex = 4 }, 120, 0, ColorMode.TrueColor);
+                AssertLine("│ " + Sgr(Reverse, LiveDashboardLayout.Pointer + LogoutPainRow + Spaces(43)) + " │", 120, logout[37]);
+                Assert.DoesNotContain(AnsiCodes.Reverse, logout[32].Text);
 
-                AssertLine("│ " + Sgr(Reverse, LiveDashboardLayout.Pointer + LogoutPainRow + Spaces(43)) + " │", 120, lines[37]);
-                Assert.DoesNotContain(AnsiCodes.Reverse, lines[32].Text);
+                var login = LiveDashboardLayout.Render(new[] { PainSnapshot() }, new LiveDashboardViewState { SelectedStepIndex = 0 }, 120, 0, ColorMode.None);
+                AssertLine(Box(" " + CheckoutPainRow + Spaces(43)), 120, login[32]);
+                AssertLine(Box(LiveDashboardLayout.Pointer + LoginPainRow + Spaces(43)), 120, login[34]);
+                Assert.AreEqual(1, CountLinesContaining(login, LiveDashboardLayout.Pointer));
             })
-            .Step("An index past the last row is clamped to the last row, and a negative one to the first", context =>
+            .Step("The highlight follows the step across a sort change: index 2 marks Add to cart's row second while Checkout's p95 is higher, and first once its own p95 overtakes", context =>
             {
-                var past = LiveDashboardLayout.Render(new[] { PainSnapshot() }, new LiveDashboardViewState { SelectedStepIndex = 99 }, 120, 0, ColorMode.None);
-                AssertLine(Box(LiveDashboardLayout.Pointer + LogoutPainRow + Spaces(43)), 120, past[37]);
+                var viewState = new LiveDashboardViewState { SelectedStepIndex = 2 };
 
-                var negative = LiveDashboardLayout.Render(new[] { PainSnapshot() }, new LiveDashboardViewState { SelectedStepIndex = -3 }, 120, 0, ColorMode.None);
-                AssertLine(Box(LiveDashboardLayout.Pointer + CheckoutPainRow + Spaces(43)), 120, negative[32]);
+                var before = LiveDashboardLayout.Render(new[] { PainSnapshot() }, viewState, 120, 0, ColorMode.None);
+                AssertLine(Box(" " + CheckoutPainRow + Spaces(43)), 120, before[32]);
+                AssertLine(Box(LiveDashboardLayout.Pointer + AddToCartPainRow + Spaces(43)), 120, before[33]);
 
-                foreach (var lines in new[] { past, negative })
+                var after = LiveDashboardLayout.Render(new[] { PainSnapshot(addToCartPercentile95: 100) }, viewState, 120, 0, ColorMode.None);
+                AssertLine(Box(LiveDashboardLayout.Pointer + AddToCartOvertakenPainRow + Spaces(43)), 120, after[32]);
+                AssertLine(Box(" " + CheckoutPainRow + Spaces(43)), 120, after[33]);
+                Assert.AreEqual(1, CountLinesContaining(after, LiveDashboardLayout.Pointer));
+
+                CollectionAssert.AreEqual(new[] { 3, 2, 0, 1, 5, 4 }, LiveDashboardLayout.DisplayedStepOrder(PainSnapshot()).ToList());
+                CollectionAssert.AreEqual(new[] { 2, 3, 0, 1, 5, 4 }, LiveDashboardLayout.DisplayedStepOrder(PainSnapshot(addToCartPercentile95: 100)).ToList());
+                Assert.AreEqual(1, LiveDashboardLayout.DisplayedPosition(LiveDashboardLayout.DisplayedStepOrder(PainSnapshot()), 2));
+                Assert.AreEqual(0, LiveDashboardLayout.DisplayedPosition(LiveDashboardLayout.DisplayedStepOrder(PainSnapshot(addToCartPercentile95: 100)), 2));
+            })
+            .Step("An index past the steps or a negative one names no step: nothing is highlighted", context =>
+            {
+                var past = LiveDashboardLayout.Render(new[] { PainSnapshot() }, new LiveDashboardViewState { SelectedStepIndex = 99 }, 120, 0, ColorMode.TrueColor);
+                var negative = LiveDashboardLayout.Render(new[] { PainSnapshot() }, new LiveDashboardViewState { SelectedStepIndex = -3 }, 120, 0, ColorMode.TrueColor);
+
+                foreach (var line in past.Concat(negative))
                 {
-                    var pointerCount = 0;
-                    foreach (var line in lines)
-                    {
-                        if (line.Text.Contains(LiveDashboardLayout.Pointer))
-                            pointerCount++;
-                    }
-
-                    Assert.AreEqual(1, pointerCount);
+                    Assert.DoesNotContain(LiveDashboardLayout.Pointer, line.Text);
+                    Assert.DoesNotContain(AnsiCodes.Reverse, line.Text);
                 }
+
+                Assert.Contains(Sgr(Dim, "—"), past[37].Text);
+
+                var order = LiveDashboardLayout.DisplayedStepOrder(PainSnapshot());
+                Assert.AreEqual(-1, LiveDashboardLayout.DisplayedPosition(order, 99));
+                Assert.AreEqual(-1, LiveDashboardLayout.DisplayedPosition(order, -3));
+                Assert.AreEqual(-1, LiveDashboardLayout.DisplayedPosition(order, null));
             })
             .Step("No selection highlights nothing, and a selection on a snapshot without steps is nothing to highlight", context =>
             {
@@ -273,7 +302,7 @@ public partial class LiveDashboardLayoutTests
                     Assert.DoesNotContain(AnsiCodes.Reverse, line.Text);
                 }
             })
-            .Step("The selection indexes the rows displayed: once the budget hides the least painful rows, an index past them lands on the last row kept", context =>
+            .Step("Once the budget hides the least painful rows the highlight follows the step into the rows kept, and the more line stands in for a hidden row with the step's name", context =>
             {
                 // Below 30 rows the tiles carry no trend (four rows, no gauge without a plan)
                 // and the chart bodies are four rows: the title, the tiles, a blank, the
@@ -281,19 +310,33 @@ public partial class LiveDashboardLayoutTests
                 // table, and its 9 are 26 against the 24 above the footer. No heatmap and the
                 // charts compact by height already, so the step rows pay: the first row given
                 // back costs the more line, so three rows go for two — Checkout, Add to cart
-                // and Login stay over "+3 more" — and index 5 lands on Login. The columns
-                // follow the rows shown: without "120 ms" the p95 column is five wide, so
-                // the rows are 72 columns.
-                var lines = LiveDashboardLayout.Render(new[] { PainSnapshot() }, new LiveDashboardViewState { SelectedStepIndex = 5 }, 120, 25, ColorMode.None);
+                // and Login stay over "+3 more". Index 0 is Login, the last row kept; index 5
+                // is Search, a hidden row, so the more line stands in for it — the pointer,
+                // "+3 more", a dot and the name, 17 columns padded to the panel's 116 — as
+                // the frame's one reverse bar, and no row is reversed. The columns follow the
+                // rows shown: without "120 ms" the p95 column is five wide, so the rows are
+                // 72 columns.
+                var kept = LiveDashboardLayout.Render(new[] { PainSnapshot() }, new LiveDashboardViewState { SelectedStepIndex = 0 }, 120, 25, ColorMode.None);
 
-                Assert.HasCount(25, lines);
-                AssertLine(PanelTop("Steps", 120), 120, lines[17]);
-                AssertLine(Box(" Checkout      1000   10  10 ms  90 ms      20  █░░░░ 2.0%" + Spaces(13) + "⣤" + Spaces(44)), 120, lines[19]);
-                AssertLine(Box(" Add to cart   1000   10  10 ms  30 ms      20  █░░░░ 2.0%" + Spaces(13) + "⣤" + Spaces(44)), 120, lines[20]);
-                AssertLine(Box(LiveDashboardLayout.Pointer + "Login         1000   10  10 ms  50 ms      10  █░░░░ 1.0%" + Spaces(13) + "⣤" + Spaces(44)), 120, lines[21]);
-                AssertLine(Box(" +3 more" + Spaces(108)), 120, lines[22]);
-                AssertLine(Bottom(120), 120, lines[23]);
-                AssertLine(OverviewFooter, 93, lines[24]);
+                Assert.HasCount(25, kept);
+                AssertLine(PanelTop("Steps", 120), 120, kept[17]);
+                AssertLine(Box(" Checkout      1000   10  10 ms  90 ms      20  █░░░░ 2.0%" + Spaces(13) + "⣤" + Spaces(44)), 120, kept[19]);
+                AssertLine(Box(" Add to cart   1000   10  10 ms  30 ms      20  █░░░░ 2.0%" + Spaces(13) + "⣤" + Spaces(44)), 120, kept[20]);
+                AssertLine(Box(LiveDashboardLayout.Pointer + "Login         1000   10  10 ms  50 ms      10  █░░░░ 1.0%" + Spaces(13) + "⣤" + Spaces(44)), 120, kept[21]);
+                AssertLine(Box(" +3 more" + Spaces(108)), 120, kept[22]);
+                AssertLine(Bottom(120), 120, kept[23]);
+                AssertLine(OverviewFooter, 93, kept[24]);
+
+                var hidden = LiveDashboardLayout.Render(new[] { PainSnapshot() }, new LiveDashboardViewState { SelectedStepIndex = 5 }, 120, 25, ColorMode.None);
+                AssertLine(Box(" Login         1000   10  10 ms  50 ms      10  █░░░░ 1.0%" + Spaces(13) + "⣤" + Spaces(44)), 120, hidden[21]);
+                AssertLine(Box(LiveDashboardLayout.Pointer + "+3 more · Search" + Spaces(99)), 120, hidden[22]);
+                Assert.AreEqual(1, CountLinesContaining(hidden, LiveDashboardLayout.Pointer));
+                Assert.DoesNotContain("\u001b", hidden[22].Text);
+
+                var styled = LiveDashboardLayout.Render(new[] { PainSnapshot() }, new LiveDashboardViewState { SelectedStepIndex = 5 }, 120, 25, ColorMode.TrueColor);
+                AssertLine("│ " + Sgr(Reverse, LiveDashboardLayout.Pointer + "+3 more · Search" + Spaces(99)) + " │", 120, styled[22]);
+                Assert.AreEqual(1, CountLinesContaining(styled, AnsiCodes.Reverse));
+                Assert.DoesNotContain(AnsiCodes.Reverse, styled[21].Text);
             })
             .Run();
     }

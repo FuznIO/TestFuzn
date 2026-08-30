@@ -93,17 +93,17 @@ public partial class LiveDashboardLayoutTests
                     + Sgr(Bold, "+-") + " window" + separator + Sgr(Bold, "?") + " help" + separator + Sgr(Bold, "q") + " quit",
                     93, lines[39]);
             })
-            .Step("Until the step detail and the error log have bodies of their own, every view lays out the overview body: only the footer differs", context =>
+            .Step("Until the error log has a body of its own it lays out the overview body: only the footer differs — while the step detail has its own, the notice under the title without a selection", context =>
             {
                 var overview = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView, 120, 40, ColorMode.None);
                 var detail = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView with { View = LiveDashboardView.StepDetail }, 120, 40, ColorMode.None);
                 var log = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView with { View = LiveDashboardView.ErrorLog, ErrorLogScroll = 3 }, 120, 40, ColorMode.None);
 
                 for (var row = 0; row < 39; row++)
-                {
-                    AssertLine(overview[row].Text, overview[row].Width, detail[row]);
                     AssertLine(overview[row].Text, overview[row].Width, log[row]);
-                }
+
+                AssertLine(LiveDashboardLayout.NoStepSelectedNoticeText, 27, detail[1]);
+                AssertLine(string.Empty, 0, detail[2]);
             })
             .Run();
     }

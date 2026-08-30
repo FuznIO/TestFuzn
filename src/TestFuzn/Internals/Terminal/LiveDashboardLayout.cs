@@ -13,8 +13,9 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// latency heatmap, a requests panel with Ok/Failed rows (count, current rate and the
 /// response-time spread), a per-step live table, and an error ticker — the sections stacked,
 /// or side by side as columns from <see cref="MinimumWidthForColumns"/> columns of width (the
-/// Columns paragraph), and closed by a key-hint footer that owns the window's last row. Pure
-/// composition of the widgets in this namespace:
+/// Columns paragraph), or as the selected step's own section in the step detail view (the
+/// Step detail paragraph), and closed by a key-hint footer that owns the window's last row.
+/// Pure composition of the widgets in this namespace:
 /// everything shown comes from the passed <see cref="LiveMetricsSnapshot"/>s and the
 /// viewer's <see cref="LiveDashboardViewState"/> (no console, no clock — elapsed, ETA and the
 /// error ticker's ages are snapshot values), so identical inputs render an identical frame,
@@ -134,15 +135,30 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// windowed as the widget documents. The column set is the widest tier whose natural width
 /// fits the panel, like the requests table: the trend goes first, then mean and failed, and
 /// only when even that tier cannot fit does the widget shrink columns. The view state's
-/// <see cref="LiveDashboardViewState.SelectedStepIndex"/> — an index into the displayed,
-/// pain-sorted rows, clamped into them as the type documents — marks its row with
-/// <see cref="Pointer"/> in the pointer column and paints the whole row, padding to the
+/// <see cref="LiveDashboardViewState.SelectedStepIndex"/> — the selected step's declaration
+/// index into <see cref="LiveMetricsSnapshot.Steps"/>, one selection for every scenario's
+/// section — marks the row of the step with that index, wherever the pain sort puts it,
+/// with <see cref="Pointer"/> in the pointer column and paints the whole row, padding to the
 /// panel's inner width included, in reverse video: a single plain reverse span over the
 /// row's text, so the highlight bar stays uniform where the cells' own colours would break
 /// it. Unselected rows keep the pointer column blank, so the columns line up either way, and
 /// in <see cref="ColorMode.None"/> the pointer is the whole highlight. Rows the height budget
 /// hides — the least painful — are announced by a "+N more" line under the rows, in the
-/// pointer column's indent.
+/// pointer column's indent; when the selected step's row is among them the more line stands
+/// in for the row — <c>▸+N more · Checkout</c>: the pointer, the count and the selected
+/// step's name (control characters sanitized to spaces, escaped, cut with the line) after a
+/// middle dot — painted as a selected row is, one plain reverse span padding included, so
+/// the one highlight bar is wherever the selection is and ↑ and ↓ never move it out of
+/// sight. A selection that names no step of the section — null, a negative index, one past
+/// the steps — highlights nothing. The order the rows are walked in is
+/// <see cref="DisplayedStepOrder"/>: the sort above as declaration indices, which the key
+/// handler moves the selection along,
+/// and <see cref="DisplayedPosition"/> is where a selection sits in it — the row the table
+/// marks, the position the step detail's header counts.
+/// Keying the selection by declaration index is a deliberate change of the Phase 3 rule,
+/// which keyed it by displayed row: the sort reshuffles the rows whenever failure shares tie
+/// and the interval p95s fluctuate, so a selection keyed by row jumped between steps on its
+/// own, a second at a time.
 /// </para>
 /// <para>
 /// <b>Errors.</b> An "Errors" panel — the ticker — of the snapshot's distinct errors, most
@@ -252,7 +268,10 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// (<see cref="LogoWidget.CompactWidth"/>), and a terminal that draws it single-width would
 /// leave that column a cell short and pull its neighbour's title row a cell left — when that
 /// column keeps <see cref="MinimumWidthForLogo"/>; the footer is one for the frame either
-/// way, and the view state's step selection applies in every column alike.
+/// way, and the view state's step selection — a declaration index — applies to every
+/// column's own steps alike: the one index is resolved against each scenario's own steps,
+/// so a column whose scenario has fewer steps, or declares them in another order,
+/// highlights an unrelated step or nothing.
 /// </para>
 /// <para>
 /// <b>Interaction.</b> The rest of the view state: the view, the pause and the help, which
@@ -270,9 +289,72 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// that do not fit from the right, which would take the quit hint first, so the footer is the
 /// longest prefix of the view's hints that fits the width together with the quit hint — the
 /// view's hints go from the right, the quit hint never — and the quit hint alone, cut to the
-/// width with the widget's ellipsis, below its six columns. Every view lays out the overview
-/// body under its own footer until the step detail and the error log have bodies of their own;
-/// <see cref="LiveDashboardViewState.ErrorLogScroll"/> and the help have nothing to render yet.
+/// width with the widget's ellipsis, below its six columns. The step detail has a body of its
+/// own (the Step detail paragraph); the error log lays out the overview body under its own
+/// footer until it has one, and <see cref="LiveDashboardViewState.ErrorLogScroll"/> and the
+/// help have nothing to render yet.
+/// </para>
+/// <para>
+/// <b>Step detail.</b> With <see cref="LiveDashboardViewState.View"/> at
+/// <see cref="LiveDashboardView.StepDetail"/> the frame is one full-width section for the
+/// first scenario's selected step in place of the overview's sections — never columns; a
+/// drill-down into another scenario is a follow-up — under the step detail's footer. The
+/// title line is the scenario's as the overview draws it (the name, the status badge, the
+/// paused badge, the logo from <see cref="MinimumWidthForLogo"/> columns), with the phase
+/// label after the badge as on a title line without a timeline, since the detail shows none.
+/// Under it the header line, <c>step 2/3 · Add to cart · Esc back</c>: the step's 1-based
+/// position in the displayed order (<see cref="DisplayedStepOrder"/>, so the position is the
+/// one ↑ and ↓ walk) and the step count in <see cref="TerminalPalette.PanelHeaderStyle"/>,
+/// the escaped name in bold and the back hint, the dots and the hint in the secondary style,
+/// cut to the width with an ellipsis. Then the step's tile row — four tiles, on two rows
+/// below <see cref="MinimumWidthForSingleTileRow"/> of four, built by the overview's rules:
+/// rps, the newest sample of <see cref="LiveStepMetrics.RequestsPerSecondSeries"/> with the
+/// rps tile's trend and its delta under one rule of the step's own — no delta while the
+/// earlier endpoint is zero (or below) and the newest is not: a step's series is zero for
+/// the whole warmup phase (the scenario's carries the warmup rates), so for the first
+/// <see cref="DeltaSampleDistance"/> seconds of measurement the comparison would be against
+/// a warmup zero and show the whole live rate as a rise; the overview's rps tile keeps the
+/// plain rule, and the price is that a step's recovery from an idle second carries no arrow
+/// either; p95, the newest sample of
+/// <see cref="LiveStepMetrics.ResponseTimePercentile95Series"/> under the p95 tile's rules —
+/// no data for an idle interval's zero and for anything no TimeSpan holds, the delta, the
+/// trend, the spike heuristic's state; fail%, the step's cumulative failure share (failed
+/// over ok + failed, the Steps table's fail% figure) as a percentage in the error-rate
+/// heuristic's state, no data while the step has no request; and count, ok + failed, with
+/// "skipped n" on the unit line once the step has skipped iterations and the line fits the
+/// box. The thresholds are the scenario's, so no tile carries a gauge; the trends go by the
+/// width and the height as the overview's do. A Failed status keeps its reason here too:
+/// <see cref="LiveMetricsSnapshot.StatusDetail"/> renders under the tiles as the same styled
+/// line the overview draws under its timeline. A blank line, then the charts: "requests —
+/// ok / failed" over the step's <see cref="LiveStepMetrics.OkDeltaSeries"/> and
+/// <see cref="LiveStepMetrics.FailedDeltaSeries"/>, composed as the overview's requests
+/// chart, and "latency — p95", the step's p95 series as one area in
+/// <see cref="TerminalPalette.ResponseTimePercentile95Style"/>, every non-latency a gap and
+/// the newest p95 annotated — no limit line, since the thresholds are not the step's — side
+/// by side from <see cref="MinimumWidthForChartsSideBySide"/> columns, stacked from
+/// <see cref="MinimumWidthForCharts"/>, dropped below, their bodies <see cref="ChartHeight"/>
+/// or <see cref="CompactChartHeight"/> rows by the overview's rules, both over the view
+/// state's time window. Then the overview's Errors ticker restricted to the entries whose
+/// <see cref="LiveErrorEntry.StepName"/> is the step's name: an entry carries the bare name
+/// of the step it occurred in, a sub-step's its own with no link to its parent, so a
+/// sub-step's errors are not on its parent's detail (a follow-up on the model); the count
+/// and rate columns are sized over the step's entries, and the "+N more" line counts the
+/// entries the budget hides — there is no per-step distinct count. A step without a
+/// matching error has no Errors panel, as a scenario without errors has none in the
+/// overview. The height budget is the overview's for the pieces the detail has, in this
+/// order:
+/// <list type="number">
+/// <item><description>the tile trends go below <see cref="MinimumHeightForTileTrends"/> and the chart bodies compact below <see cref="MinimumHeightForTallCharts"/>, from the window's height alone;</description></item>
+/// <item><description>the chart bodies compact when the height left them tall — side by side the pair together;</description></item>
+/// <item><description>the error entries go, least recently active first, down to one entry;</description></item>
+/// <item><description>the latency chart goes — stacked, alone; side by side the pair splits and the requests chart spans the width, which frees no row, so the next step follows at once;</description></item>
+/// <item><description>the requests chart goes;</description></item>
+/// <item><description>the Errors panel goes whole;</description></item>
+/// <item><description>and last the clipping, which cuts the status-detail line when there is one and then the tile row from its bottom border up, never the footer.</description></item>
+/// </list>
+/// Without a scenario, without a step, or with a selection that names no step — null, or an
+/// index past the steps — the section is the title line (when there is a scenario) over a
+/// <c>no step selected · Esc back</c> notice in the secondary style, never a throw.
 /// </para>
 /// Alternate-screen entry/exit and the render loop are the caller's job. Stateless and
 /// thread-safe.
@@ -383,10 +465,23 @@ internal static class LiveDashboardLayout
     private const string RequestsTileLabel = "requests";
     private const string ElapsedTileLabel = "elapsed";
 
+    // The step detail's own tile labels: the fail% tile shows the Steps table's fail% figure
+    // under that column's name, and the count tile its count column's.
+    private const string FailureTileLabel = "fail%";
+    private const string CountTileLabel = "count";
+
     private const string ResponseTimeUnit = "ms";
     private const string PercentUnit = "%";
     private const string WarmupUnitPrefix = "warmup ";
     private const string PlannedUnitPrefix = "/ ";
+    private const string SkippedUnitPrefix = "skipped ";
+
+    // The step detail's header pieces: the "step n/m" prefix and the back hint after the name.
+    private const string StepPositionPrefix = "step ";
+    private const string BackHintText = "Esc back";
+
+    // The four tiles of the step detail, in row order: rps, p95, fail%, count.
+    private const int StepDetailTileCount = 4;
 
     // The chart panel headers double as the charts' legends: the widget has none, so the
     // series' words are written here in the series' styles, top-down in the series' paint
@@ -398,6 +493,10 @@ internal static class LiveDashboardLayout
         + TerminalPalette.ResponseTimePercentile95Style + "]p95[/] [" + TerminalPalette.SecondaryStyle + "]/[/] ["
         + TerminalPalette.ResponseTimeMedianStyle + "]p50[/]";
     private const string HeatmapHeader = "[" + TerminalPalette.PanelHeaderStyle + "]latency heatmap[/]";
+
+    // The step detail's latency chart is the p95 band alone, so its legend is one word.
+    private const string StepLatencyChartHeader = "[" + TerminalPalette.PanelHeaderStyle + "]latency[/] [" + TerminalPalette.SecondaryStyle + "]—[/] ["
+        + TerminalPalette.ResponseTimePercentile95Style + "]p95[/]";
 
     // The tiles every scenario has, in row order: rps, p95, errors, requests, elapsed; a
     // declared p99 or mean threshold adds its tile after them.
@@ -428,6 +527,9 @@ internal static class LiveDashboardLayout
 
     /// <summary>The paused badge's text, after the status badge on every section's title line while the view state is paused.</summary>
     public const string PausedBadgeText = "⏸ paused";
+
+    /// <summary>The step detail's notice line, under the title line, when the view state's selection names no step of the first scenario — or there is no scenario or no step.</summary>
+    public const string NoStepSelectedNoticeText = "no step selected · Esc back";
 
     // The footer's hints: the quit hint closes every view's set, and the view's own hints are
     // given up from the right before it (see the class summary's Interaction).
@@ -545,8 +647,10 @@ internal static class LiveDashboardLayout
     /// to the rows above the footer on the last row, each section's optional rows given up in
     /// the order the class summary describes; the unclipped content plus the footer, every
     /// optional row in, for a smaller height. A width below 1 renders nothing. The view
-    /// state's step selection, pause badge and time window apply to every section alike, and
-    /// its view and help choose the footer's hints (the Interaction paragraph). The glyph set is passed through
+    /// state's step selection, pause badge and time window apply to every section alike, its
+    /// view chooses the body — the overview's sections, or the step detail's one section for
+    /// the first scenario's selected step (the Step detail paragraph) — and its view and help
+    /// choose the footer's hints (the Interaction paragraph). The glyph set is passed through
     /// to the tile trends, the chart panels and the step trends so the caller can match it to
     /// the terminal's font support. The spinner glyph, when given, is drawn in place of the
     /// dot on a running scenario's status badge — a single-column glyph the caller's render
@@ -567,7 +671,11 @@ internal static class LiveDashboardLayout
 
         var lines = new List<RenderedLine>();
         var columnCount = ColumnCount(snapshots.Count, width);
-        if (columnCount > 1)
+        if (viewState.View == LiveDashboardView.StepDetail)
+        {
+            AddStepDetailSection(lines, snapshots, viewState, width, height, remainingRows, colorMode, sparklineGlyphSet, spinnerGlyph);
+        }
+        else if (columnCount > 1)
         {
             AddColumnRows(lines, snapshots, viewState, width, height, columnCount, remainingRows, colorMode, sparklineGlyphSet, spinnerGlyph);
         }
@@ -652,6 +760,47 @@ internal static class LiveDashboardLayout
     public static int MinimumWidthForSingleTileRow(int tileCount)
     {
         return (tileCount * MinimumTileBoxWidth) + ((tileCount - 1) * TileRowWidget.Gap);
+    }
+
+    /// <summary>
+    /// The snapshot's steps in the order the Steps table displays them — the pain sort of the
+    /// class summary's Steps paragraph — as their declaration indices into
+    /// <see cref="LiveMetricsSnapshot.Steps"/>: the first entry is the top row's step, the
+    /// last the bottom row's, every step once, and a snapshot without steps an empty list.
+    /// The same sort the table renders from, so <see cref="LiveDashboardKeyHandler"/> moves
+    /// the selection (a declaration index) up and down the rows as the viewer sees them.
+    /// </summary>
+    public static IReadOnlyList<int> DisplayedStepOrder(LiveMetricsSnapshot snapshot)
+    {
+        if (snapshot == null)
+            throw new ArgumentNullException(nameof(snapshot), "Snapshot cannot be null.");
+
+        return DisplayedStepOrder(snapshot.Steps);
+    }
+
+    /// <summary>
+    /// The displayed position of a selection — where <paramref name="selectedStepIndex"/>, a
+    /// declaration index, sits in <paramref name="stepOrder"/> (a <see cref="DisplayedStepOrder"/>):
+    /// 0 for the top row's step — or -1 for no selection and for a selection that names no
+    /// step of the order (a negative index, one past the steps, a step gone from the
+    /// snapshot). The Steps table marks the row at it, the step detail's header counts it,
+    /// and <see cref="LiveDashboardKeyHandler"/> moves the selection from it.
+    /// </summary>
+    public static int DisplayedPosition(IReadOnlyList<int> stepOrder, int? selectedStepIndex)
+    {
+        if (stepOrder == null)
+            throw new ArgumentNullException(nameof(stepOrder), "Step order cannot be null.");
+
+        if (selectedStepIndex == null)
+            return -1;
+
+        for (var position = 0; position < stepOrder.Count; position++)
+        {
+            if (stepOrder[position] == selectedStepIndex.Value)
+                return position;
+        }
+
+        return -1;
     }
 
     // The columns the frame renders the snapshots in: one below MinimumWidthForColumns or with
@@ -824,29 +973,34 @@ internal static class LiveDashboardLayout
     {
         var thresholds = new DeclaredThresholds(snapshot.Thresholds);
         var includeTimeline = snapshot.PlanEntries.Count > 0 && HasRowsFor(height, MinimumHeightForTimeline);
+        var tileOptions = TileOptionsFor(width, height);
 
         var header = new List<RenderedLine>();
         header.Add(RenderTitleLine(snapshot, viewState.IsPaused, width, colorMode, spinnerGlyph, includeLogo, includePhaseLabel: !includeTimeline));
-        AddTileRows(header, snapshot, thresholds, width, height, colorMode, sparklineGlyphSet);
+        AddTileRows(header, StandardTileCount + thresholds.Added.Count, (index, innerWidth) => BuildTile(snapshot, thresholds, tileOptions, index, innerWidth), width, colorMode, sparklineGlyphSet);
 
         if (includeTimeline)
             AddTimeline(header, snapshot, width, colorMode);
 
         if (snapshot.StatusDetail != null)
-            header.Add(MarkupText.RenderTruncated("[" + TerminalPalette.FailedStyle + "]✗ " + MarkupParser.Escape(snapshot.StatusDetail) + "[/]", width, colorMode));
+            header.Add(RenderStatusDetailLine(snapshot.StatusDetail, width, colorMode));
 
         header.Add(BlankLine);
 
         var requests = RenderRequestsPanel(snapshot, width, colorMode);
-        var steps = SortStepsByPain(snapshot.Steps);
-        var errorEntries = RenderErrorEntries(snapshot, width, colorMode);
+        var stepOrder = DisplayedStepOrder(snapshot.Steps);
+        var errorEntries = RenderErrorEntries(snapshot.Errors, snapshot.Samples, width, colorMode);
         var distinctErrorCount = Math.Max(snapshot.DistinctErrorCount, snapshot.Errors.Count);
-        var plan = PlanSection(width, height, header.Count + requests.Count, budget, steps.Count, errorEntries, distinctErrorCount, includeHeatmap);
+        var plan = PlanSection(width, height, header.Count + requests.Count, budget, stepOrder.Count, errorEntries, distinctErrorCount, includeHeatmap);
 
         lines.AddRange(header);
 
         if (plan.IncludeRequestsChart || plan.IncludeLatencyChart)
-            AddChartPanels(lines, snapshot, thresholds, plan, viewState.TimeWindow, width, colorMode, sparklineGlyphSet);
+        {
+            AddChartPanels(lines, plan, width,
+                (panelWidth, bodyHeight) => RenderRequestsChartPanel(snapshot.OkDeltaSeries, snapshot.FailedDeltaSeries, viewState.TimeWindow, panelWidth, bodyHeight, colorMode, sparklineGlyphSet),
+                (panelWidth, bodyHeight) => RenderLatencyChartPanel(snapshot, thresholds, viewState.TimeWindow, panelWidth, bodyHeight, colorMode, sparklineGlyphSet));
+        }
 
         if (plan.IncludeHeatmap)
             lines.AddRange(RenderHeatmapPanel(snapshot, viewState.TimeWindow, width, plan.HeatmapHeight, colorMode));
@@ -854,10 +1008,106 @@ internal static class LiveDashboardLayout
         lines.AddRange(requests);
 
         if (plan.IncludeSteps)
-            AddStepsPanel(lines, steps, plan.StepRowCount, SelectedStepRow(viewState, plan.StepRowCount), width, colorMode, sparklineGlyphSet);
+            AddStepsPanel(lines, snapshot.Steps, stepOrder, plan.StepRowCount, viewState.SelectedStepIndex, width, colorMode, sparklineGlyphSet);
 
         if (plan.IncludeErrors)
             AddErrorsPanel(lines, errorEntries, plan.ErrorEntryCount, distinctErrorCount - plan.ErrorEntryCount, width, colorMode);
+    }
+
+    // The step detail's section (the class summary's Step detail): the first scenario's title
+    // line and, for the selected step, the header line, the step's tiles, the scenario's
+    // status detail when it has one, a blank and the pieces the budget keeps — its charts and
+    // its errors — planned by the overview's drop order with no requests panel, no step rows
+    // and no heatmap to give; the notice alone under the title (or alone, without a scenario)
+    // when the selection names no step.
+    private static void AddStepDetailSection(List<RenderedLine> lines, IReadOnlyList<LiveMetricsSnapshot> snapshots, LiveDashboardViewState viewState, int width, int height, int budget, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet, string? spinnerGlyph)
+    {
+        if (snapshots.Count == 0)
+        {
+            lines.Add(RenderNoStepNotice(width, colorMode));
+            return;
+        }
+
+        var snapshot = snapshots[0];
+        var stepOrder = DisplayedStepOrder(snapshot.Steps);
+        var position = DisplayedPosition(stepOrder, viewState.SelectedStepIndex);
+
+        lines.Add(RenderTitleLine(snapshot, viewState.IsPaused, width, colorMode, spinnerGlyph, includeLogo: width >= MinimumWidthForLogo, includePhaseLabel: true));
+        if (position < 0)
+        {
+            lines.Add(RenderNoStepNotice(width, colorMode));
+            return;
+        }
+
+        var step = snapshot.Steps[stepOrder[position]];
+        var tileOptions = TileOptionsFor(width, height);
+
+        var header = new List<RenderedLine>();
+        header.Add(RenderStepDetailHeader(step, position, stepOrder.Count, width, colorMode));
+        AddTileRows(header, StepDetailTileCount, (index, innerWidth) => BuildStepTile(step, tileOptions, index, innerWidth), width, colorMode, sparklineGlyphSet);
+        if (snapshot.StatusDetail != null)
+            header.Add(RenderStatusDetailLine(snapshot.StatusDetail, width, colorMode));
+
+        header.Add(BlankLine);
+
+        // The fixed rows are the title line and the header block; the more line counts only
+        // the entries the budget hides, since the distinct count is the scenario's.
+        var errorEntries = RenderErrorEntries(StepErrors(snapshot.Errors, step.Name), snapshot.Samples, width, colorMode);
+        var plan = PlanSection(width, height, 1 + header.Count, budget, stepCount: 0, errorEntries, errorEntries.Count, includeHeatmap: false);
+
+        lines.AddRange(header);
+
+        if (plan.IncludeRequestsChart || plan.IncludeLatencyChart)
+        {
+            AddChartPanels(lines, plan, width,
+                (panelWidth, bodyHeight) => RenderRequestsChartPanel(step.OkDeltaSeries, step.FailedDeltaSeries, viewState.TimeWindow, panelWidth, bodyHeight, colorMode, sparklineGlyphSet),
+                (panelWidth, bodyHeight) => RenderStepLatencyChartPanel(step.ResponseTimePercentile95Series, viewState.TimeWindow, panelWidth, bodyHeight, colorMode, sparklineGlyphSet));
+        }
+
+        if (plan.IncludeErrors)
+            AddErrorsPanel(lines, errorEntries, plan.ErrorEntryCount, errorEntries.Count - plan.ErrorEntryCount, width, colorMode);
+    }
+
+    // The step detail's header line: the step's displayed position and the step count in the
+    // panel header style, the escaped name in bold and the back hint, the dots and the hint
+    // secondary, cut to the width.
+    private static RenderedLine RenderStepDetailHeader(LiveStepMetrics step, int position, int stepCount, int width, ColorMode colorMode)
+    {
+        var separator = " [" + TerminalPalette.SecondaryStyle + "]·[/] ";
+        var markup = "[" + TerminalPalette.PanelHeaderStyle + "]" + StepPositionPrefix + FormatCount(position + 1) + "/" + FormatCount(stepCount) + "[/]"
+            + separator + "[bold]" + MarkupParser.Escape(step.Name) + "[/]"
+            + separator + "[" + TerminalPalette.SecondaryStyle + "]" + BackHintText + "[/]";
+        return MarkupText.RenderTruncated(markup, width, colorMode);
+    }
+
+    // The scenario's failure reason as its own line in the failed style, escaped and cut to
+    // the width: the overview draws it under the timeline, the step detail under the tiles,
+    // both last in the header block before its blank — so a Failed status is never
+    // reason-less on screen, whichever view is up.
+    private static RenderedLine RenderStatusDetailLine(string statusDetail, int width, ColorMode colorMode)
+    {
+        return MarkupText.RenderTruncated("[" + TerminalPalette.FailedStyle + "]✗ " + MarkupParser.Escape(statusDetail) + "[/]", width, colorMode);
+    }
+
+    // The notice the step detail shows in place of a step's section.
+    private static RenderedLine RenderNoStepNotice(int width, ColorMode colorMode)
+    {
+        return MarkupText.RenderTruncated("[" + TerminalPalette.SecondaryStyle + "]" + MarkupParser.Escape(NoStepSelectedNoticeText) + "[/]", width, colorMode);
+    }
+
+    // The errors of one step: the entries whose step name is the given name, in the
+    // snapshot's order — a sub-step's entries carry the sub-step's own name, so they are not
+    // its parent's.
+    private static List<LiveErrorEntry> StepErrors(IReadOnlyList<LiveErrorEntry> errors, string stepName)
+    {
+        var stepErrors = new List<LiveErrorEntry>();
+        foreach (var error in errors)
+        {
+            if (string.Equals(error.StepName, stepName, StringComparison.Ordinal))
+                stepErrors.Add(error);
+        }
+
+        return stepErrors;
     }
 
     // Which of the section's optional pieces render, how tall the heatmap and chart bodies
@@ -1023,17 +1273,6 @@ internal static class LiveDashboardLayout
         return rows;
     }
 
-    // The displayed row the view state's selection lands on: the index clamped into the rows
-    // shown, so a selection past the last row (one the budget trimmed) stays on the last row
-    // and a negative one lands on the first; none without a selection or without rows.
-    private static int? SelectedStepRow(LiveDashboardViewState viewState, int rowCount)
-    {
-        if (viewState.SelectedStepIndex == null || rowCount < 1)
-            return null;
-
-        return Math.Clamp(viewState.SelectedStepIndex.Value, 0, rowCount - 1);
-    }
-
     // Whether the window has the rows for an optional piece; an unbounded height (below 1)
     // has them all.
     private static bool HasRowsFor(int height, int minimumHeight)
@@ -1091,25 +1330,30 @@ internal static class LiveDashboardLayout
         return "[" + TerminalPalette.RunningStyle + "]" + runningGlyph + " Running[/]";
     }
 
-    // The tile row: the five standard tiles and one per added threshold on one row while every
-    // box can be MinimumTileBoxWidth wide, else on two rows with the first taking the larger
-    // half; each tile is built for the inner width the widget will give its box.
-    private static void AddTileRows(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, int width, int height, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    // The tiles' optional parts at this window size (see TileOptions).
+    private static TileOptions TileOptionsFor(int width, int height)
     {
-        var options = new TileOptions(
+        return new TileOptions(
             includeTrends: width >= MinimumWidthForTileTrends && HasRowsFor(height, MinimumHeightForTileTrends),
             includeGauges: HasRowsFor(height, MinimumHeightForTileGauges));
-        var count = StandardTileCount + thresholds.Added.Count;
+    }
 
+    // A tile row of count tiles — the overview's five standard tiles and one per added
+    // threshold, the step detail's four — on one row while every box can be
+    // MinimumTileBoxWidth wide, else on two rows with the first taking the larger half; each
+    // tile is built by the given builder, from its index and the inner width the widget will
+    // give its box.
+    private static void AddTileRows(List<RenderedLine> lines, int count, Func<int, int, StatTile> buildTile, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    {
         if (width >= MinimumWidthForSingleTileRow(count))
         {
-            AddTileRow(lines, snapshot, thresholds, options, 0, count, width, colorMode, sparklineGlyphSet);
+            AddTileRow(lines, buildTile, 0, count, width, colorMode, sparklineGlyphSet);
             return;
         }
 
         var firstRowCount = (count + 1) / 2;
-        AddTileRow(lines, snapshot, thresholds, options, 0, firstRowCount, width, colorMode, sparklineGlyphSet);
-        AddTileRow(lines, snapshot, thresholds, options, firstRowCount, count - firstRowCount, width, colorMode, sparklineGlyphSet);
+        AddTileRow(lines, buildTile, 0, firstRowCount, width, colorMode, sparklineGlyphSet);
+        AddTileRow(lines, buildTile, firstRowCount, count - firstRowCount, width, colorMode, sparklineGlyphSet);
     }
 
     // Each tile is built for the inner width the widget will give its box — the boxes' equal
@@ -1117,12 +1361,12 @@ internal static class LiveDashboardLayout
     // less the borders and padding — mirrored here so a tile's texts can be sized to the box
     // they land in. Too small to fit anything at degenerate widths, where the widget drops
     // tiles anyway.
-    private static void AddTileRow(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, TileOptions options, int firstTile, int count, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    private static void AddTileRow(List<RenderedLine> lines, Func<int, int, StatTile> buildTile, int firstTile, int count, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
         var boxWidths = ShareWidth(count, width, TileRowWidget.Gap);
         var tiles = new StatTile[count];
         for (var index = 0; index < count; index++)
-            tiles[index] = BuildTile(snapshot, thresholds, options, firstTile + index, boxWidths[index] - PanelWidget.ContentOverhead);
+            tiles[index] = buildTile(firstTile + index, boxWidths[index] - PanelWidget.ContentOverhead);
 
         lines.AddRange(TileRowWidget.Render(tiles, width, colorMode, sparklineGlyphSet));
     }
@@ -1132,9 +1376,9 @@ internal static class LiveDashboardLayout
         switch (index)
         {
             case 0:
-                return RateTile(snapshot, thresholds.RequestsPerSecond, options);
+                return RateTile(snapshot.RequestsPerSecondSeries, thresholds.RequestsPerSecond, options, hideDeltaFromZero: false);
             case 1:
-                return ResponseTimeTile(snapshot, thresholds.ResponseTimePercentile95, options);
+                return ResponseTimeTile(snapshot.ResponseTimePercentile95Series, thresholds.ResponseTimePercentile95, options);
             case 2:
                 return ErrorsTile(snapshot, thresholds.ErrorRate, options);
             case 3:
@@ -1146,12 +1390,29 @@ internal static class LiveDashboardLayout
         }
     }
 
-    // The newest interval's rate — no data before the first sample or when it is not finite,
-    // else the shared rate format — with its delta and trend, in the declared rps threshold's
-    // state and gauge, else Neutral.
-    private static StatTile RateTile(LiveMetricsSnapshot snapshot, LiveThreshold? threshold, TileOptions options)
+    // The step detail's tiles: the rps and p95 tiles over the step's own series, without a
+    // threshold (the thresholds are the scenario's) — the rps delta hidden against a warmup
+    // zero, the step rule of RateDelta — then the fail% and count tiles.
+    private static StatTile BuildStepTile(LiveStepMetrics step, TileOptions options, int index, int innerWidth)
     {
-        var series = snapshot.RequestsPerSecondSeries;
+        switch (index)
+        {
+            case 0:
+                return RateTile(step.RequestsPerSecondSeries, null, options, hideDeltaFromZero: true);
+            case 1:
+                return ResponseTimeTile(step.ResponseTimePercentile95Series, null, options);
+            case 2:
+                return FailureTile(step);
+            default:
+                return CountTile(step, innerWidth);
+        }
+    }
+
+    // The newest interval's rate — no data before the first sample or when it is not finite,
+    // else the shared rate format — with its delta (under the step rule when asked, see
+    // RateDelta) and trend, in the declared rps threshold's state and gauge, else Neutral.
+    private static StatTile RateTile(IReadOnlyList<double> series, LiveThreshold? threshold, TileOptions options, bool hideDeltaFromZero)
+    {
         var value = NoDataText;
         if (series.Count > 0 && double.IsFinite(series[series.Count - 1]))
             value = FormatFiniteRate(series[series.Count - 1]);
@@ -1159,7 +1420,7 @@ internal static class LiveDashboardLayout
         return new StatTile(RateTileLabel, value)
         {
             State = ThresholdTileState(threshold),
-            Delta = RateDelta(series),
+            Delta = RateDelta(series, hideDeltaFromZero),
             Gauge = ThresholdGauge(threshold, options),
             Trend = options.IncludeTrends ? Trailing(series, TrendSampleCount) : null
         };
@@ -1169,8 +1430,13 @@ internal static class LiveDashboardLayout
     // rounded to the rate format's finest step so the arrow and the text never disagree; none
     // while the series is too short, when either endpoint (or the change) is not finite, and
     // when the rounded change — the number the tile would show — is zero: a steady rate
-    // carries no arrow, never a permanent ▲ 0.0.
-    private static StatTileDelta? RateDelta(IReadOnlyList<double> series)
+    // carries no arrow, never a permanent ▲ 0.0. With hideDeltaFromZero — the step tiles'
+    // rule — none either while the earlier endpoint is zero (or below) and the newest is not:
+    // a step's series is zero for the whole warmup phase (ScenarioLiveMetrics), so for the
+    // first DeltaSampleDistance seconds of measurement the comparison would be against a
+    // warmup zero and show the whole live rate as a rise. The scenario's series carries the
+    // warmup rates, so the overview's rps tile takes the plain rule.
+    private static StatTileDelta? RateDelta(IReadOnlyList<double> series, bool hideDeltaFromZero)
     {
         if (series.Count <= DeltaSampleDistance)
             return null;
@@ -1178,6 +1444,9 @@ internal static class LiveDashboardLayout
         var newest = series[series.Count - 1];
         var earlier = series[series.Count - 1 - DeltaSampleDistance];
         if (!double.IsFinite(newest) || !double.IsFinite(earlier))
+            return null;
+
+        if (hideDeltaFromZero && earlier <= 0 && newest != 0)
             return null;
 
         var change = Math.Round(newest - earlier, 1, MidpointRounding.AwayFromZero);
@@ -1191,9 +1460,8 @@ internal static class LiveDashboardLayout
     // state and gauge, else the spike heuristic's state — computed only then: it sorts the
     // trailing window, and a declared threshold would discard it. An idle interval records a
     // p95 of zero: that is no data here, never "0 ms".
-    private static StatTile ResponseTimeTile(LiveMetricsSnapshot snapshot, LiveThreshold? threshold, TileOptions options)
+    private static StatTile ResponseTimeTile(IReadOnlyList<double> series, LiveThreshold? threshold, TileOptions options)
     {
-        var series = snapshot.ResponseTimePercentile95Series;
         var newest = NewestResponseTimeSample(series);
 
         StatTileState state;
@@ -1355,6 +1623,34 @@ internal static class LiveDashboardLayout
         return new StatTile(RequestsTileLabel, value) { Unit = unit };
     }
 
+    // The step's cumulative failure share as a percentage — the fail% column's figure, in the
+    // error-rate heuristic's state — no data while the step has no request, never a green
+    // 0.0 %. No gauge: the thresholds are the scenario's.
+    private static StatTile FailureTile(LiveStepMetrics step)
+    {
+        var hasReading = (long)step.RequestCountOk + step.RequestCountFailed != 0;
+        var fraction = FailureFraction(step);
+
+        return new StatTile(FailureTileLabel, hasReading ? FormatPercentNumber(fraction) : NoDataText)
+        {
+            Unit = hasReading ? PercentUnit : string.Empty,
+            State = ErrorRateHeuristicState(hasReading, fraction)
+        };
+    }
+
+    // The step's ok + failed count, the skipped count on the unit line once the step has
+    // skipped iterations and the line fits the box.
+    private static StatTile CountTile(LiveStepMetrics step, int innerWidth)
+    {
+        var value = FormatCount((long)step.RequestCountOk + step.RequestCountFailed);
+
+        var unit = string.Empty;
+        if (step.SkippedCount > 0)
+            unit = FitUnit(value, SkippedUnitPrefix + FormatCount(step.SkippedCount), innerWidth);
+
+        return new StatTile(CountTileLabel, value) { Unit = unit };
+    }
+
     // The run clock, the planned total on the unit line when the plan has one and the line
     // fits the box, and a gauge of the progress fraction — no warning band, since nothing is
     // judged — ending in the time remaining, whenever the plan gives both. An indeterminate
@@ -1507,12 +1803,13 @@ internal static class LiveDashboardLayout
         }
     }
 
-    // The chart panels the plan kept: side by side, the requests chart on the left and the
-    // latency chart on the right with the panel widths summing to the full width less the gap
-    // — the column over, at an odd width, going to the latency chart, unlike the tile boxes
-    // and the scenario columns, which widen the first — so the joined rows are exactly the
-    // frame width; stacked, each at the full width, requests first.
-    private static void AddChartPanels(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, SectionPlan plan, int? timeWindow, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    // The chart panels the plan kept, each rendered by its renderer at a panel width and the
+    // plan's body height: side by side, the requests chart on the left and the latency chart
+    // on the right with the panel widths summing to the full width less the gap — the column
+    // over, at an odd width, going to the latency chart, unlike the tile boxes and the
+    // scenario columns, which widen the first — so the joined rows are exactly the frame
+    // width; stacked, each at the full width, requests first.
+    private static void AddChartPanels(List<RenderedLine> lines, SectionPlan plan, int width, Func<int, int, IReadOnlyList<RenderedLine>> renderRequestsChartPanel, Func<int, int, IReadOnlyList<RenderedLine>> renderLatencyChartPanel)
     {
         if (plan.SideBySideCharts)
         {
@@ -1520,8 +1817,8 @@ internal static class LiveDashboardLayout
             var rightWidth = width - ColumnGap - leftWidth;
             var panels = new[]
             {
-                RenderRequestsChartPanel(snapshot, timeWindow, leftWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet),
-                RenderLatencyChartPanel(snapshot, thresholds, timeWindow, rightWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet)
+                renderRequestsChartPanel(leftWidth, plan.ChartBodyHeight),
+                renderLatencyChartPanel(rightWidth, plan.ChartBodyHeight)
             };
             var panelWidths = new[] { leftWidth, rightWidth };
 
@@ -1532,10 +1829,10 @@ internal static class LiveDashboardLayout
         }
 
         if (plan.IncludeRequestsChart)
-            lines.AddRange(RenderRequestsChartPanel(snapshot, timeWindow, width, plan.ChartBodyHeight, colorMode, sparklineGlyphSet));
+            lines.AddRange(renderRequestsChartPanel(width, plan.ChartBodyHeight));
 
         if (plan.IncludeLatencyChart)
-            lines.AddRange(RenderLatencyChartPanel(snapshot, thresholds, timeWindow, width, plan.ChartBodyHeight, colorMode, sparklineGlyphSet));
+            lines.AddRange(renderLatencyChartPanel(width, plan.ChartBodyHeight));
     }
 
     // A chart panel's options over the view state's time window: the shared defaults as they
@@ -1557,19 +1854,33 @@ internal static class LiveDashboardLayout
         return new HeatmapOptions { LabelStyle = LatencyHeatmapOptions.LabelStyle, TimeWindow = timeWindow };
     }
 
-    // The per-interval ok and failed counts as two areas on one count scale, failed painted
-    // over ok so a failed count shows at the bottom in its own colour; the annotation is the
-    // first series' — the newest ok count.
-    private static IReadOnlyList<RenderedLine> RenderRequestsChartPanel(LiveMetricsSnapshot snapshot, int? timeWindow, int panelWidth, int bodyHeight, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    // The per-interval ok and failed counts — the scenario's or a step's — as two areas on one
+    // count scale, failed painted over ok so a failed count shows at the bottom in its own
+    // colour; the annotation is the first series' — the newest ok count.
+    private static IReadOnlyList<RenderedLine> RenderRequestsChartPanel(IReadOnlyList<double> okDeltaSeries, IReadOnlyList<double> failedDeltaSeries, int? timeWindow, int panelWidth, int bodyHeight, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
         var series = new[]
         {
-            new ChartSeries(snapshot.OkDeltaSeries) { Style = TerminalPalette.OkStyle },
-            new ChartSeries(snapshot.FailedDeltaSeries) { Style = TerminalPalette.FailedStyle }
+            new ChartSeries(okDeltaSeries) { Style = TerminalPalette.OkStyle },
+            new ChartSeries(failedDeltaSeries) { Style = TerminalPalette.FailedStyle }
         };
 
         var chart = ChartWidget.Render(series, panelWidth - PanelWidget.ContentOverhead, bodyHeight, colorMode, sparklineGlyphSet, ChartOptionsFor(RequestsChartOptions, timeWindow));
         return PanelWidget.Render(RequestsChartHeader, chart, panelWidth, colorMode);
+    }
+
+    // The step detail's latency chart: the step's per-interval p95 as one area in the p95
+    // band's style, every non-latency reading a gap, the newest p95 annotated; no limit line,
+    // since the declared thresholds are the scenario's.
+    private static IReadOnlyList<RenderedLine> RenderStepLatencyChartPanel(IReadOnlyList<double> percentile95Series, int? timeWindow, int panelWidth, int bodyHeight, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    {
+        var series = new[]
+        {
+            new ChartSeries(ResponseTimeGaps(percentile95Series)) { Style = TerminalPalette.ResponseTimePercentile95Style }
+        };
+
+        var chart = ChartWidget.Render(series, panelWidth - PanelWidget.ContentOverhead, bodyHeight, colorMode, sparklineGlyphSet, ChartOptionsFor(LatencyChartOptions, timeWindow));
+        return PanelWidget.Render(StepLatencyChartHeader, chart, panelWidth, colorMode);
     }
 
     // The per-interval p99 and p95 as two areas, tallest first so each band shows where it
@@ -1754,13 +2065,16 @@ internal static class LiveDashboardLayout
         };
     }
 
-    // The steps by pain: the failure share first, then the newest interval p95, both
-    // descending — a step without a p95 reading after every step with one — and declaration
-    // order on a tie (the sort is stable), so the rows a shrinking budget keeps are the ones
-    // that hurt.
-    private static List<LiveStepMetrics> SortStepsByPain(IReadOnlyList<LiveStepMetrics> steps)
+    // The steps by pain, as declaration indices: the failure share first, then the newest
+    // interval p95, both descending — a step without a p95 reading after every step with one
+    // — and declaration order on a tie (the sort is stable), so the rows a shrinking budget
+    // keeps are the ones that hurt.
+    private static List<int> DisplayedStepOrder(IReadOnlyList<LiveStepMetrics> steps)
     {
-        return steps.OrderByDescending(FailureFraction).ThenByDescending(PainResponseTime).ToList();
+        return Enumerable.Range(0, steps.Count)
+            .OrderByDescending(index => FailureFraction(steps[index]))
+            .ThenByDescending(index => PainResponseTime(steps[index]))
+            .ToList();
     }
 
     // The step's failure share, 0..1: failed over ok + failed, clamped so counts that do not
@@ -1792,18 +2106,22 @@ internal static class LiveDashboardLayout
         return newest.Value;
     }
 
-    // The first rowCount of the pain-sorted steps as a table under the column header — every
-    // step when the budget allows, fewer with the more line when the drop order took rows —
-    // in the widest column tier whose natural width fits the panel. The selected row is
-    // painted whole in reverse video: the table is rendered once more without colour for the
-    // row's plain text, which is then re-rendered as one reverse span padded to the inner
-    // width, so the bar is uniform where the cells' own styles would break it.
-    private static void AddStepsPanel(List<RenderedLine> lines, IReadOnlyList<LiveStepMetrics> steps, int rowCount, int? selectedRow, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    // The first rowCount steps of the displayed order as a table under the column header —
+    // every step when the budget allows, fewer with the more line when the drop order took
+    // rows — in the widest column tier whose natural width fits the panel. The selected
+    // step's row, where it is displayed, is painted whole in reverse video: the table is
+    // rendered once more without colour for the row's plain text, which is then re-rendered
+    // as one reverse span padded to the inner width, so the bar is uniform where the cells'
+    // own styles would break it; for a selected step among the hidden rows the more line
+    // stands in — the pointer, the count and the step's sanitized name — painted the same
+    // way, so the one highlight bar is wherever the selection is.
+    private static void AddStepsPanel(List<RenderedLine> lines, IReadOnlyList<LiveStepMetrics> steps, IReadOnlyList<int> stepOrder, int rowCount, int? selectedStepIndex, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
         var innerWidth = width - PanelWidget.ContentOverhead;
+        var selectedPosition = DisplayedPosition(stepOrder, selectedStepIndex);
         var rows = new string?[rowCount][];
         for (var index = 0; index < rowCount; index++)
-            rows[index] = StepRow(steps[index], isSelected: selectedRow != null && selectedRow.Value == index, sparklineGlyphSet);
+            rows[index] = StepRow(steps[stepOrder[index]], isSelected: selectedPosition == index, sparklineGlyphSet);
 
         var content = new List<RenderedLine>();
         for (var tier = 0; tier < StepColumnTiers.Length; tier++)
@@ -1815,17 +2133,27 @@ internal static class LiveDashboardLayout
                 continue;
 
             content.AddRange(TableWidget.Render(columns, tierRows, innerWidth, colorMode));
-            if (selectedRow != null && selectedRow.Value + 1 < content.Count)
+            if (selectedPosition >= 0 && selectedPosition < rowCount && selectedPosition + 1 < content.Count)
             {
                 var plain = TableWidget.Render(columns, tierRows, innerWidth, ColorMode.None);
-                content[selectedRow.Value + 1] = ReverseVideoRow(plain[selectedRow.Value + 1].Text, innerWidth, colorMode);
+                content[selectedPosition + 1] = ReverseVideoRow(plain[selectedPosition + 1].Text, innerWidth, colorMode);
             }
 
             break;
         }
 
-        if (rowCount < steps.Count)
-            content.Add(MarkupText.RenderTruncated(PointerColumnBlank + MoreLineMarkup(steps.Count - rowCount), innerWidth, colorMode));
+        if (rowCount < stepOrder.Count)
+        {
+            if (selectedPosition >= rowCount)
+            {
+                var selectedName = MarkupText.SanitizeControlCharacters(steps[stepOrder[selectedPosition]].Name);
+                content.Add(ReverseVideoRow(Pointer + MoreLineText(stepOrder.Count - rowCount) + " · " + selectedName, innerWidth, colorMode));
+            }
+            else
+            {
+                content.Add(MarkupText.RenderTruncated(PointerColumnBlank + MoreLineMarkup(stepOrder.Count - rowCount), innerWidth, colorMode));
+            }
+        }
 
         lines.AddRange(PanelWidget.Render(StepsHeader, content, width, colorMode));
     }
@@ -1875,10 +2203,17 @@ internal static class LiveDashboardLayout
         return MarkupText.RenderTruncated("[reverse]" + MarkupParser.Escape(plainText.PadRight(innerWidth)) + "[/]", innerWidth, colorMode);
     }
 
-    // The line that announces the rows a panel does not show.
+    // The line that announces the rows a panel does not show, in the secondary style.
     private static string MoreLineMarkup(int hiddenCount)
     {
-        return "[" + TerminalPalette.SecondaryStyle + "]+" + FormatCount(hiddenCount) + " more[/]";
+        return "[" + TerminalPalette.SecondaryStyle + "]" + MoreLineText(hiddenCount) + "[/]";
+    }
+
+    // The more line's text, for the Steps table's stand-in for a hidden selected row, which
+    // styles the whole line as one.
+    private static string MoreLineText(int hiddenCount)
+    {
+        return "+" + FormatCount(hiddenCount) + " more";
     }
 
     // The first entryCount ticker entries, each on its laid-out lines, and the more line for
@@ -1896,24 +2231,25 @@ internal static class LiveDashboardLayout
     }
 
     // Every ticker entry laid out for the panel, most recently active first: the count and
-    // the rate right-aligned across all the entries (so the layout does not depend on which
-    // the budget keeps), the step name, the message and the ages as styled runs of sanitized
-    // text, wrapped to the panel's inner width — the pieces the width drops left out.
-    private static List<IReadOnlyList<RenderedLine>> RenderErrorEntries(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode)
+    // the rate right-aligned across all the given entries (so the layout does not depend on
+    // which the budget keeps), the step name, the message and the ages as styled runs of
+    // sanitized text, wrapped to the panel's inner width — the pieces the width drops left
+    // out. The entries are the snapshot's errors, or one step's share of them.
+    private static List<IReadOnlyList<RenderedLine>> RenderErrorEntries(IReadOnlyList<LiveErrorEntry> unsortedErrors, IReadOnlyList<LiveMetricsSample> samples, int width, ColorMode colorMode)
     {
         var entries = new List<IReadOnlyList<RenderedLine>>();
-        if (snapshot.Errors.Count == 0)
+        if (unsortedErrors.Count == 0)
             return entries;
 
-        var errors = snapshot.Errors.OrderByDescending(error => error.LastSeen).ThenByDescending(error => error.Count).ToList();
+        var errors = unsortedErrors.OrderByDescending(error => error.LastSeen).ThenByDescending(error => error.Count).ToList();
         var includeRates = width >= MinimumWidthForErrorRates;
-        var includeAges = width >= MinimumWidthForErrorAges && snapshot.Samples.Count > 0;
+        var includeAges = width >= MinimumWidthForErrorAges && samples.Count > 0;
 
         // The instant the ages are measured from: the newest sample's timestamp, which the
         // ages are shown only when the snapshot has.
         var reference = DateTime.MinValue;
         if (includeAges)
-            reference = snapshot.Samples[snapshot.Samples.Count - 1].Timestamp;
+            reference = samples[samples.Count - 1].Timestamp;
 
         var countWidth = 0;
         var rateWidth = 0;

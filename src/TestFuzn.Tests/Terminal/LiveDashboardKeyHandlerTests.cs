@@ -6,12 +6,15 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// <summary>
 /// Pins every binding of the pure <see cref="LiveDashboardKeyHandler"/> on a
 /// <see cref="LiveDashboardViewState"/> without a terminal: the view switches (and what
-/// <c>2</c> does without steps), the step selection moving over the first scenario's steps
-/// and stopping at both ends, the error log scrolling from its top, Enter with and without a
-/// selection or steps, Escape closing the help before it leaves a view, the pause toggle, the
-/// time window ladder in both directions from every rung, holding at its ends, and from a
-/// window off it, the help toggle, the chords and unknown keys that change nothing — the quit
-/// key among them — and that the state handed in is never changed.
+/// <c>2</c> does without steps), the step selection moving over the first scenario's steps in
+/// the order the Steps table displays them — the selection a declaration index, the walk the
+/// pain order — and stopping at both ends, the error log scrolling from its top, Enter with
+/// and without a selection or steps, Escape closing the help before it leaves a view, the
+/// pause toggle, the time window ladder in both directions from every rung, holding at its
+/// ends, and from a window off it, the help toggle, the chords and unknown keys that change
+/// nothing — the quit key among them — and that the state handed in is never changed. The
+/// steps of <see cref="Snapshots"/> carry no readings, so their displayed order is their
+/// declaration order; <see cref="PainSnapshots"/> sorts differently.
 /// </summary>
 [TestClass]
 public class LiveDashboardKeyHandlerTests : Test
@@ -52,6 +55,25 @@ public class LiveDashboardKeyHandlerTests : Test
             steps[index] = new LiveStepMetrics { Name = "Step " + (index + 1) };
 
         return steps;
+    }
+
+    /// <summary>
+    /// Two scenarios whose first sorts by pain: three steps declared Browse (no failure), Login
+    /// (five of a hundred failed) and Search (one of a hundred, or the given count), so the
+    /// Steps table displays Login, Search, Browse — the declaration indices 1, 2, 0 — unless
+    /// Search fails more than Login, when it displays Search, Login, Browse. The second
+    /// scenario's five plain steps would walk 0 to 4.
+    /// </summary>
+    private static LiveMetricsSnapshot[] PainSnapshots(int searchFailedCount = 1)
+    {
+        var steps = new[]
+        {
+            new LiveStepMetrics { Name = "Browse", RequestCountOk = 100 },
+            new LiveStepMetrics { Name = "Login", RequestCountOk = 95, RequestCountFailed = 5 },
+            new LiveStepMetrics { Name = "Search", RequestCountOk = 100 - searchFailedCount, RequestCountFailed = searchFailedCount }
+        };
+
+        return new[] { new LiveMetricsSnapshot { ScenarioName = "First", Steps = steps }, new LiveMetricsSnapshot { ScenarioName = "Second", Steps = Steps(5) } };
     }
 
     private static LiveDashboardViewState Apply(LiveDashboardViewState state, ConsoleKeyInfo key, int stepCount = 3)
@@ -95,7 +117,7 @@ public class LiveDashboardKeyHandlerTests : Test
                 state = Apply(state, Typed('1'));
                 Assert.AreEqual(LiveDashboardView.Overview, state.View);
             })
-            .Step("2 opens the detail on the selected step, selecting the first step when none is and clamping a stale selection into the steps", context =>
+            .Step("2 opens the detail on the selected step, selecting the top row's step when none is; a stale selection that names no step counts as none", context =>
             {
                 var opened = Apply(LiveDashboardViewState.Default, Typed('2'));
                 Assert.AreEqual(LiveDashboardView.StepDetail, opened.View);
@@ -104,8 +126,9 @@ public class LiveDashboardKeyHandlerTests : Test
                 var kept = Apply(LiveDashboardViewState.Default with { SelectedStepIndex = 2 }, Typed('2'));
                 Assert.AreEqual(2, kept.SelectedStepIndex);
 
-                var clamped = Apply(LiveDashboardViewState.Default with { SelectedStepIndex = 7 }, Typed('2'));
-                Assert.AreEqual(2, clamped.SelectedStepIndex);
+                var stale = Apply(LiveDashboardViewState.Default with { SelectedStepIndex = 7 }, Typed('2'));
+                Assert.AreEqual(LiveDashboardView.StepDetail, stale.View);
+                Assert.AreEqual(0, stale.SelectedStepIndex);
             })
             .Step("2 without steps in the first scenario changes nothing — the view stays where it is — while 3 always switches", context =>
             {
@@ -165,15 +188,18 @@ public class LiveDashboardKeyHandlerTests : Test
                 Assert.AreEqual(0, Apply(state, Down, stepCount: 1).SelectedStepIndex);
                 Assert.AreEqual(0, Apply(state, Up, stepCount: 1).SelectedStepIndex);
             })
-            .Step("No steps: the selection stays null, and a stale selection past the steps is pulled back into them", context =>
+            .Step("No steps: the selection stays null, and a stale selection past the steps counts as none — either arrow selects the top row's step", context =>
             {
                 Assert.IsNull(Apply(LiveDashboardViewState.Default, Down, stepCount: 0).SelectedStepIndex);
                 Assert.IsNull(Apply(LiveDashboardViewState.Default, Up, stepCount: 0).SelectedStepIndex);
                 Assert.IsNull(LiveDashboardKeyHandler.Apply(LiveDashboardViewState.Default, Down, Array.Empty<LiveMetricsSnapshot>()).SelectedStepIndex);
 
                 var stale = LiveDashboardViewState.Default with { SelectedStepIndex = 7 };
-                Assert.AreEqual(2, Apply(stale, Down).SelectedStepIndex);
-                Assert.AreEqual(2, Apply(stale, Up).SelectedStepIndex);
+                Assert.AreEqual(0, Apply(stale, Down).SelectedStepIndex);
+                Assert.AreEqual(0, Apply(stale, Up).SelectedStepIndex);
+
+                // A stale selection without steps stays as it is: there is nothing to select.
+                Assert.AreEqual(7, Apply(stale, Down, stepCount: 0).SelectedStepIndex);
             })
             .Step("The steps counted are the first scenario's, not the second's five", context =>
             {
@@ -189,6 +215,65 @@ public class LiveDashboardKeyHandlerTests : Test
                 Assert.AreEqual(2, down.SelectedStepIndex);
                 Assert.AreEqual(LiveDashboardView.StepDetail, down.View);
                 Assert.AreEqual(0, Apply(detail, Up).SelectedStepIndex);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_arrows_walk_the_displayed_order_and_store_declaration_indices()
+    {
+        await Scenario()
+            .Step("The order walked is the layout's displayed order — Login, Search, Browse: the declaration indices 1, 2, 0 — not the declaration order", context =>
+            {
+                CollectionAssert.AreEqual(new[] { 1, 2, 0 }, LiveDashboardLayout.DisplayedStepOrder(PainSnapshots()[0]).ToList());
+                CollectionAssert.AreEqual(new[] { 0, 1, 2, 3, 4 }, LiveDashboardLayout.DisplayedStepOrder(PainSnapshots()[1]).ToList());
+            })
+            .Step("Down from no selection selects the top row's step, Login (1), then Search (2), then Browse (0), and stays on Browse; up walks back through Search to Login and stays there", context =>
+            {
+                var state = LiveDashboardKeyHandler.Apply(LiveDashboardViewState.Default, Down, PainSnapshots());
+                Assert.AreEqual(1, state.SelectedStepIndex);
+                state = LiveDashboardKeyHandler.Apply(state, Down, PainSnapshots());
+                Assert.AreEqual(2, state.SelectedStepIndex);
+                state = LiveDashboardKeyHandler.Apply(state, Down, PainSnapshots());
+                Assert.AreEqual(0, state.SelectedStepIndex);
+                state = LiveDashboardKeyHandler.Apply(state, Down, PainSnapshots());
+                Assert.AreEqual(0, state.SelectedStepIndex);
+
+                state = LiveDashboardKeyHandler.Apply(state, Up, PainSnapshots());
+                Assert.AreEqual(2, state.SelectedStepIndex);
+                state = LiveDashboardKeyHandler.Apply(state, Up, PainSnapshots());
+                Assert.AreEqual(1, state.SelectedStepIndex);
+                state = LiveDashboardKeyHandler.Apply(state, Up, PainSnapshots());
+                Assert.AreEqual(1, state.SelectedStepIndex);
+
+                Assert.AreEqual(1, LiveDashboardKeyHandler.Apply(LiveDashboardViewState.Default, Up, PainSnapshots()).SelectedStepIndex);
+            })
+            .Step("The selection is the step, not its row: once Search fails more than Login and sorts to the top, the same selection 2 is the top row — up stays, down goes to Login (1)", context =>
+            {
+                var search = LiveDashboardViewState.Default with { SelectedStepIndex = 2 };
+
+                Assert.AreEqual(1, LiveDashboardKeyHandler.Apply(search, Up, PainSnapshots()).SelectedStepIndex);
+                Assert.AreEqual(0, LiveDashboardKeyHandler.Apply(search, Down, PainSnapshots()).SelectedStepIndex);
+
+                CollectionAssert.AreEqual(new[] { 2, 1, 0 }, LiveDashboardLayout.DisplayedStepOrder(PainSnapshots(searchFailedCount: 10)[0]).ToList());
+                Assert.AreEqual(2, LiveDashboardKeyHandler.Apply(search, Up, PainSnapshots(searchFailedCount: 10)).SelectedStepIndex);
+                Assert.AreEqual(1, LiveDashboardKeyHandler.Apply(search, Down, PainSnapshots(searchFailedCount: 10)).SelectedStepIndex);
+            })
+            .Step("Enter and 2 open the detail on the top row's step, Login (1), from no selection and from a stale one, and keep a selection that names a step", context =>
+            {
+                var opened = LiveDashboardKeyHandler.Apply(LiveDashboardViewState.Default, Enter, PainSnapshots());
+                Assert.AreEqual(LiveDashboardView.StepDetail, opened.View);
+                Assert.AreEqual(1, opened.SelectedStepIndex);
+
+                var stale = LiveDashboardKeyHandler.Apply(LiveDashboardViewState.Default with { SelectedStepIndex = 7 }, Typed('2'), PainSnapshots());
+                Assert.AreEqual(1, stale.SelectedStepIndex);
+
+                var kept = LiveDashboardKeyHandler.Apply(LiveDashboardViewState.Default with { SelectedStepIndex = 0 }, Enter, PainSnapshots());
+                Assert.AreEqual(0, kept.SelectedStepIndex);
+                Assert.AreEqual(LiveDashboardView.StepDetail, kept.View);
+
+                var staleDown = LiveDashboardKeyHandler.Apply(LiveDashboardViewState.Default with { SelectedStepIndex = 7 }, Down, PainSnapshots());
+                Assert.AreEqual(1, staleDown.SelectedStepIndex);
             })
             .Run();
     }

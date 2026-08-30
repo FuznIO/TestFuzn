@@ -127,10 +127,14 @@ public partial class LiveDashboardLayoutTests : Test
     /// rate on the newest interval, two steps and two errors. The steps carry ten-sample
     /// series in lockstep with the ring: their rates climb 44 → 70 over nine samples and the
     /// newest is the step's current rate — 71.4 for Add to cart, 9.6 for Checkout, whose rate
-    /// collapsed — and their interval p95 ends at 38 and 96 ms against cumulative p95s of 40
-    /// and 90. The Checkout error was first seen 72 s before the newest sample and last 2 s
-    /// before it at 2.0/s; the Add to cart one 45 s and 20 s before it, no longer occurring.
-    /// The golden frames below are derived from these values by hand.
+    /// collapsed — their ok and failed deltas add up to their rates (Add to cart never fails
+    /// in the ring; Checkout's three failed requests fall in samples 4, 7 and 10, and its
+    /// newest interval, 1.04 s long, closed with 9 ok and 1 failed), and their interval p95
+    /// ends at 38 and 96 ms against cumulative p95s of 40 and 90. The Checkout error was
+    /// first seen 72 s before the newest sample and last 2 s before it at 2.0/s; the Add to
+    /// cart one 45 s and 20 s before it, no longer occurring. The golden frames below are
+    /// derived from these values by hand; the step delta series show only in the step detail
+    /// (LiveDashboardLayoutTests.Detail.cs).
     /// </summary>
     private static LiveMetricsSnapshot RichSnapshot()
     {
@@ -175,6 +179,8 @@ public partial class LiveDashboardLayoutTests : Test
                 ResponseTimeMean = TimeSpan.FromMilliseconds(18),
                 ResponseTimePercentile95 = TimeSpan.FromMilliseconds(40),
                 RequestsPerSecondSeries = new double[] { 44, 48, 52, 56, 60, 64, 67, 69, 70, 71.4 },
+                OkDeltaSeries = new double[] { 44, 48, 52, 56, 60, 64, 67, 69, 70, 71 },
+                FailedDeltaSeries = new double[10],
                 ResponseTimePercentile95Series = new double[] { 44, 43, 42, 41, 40, 40, 39, 39, 38, 38 }
             },
             new LiveStepMetrics
@@ -187,6 +193,8 @@ public partial class LiveDashboardLayoutTests : Test
                 ResponseTimeMean = TimeSpan.FromMilliseconds(58),
                 ResponseTimePercentile95 = TimeSpan.FromMilliseconds(90),
                 RequestsPerSecondSeries = new double[] { 44, 48, 52, 56, 60, 64, 66, 69, 70, 9.6 },
+                OkDeltaSeries = new double[] { 44, 48, 52, 55, 60, 64, 65, 69, 70, 9 },
+                FailedDeltaSeries = new double[] { 0, 0, 0, 1, 0, 0, 1, 0, 0, 1 },
                 ResponseTimePercentile95Series = new double[] { 90, 90, 91, 92, 93, 94, 95, 95, 96, 96 }
             }
         };

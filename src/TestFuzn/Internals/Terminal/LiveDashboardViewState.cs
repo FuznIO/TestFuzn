@@ -9,7 +9,7 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// <see cref="LiveDashboardKeyHandler"/> derives the next state from a key press with a
 /// <c>with</c> expression — so a frame is a pure function of the snapshots and one of these, and
 /// identical inputs still render an identical frame. Nothing here is validated: the layout and
-/// the key handler clamp what they read into what the snapshots allow.
+/// the key handler resolve what they read against what the snapshots allow.
 /// </summary>
 internal readonly struct LiveDashboardViewState
 {
@@ -20,15 +20,19 @@ internal readonly struct LiveDashboardViewState
     public LiveDashboardView View { get; init; }
 
     /// <summary>
-    /// The highlighted row of the Steps table, as an index into the rows as they are
-    /// displayed — the pain-sorted order the layout shows, not the scenario's declaration
-    /// order, and only the rows the height budget kept — or null for no selection. The layout
-    /// clamps the index into the displayed rows: one past the last row (a row the budget
-    /// trimmed away) selects the last row shown and a negative one the first, so a selection
-    /// never disappears while there are rows; with no rows displayed nothing is highlighted.
-    /// One selection for the whole frame: it applies to every scenario's section alike, and
-    /// the step detail shows the first scenario's selected step — the current rule, since the
-    /// key handler moves the selection over the first scenario's steps.
+    /// The selected step, as its declaration index into <see cref="LiveMetricsSnapshot.Steps"/>
+    /// — a stable identity: the Steps table sorts its rows by pain and reshuffles them as the
+    /// readings move, and the highlight follows the step wherever the sort puts its row — or
+    /// null for no selection. The key handler moves it up and down the rows in the order the
+    /// table displays them (<see cref="LiveDashboardLayout.DisplayedStepOrder"/>), so ↑ and ↓
+    /// walk what the viewer sees, and stores the neighbour's declaration index. A value that
+    /// names no step — a negative index, one past the steps, which only a step that has gone
+    /// from the snapshot can leave behind — selects nothing: the layout highlights no row and
+    /// the step detail shows its notice, and the key handler treats it as no selection. One
+    /// selection for the whole frame: it applies to every scenario's section, each resolving it
+    /// against its own steps, and the step detail shows the first scenario's selected step —
+    /// the current rule, since the key handler moves the selection over the first scenario's
+    /// steps.
     /// </summary>
     public int? SelectedStepIndex { get; init; }
 
