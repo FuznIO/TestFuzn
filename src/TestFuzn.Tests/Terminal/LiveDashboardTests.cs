@@ -252,10 +252,11 @@ public class LiveDashboardTests : Test
     public async Task Verify_view_state_reaches_the_frame_and_a_pause_holds_the_spinner()
     {
         await Scenario()
-            .Step("The view state's footer is laid out: the error log's hints replace the overview's on the last row", context =>
+            .Step("The view state's view is laid out: the error log's header, its no-errors notice and its hints replace the overview's tiles and footer, row by row", context =>
             {
                 // At 40 columns the log's footer is "Esc back · ↑↓ scroll · q quit", 29
-                // columns — its next hint would make it 42.
+                // columns — its next hint would make it 42. The tiles' four rows become the
+                // log's header, its notice and two blank rows.
                 var writer = new FakeTerminalWriter { WindowWidth = 40, WindowHeight = 6 };
                 using var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) });
                 dashboard.Start();
@@ -265,7 +266,15 @@ public class LiveDashboardTests : Test
                 dashboard.Render(LiveDashboardViewState.Default with { View = LiveDashboardView.ErrorLog });
 
                 var flush = Assert.ContainsSingle(writer.Writes);
-                Assert.AreEqual(SynchronizedFlush(RepaintedLine(1, TitleLine("⠙")), RepaintedLine(6, "Esc back · ↑↓ scroll · q quit")), flush);
+                Assert.AreEqual(
+                    SynchronizedFlush(
+                        RepaintedLine(1, TitleLine("⠙")),
+                        RepaintedLine(2, "errors · 0 of 0 · Esc back"),
+                        RepaintedLine(3, LiveDashboardLayout.NoErrorsNoticeText),
+                        RepaintedLine(4, string.Empty),
+                        RepaintedLine(5, string.Empty),
+                        RepaintedLine(6, "Esc back · ↑↓ scroll · q quit")),
+                    flush);
             })
             .Step("Paused, the badge joins the title and the spinner holds its glyph, so further paused renders of the same state write nothing; resuming shows the held glyph once more and then advances", context =>
             {

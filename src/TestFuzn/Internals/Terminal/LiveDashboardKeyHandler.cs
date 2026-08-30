@@ -8,7 +8,8 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// one state it hands the layout. The bindings:
 /// <list type="bullet">
 /// <item><description><c>1</c>, <c>2</c>, <c>3</c> switch to the overview, the step detail and the error log. <c>2</c> is <c>Enter</c> under another name: it opens the selected step, selects the first displayed step when none is, and does nothing at all — the view stays — while the first scenario has no steps, since the detail would have no subject; <c>1</c> and <c>3</c> always switch.</description></item>
-/// <item><description><c>↑</c> and <c>↓</c> move the step selection in the overview and the step detail — over the first scenario's steps in the order the Steps table displays them (<see cref="LiveDashboardLayout.DisplayedStepOrder"/>, the pain order), the selection being the step's declaration index (<see cref="LiveDashboardViewState.SelectedStepIndex"/>): the first press selects the top row's step from no selection, later ones move one row up or down and stop at the ends (no wrap-around), and without steps the selection stays as it is — and scroll the error log in the log view, one entry per press, never above the top; the log view clamps the other end. A selection that names no step of the first scenario (stale: the step has gone from the snapshot) counts as none, so the next press selects the top row's step.</description></item>
+/// <item><description><c>↑</c> and <c>↓</c> move the step selection in the overview and the step detail — over the first scenario's steps in the order the Steps table displays them (<see cref="LiveDashboardLayout.DisplayedStepOrder"/>, the pain order), the selection being the step's declaration index (<see cref="LiveDashboardViewState.SelectedStepIndex"/>): the first press selects the top row's step from no selection, later ones move one row up or down and stop at the ends (no wrap-around), and without steps the selection stays as it is — and scroll the error log in the log view, one entry per press, clamped into the first scenario's entries (<see cref="LiveDashboardViewState.ErrorLogScroll"/>: never above the top, never past the last entry, and 0 without an entry); the log view clamps the offset further, to the last one its page is still full from, since only it knows the page. A selection that names no step of the first scenario (stale: the step has gone from the snapshot) counts as none, so the next press selects the top row's step.</description></item>
+/// <item><description><c>Page Up</c> and <c>Page Down</c> scroll the error log by <see cref="ErrorLogPageSize"/> entries in the log view, clamped the same way, and do nothing in the other views — the Steps table has no page to turn.</description></item>
 /// <item><description><c>Enter</c> opens the step detail on the selected step, selecting the top row's step when none is selected (or the selection names no step), and does nothing while the first scenario has no steps.</description></item>
 /// <item><description><c>Esc</c> closes the help when it is up, else returns to the overview (the selection and the other choices stay).</description></item>
 /// <item><description><c>p</c> (either case, like the quit key) toggles the pause.</description></item>
@@ -19,14 +20,17 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// the handler leaves the state alone for it as for any key it has no binding for. A chord with
 /// Alt or Control is never a binding — on a pty Alt+p arrives as ESC p and reads as p with the
 /// Alt modifier — while Shift is what makes <c>?</c>, <c>+</c> and an upper-case letter, so it
-/// is not. Page Up and Page Down are reserved for the error log and ignored for now. The
-/// letters and symbols are matched by the typed character (so a keypad <c>+</c> counts) and the
-/// arrows, Enter and Escape by their key. Stateless and thread-safe.
+/// is not. The letters and symbols are matched by the typed character (so a keypad <c>+</c>
+/// counts) and the arrows, the page keys, Enter and Escape by their key. Stateless and
+/// thread-safe.
 /// </summary>
 internal static class LiveDashboardKeyHandler
 {
     /// <summary>The rungs of the ladder <c>+</c> and <c>-</c> move the time window along, in samples, narrowest first; every sample (null) is the top of the ladder above the widest rung, and nothing lies below the narrowest.</summary>
     public static readonly IReadOnlyList<int> TimeWindowLadder = new[] { 60, 120, 300 };
+
+    /// <summary>The entries Page Up and Page Down scroll the error log by — a fixed page, since the handler never sees the window's height.</summary>
+    public const int ErrorLogPageSize = 10;
 
     /// <summary>The key that toggles the pause, in either case.</summary>
     public const char PauseKey = 'p';
@@ -58,9 +62,13 @@ internal static class LiveDashboardKeyHandler
         switch (key.Key)
         {
             case ConsoleKey.UpArrow:
-                return MoveUp(state, stepOrder);
+                return MoveUp(state, stepOrder, snapshots);
             case ConsoleKey.DownArrow:
-                return MoveDown(state, stepOrder);
+                return MoveDown(state, stepOrder, snapshots);
+            case ConsoleKey.PageUp:
+                return PageErrorLog(state, -ErrorLogPageSize, snapshots);
+            case ConsoleKey.PageDown:
+                return PageErrorLog(state, ErrorLogPageSize, snapshots);
             case ConsoleKey.Enter:
                 return OpenStepDetail(state, stepOrder);
             case ConsoleKey.Escape:
@@ -101,20 +109,41 @@ internal static class LiveDashboardKeyHandler
         return LiveDashboardLayout.DisplayedStepOrder(snapshots[0]);
     }
 
-    private static LiveDashboardViewState MoveUp(LiveDashboardViewState state, IReadOnlyList<int> stepOrder)
+    private static LiveDashboardViewState MoveUp(LiveDashboardViewState state, IReadOnlyList<int> stepOrder, IReadOnlyList<LiveMetricsSnapshot> snapshots)
     {
         if (state.View == LiveDashboardView.ErrorLog)
-            return state with { ErrorLogScroll = Math.Max(0, state.ErrorLogScroll - 1) };
+            return ScrollErrorLog(state, -1, snapshots);
 
         return MoveSelection(state, -1, stepOrder);
     }
 
-    private static LiveDashboardViewState MoveDown(LiveDashboardViewState state, IReadOnlyList<int> stepOrder)
+    private static LiveDashboardViewState MoveDown(LiveDashboardViewState state, IReadOnlyList<int> stepOrder, IReadOnlyList<LiveMetricsSnapshot> snapshots)
     {
         if (state.View == LiveDashboardView.ErrorLog)
-            return state with { ErrorLogScroll = state.ErrorLogScroll + 1 };
+            return ScrollErrorLog(state, 1, snapshots);
 
         return MoveSelection(state, 1, stepOrder);
+    }
+
+    // A page key: the log scrolled by a page in the log view, nothing elsewhere.
+    private static LiveDashboardViewState PageErrorLog(LiveDashboardViewState state, int delta, IReadOnlyList<LiveMetricsSnapshot> snapshots)
+    {
+        if (state.View != LiveDashboardView.ErrorLog)
+            return state;
+
+        return ScrollErrorLog(state, delta, snapshots);
+    }
+
+    // The error log's scroll moved by delta entries and clamped into the first scenario's
+    // entries: never below 0, never past the last entry, and 0 without an entry or a scenario
+    // — so a stale offset past the entries comes back onto them with the next press.
+    private static LiveDashboardViewState ScrollErrorLog(LiveDashboardViewState state, int delta, IReadOnlyList<LiveMetricsSnapshot> snapshots)
+    {
+        var lastEntry = 0;
+        if (snapshots.Count > 0)
+            lastEntry = Math.Max(0, snapshots[0].Errors.Count - 1);
+
+        return state with { ErrorLogScroll = (int)Math.Clamp((long)state.ErrorLogScroll + delta, 0, lastEntry) };
     }
 
     // The selection one displayed row in the given direction, clamped into the rows: the top

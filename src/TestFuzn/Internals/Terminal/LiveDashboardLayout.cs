@@ -289,10 +289,9 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// that do not fit from the right, which would take the quit hint first, so the footer is the
 /// longest prefix of the view's hints that fits the width together with the quit hint — the
 /// view's hints go from the right, the quit hint never — and the quit hint alone, cut to the
-/// width with the widget's ellipsis, below its six columns. The step detail has a body of its
-/// own (the Step detail paragraph); the error log lays out the overview body under its own
-/// footer until it has one, and <see cref="LiveDashboardViewState.ErrorLogScroll"/> and the
-/// help have nothing to render yet.
+/// width with the widget's ellipsis, below its six columns. The step detail and the error log
+/// have bodies of their own (the Step detail and Error log paragraphs), and the help is a
+/// panel composed over whichever view is up (the Help overlay paragraph).
 /// </para>
 /// <para>
 /// <b>Step detail.</b> With <see cref="LiveDashboardViewState.View"/> at
@@ -355,6 +354,77 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// Without a scenario, without a step, or with a selection that names no step — null, or an
 /// index past the steps — the section is the title line (when there is a scenario) over a
 /// <c>no step selected · Esc back</c> notice in the secondary style, never a throw.
+/// </para>
+/// <para>
+/// <b>Error log.</b> With <see cref="LiveDashboardViewState.View"/> at
+/// <see cref="LiveDashboardView.ErrorLog"/> the frame is the first scenario's errors as one
+/// scrollable log in place of the overview's sections — never columns; the other scenarios'
+/// logs are a follow-up, like the detail's drill-down — under the error log's footer. The
+/// title line is the scenario's as the detail draws it (the name, the status badge, the
+/// paused badge, the phase label after the badge since the log shows no timeline, the logo
+/// from <see cref="MinimumWidthForLogo"/> columns). Under it the header line, <c>errors ·
+/// 3–14 of 27 · Esc back</c>: the word in <see cref="TerminalPalette.PanelHeaderStyle"/>,
+/// the scroll indicator — the 1-based positions of the first and last entries on the page
+/// and the log's entry count, <c>0 of 27</c> when no entry line fits — and, in the secondary
+/// style with the dots, <c>+5 unlisted</c> when the model tracks more distinct errors than the
+/// snapshot carries (<see cref="LiveMetricsSnapshot.DistinctErrorCount"/> over the list, which
+/// holds the top <see cref="ScenarioLiveMetrics.ErrorCapacity"/>) and the back hint, cut to
+/// the width with an ellipsis. Then the log, every row between the header and the footer:
+/// the entries grouped by step under a group header per step — <c>▸ Checkout</c>, the
+/// <see cref="Pointer"/> and the sanitized, escaped name in the panel header style, cut to
+/// the width — the groups in the order of their most recently active entry (the ticker's
+/// order: <see cref="LiveErrorEntry.LastSeen"/> descending, then the count descending, then
+/// the snapshot's order) and the entries inside a group in that order too. An entry is the
+/// ticker's line without the step name — the group header names it — indented two columns
+/// under the header: the count and the rate in columns sized over the whole log, the message
+/// and the ages, the rates and the ages going by the frame's width as the ticker's do, wrapped
+/// to the width with the ticker's wrap but without its line cap, so the whole message is on
+/// the page (an entry taller than the page shows what fits; the scroll moves by entries, so
+/// the tail of such an entry never comes into view). <see cref="LiveDashboardViewState.ErrorLogScroll"/>
+/// is the position of the first entry on the page: the page opens with that entry's group
+/// header — the header rides with the first entry shown, whichever of its group's entries
+/// that is — then the entries from it on, a header wherever the group changes, as many lines
+/// as fit; a group header may be the page's last row, announcing the group the next entry
+/// belongs to. Two clamps: the key handler keeps the offset between 0 and the entry count
+/// less one, and the layout takes it no further than the last page — the smallest offset
+/// the entries from there on, with their headers, fit the rows from — so the last page is
+/// the fullest page that still shows the log's end whole (a scroll past the end lands on
+/// it, and every entry is reachable), a log that fits the page whole is never scrolled at
+/// all, and a lone entry taller than the page — the last entry, under its header,
+/// overrunning the rows on its own — is the last page by itself and is cut from the bottom;
+/// under an unbounded height there is no page to fill, so the offset applies as the handler
+/// left it. Without an error the header reads <c>errors · 0 of 0 · Esc back</c> over a
+/// <c>no errors</c> notice (<see cref="NoErrorsNoticeText"/>) in the secondary style — the
+/// back hint is the header's, so the notice carries none; without a scenario the header and
+/// the notice stand alone, never a throw.
+/// </para>
+/// <para>
+/// <b>Help overlay.</b> With <see cref="LiveDashboardViewState.ShowHelp"/> set the frame is
+/// laid out as it would be without it — whichever view is up, its footer the help hints —
+/// and a <see cref="PanelWidget"/> titled <c>? help</c> (the help key) is composed over its
+/// rows: one line per binding, the key in bold in a column as wide as the widest key
+/// (<c>PgUp PgDn</c>), two spaces and the description — <c>1  overview</c>, <c>2 ⏎  step
+/// detail</c>, <c>3  error log</c>, <c>↑ ↓  select step / scroll</c>, <c>PgUp PgDn  page the
+/// error log</c>, <c>Esc  close help / back</c>, <c>p  pause</c>, <c>+ -  time window</c>,
+/// <c>?  help</c>, <c>q  quit</c> — the keys from the handler's and the layout's constants.
+/// The panel is as wide as its widest line and the borders, capped to the width less two
+/// (its lines then cut with the widget's ellipsis), and as tall as its lines and the borders,
+/// capped to the rows above the footer — the lines past the cap dropped from the bottom, so
+/// the footer row is never covered — and centred over those rows, the odd column and row of
+/// the leftover going right of and below it. Each covered row is spliced around the panel:
+/// the row's columns before the panel's left edge, the panel line, the row's columns after
+/// its right edge, the two parts cut by a helper that walks the row's SGR sequences — the
+/// sequences before a part are folded into the style in force at its first column and
+/// replayed there (every sequence since the last reset, in order, which reproduces the
+/// engine's per-span styling exactly), the sequences inside a part stay where they are, a
+/// reset closes a part left with an open style, and a surrogate pair the panel's edge would
+/// split is replaced by a space on the uncovered side — so every covered row is exactly the
+/// width and style-complete, a row without an escape gains none, the rows above and below
+/// the panel are untouched, and the frame renderer diffs the result as any other. The panel
+/// is dropped whole when the caps leave it narrower than its frame — the two borders and
+/// their padding, <see cref="PanelWidget.ContentOverhead"/> columns — or shorter than its
+/// two border rows (a width below 6, a height below 3); at the frame alone it still renders,
+/// a hollow box with no header and no content column.
 /// </para>
 /// Alternate-screen entry/exit and the render loop are the caller's job. Stateless and
 /// thread-safe.
@@ -531,6 +601,23 @@ internal static class LiveDashboardLayout
     /// <summary>The step detail's notice line, under the title line, when the view state's selection names no step of the first scenario — or there is no scenario or no step.</summary>
     public const string NoStepSelectedNoticeText = "no step selected · Esc back";
 
+    /// <summary>The error log's notice line, under its header, when the first scenario has no error — or there is no scenario; the back hint is the header's.</summary>
+    public const string NoErrorsNoticeText = "no errors";
+
+    // The error log's header pieces: the word before the scroll indicator, the dash between
+    // the indicator's positions, and the note on the distinct errors the snapshot does not
+    // carry.
+    private const string ErrorLogHeaderText = "errors";
+    private const string ScrollRangeDash = "–";
+    private const string UnlistedSuffix = " unlisted";
+
+    // The columns the log's entries are indented by under their group header: the pointer
+    // glyph and its space.
+    private const int ErrorGroupIndent = 2;
+
+    // The columns between the help panel's key column and its descriptions.
+    private const int HelpColumnGap = 2;
+
     // The footer's hints: the quit hint closes every view's set, and the view's own hints are
     // given up from the right before it (see the class summary's Interaction).
     private static readonly KeyHint QuitHint = new KeyHint(QuitKey.ToString(), "quit");
@@ -573,6 +660,30 @@ internal static class LiveDashboardLayout
         new KeyHint(LiveDashboardKeyHandler.HelpKey.ToString(), "close"),
         new KeyHint("Esc", "close")
     };
+
+    // The help panel: its header — the help key and the word — and every binding as a key and
+    // its description, in the order the panel lists them (see the class summary's Help
+    // overlay); the lines are the keys in bold, padded to one column, before the descriptions.
+    private static readonly string HelpHeader = "[" + TerminalPalette.PanelHeaderStyle + "]" + LiveDashboardKeyHandler.HelpKey + " help[/]";
+
+    private static readonly KeyHint[] HelpEntries =
+    {
+        new KeyHint("1", "overview"),
+        new KeyHint("2 ⏎", "step detail"),
+        new KeyHint("3", "error log"),
+        new KeyHint("↑ ↓", "select step / scroll"),
+        new KeyHint("PgUp PgDn", "page the error log"),
+        new KeyHint("Esc", "close help / back"),
+        new KeyHint(LiveDashboardKeyHandler.PauseKey.ToString(), "pause"),
+        new KeyHint(LiveDashboardKeyHandler.WidenTimeWindowKey + " " + LiveDashboardKeyHandler.NarrowTimeWindowKey, "time window"),
+        new KeyHint(LiveDashboardKeyHandler.HelpKey.ToString(), "help"),
+        new KeyHint(QuitKey.ToString(), "quit")
+    };
+
+    private static readonly string[] HelpLines = BuildHelpLines();
+
+    // The panel's natural width: its widest line and the borders — what the width cap works from.
+    private static readonly int HelpPanelWidth = WidestMarkup(HelpLines) + PanelWidget.ContentOverhead;
 
     // The chart and heatmap panels' options: the layout's own formats and styles over every
     // sample, shared across renders (the options are immutable); a view state's time window
@@ -655,7 +766,9 @@ internal static class LiveDashboardLayout
     /// the terminal's font support. The spinner glyph, when given, is drawn in place of the
     /// dot on a running scenario's status badge — a single-column glyph the caller's render
     /// loop advances per frame; null keeps the dot, and finished badges (passed, failed,
-    /// skipped) always keep theirs.
+    /// skipped) always keep theirs. The view's error log (the Error log paragraph) is the
+    /// first scenario's, and the help (the Help overlay paragraph) is composed over the
+    /// finished frame, footer excluded.
     /// </summary>
     public static IReadOnlyList<RenderedLine> Render(IReadOnlyList<LiveMetricsSnapshot> snapshots, LiveDashboardViewState viewState, int width, int height, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet = SparklineGlyphSet.Braille, string? spinnerGlyph = null)
     {
@@ -674,6 +787,10 @@ internal static class LiveDashboardLayout
         if (viewState.View == LiveDashboardView.StepDetail)
         {
             AddStepDetailSection(lines, snapshots, viewState, width, height, remainingRows, colorMode, sparklineGlyphSet, spinnerGlyph);
+        }
+        else if (viewState.View == LiveDashboardView.ErrorLog)
+        {
+            AddErrorLogSection(lines, snapshots, viewState, width, height, remainingRows, colorMode, spinnerGlyph);
         }
         else if (columnCount > 1)
         {
@@ -708,7 +825,177 @@ internal static class LiveDashboardLayout
         }
 
         lines.AddRange(RenderFooter(viewState, width, colorMode));
+
+        if (viewState.ShowHelp)
+            OverlayHelp(lines, width, colorMode);
+
         return lines;
+    }
+
+    // The help panel's lines: every entry's key in bold, padded to the widest key, the column
+    // gap and the description.
+    private static string[] BuildHelpLines()
+    {
+        var keyWidth = 0;
+        foreach (var entry in HelpEntries)
+            keyWidth = Math.Max(keyWidth, MarkupText.Measure(entry.Key));
+
+        var lines = new string[HelpEntries.Length];
+        for (var index = 0; index < HelpEntries.Length; index++)
+            lines[index] = "[bold]" + HelpEntries[index].Key + "[/]" + new string(' ', keyWidth - MarkupText.Measure(HelpEntries[index].Key) + HelpColumnGap) + HelpEntries[index].Description;
+
+        return lines;
+    }
+
+    // The widest of the markup lines in display columns: the content width the help panel's
+    // natural width puts its borders around.
+    private static int WidestMarkup(IReadOnlyList<string> markupLines)
+    {
+        var widest = 0;
+        foreach (var markup in markupLines)
+            widest = Math.Max(widest, MarkupText.Measure(markup));
+
+        return widest;
+    }
+
+    // The help panel over the frame's rows above the footer (the class summary's Help
+    // overlay): centred, its width the natural one capped to the width less two, its height
+    // the lines' with the borders capped to the rows above the footer — the lines past the
+    // cap dropped from the bottom — and each covered row spliced around it; nothing when the
+    // caps leave it narrower than its frame or shorter than its border rows. The footer is
+    // the frame's last row here, whatever the height.
+    private static void OverlayHelp(List<RenderedLine> lines, int width, ColorMode colorMode)
+    {
+        var contentRows = lines.Count - 1;
+        var panelWidth = Math.Min(HelpPanelWidth, width - 2);
+        var panelHeight = Math.Min(HelpLines.Length + PanelFrameRows, contentRows);
+        if (panelWidth < PanelWidget.ContentOverhead || panelHeight < PanelFrameRows)
+            return;
+
+        var content = new string?[panelHeight - PanelFrameRows];
+        Array.Copy(HelpLines, content, content.Length);
+        var panel = PanelWidget.Render(HelpHeader, content, panelWidth, colorMode);
+
+        var left = (width - panelWidth) / 2;
+        var top = (contentRows - panelHeight) / 2;
+        for (var row = 0; row < panel.Count; row++)
+            lines[top + row] = SpliceColumns(lines[top + row], panel[row], left, width);
+    }
+
+    // A frame row with the panel line laid over its columns from left on: the row's columns
+    // before the panel, the panel line, and the row's columns after it, each side taken
+    // through ColumnRange, so the row stays exactly the width and style-complete. A row
+    // declared wider than its characters — the title line's double-width logo — keeps its
+    // declared width: the columns after the panel are taken short by the surplus, so the
+    // row's text stays as many characters short of the width as it was.
+    private static RenderedLine SpliceColumns(RenderedLine row, RenderedLine panelLine, int left, int width)
+    {
+        // The surplus is the title line's lightning, always outside the panel: the panel is
+        // centred and no wider than its natural width, so its right edge stops short of the
+        // logo's gap at every width that carries one — the tests pin that from
+        // MinimumWidthForLogo up. Covering the lightning would take the row a column short.
+        var surplus = Math.Max(0, row.Width - DisplayColumns(row.Text));
+        var text = ColumnRange(row.Text, 0, left) + panelLine.Text + ColumnRange(row.Text, left + panelLine.Width, width - surplus);
+        return new RenderedLine(text, width);
+    }
+
+    // The columns [start, end) of a rendered line's text, as text of exactly end − start
+    // columns — the characters there, padded with spaces past the line's last one. The SGR
+    // sequences before the range are folded into the style in force at its first character
+    // and replayed ahead of it — every sequence since the last reset, in order; the engine's
+    // styling is SGR alone, each span opened by one sequence and closed by a reset, so the
+    // replay reproduces the state exactly — the sequences inside the range are kept where
+    // they are, and a reset closes the part when a style is still open at its end, so the
+    // part is style-complete on its own and carries no escape at all when the line carries
+    // none. A surrogate pair the range's edge would split is replaced by a space on the
+    // part's side, so a pair is never broken. Reads past a line's escapes like CutToWidth,
+    // and for the same reason: a frame row must never outgrow the width.
+    private static string ColumnRange(string text, int start, int end)
+    {
+        var part = new StringBuilder();
+        var active = new StringBuilder();
+        var opened = false;
+        var kept = 0;
+        var column = 0;
+        var position = 0;
+        while (position < text.Length && column < end)
+        {
+            var character = text[position];
+            if (character == AnsiCodes.Escape[0])
+            {
+                var sequenceEnd = EndOfEscapeSequence(text, position);
+                if (opened)
+                    part.Append(text, position, sequenceEnd - position);
+
+                if (IsResetSequence(text, position, sequenceEnd))
+                    active.Clear();
+                else
+                    active.Append(text, position, sequenceEnd - position);
+
+                position = sequenceEnd;
+                continue;
+            }
+
+            var length = 1;
+            if (char.IsHighSurrogate(character) && position + 1 < text.Length && char.IsLowSurrogate(text[position + 1]))
+                length = 2;
+
+            if (column + length > start)
+            {
+                if (!opened)
+                {
+                    part.Append(active);
+                    opened = true;
+                }
+
+                if (column < start || column + length > end)
+                {
+                    part.Append(' ');
+                    kept++;
+                }
+                else
+                {
+                    part.Append(text, position, length);
+                    kept += length;
+                }
+            }
+
+            column += length;
+            position += length;
+        }
+
+        if (opened && active.Length > 0)
+            part.Append(AnsiCodes.Reset);
+
+        part.Append(' ', Math.Max(0, end - start - kept));
+        return part.ToString();
+    }
+
+    private static bool IsResetSequence(string text, int position, int end)
+    {
+        return end - position == AnsiCodes.Reset.Length && string.CompareOrdinal(text, position, AnsiCodes.Reset, 0, AnsiCodes.Reset.Length) == 0;
+    }
+
+    // The columns a rendered line's characters take as the engine counts them — one per
+    // character outside the escape sequences — against which a line's declared width can
+    // carry a surplus (the compact logo's lightning is declared two columns wide).
+    private static int DisplayColumns(string text)
+    {
+        var columns = 0;
+        var position = 0;
+        while (position < text.Length)
+        {
+            if (text[position] == AnsiCodes.Escape[0])
+            {
+                position = EndOfEscapeSequence(text, position);
+                continue;
+            }
+
+            columns++;
+            position++;
+        }
+
+        return columns;
     }
 
     // The footer: the longest prefix of the view's hints that fits the width together with the
@@ -1024,7 +1311,7 @@ internal static class LiveDashboardLayout
     {
         if (snapshots.Count == 0)
         {
-            lines.Add(RenderNoStepNotice(width, colorMode));
+            lines.Add(RenderNoticeLine(NoStepSelectedNoticeText, width, colorMode));
             return;
         }
 
@@ -1035,7 +1322,7 @@ internal static class LiveDashboardLayout
         lines.Add(RenderTitleLine(snapshot, viewState.IsPaused, width, colorMode, spinnerGlyph, includeLogo: width >= MinimumWidthForLogo, includePhaseLabel: true));
         if (position < 0)
         {
-            lines.Add(RenderNoStepNotice(width, colorMode));
+            lines.Add(RenderNoticeLine(NoStepSelectedNoticeText, width, colorMode));
             return;
         }
 
@@ -1089,10 +1376,161 @@ internal static class LiveDashboardLayout
         return MarkupText.RenderTruncated("[" + TerminalPalette.FailedStyle + "]✗ " + MarkupParser.Escape(statusDetail) + "[/]", width, colorMode);
     }
 
-    // The notice the step detail shows in place of a step's section.
-    private static RenderedLine RenderNoStepNotice(int width, ColorMode colorMode)
+    // A notice line in the secondary style: the step detail's in place of a step's section,
+    // the error log's in place of its entries.
+    private static RenderedLine RenderNoticeLine(string notice, int width, ColorMode colorMode)
     {
-        return MarkupText.RenderTruncated("[" + TerminalPalette.SecondaryStyle + "]" + MarkupParser.Escape(NoStepSelectedNoticeText) + "[/]", width, colorMode);
+        return MarkupText.RenderTruncated("[" + TerminalPalette.SecondaryStyle + "]" + MarkupParser.Escape(notice) + "[/]", width, colorMode);
+    }
+
+    // The error log's section (the class summary's Error log): the first scenario's title
+    // line and, under the header line that carries the scroll indicator, its entries grouped
+    // by step from the scroll offset — as many lines as the rows between the header and the
+    // footer hold, the offset clamped to the last page, the fullest page that still shows
+    // the log's end whole — or the no-errors notice; without a scenario the header and the
+    // notice alone.
+    private static void AddErrorLogSection(List<RenderedLine> lines, IReadOnlyList<LiveMetricsSnapshot> snapshots, LiveDashboardViewState viewState, int width, int height, int budget, ColorMode colorMode, string? spinnerGlyph)
+    {
+        IReadOnlyList<LiveErrorEntry> errors = Array.Empty<LiveErrorEntry>();
+        IReadOnlyList<LiveMetricsSample> samples = Array.Empty<LiveMetricsSample>();
+        var unlistedCount = 0;
+        if (snapshots.Count > 0)
+        {
+            var snapshot = snapshots[0];
+            lines.Add(RenderTitleLine(snapshot, viewState.IsPaused, width, colorMode, spinnerGlyph, includeLogo: width >= MinimumWidthForLogo, includePhaseLabel: true));
+            budget--;
+            errors = snapshot.Errors;
+            samples = snapshot.Samples;
+            unlistedCount = Math.Max(0, snapshot.DistinctErrorCount - errors.Count);
+        }
+
+        // The header takes a row; the log has every row left above the footer.
+        budget--;
+        if (errors.Count == 0)
+        {
+            lines.Add(RenderErrorLogHeader(0, 0, 0, unlistedCount, width, colorMode));
+            lines.Add(RenderNoticeLine(NoErrorsNoticeText, width, colorMode));
+            return;
+        }
+
+        // The entries in the log's order, their runs and the wrap of each: the line counts
+        // are what the clamp and the page are measured in, and only the lines on the page
+        // are rendered.
+        var entries = GroupErrors(SortErrors(errors));
+        var innerWidth = width - ErrorGroupIndent;
+        var runs = ErrorEntryRuns(entries, samples, width, innerWidth, includeStepNames: false, out var indent);
+        var ranges = new List<(int Start, int Length)>[entries.Count];
+        for (var index = 0; index < entries.Count; index++)
+            ranges[index] = WrapRanges(RunsText(runs[index]), Math.Max(1, innerWidth), Math.Max(1, innerWidth - indent), int.MaxValue);
+
+        var offset = Math.Clamp(viewState.ErrorLogScroll, 0, entries.Count - 1);
+        var rows = int.MaxValue;
+        if (height >= 1)
+        {
+            rows = Math.Max(0, budget);
+            offset = Math.Min(offset, LastPageOffset(entries, ranges, rows));
+        }
+
+        var page = new List<RenderedLine>();
+        var lastShown = 0;
+        for (var index = offset; index < entries.Count && page.Count < rows; index++)
+        {
+            if (index == offset || IsGroupStart(entries, index))
+                page.Add(RenderErrorGroupHeader(entries[index].StepName, width, colorMode));
+
+            for (var line = 0; line < ranges[index].Count && page.Count < rows; line++)
+            {
+                page.Add(IndentLine(RenderWrappedLine(runs[index], ranges[index][line], line == 0, innerWidth, indent, colorMode), ErrorGroupIndent));
+                lastShown = index + 1;
+            }
+        }
+
+        var firstShown = 0;
+        if (lastShown > 0)
+            firstShown = offset + 1;
+
+        lines.Add(RenderErrorLogHeader(firstShown, lastShown, entries.Count, unlistedCount, width, colorMode));
+        lines.AddRange(page);
+    }
+
+    // The last page's offset — the smallest one whose entries from there on, with their group
+    // headers, take rows lines or fewer: the fullest page that still shows the log's end
+    // whole, the top end of the scroll. 0 when the whole log fits, and the last entry's own
+    // when even that entry alone, under its header, overruns the rows — it is then cut from
+    // the bottom. Walked from the end: the lines from an entry on are its group header, its
+    // lines and the lines from the next entry on, whose header stands only where the group
+    // changes; the first entry from the end to overrun the rows puts the last page at the
+    // entry after it.
+    private static int LastPageOffset(List<LiveErrorEntry> entries, List<(int Start, int Length)>[] ranges, int rows)
+    {
+        var tail = 0;
+        for (var index = entries.Count - 1; index >= 0; index--)
+        {
+            if (index == entries.Count - 1)
+                tail = 1 + ranges[index].Count;
+            else
+                tail += ranges[index].Count + (IsGroupStart(entries, index + 1) ? 1 : 0);
+
+            if (tail > rows)
+                return Math.Min(index + 1, entries.Count - 1);
+        }
+
+        return 0;
+    }
+
+    // Whether the entry at index opens a group: the first entry, or one whose step differs
+    // from the entry before it — the groups are contiguous in the log's order.
+    private static bool IsGroupStart(List<LiveErrorEntry> entries, int index)
+    {
+        return index == 0 || !string.Equals(entries[index].StepName, entries[index - 1].StepName, StringComparison.Ordinal);
+    }
+
+    // The sorted entries with each step's brought together: the groups in the order of their
+    // first entry — the step's most recently active error — and the entries inside a group in
+    // the order they came in.
+    private static List<LiveErrorEntry> GroupErrors(List<LiveErrorEntry> sortedErrors)
+    {
+        var grouped = new List<LiveErrorEntry>(sortedErrors.Count);
+        foreach (var group in sortedErrors.GroupBy(error => error.StepName, StringComparer.Ordinal))
+            grouped.AddRange(group);
+
+        return grouped;
+    }
+
+    // The log's header line: the word in the panel header style, a dim dot, the scroll
+    // indicator — the positions shown and the count, or "0 of n" when no entry line is on the
+    // page — and, dim, the unlisted note when there is one and the back hint after their
+    // dots, cut to the width.
+    private static RenderedLine RenderErrorLogHeader(int firstShown, int lastShown, int entryCount, int unlistedCount, int width, ColorMode colorMode)
+    {
+        var indicator = "0 of " + FormatCount(entryCount);
+        if (lastShown > 0)
+            indicator = FormatCount(firstShown) + ScrollRangeDash + FormatCount(lastShown) + " of " + FormatCount(entryCount);
+
+        var notes = string.Empty;
+        if (unlistedCount > 0)
+            notes = "· +" + FormatCount(unlistedCount) + UnlistedSuffix + " ";
+
+        var markup = "[" + TerminalPalette.PanelHeaderStyle + "]" + ErrorLogHeaderText + "[/] [" + TerminalPalette.SecondaryStyle + "]·[/] " + indicator
+            + " [" + TerminalPalette.SecondaryStyle + "]" + notes + "· " + BackHintText + "[/]";
+        return MarkupText.RenderTruncated(markup, width, colorMode);
+    }
+
+    // A group header of the log: the pointer and the step's name, sanitized and escaped, in
+    // the panel header style, cut to the width.
+    private static RenderedLine RenderErrorGroupHeader(string stepName, int width, ColorMode colorMode)
+    {
+        var markup = "[" + TerminalPalette.PanelHeaderStyle + "]" + Pointer + " " + MarkupParser.Escape(MarkupText.SanitizeControlCharacters(stepName)) + "[/]";
+        return MarkupText.RenderTruncated(markup, width, colorMode);
+    }
+
+    // A line moved right by indent columns; an empty line stays empty.
+    private static RenderedLine IndentLine(RenderedLine line, int indent)
+    {
+        if (line.Width == 0)
+            return line;
+
+        return new RenderedLine(new string(' ', indent) + line.Text, line.Width + indent);
     }
 
     // The errors of one step: the entries whose step name is the given name, in the
@@ -2233,15 +2671,43 @@ internal static class LiveDashboardLayout
     // Every ticker entry laid out for the panel, most recently active first: the count and
     // the rate right-aligned across all the given entries (so the layout does not depend on
     // which the budget keeps), the step name, the message and the ages as styled runs of
-    // sanitized text, wrapped to the panel's inner width — the pieces the width drops left
-    // out. The entries are the snapshot's errors, or one step's share of them.
+    // sanitized text, wrapped to the panel's inner width under the ticker's line cap — the
+    // pieces the width drops left out. The entries are the snapshot's errors, or one step's
+    // share of them.
     private static List<IReadOnlyList<RenderedLine>> RenderErrorEntries(IReadOnlyList<LiveErrorEntry> unsortedErrors, IReadOnlyList<LiveMetricsSample> samples, int width, ColorMode colorMode)
     {
         var entries = new List<IReadOnlyList<RenderedLine>>();
         if (unsortedErrors.Count == 0)
             return entries;
 
-        var errors = unsortedErrors.OrderByDescending(error => error.LastSeen).ThenByDescending(error => error.Count).ToList();
+        var innerWidth = width - PanelWidget.ContentOverhead;
+        var runs = ErrorEntryRuns(SortErrors(unsortedErrors), samples, width, innerWidth, includeStepNames: true, out var indent);
+        foreach (var entryRuns in runs)
+            entries.Add(WrapRuns(entryRuns, innerWidth, indent, colorMode, MaximumErrorEntryLines));
+
+        return entries;
+    }
+
+    // The errors most recently active first: the last-seen instant descending, then the
+    // count descending, the given order on a tie — the ticker's order, and the order the
+    // log's groups and their entries follow.
+    private static List<LiveErrorEntry> SortErrors(IReadOnlyList<LiveErrorEntry> errors)
+    {
+        return errors.OrderByDescending(error => error.LastSeen).ThenByDescending(error => error.Count).ToList();
+    }
+
+    // The entries as styled runs of sanitized text, in the given order: the count
+    // right-aligned across all the entries with a × in the failed style, the rate in
+    // parentheses per second right-aligned likewise and secondary, between a space and two,
+    // while the width allows one; the step name in bold and a dim middle dot when asked for
+    // (the ticker's line — the error log's group header names the step instead); the
+    // message; and the ages in the secondary style after three spaces while the width allows
+    // them and the snapshot has a sample to measure them from. The indent is where an
+    // entry's continuation lines sit: under the step name — under the message without one —
+    // past the count and its ×, then either the rate between a space and two spaces or one
+    // space, unless that would take more than half the inner width.
+    private static List<List<TextRun>> ErrorEntryRuns(IReadOnlyList<LiveErrorEntry> errors, IReadOnlyList<LiveMetricsSample> samples, int width, int innerWidth, bool includeStepNames, out int indent)
+    {
         var includeRates = width >= MinimumWidthForErrorRates;
         var includeAges = width >= MinimumWidthForErrorAges && samples.Count > 0;
 
@@ -2259,16 +2725,14 @@ internal static class LiveDashboardLayout
             rateWidth = Math.Max(rateWidth, ErrorRateText(error.RatePerSecond).Length);
         }
 
-        // Continuation lines sit under the step name: past the count and its ×, then either
-        // the rate between a space and two spaces, or one space.
-        var innerWidth = width - PanelWidget.ContentOverhead;
         var nameSeparator = includeRates ? "  " : " ";
-        var indent = countWidth + 1 + nameSeparator.Length;
+        indent = countWidth + 1 + nameSeparator.Length;
         if (includeRates)
             indent += 1 + rateWidth;
         if (indent * 2 > innerWidth)
             indent = 0;
 
+        var entries = new List<List<TextRun>>(errors.Count);
         foreach (var error in errors)
         {
             var runs = new List<TextRun>();
@@ -2280,10 +2744,14 @@ internal static class LiveDashboardLayout
             }
 
             runs.Add(new TextRun(nameSeparator, null));
-            runs.Add(new TextRun(MarkupText.SanitizeControlCharacters(error.StepName), "bold"));
-            runs.Add(new TextRun(" ", null));
-            runs.Add(new TextRun("·", TerminalPalette.SecondaryStyle));
-            runs.Add(new TextRun(" ", null));
+            if (includeStepNames)
+            {
+                runs.Add(new TextRun(MarkupText.SanitizeControlCharacters(error.StepName), "bold"));
+                runs.Add(new TextRun(" ", null));
+                runs.Add(new TextRun("·", TerminalPalette.SecondaryStyle));
+                runs.Add(new TextRun(" ", null));
+            }
+
             runs.Add(new TextRun(MarkupText.SanitizeControlCharacters(error.Message), null));
             if (includeAges)
             {
@@ -2291,7 +2759,7 @@ internal static class LiveDashboardLayout
                 runs.Add(new TextRun("first " + FormatAge(reference - error.FirstSeen) + " ago · last " + FormatAge(reference - error.LastSeen) + " ago", TerminalPalette.SecondaryStyle));
             }
 
-            entries.Add(WrapRuns(runs, innerWidth, indent, colorMode));
+            entries.Add(runs);
         }
 
         return entries;
@@ -2315,39 +2783,42 @@ internal static class LiveDashboardLayout
         return SimulationPlan.FormatDuration(age);
     }
 
-    // The runs' text wrapped to the width as lines of at most MaximumErrorEntryLines: the first
-    // line at the full width, the rest indented and narrowed by the indent; each line's markup
-    // is rebuilt from the runs it covers, so no line break can split a tag or an escape. The
+    // The runs' text wrapped to the width as lines of at most maximumLines: the first line at
+    // the full width, the rest indented and narrowed by the indent; each line's markup is
+    // rebuilt from the runs it covers, so no line break can split a tag or an escape. The
     // last allowed line takes all the remaining text and is truncated with an ellipsis when
     // that is too wide. A degenerate panel (an inner width below 1) lays the text out as if
     // one column wide, so the loop always advances, and renders every line empty.
-    private static IReadOnlyList<RenderedLine> WrapRuns(List<TextRun> runs, int innerWidth, int indent, ColorMode colorMode)
+    private static IReadOnlyList<RenderedLine> WrapRuns(List<TextRun> runs, int innerWidth, int indent, ColorMode colorMode, int maximumLines)
+    {
+        var ranges = WrapRanges(RunsText(runs), Math.Max(1, innerWidth), Math.Max(1, innerWidth - indent), maximumLines);
+
+        var lines = new List<RenderedLine>(ranges.Count);
+        for (var index = 0; index < ranges.Count; index++)
+            lines.Add(RenderWrappedLine(runs, ranges[index], index == 0, innerWidth, indent, colorMode));
+
+        return lines;
+    }
+
+    // One wrapped line of an entry: the runs' markup over the range, the first line at the
+    // full inner width, a continuation line narrowed by the indent and moved right by it.
+    private static RenderedLine RenderWrappedLine(List<TextRun> runs, (int Start, int Length) range, bool isFirstLine, int innerWidth, int indent, ColorMode colorMode)
+    {
+        var markup = RunsMarkup(runs, range.Start, range.Length);
+        if (isFirstLine)
+            return MarkupText.RenderTruncated(markup, innerWidth, colorMode);
+
+        return IndentLine(MarkupText.RenderTruncated(markup, innerWidth - indent, colorMode), indent);
+    }
+
+    // The runs' text end to end: what the wrap measures.
+    private static string RunsText(List<TextRun> runs)
     {
         var text = new StringBuilder();
         foreach (var run in runs)
             text.Append(run.Text);
 
-        var continuationWidth = innerWidth - indent;
-        var ranges = WrapRanges(text.ToString(), Math.Max(1, innerWidth), Math.Max(1, continuationWidth), MaximumErrorEntryLines);
-
-        var lines = new List<RenderedLine>(ranges.Count);
-        for (var index = 0; index < ranges.Count; index++)
-        {
-            var markup = RunsMarkup(runs, ranges[index].Start, ranges[index].Length);
-            if (index == 0)
-            {
-                lines.Add(MarkupText.RenderTruncated(markup, innerWidth, colorMode));
-                continue;
-            }
-
-            var rendered = MarkupText.RenderTruncated(markup, continuationWidth, colorMode);
-            if (rendered.Width == 0)
-                lines.Add(rendered);
-            else
-                lines.Add(new RenderedLine(new string(' ', indent) + rendered.Text, indent + rendered.Width));
-        }
-
-        return lines;
+        return text.ToString();
     }
 
     // Greedy word wrapping over plain text: a line breaks at the last space that lets it fit

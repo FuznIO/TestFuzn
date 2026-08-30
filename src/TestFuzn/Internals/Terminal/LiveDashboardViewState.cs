@@ -37,9 +37,12 @@ internal readonly struct LiveDashboardViewState
     public int? SelectedStepIndex { get; init; }
 
     /// <summary>
-    /// How many entries the error log is scrolled down from its top, never below 0. The key
-    /// handler clamps only at 0; the log view clamps the top end into the entries it has, so a
-    /// scroll past the last entry lands on it.
+    /// How many entries the error log is scrolled down from its top — the position of the
+    /// first entry on its page, in the log's own order (grouped by step) — never below 0. The
+    /// key handler clamps it into the first scenario's entries, 0 to their count less one; the
+    /// log view clamps it further, to the last position its page is still full from, so a
+    /// scroll past that shows the last full page rather than a short one (the layout
+    /// documents both clamps).
     /// </summary>
     public int ErrorLogScroll { get; init; }
 
@@ -59,6 +62,6 @@ internal readonly struct LiveDashboardViewState
     /// </summary>
     public int? TimeWindow { get; init; }
 
-    /// <summary>Whether the help overlay is up. The footer shows how to close it; the overlay itself is drawn by the layout.</summary>
+    /// <summary>Whether the help overlay is up: the layout composes its help panel over the frame of whichever view is up, and the footer shows how to close it.</summary>
     public bool ShowHelp { get; init; }
 }

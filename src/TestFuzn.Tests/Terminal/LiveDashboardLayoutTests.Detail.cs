@@ -271,12 +271,17 @@ public partial class LiveDashboardLayoutTests
                 Assert.Contains(Sgr(Red, "30×"), lines[17].Text);
                 AssertMaximumWidth(120, lines);
             })
-            .Step("The help changes only the footer, and the paused badge sits on the title line before the phase", context =>
+            .Step("The help changes the footer and the twelve rows its panel covers — 13 to 24, the rows around them untouched (LiveDashboardLayoutTests.ErrorLog.cs pins the panel) — and the paused badge sits on the title line before the phase", context =>
             {
                 var detail = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DetailView(1), 120, 40, ColorMode.None);
                 var help = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DetailView(1) with { ShowHelp = true }, 120, 40, ColorMode.None);
-                for (var row = 0; row < 39; row++)
+                for (var row = 0; row < 13; row++)
                     AssertLine(detail[row].Text, detail[row].Width, help[row]);
+                for (var row = 13; row < 25; row++)
+                    Assert.AreEqual(120, help[row].Width, $"Covered row {row}");
+                for (var row = 25; row < 39; row++)
+                    AssertLine(detail[row].Text, detail[row].Width, help[row]);
+                Assert.Contains("? help", help[13].Text);
                 AssertLine(HelpFooter, 28, help[39]);
 
                 var paused = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DetailView(1) with { IsPaused = true }, 120, 40, ColorMode.None);

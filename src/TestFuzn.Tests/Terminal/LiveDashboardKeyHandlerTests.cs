@@ -8,13 +8,14 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// <see cref="LiveDashboardViewState"/> without a terminal: the view switches (and what
 /// <c>2</c> does without steps), the step selection moving over the first scenario's steps in
 /// the order the Steps table displays them — the selection a declaration index, the walk the
-/// pain order — and stopping at both ends, the error log scrolling from its top, Enter with
-/// and without a selection or steps, Escape closing the help before it leaves a view, the
-/// pause toggle, the time window ladder in both directions from every rung, holding at its
-/// ends, and from a window off it, the help toggle, the chords and unknown keys that change
-/// nothing — the quit key among them — and that the state handed in is never changed. The
-/// steps of <see cref="Snapshots"/> carry no readings, so their displayed order is their
-/// declaration order; <see cref="PainSnapshots"/> sorts differently.
+/// pain order — and stopping at both ends, the error log scrolling by an entry and by a page
+/// between its top and its last entry, Enter with and without a selection or steps, Escape
+/// closing the help before it leaves a view, the pause toggle, the time window ladder in
+/// both directions from every rung, holding at its ends, and from a window off it, the help
+/// toggle, the chords and unknown keys that change nothing — the quit key among them — and
+/// that the state handed in is never changed. The steps of <see cref="Snapshots"/> carry no
+/// readings, so their displayed order is their declaration order; <see cref="PainSnapshots"/>
+/// sorts differently.
 /// </summary>
 [TestClass]
 public class LiveDashboardKeyHandlerTests : Test
@@ -27,6 +28,8 @@ public class LiveDashboardKeyHandlerTests : Test
     private static readonly ConsoleKeyInfo Widen = Key(ConsoleKey.OemPlus, '+', shift: true);
     private static readonly ConsoleKeyInfo Narrow = Key(ConsoleKey.OemMinus, '-');
     private static readonly ConsoleKeyInfo Help = Key(ConsoleKey.Oem2, '?', shift: true);
+    private static readonly ConsoleKeyInfo PageUp = Key(ConsoleKey.PageUp);
+    private static readonly ConsoleKeyInfo PageDown = Key(ConsoleKey.PageDown);
 
     private static ConsoleKeyInfo Key(ConsoleKey key, char keyChar = '\0', bool shift = false, bool alt = false, bool control = false)
     {
@@ -40,12 +43,16 @@ public class LiveDashboardKeyHandlerTests : Test
     }
 
     /// <summary>
-    /// Two scenarios: the first with the given number of steps, the second always with five,
-    /// so a binding that counted the wrong scenario's steps would show.
+    /// Two scenarios: the first with the given numbers of steps and errors, the second always
+    /// with five steps and nine errors, so a binding that counted the wrong scenario's would show.
     /// </summary>
-    private static LiveMetricsSnapshot[] Snapshots(int stepCount)
+    private static LiveMetricsSnapshot[] Snapshots(int stepCount, int errorCount = 0)
     {
-        return new[] { new LiveMetricsSnapshot { ScenarioName = "First", Steps = Steps(stepCount) }, new LiveMetricsSnapshot { ScenarioName = "Second", Steps = Steps(5) } };
+        return new[]
+        {
+            new LiveMetricsSnapshot { ScenarioName = "First", Steps = Steps(stepCount), Errors = Errors(errorCount) },
+            new LiveMetricsSnapshot { ScenarioName = "Second", Steps = Steps(5), Errors = Errors(9) }
+        };
     }
 
     private static LiveStepMetrics[] Steps(int count)
@@ -55,6 +62,15 @@ public class LiveDashboardKeyHandlerTests : Test
             steps[index] = new LiveStepMetrics { Name = "Step " + (index + 1) };
 
         return steps;
+    }
+
+    private static LiveErrorEntry[] Errors(int count)
+    {
+        var errors = new LiveErrorEntry[count];
+        for (var index = 0; index < count; index++)
+            errors[index] = new LiveErrorEntry { StepName = "Step 1", Message = "E" + (index + 1), Count = 1 };
+
+        return errors;
     }
 
     /// <summary>
@@ -76,9 +92,9 @@ public class LiveDashboardKeyHandlerTests : Test
         return new[] { new LiveMetricsSnapshot { ScenarioName = "First", Steps = steps }, new LiveMetricsSnapshot { ScenarioName = "Second", Steps = Steps(5) } };
     }
 
-    private static LiveDashboardViewState Apply(LiveDashboardViewState state, ConsoleKeyInfo key, int stepCount = 3)
+    private static LiveDashboardViewState Apply(LiveDashboardViewState state, ConsoleKeyInfo key, int stepCount = 3, int errorCount = 0)
     {
-        return LiveDashboardKeyHandler.Apply(state, key, Snapshots(stepCount));
+        return LiveDashboardKeyHandler.Apply(state, key, Snapshots(stepCount, errorCount));
     }
 
     private static void AssertUnchanged(LiveDashboardViewState expected, LiveDashboardViewState actual)
@@ -282,29 +298,90 @@ public class LiveDashboardKeyHandlerTests : Test
     public async Task Verify_arrows_scroll_the_error_log()
     {
         await Scenario()
-            .Step("In the error log down scrolls one entry per press without an upper limit, up scrolls back and stops at the top, and the step selection stays put", context =>
+            .Step("In the error log down scrolls one entry per press and stops at the last entry, up scrolls back and stops at the top, and the step selection stays put", context =>
             {
                 var state = LiveDashboardViewState.Default with { View = LiveDashboardView.ErrorLog, SelectedStepIndex = 1 };
 
-                state = Apply(state, Down);
+                state = Apply(state, Down, errorCount: 3);
                 Assert.AreEqual(1, state.ErrorLogScroll);
-                state = Apply(state, Down);
+                state = Apply(state, Down, errorCount: 3);
+                Assert.AreEqual(2, state.ErrorLogScroll);
+                state = Apply(state, Down, errorCount: 3);
                 Assert.AreEqual(2, state.ErrorLogScroll);
                 Assert.AreEqual(1, state.SelectedStepIndex);
 
-                state = Apply(state, Up);
+                state = Apply(state, Up, errorCount: 3);
                 Assert.AreEqual(1, state.ErrorLogScroll);
-                state = Apply(state, Up);
+                state = Apply(state, Up, errorCount: 3);
                 Assert.AreEqual(0, state.ErrorLogScroll);
-                state = Apply(state, Up);
+                state = Apply(state, Up, errorCount: 3);
                 Assert.AreEqual(0, state.ErrorLogScroll);
                 Assert.AreEqual(LiveDashboardView.ErrorLog, state.View);
                 Assert.AreEqual(1, state.SelectedStepIndex);
+            })
+            .Step("The entries counted are the first scenario's, not the second's nine: without an error the scroll stays at 0, and a stale offset past the entries comes back onto them with the next press either way", context =>
+            {
+                var log = LiveDashboardViewState.Default with { View = LiveDashboardView.ErrorLog };
+                Assert.AreEqual(0, Apply(log, Down).ErrorLogScroll);
+                Assert.AreEqual(0, Apply(log, Down, stepCount: 0).ErrorLogScroll);
+                Assert.AreEqual(0, LiveDashboardKeyHandler.Apply(log, Down, Array.Empty<LiveMetricsSnapshot>()).ErrorLogScroll);
 
-                // The top end is the log view's to clamp: the handler scrolls on regardless
-                // of how many errors there are (none here).
-                var deep = Apply(LiveDashboardViewState.Default with { View = LiveDashboardView.ErrorLog, ErrorLogScroll = 10 }, Down, stepCount: 0);
-                Assert.AreEqual(11, deep.ErrorLogScroll);
+                var stale = log with { ErrorLogScroll = 10 };
+                Assert.AreEqual(2, Apply(stale, Down, errorCount: 3).ErrorLogScroll);
+                Assert.AreEqual(2, Apply(stale, Up, errorCount: 3).ErrorLogScroll);
+                Assert.AreEqual(0, Apply(stale, Up).ErrorLogScroll);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_page_keys_scroll_the_error_log_by_a_page()
+    {
+        await Scenario()
+            .Step("The page is ten entries: over 27 entries Page Down walks 0, 10, 20 and stops at the last entry, 26; Page Up walks back 16, 6 and stops at 0", context =>
+            {
+                var state = LiveDashboardViewState.Default with { View = LiveDashboardView.ErrorLog, SelectedStepIndex = 2 };
+                state = Apply(state, PageDown, errorCount: 27);
+                Assert.AreEqual(10, state.ErrorLogScroll);
+                state = Apply(state, PageDown, errorCount: 27);
+                Assert.AreEqual(20, state.ErrorLogScroll);
+                state = Apply(state, PageDown, errorCount: 27);
+                Assert.AreEqual(26, state.ErrorLogScroll);
+                state = Apply(state, PageDown, errorCount: 27);
+                Assert.AreEqual(26, state.ErrorLogScroll);
+
+                state = Apply(state, PageUp, errorCount: 27);
+                Assert.AreEqual(16, state.ErrorLogScroll);
+                state = Apply(state, PageUp, errorCount: 27);
+                Assert.AreEqual(6, state.ErrorLogScroll);
+                state = Apply(state, PageUp, errorCount: 27);
+                Assert.AreEqual(0, state.ErrorLogScroll);
+                state = Apply(state, PageUp, errorCount: 27);
+                Assert.AreEqual(0, state.ErrorLogScroll);
+                Assert.AreEqual(LiveDashboardView.ErrorLog, state.View);
+                Assert.AreEqual(2, state.SelectedStepIndex);
+            })
+            .Step("A short log clamps a page at both ends, and without an error the scroll stays at 0", context =>
+            {
+                var log = LiveDashboardViewState.Default with { View = LiveDashboardView.ErrorLog };
+                Assert.AreEqual(2, Apply(log, PageDown, errorCount: 3).ErrorLogScroll);
+                Assert.AreEqual(0, Apply(log with { ErrorLogScroll = 2 }, PageUp, errorCount: 3).ErrorLogScroll);
+                Assert.AreEqual(0, Apply(log, PageDown).ErrorLogScroll);
+                Assert.AreEqual(0, LiveDashboardKeyHandler.Apply(log with { ErrorLogScroll = 4 }, PageDown, Array.Empty<LiveMetricsSnapshot>()).ErrorLogScroll);
+            })
+            .Step("In the overview and the step detail the page keys change nothing, and a chord with Alt or Control is never a binding", context =>
+            {
+                var overview = new LiveDashboardViewState { SelectedStepIndex = 1, ErrorLogScroll = 2 };
+                AssertUnchanged(overview, Apply(overview, PageDown, errorCount: 27));
+                AssertUnchanged(overview, Apply(overview, PageUp, errorCount: 27));
+
+                var detail = overview with { View = LiveDashboardView.StepDetail };
+                AssertUnchanged(detail, Apply(detail, PageDown, errorCount: 27));
+                AssertUnchanged(detail, Apply(detail, PageUp, errorCount: 27));
+
+                var log = overview with { View = LiveDashboardView.ErrorLog };
+                AssertUnchanged(log, Apply(log, Key(ConsoleKey.PageDown, alt: true), errorCount: 27));
+                AssertUnchanged(log, Apply(log, Key(ConsoleKey.PageUp, control: true), errorCount: 27));
             })
             .Run();
     }
@@ -502,20 +579,18 @@ public class LiveDashboardKeyHandlerTests : Test
                 AssertUnchanged(state, Apply(state, Key(ConsoleKey.OemPlus, '+', shift: true, alt: true)));
                 AssertUnchanged(state, Apply(state, Key(ConsoleKey.Oem2, '?', shift: true, control: true)));
             })
-            .Step("Keys without a binding change nothing: letters, space, Tab, function keys, Home, End, the reserved Page Up and Page Down, and the quit key in either case", context =>
+            .Step("Keys without a binding change nothing: letters, space, Tab, function keys, Home, End, and the quit key in either case", context =>
             {
                 var state = new LiveDashboardViewState { View = LiveDashboardView.ErrorLog, SelectedStepIndex = 1, ErrorLogScroll = 2, IsPaused = true };
 
-                AssertUnchanged(state, Apply(state, Typed('x')));
-                AssertUnchanged(state, Apply(state, Typed('4')));
-                AssertUnchanged(state, Apply(state, Key(ConsoleKey.Spacebar, ' ')));
-                AssertUnchanged(state, Apply(state, Key(ConsoleKey.Tab, '\t')));
-                AssertUnchanged(state, Apply(state, Key(ConsoleKey.F1)));
-                AssertUnchanged(state, Apply(state, Key(ConsoleKey.Home)));
-                AssertUnchanged(state, Apply(state, Key(ConsoleKey.End)));
-                AssertUnchanged(state, Apply(state, Key(ConsoleKey.PageUp)));
-                AssertUnchanged(state, Apply(state, Key(ConsoleKey.PageDown)));
-                AssertUnchanged(state, Apply(state, Key(ConsoleKey.Backspace, '\b')));
+                AssertUnchanged(state, Apply(state, Typed('x'), errorCount: 9));
+                AssertUnchanged(state, Apply(state, Typed('4'), errorCount: 9));
+                AssertUnchanged(state, Apply(state, Key(ConsoleKey.Spacebar, ' '), errorCount: 9));
+                AssertUnchanged(state, Apply(state, Key(ConsoleKey.Tab, '\t'), errorCount: 9));
+                AssertUnchanged(state, Apply(state, Key(ConsoleKey.F1), errorCount: 9));
+                AssertUnchanged(state, Apply(state, Key(ConsoleKey.Home), errorCount: 9));
+                AssertUnchanged(state, Apply(state, Key(ConsoleKey.End), errorCount: 9));
+                AssertUnchanged(state, Apply(state, Key(ConsoleKey.Backspace, '\b'), errorCount: 9));
                 AssertUnchanged(state, Apply(state, Typed(LiveDashboardLayout.QuitKey)));
                 AssertUnchanged(state, Apply(state, Typed('Q')));
             })

@@ -849,8 +849,12 @@ public class ConsoleManagerTests : Test
 
                 await harness.ConsoleManager.StopRealtimeConsoleOutput();
             })
-            .Step("A key while paused repaints over the frozen snapshots — the help footer is the only line written, the clock stands — and resuming jumps to now", async context =>
+            .Step("A key while paused repaints over the frozen snapshots — the help panel's rows and the help footer are the lines written, the clock stands on the frozen second — and resuming jumps to now", async context =>
             {
+                // At 60 columns and 12 rows the help panel covers the eleven rows above the
+                // footer from column 12: the frozen clock's row is among them, so the write
+                // carries the frozen second where the panel leaves it visible, and the
+                // footer is the help's.
                 var harness = new Harness();
                 harness.Writer.WindowHeight = 12;
                 harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
@@ -869,18 +873,30 @@ public class ConsoleManagerTests : Test
                 Assert.IsTrue(harness.ConsoleManager.ViewState.ShowHelp);
                 Assert.IsTrue(harness.ConsoleManager.ViewState.IsPaused);
                 Assert.HasCount(5, harness.Writer.Writes);
-                Assert.AreEqual(
-                    AnsiCodes.BeginSynchronizedOutput + AnsiCodes.MoveCursor(12, 1) + AnsiCodes.Reset + AnsiCodes.EraseLine + "? close · Esc close · q quit" + AnsiCodes.EndSynchronizedOutput,
-                    harness.Writer.Writes[4]);
+                Assert.Contains("? help", harness.Writer.Writes[4]);
+                Assert.EndsWith(AnsiCodes.MoveCursor(12, 1) + AnsiCodes.Reset + AnsiCodes.EraseLine + "? close · Esc close · q quit" + AnsiCodes.EndSynchronizedOutput, harness.Writer.Writes[4]);
+                Assert.DoesNotContain("00:00:02", harness.Writer.Writes[4]);
+                Assert.DoesNotContain("00:00:03", harness.Writer.Writes[4]);
 
                 await harness.Host.RunTick(At(3));
                 Assert.HasCount(5, harness.Writer.Writes);
 
-                harness.Host.Reader.Press(LiveDashboardKeyHandler.PauseKey);
+                // Closing the help repaints the covered rows from the frozen picture: the
+                // badge and the second the pause began on come back into view, the clock
+                // still standing there.
+                harness.Host.Reader.Press(new ConsoleKeyInfo(LiveDashboardKeyHandler.HelpKey, ConsoleKey.Oem2, shift: true, alt: false, control: false));
                 await harness.Host.RunTick(At(3.25));
+                Assert.IsFalse(harness.ConsoleManager.ViewState.ShowHelp);
                 Assert.HasCount(6, harness.Writer.Writes);
-                Assert.Contains("00:00:03", harness.Writer.Writes[5]);
-                Assert.DoesNotContain(LiveDashboardLayout.PausedBadgeText, harness.Writer.Writes[5]);
+                Assert.DoesNotContain("? help", harness.Writer.Writes[5]);
+                Assert.Contains(LiveDashboardLayout.PausedBadgeText, harness.Writer.Writes[5]);
+                Assert.Contains("00:00:01", harness.Writer.Writes[5]);
+
+                harness.Host.Reader.Press(LiveDashboardKeyHandler.PauseKey);
+                await harness.Host.RunTick(At(3.5));
+                Assert.HasCount(7, harness.Writer.Writes);
+                Assert.Contains("00:00:03", harness.Writer.Writes[6]);
+                Assert.DoesNotContain(LiveDashboardLayout.PausedBadgeText, harness.Writer.Writes[6]);
 
                 await harness.ConsoleManager.StopRealtimeConsoleOutput();
             })
@@ -899,10 +915,12 @@ public class ConsoleManagerTests : Test
                 Assert.AreEqual(LiveDashboardView.ErrorLog, harness.ConsoleManager.ViewState.View);
                 Assert.Contains("Esc back · ↑↓ scroll · 1 overview · 2 step · q quit", harness.Writer.Writes[2]);
 
+                // The init placeholder has no error, so the log's scroll is clamped at its
+                // top; the walk over entries is the key handler's own tests' to pin.
                 harness.Host.Reader.Press(ConsoleKey.DownArrow);
                 harness.Host.Reader.Press(ConsoleKey.DownArrow);
                 await harness.Host.RunTick(At(1.25));
-                Assert.AreEqual(2, harness.ConsoleManager.ViewState.ErrorLogScroll);
+                Assert.AreEqual(0, harness.ConsoleManager.ViewState.ErrorLogScroll);
                 Assert.IsNull(harness.ConsoleManager.ViewState.SelectedStepIndex);
 
                 harness.Host.Reader.Press(ConsoleKey.Escape);
@@ -935,6 +953,38 @@ public class ConsoleManagerTests : Test
                 await harness.Host.RunTick(At(2.5));
                 Assert.AreEqual(LiveDashboardView.Overview, harness.ConsoleManager.ViewState.View);
                 Assert.AreEqual(0, harness.ConsoleManager.ViewState.SelectedStepIndex);
+
+                await harness.ConsoleManager.StopRealtimeConsoleOutput();
+            })
+            .Step("3, ? and Esc reach the frames: the error log's header, the help panel over the log, and the log again once the help is closed", async context =>
+            {
+                // At 60 columns and 8 rows the help panel covers every row above the footer
+                // from column 12, its top border over the title line.
+                var harness = new Harness();
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+
+                harness.Host.Reader.Press('3');
+                await harness.Host.RunTick(At(1));
+                Assert.AreEqual(LiveDashboardView.ErrorLog, harness.ConsoleManager.ViewState.View);
+                Assert.Contains("errors · 0 of 0 · Esc back", harness.Writer.Writes[2]);
+                Assert.Contains(LiveDashboardLayout.NoErrorsNoticeText, harness.Writer.Writes[2]);
+
+                harness.Host.Reader.Press(new ConsoleKeyInfo(LiveDashboardKeyHandler.HelpKey, ConsoleKey.Oem2, shift: true, alt: false, control: false));
+                await harness.Host.RunTick(At(1.25));
+                Assert.IsTrue(harness.ConsoleManager.ViewState.ShowHelp);
+                Assert.AreEqual(LiveDashboardView.ErrorLog, harness.ConsoleManager.ViewState.View);
+                Assert.Contains("╭─ ? help ", harness.Writer.Writes[3]);
+                Assert.Contains("? close · Esc close · q quit", harness.Writer.Writes[3]);
+
+                harness.Host.Reader.Press(ConsoleKey.Escape);
+                await harness.Host.RunTick(At(1.5));
+                Assert.IsFalse(harness.ConsoleManager.ViewState.ShowHelp);
+                Assert.AreEqual(LiveDashboardView.ErrorLog, harness.ConsoleManager.ViewState.View);
+                Assert.DoesNotContain("? help", harness.Writer.Writes[4]);
+                Assert.Contains("errors · 0 of 0 · Esc back", harness.Writer.Writes[4]);
+                Assert.Contains("Esc back · ↑↓ scroll · 1 overview · 2 step · q quit", harness.Writer.Writes[4]);
 
                 await harness.ConsoleManager.StopRealtimeConsoleOutput();
             })
