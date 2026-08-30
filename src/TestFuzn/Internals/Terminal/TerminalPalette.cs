@@ -50,6 +50,9 @@ internal static class TerminalPalette
     /// <summary>The running status badge.</summary>
     public const string RunningStyle = "yellow";
 
+    /// <summary>The paused badge beside the status badge: the viewer froze the frame, so the numbers on screen are standing still — a caution in the running badge's colour (<see cref="RunningStyle"/>, so retheming it moves the badge too), bold to stand out from it.</summary>
+    public const string PausedStyle = "bold " + RunningStyle;
+
     /// <summary>A caution: a skipped or stopped run's message, a mild failure share, a tile in the warning state.</summary>
     public const string WarningStyle = "yellow";
 

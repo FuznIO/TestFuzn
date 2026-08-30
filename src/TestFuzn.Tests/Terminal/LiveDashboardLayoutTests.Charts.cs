@@ -182,7 +182,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(PanelTop("Requests", 120), 120, lines[25]);
                 AssertLine(Bottom(120), 120, lines[29]);
                 AssertLine(string.Empty, 0, lines[30]);
-                AssertLine("q quit", 6, lines[35]);
+                AssertLine(OverviewFooter, 93, lines[35]);
             })
             .Step("An idle interval between two live ones is a gap in every band, never a dip to zero, and a blank heatmap column", context =>
             {
@@ -243,7 +243,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(PanelTop("Steps", 120), 120, floor[28]);
                 AssertLine(PanelTop("Errors", 120), 120, floor[33]);
                 AssertLine(Bottom(120), 120, floor[36]);
-                AssertLine("q quit", 6, floor[37]);
+                AssertLine(OverviewFooter, 93, floor[37]);
 
                 var whole = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView, 120, 37, ColorMode.None);
                 Assert.HasCount(37, whole);
@@ -255,7 +255,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Bottom(120), 120, whole[30]);
                 AssertLine(string.Empty, 0, whole[31]);
                 AssertLine(string.Empty, 0, whole[35]);
-                AssertLine("q quit", 6, whole[36]);
+                AssertLine(OverviewFooter, 93, whole[36]);
                 foreach (var line in whole)
                     Assert.DoesNotContain(HeatmapTitle, line.Text);
             })
@@ -272,7 +272,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Bottom(120), 120, budget[30]);
                 AssertLine(string.Empty, 0, budget[31]);
                 AssertLine(string.Empty, 0, budget[34]);
-                AssertLine("q quit", 6, budget[35]);
+                AssertLine(OverviewFooter, 93, budget[35]);
 
                 var height = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView, 120, 35, ColorMode.None);
                 Assert.HasCount(35, height);
@@ -283,7 +283,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Box(CheckoutErrorEntry + Spaces(24)), 120, height[28]);
                 AssertLine(Bottom(120), 120, height[30]);
                 AssertLine(string.Empty, 0, height[31]);
-                AssertLine("q quit", 6, height[34]);
+                AssertLine(OverviewFooter, 93, height[34]);
                 foreach (var line in budget.Concat(height))
                     Assert.DoesNotContain(HeatmapTitle, line.Text);
             })
@@ -314,7 +314,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(PanelTop("Errors", 120), 120, tall[25]);
                 AssertLine(Box(AddToCartErrorEntry + Spaces(41)), 120, tall[27]);
                 AssertLine(Bottom(120), 120, tall[28]);
-                AssertLine("q quit", 6, tall[29]);
+                AssertLine(OverviewFooter, 93, tall[29]);
 
                 var compact = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView, 120, 29, ColorMode.None);
                 Assert.HasCount(29, compact);
@@ -328,7 +328,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Bottom(120), 120, compact[22]);
                 AssertLine(string.Empty, 0, compact[23]);
                 AssertLine(string.Empty, 0, compact[27]);
-                AssertLine("q quit", 6, compact[28]);
+                AssertLine(OverviewFooter, 93, compact[28]);
                 foreach (var line in compact)
                 {
                     Assert.DoesNotContain(RequestsChartTitle, line.Text);
@@ -349,7 +349,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(PanelTop("Errors", 120), 120, exact[19]);
                 AssertLine(Box(AddToCartErrorEntry + Spaces(41)), 120, exact[21]);
                 AssertLine(Bottom(120), 120, exact[22]);
-                AssertLine("q quit", 6, exact[23]);
+                AssertLine(OverviewFooter, 93, exact[23]);
                 foreach (var line in exact)
                     Assert.DoesNotContain(RequestsChartTitle, line.Text);
 
@@ -361,7 +361,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Bottom(120), 120, firstTable[17]);
                 AssertLine(string.Empty, 0, firstTable[18]);
                 AssertLine(string.Empty, 0, firstTable[21]);
-                AssertLine("q quit", 6, firstTable[22]);
+                AssertLine(OverviewFooter, 93, firstTable[22]);
                 foreach (var line in firstTable)
                     Assert.DoesNotContain("Steps", line.Text);
 
@@ -372,7 +372,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(PanelTop("Errors", 120), 120, gauges[14]);
                 AssertLine(Bottom(120), 120, gauges[17]);
                 AssertLine(string.Empty, 0, gauges[18]);
-                AssertLine("q quit", 6, gauges[19]);
+                AssertLine(OverviewFooter, 93, gauges[19]);
                 foreach (var line in gauges)
                 {
                     Assert.DoesNotContain(RequestsChartTitle, line.Text);
@@ -392,7 +392,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(PanelTop("Errors", 120), 120, kept[13]);
                 AssertLine(Box(AddToCartErrorEntry + Spaces(41)), 120, kept[15]);
                 AssertLine(Bottom(120), 120, kept[16]);
-                AssertLine("q quit", 6, kept[17]);
+                AssertLine(OverviewFooter, 93, kept[17]);
 
                 var gone = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView, 120, 17, ColorMode.None);
                 Assert.HasCount(17, gone);
@@ -400,7 +400,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Bottom(120), 120, gone[12]);
                 AssertLine(string.Empty, 0, gone[13]);
                 AssertLine(string.Empty, 0, gone[15]);
-                AssertLine("q quit", 6, gone[16]);
+                AssertLine(OverviewFooter, 93, gone[16]);
                 foreach (var line in gone)
                 {
                     Assert.DoesNotContain("Steps", line.Text);
@@ -418,21 +418,21 @@ public partial class LiveDashboardLayoutTests
                 AssertLine("│ failed     32  1.0  88 ms  102 ms  99 ms  110 ms  140 ms  160 ms  201 ms" + Spaces(44) + " │", 120, fourteen[10]);
                 AssertLine(Bottom(120), 120, fourteen[11]);
                 AssertLine(string.Empty, 0, fourteen[12]);
-                AssertLine("q quit", 6, fourteen[13]);
+                AssertLine(OverviewFooter, 93, fourteen[13]);
 
                 var twelve = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView, 120, 12, ColorMode.None);
                 AssertLine("│ failed     32  1.0  88 ms  102 ms  99 ms  110 ms  140 ms  160 ms  201 ms" + Spaces(44) + " │", 120, twelve[10]);
-                AssertLine("q quit", 6, twelve[11]);
+                AssertLine(OverviewFooter, 93, twelve[11]);
 
                 var eleven = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView, 120, 11, ColorMode.None);
                 AssertLine("│ ok      12480  141  12 ms   38 ms  35 ms   48 ms   72 ms   94 ms  312 ms" + Spaces(44) + " │", 120, eleven[9]);
-                AssertLine("q quit", 6, eleven[10]);
+                AssertLine(OverviewFooter, 93, eleven[10]);
 
                 var ten = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView, 120, 10, ColorMode.None);
                 AssertLine(PanelTop("Requests", 120), 120, ten[6]);
                 AssertLine("│ warmup 1200 ok · 3 failed" + Spaces(91) + " │", 120, ten[7]);
                 AssertLine("│         count  rps    min    mean    p50     p75     p95     p99     max" + Spaces(44) + " │", 120, ten[8]);
-                AssertLine("q quit", 6, ten[9]);
+                AssertLine(OverviewFooter, 93, ten[9]);
             })
             .Step("Wrapped tiles reach the budget steps although the height allows everything: at 60×36 the heatmap goes, the stacked charts compact and the latency chart follows, leaving the rps chart over both tables; at 60×35 the rps chart goes too", context =>
             {
@@ -461,7 +461,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Box(Spaces(13) + "(localhost:7058)" + Spaces(27)), 60, heatmapAllowed[32]);
                 AssertLine(Box(" 2× (0.0/s)  Add to cart · Timeout after 30s" + Spaces(12)), 60, heatmapAllowed[33]);
                 AssertLine(Bottom(60), 60, heatmapAllowed[34]);
-                AssertLine("q quit", 6, heatmapAllowed[35]);
+                AssertLine(OverviewFooterAt51, 51, heatmapAllowed[35]);
                 foreach (var line in heatmapAllowed)
                 {
                     Assert.DoesNotContain(HeatmapTitle, line.Text);
@@ -476,7 +476,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Bottom(60), 60, shorter[28]);
                 AssertLine(string.Empty, 0, shorter[29]);
                 AssertLine(string.Empty, 0, shorter[33]);
-                AssertLine("q quit", 6, shorter[34]);
+                AssertLine(OverviewFooterAt51, 51, shorter[34]);
                 foreach (var line in shorter)
                     Assert.DoesNotContain(RequestsChartTitle, line.Text);
             })
@@ -499,7 +499,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Box(CheckoutStepRow + Spaces(43)), 120, lines[34]);
                 AssertLine(Box(AddToCartStepRow + Spaces(43)), 120, lines[35]);
                 AssertLine(Box(AddToCartErrorEntry + Spaces(41)), 120, lines[39]);
-                AssertLine("q quit", 6, lines[41]);
+                AssertLine(OverviewFooter, 93, lines[41]);
             })
             .Run();
     }
@@ -539,7 +539,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Bottom(120), 120, lines[34]);
                 AssertLine(PanelTop("Errors", 120), 120, lines[35]);
                 AssertLine(Bottom(120), 120, lines[38]);
-                AssertLine("q quit", 6, lines[39]);
+                AssertLine(OverviewFooter, 93, lines[39]);
                 foreach (var line in lines)
                     Assert.DoesNotContain("more", line.Text);
             })

@@ -29,8 +29,9 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// comments; the columns between follow the interpolation. The heatmap tests in this file are worked in
 /// sixths: a cell's step is ceil(count × 6 / max(total, the median total)). The chart, heatmap
 /// and height-order tests continue in LiveDashboardLayoutTests.Charts.cs, the steps table and
-/// error ticker tests in LiveDashboardLayoutTests.Steps.cs, and the multi-scenario column
-/// goldens in LiveDashboardLayoutTests.Columns.cs.
+/// error ticker tests in LiveDashboardLayoutTests.Steps.cs, the multi-scenario column
+/// goldens in LiveDashboardLayoutTests.Columns.cs, and the footer, paused badge and time
+/// window goldens in LiveDashboardLayoutTests.Interaction.cs.
 /// </summary>
 [TestClass]
 public partial class LiveDashboardLayoutTests : Test
@@ -71,8 +72,19 @@ public partial class LiveDashboardLayoutTests : Test
     private const string CheckoutErrorEntry = "30× (2.0/s)  Checkout · Connection refused (localhost:7058)   first 1m 12s ago · last 2s ago";
     private const string AddToCartErrorEntry = " 2× (0.0/s)  Add to cart · Timeout after 30s   first 45s ago · last 20s ago";
 
-    /// <summary>The view state every golden not about the selection renders under: nothing selected.</summary>
+    /// <summary>The view state every golden not about the interaction renders under: the overview, nothing selected, every sample, not paused, no help.</summary>
     private static readonly LiveDashboardViewState DefaultView = LiveDashboardViewState.Default;
+
+    /// <summary>
+    /// The overview's footer — the view's eight hints and the quit hint, 93 columns — and
+    /// what it comes to when the width drops the view's hints from the right: six of them
+    /// with the quit hint at 72 columns (widths 72-83), four at 51 (51-61), three at 39
+    /// (39-50); the quit hint is never dropped.
+    /// </summary>
+    private const string OverviewFooter = "1 overview · 2 step · 3 errors · ↑↓ select · ⏎ detail · p pause · +- window · ? help · q quit";
+    private const string OverviewFooterAt72 = "1 overview · 2 step · 3 errors · ↑↓ select · ⏎ detail · p pause · q quit";
+    private const string OverviewFooterAt51 = "1 overview · 2 step · 3 errors · ↑↓ select · q quit";
+    private const string OverviewFooterAt39 = "1 overview · 2 step · 3 errors · q quit";
 
     /// <summary>The rich snapshot's plan: a 60 s warmup, a 120 s ramp and a 120 s steady simulation — 300 s, matching its planned duration.</summary>
     private static SimulationPlanEntry[] ThreePhasePlan()
@@ -600,7 +612,7 @@ public partial class LiveDashboardLayoutTests : Test
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView, 120, 40, ColorMode.None);
 
                 Assert.HasCount(40, lines);
-                AssertLine("q quit", 6, lines[39]);
+                AssertLine(OverviewFooter, 93, lines[39]);
                 AssertMaximumWidth(120, lines);
                 for (var row = 8; row <= 38; row++)
                     Assert.AreEqual(120, lines[row].Width, $"Row {row} is not a full panel row");
@@ -772,7 +784,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine(Box(CheckoutErrorEntry + Spaces(24)), 120, lines[38]);
                 AssertLine(Box(AddToCartErrorEntry + Spaces(41)), 120, lines[39]);
                 AssertLine(Bottom(120), 120, lines[40]);
-                AssertLine("q quit", 6, lines[41]);
+                AssertLine(OverviewFooter, 93, lines[41]);
 
                 var styled = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView, 120, 42, ColorMode.TrueColor);
                 Assert.Contains(Sgr(Dim, "≤ 200 ms") + " " + Spaces(97) + Sgr(HeatStep1, Glyphs('█', 10)), styled[21].Text);
@@ -844,7 +856,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine(Box(CheckoutErrorEntry + Spaces(4)), 100, lines[26]);
                 AssertLine(Box(AddToCartErrorEntry + Spaces(21)), 100, lines[27]);
                 AssertLine(Bottom(100), 100, lines[28]);
-                AssertLine("q quit", 6, lines[29]);
+                AssertLine(OverviewFooter, 93, lines[29]);
                 AssertMaximumWidth(100, lines);
 
                 foreach (var line in lines)
@@ -881,7 +893,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine(Box(CheckoutErrorEntry + Spaces(3)), 99, lines[36]);
                 AssertLine(Box(AddToCartErrorEntry + Spaces(20)), 99, lines[37]);
                 AssertLine(Bottom(99), 99, lines[38]);
-                AssertLine("q quit", 6, lines[39]);
+                AssertLine(OverviewFooter, 93, lines[39]);
                 AssertMaximumWidth(99, lines);
 
                 foreach (var line in lines)
@@ -931,7 +943,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine(Bottom(80), 80, lines[18]);
                 AssertLine(string.Empty, 0, lines[19]);
                 AssertLine(string.Empty, 0, lines[22]);
-                AssertLine("q quit", 6, lines[23]);
+                AssertLine(OverviewFooterAt72, 72, lines[23]);
                 AssertMaximumWidth(80, lines);
 
                 foreach (var line in lines)
@@ -978,7 +990,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine(Bottom(80), 80, lines[30]);
                 AssertLine(string.Empty, 0, lines[31]);
                 AssertLine(string.Empty, 0, lines[34]);
-                AssertLine("q quit", 6, lines[35]);
+                AssertLine(OverviewFooterAt72, 72, lines[35]);
                 AssertMaximumWidth(80, lines);
 
                 foreach (var line in lines)
@@ -1026,7 +1038,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine("╭─ Requests " + new string('─', 47) + "╮", 60, lines[13]);
                 AssertLine("│ warmup 1200 ok · 3 failed" + Spaces(31) + " │", 60, lines[14]);
                 AssertLine(Bottom(60), 60, lines[18]);
-                AssertLine("q quit", 6, lines[19]);
+                AssertLine(OverviewFooterAt51, 51, lines[19]);
                 AssertMaximumWidth(60, lines);
 
                 foreach (var line in lines)
@@ -1244,7 +1256,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine(PanelTop("Requests", 120), 120, lines[26]);
                 AssertLine(Bottom(120), 120, lines[30]);
                 AssertLine(string.Empty, 0, lines[31]);
-                AssertLine("q quit", 6, lines[39]);
+                AssertLine(OverviewFooter, 93, lines[39]);
                 AssertMaximumWidth(120, lines);
             })
             .Step("TrueColor: the same frame, every no-data value in the placeholder's Ok green, the request count bare bold and the phase in its accent", context =>
@@ -1258,7 +1270,7 @@ public partial class LiveDashboardLayoutTests : Test
                 Assert.Contains(Box(Sgr(Bold, "0") + Spaces(14)), lines[3].Text);
                 AssertLine(string.Empty, 0, lines[7]);
                 Assert.Contains(Sgr(Dim, "· limits") + " " + Sgr(Yellow, "500 ms") + " " + Sgr(Dim, "/") + " " + Sgr(Red, "800 ms"), lines[8].Text);
-                Assert.AreEqual(6, lines[39].Width);
+                Assert.AreEqual(93, lines[39].Width);
                 AssertMaximumWidth(120, lines);
             })
             .Run();
@@ -1574,7 +1586,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine(PanelTop("Requests", 100), 100, lines[51]);
                 AssertLine(Bottom(100), 100, lines[55]);
                 AssertLine(string.Empty, 0, lines[56]);
-                AssertLine("q quit", 6, lines[59]);
+                AssertLine(OverviewFooter, 93, lines[59]);
                 AssertMaximumWidth(100, lines);
 
                 var logoLineCount = 0;
@@ -1606,7 +1618,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine(PanelTop("Errors", 120), 120, lines[25]);
                 AssertLine(Box(AddToCartErrorEntry + Spaces(41)), 120, lines[27]);
                 AssertLine(Bottom(120), 120, lines[28]);
-                AssertLine("q quit", 6, lines[29]);
+                AssertLine(OverviewFooter, 93, lines[29]);
 
                 foreach (var line in lines)
                 {
@@ -1619,7 +1631,7 @@ public partial class LiveDashboardLayoutTests : Test
                 var lines = LiveDashboardLayout.Render(new[] { RichSnapshot() }, DefaultView, 120, 1, ColorMode.None);
 
                 Assert.HasCount(1, lines);
-                AssertLine("q quit", 6, lines[0]);
+                AssertLine(OverviewFooter, 93, lines[0]);
             })
             .Run();
     }
@@ -1675,7 +1687,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine("Checkout flow  ● Failed · completed" + Spaces(52) + "  ⚡ TestFuzn", 100, lines[0]);
                 Assert.Contains(Box("00:05:00" + Spaces(7)), lines[3].Text);
                 AssertLine("✗ Assert.IsLessThan failed. p95 too high: 240 ms", 48, lines[6]);
-                AssertLine("q quit", 6, lines[31]);
+                AssertLine(OverviewFooter, 93, lines[31]);
             })
             .Step("The assert reason line renders red in TrueColor", context =>
             {
@@ -1919,7 +1931,7 @@ public partial class LiveDashboardLayoutTests : Test
                         var lines = LiveDashboardLayout.Render(snapshots, DefaultView, width, height, ColorMode.TrueColor);
 
                         Assert.HasCount(height, lines, $"Row count at {width}×{height}");
-                        Assert.AreEqual(6, lines[height - 1].Width, $"Footer at {width}×{height}");
+                        Assert.AreEqual(ExpectedOverviewFooterWidth(width), lines[height - 1].Width, $"Footer at {width}×{height}");
                         AssertMaximumWidth(width, lines);
                     }
                 }
@@ -1965,7 +1977,7 @@ public partial class LiveDashboardLayoutTests : Test
                 var lines = LiveDashboardLayout.Render(Array.Empty<LiveMetricsSnapshot>(), DefaultView, 40, 5, ColorMode.None);
 
                 Assert.HasCount(5, lines);
-                AssertLine("q quit", 6, lines[4]);
+                AssertLine(OverviewFooterAt39, 39, lines[4]);
             })
             .Run();
     }
@@ -2039,7 +2051,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine(Box("30× (2.0/s)  Checkout · Connection refused (localhost:7058)" + Spaces(15)), 78, lines[20]);
                 AssertLine(Box(" 2× (0.0/s)  Add to cart · Timeout after 30s" + Spaces(30)), 78, lines[21]);
                 AssertLine(Bottom(78), 78, lines[22]);
-                AssertLine("q quit", 6, lines[23]);
+                AssertLine(OverviewFooterAt72, 72, lines[23]);
                 AssertMaximumWidth(78, lines);
 
                 foreach (var line in lines)
@@ -2067,7 +2079,7 @@ public partial class LiveDashboardLayoutTests : Test
                 AssertLine("│ 30× Checkout · Connection refused (localhost:7058)" + Spaces(2) + " │", 56, lines[20]);
                 AssertLine("│  2× Add to cart · Timeout after 30s" + Spaces(17) + " │", 56, lines[21]);
                 AssertLine(Bottom(56), 56, lines[22]);
-                AssertLine("q quit", 6, lines[23]);
+                AssertLine(OverviewFooterAt51, 51, lines[23]);
                 AssertMaximumWidth(56, lines);
 
                 foreach (var line in lines)

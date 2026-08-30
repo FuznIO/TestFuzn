@@ -97,7 +97,7 @@ public partial class LiveDashboardLayoutTests
                 for (var row = 0; row < 39; row++)
                     Assert.AreEqual(160, lines[row].Width, $"Row {row} is not a joined row");
 
-                AssertLine("q quit", 6, lines[39]);
+                AssertLine(OverviewFooter, 93, lines[39]);
                 AssertMaximumWidth(160, lines);
 
                 foreach (var line in lines)
@@ -207,7 +207,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(PanelTop("Steps", 100), 100, lines[30]);
                 AssertLine(PanelTop("Errors", 100), 100, lines[35]);
                 AssertLine(Bottom(100), 100, lines[38]);
-                AssertLine("q quit", 6, lines[39]);
+                AssertLine(OverviewFooter, 93, lines[39]);
                 AssertMaximumWidth(100, lines);
 
                 foreach (var line in lines)
@@ -321,7 +321,7 @@ public partial class LiveDashboardLayoutTests
                 AssertColumns(ThreeColumnsAt200, lines[38], Bottom(66), string.Empty, string.Empty);
                 AssertLine(string.Empty, 0, lines[39]);
                 AssertLine(string.Empty, 0, lines[43]);
-                AssertLine("q quit", 6, lines[44]);
+                AssertLine(OverviewFooter, 93, lines[44]);
                 AssertMaximumWidth(200, lines);
 
                 foreach (var line in lines)
@@ -361,7 +361,7 @@ public partial class LiveDashboardLayoutTests
                 AssertColumns(ThreeColumnsAt200, lines[54], PanelTop(LatencyChartTitle, 66), string.Empty, string.Empty);
                 AssertColumns(ThreeColumnsAt200, lines[62], PanelTop("Requests", 66), string.Empty, string.Empty);
                 AssertColumns(ThreeColumnsAt200, lines[66], Bottom(66), string.Empty, string.Empty);
-                AssertLine("q quit", 6, lines[67]);
+                AssertLine(OverviewFooter, 93, lines[67]);
                 AssertMaximumWidth(200, lines);
                 Assert.DoesNotContain("Idle run", lines[0].Text);
             })
@@ -373,7 +373,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(string.Empty, 0, lines[39]);
                 AssertColumns(ThreeColumnsAt200, lines[40], "Idle run  ● Running · Fixed Load 100 rps", string.Empty, string.Empty);
                 AssertColumns(ThreeColumnsAt200, lines[43], Row(Box("0.0" + Spaces(6)), Box("—" + Spaces(8)), Box("—" + Spaces(7)), Box("0" + Spaces(7)), Box("00:00:03")), string.Empty, string.Empty);
-                AssertLine("q quit", 6, lines[44]);
+                AssertLine(OverviewFooter, 93, lines[44]);
             })
             .Step("Even a window wide enough for four columns of 60 keeps three: at 250 columns three 82-column columns carry the logo on the last and the fourth scenario waits below", context =>
             {
@@ -425,7 +425,7 @@ public partial class LiveDashboardLayoutTests
                 AssertColumns(TwoColumnsAt122, columns[29], PanelTop("Requests", 60), Box(EmptyRequestsHeaderRow + Spaces(2)));
                 AssertColumns(TwoColumnsAt122, columns[35], PanelTop("Steps", 60), string.Empty);
                 AssertColumns(TwoColumnsAt122, columns[44], Bottom(60), string.Empty);
-                AssertLine("q quit", 6, columns[45]);
+                AssertLine(OverviewFooter, 93, columns[45]);
                 for (var row = 0; row < 45; row++)
                     Assert.AreEqual(122, columns[row].Width, $"Row {row} is not a joined row");
 
@@ -555,7 +555,7 @@ public partial class LiveDashboardLayoutTests
                 AssertColumns(TwoColumnsAt122, lines[26], Box(Spaces(13) + "(localhost:7058)" + Spaces(27)), Box(EmptyOkRequestsRow + Spaces(2)));
                 AssertColumns(TwoColumnsAt122, lines[27], Box(AddToCartErrorEntryWithoutAges + Spaces(12)), Box(EmptyFailedRequestsRow + Spaces(2)));
                 AssertColumns(TwoColumnsAt122, lines[28], Bottom(60), Bottom(60));
-                AssertLine("q quit", 6, lines[29]);
+                AssertLine(OverviewFooter, 93, lines[29]);
                 AssertMaximumWidth(122, lines);
                 Assert.AreEqual(1, CountLinesContaining(lines, RequestsChartTitle));
                 Assert.AreEqual(1, CountLinesContaining(lines, LatencyChartTitle));
@@ -633,7 +633,7 @@ public partial class LiveDashboardLayoutTests
                             var lines = LiveDashboardLayout.Render(snapshots, DefaultView, width, height, ColorMode.TrueColor);
 
                             Assert.HasCount(height, lines, $"Row count for {snapshots.Length} scenarios at {width}×{height}");
-                            Assert.AreEqual(6, lines[height - 1].Width, $"Footer for {snapshots.Length} scenarios at {width}×{height}");
+                            Assert.AreEqual(ExpectedOverviewFooterWidth(width), lines[height - 1].Width, $"Footer for {snapshots.Length} scenarios at {width}×{height}");
                             AssertMaximumWidth(width, lines);
                         }
                     }

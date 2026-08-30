@@ -195,7 +195,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Box(" " + SearchPainRow + Spaces(43)), 120, lines[36]);
                 AssertLine(Box(" " + LogoutPainRow + Spaces(43)), 120, lines[37]);
                 AssertLine(Bottom(120), 120, lines[38]);
-                AssertLine("q quit", 6, lines[39]);
+                AssertLine(OverviewFooter, 93, lines[39]);
             })
             .Step("TrueColor: the bar and its percentage are red above one percent, yellow at it, green at zero, the em dash and the trend dim, and no row is highlighted", context =>
             {
@@ -293,7 +293,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Box(LiveDashboardLayout.Pointer + "Login         1000   10  10 ms  50 ms      10  █░░░░ 1.0%" + Spaces(13) + "⣤" + Spaces(44)), 120, lines[21]);
                 AssertLine(Box(" +3 more" + Spaces(108)), 120, lines[22]);
                 AssertLine(Bottom(120), 120, lines[23]);
-                AssertLine("q quit", 6, lines[24]);
+                AssertLine(OverviewFooter, 93, lines[24]);
             })
             .Run();
     }
@@ -320,7 +320,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Box(" Checkout   1000   10  10 ms  90 ms      20  █░░░░ 2.0%" + Spaces(13) + "⣤" + Spaces(47)), 120, minimum[19]);
                 AssertLine(Box(" +5 more" + Spaces(108)), 120, minimum[20]);
                 AssertLine(Bottom(120), 120, minimum[21]);
-                AssertLine("q quit", 6, minimum[22]);
+                AssertLine(OverviewFooter, 93, minimum[22]);
 
                 var chartsGone = LiveDashboardLayout.Render(new[] { PainSnapshot() }, DefaultView, 120, 22, ColorMode.None);
                 Assert.HasCount(22, chartsGone);
@@ -332,7 +332,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Bottom(120), 120, chartsGone[15]);
                 AssertLine(string.Empty, 0, chartsGone[16]);
                 AssertLine(string.Empty, 0, chartsGone[20]);
-                AssertLine("q quit", 6, chartsGone[21]);
+                AssertLine(OverviewFooter, 93, chartsGone[21]);
                 foreach (var line in chartsGone)
                     Assert.DoesNotContain(RequestsChartTitle, line.Text);
             })
@@ -347,14 +347,14 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(PanelTop("Steps", 120), 120, fitting[11]);
                 AssertLine(Box(" +5 more" + Spaces(108)), 120, fitting[14]);
                 AssertLine(Bottom(120), 120, fitting[15]);
-                AssertLine("q quit", 6, fitting[16]);
+                AssertLine(OverviewFooter, 93, fitting[16]);
 
                 var dropped = LiveDashboardLayout.Render(new[] { PainSnapshot() }, DefaultView, 120, 16, ColorMode.None);
                 Assert.HasCount(16, dropped);
                 AssertLine(Bottom(120), 120, dropped[10]);
                 AssertLine(string.Empty, 0, dropped[11]);
                 AssertLine(string.Empty, 0, dropped[14]);
-                AssertLine("q quit", 6, dropped[15]);
+                AssertLine(OverviewFooter, 93, dropped[15]);
                 foreach (var line in dropped)
                     Assert.DoesNotContain("Steps", line.Text);
             })
@@ -518,7 +518,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Box("1× (0.0/s)  S · E1" + Spaces(98)), 120, lines[31]);
                 AssertLine(Box("5× (0.0/s)  S · E5" + Spaces(98)), 120, lines[35]);
                 AssertLine(Bottom(120), 120, lines[36]);
-                AssertLine("q quit", 6, lines[37]);
+                AssertLine(OverviewFooter, 93, lines[37]);
                 foreach (var line in lines)
                     Assert.DoesNotContain("more", line.Text);
             })
@@ -537,7 +537,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Box("2× (0.0/s)  S · E2" + Spaces(98)), 120, lines[19]);
                 AssertLine(Box("+3 more" + Spaces(109)), 120, lines[20]);
                 AssertLine(Bottom(120), 120, lines[21]);
-                AssertLine("q quit", 6, lines[22]);
+                AssertLine(OverviewFooter, 93, lines[22]);
             })
             .Step("Distinct errors beyond what the snapshot carries count too, with every entry shown and once the budget hides some", context =>
             {
@@ -570,7 +570,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Box(" 1× (0.0/s)  S · E1" + Spaces(97)), 120, minimum[18]);
                 AssertLine(Box("+19 more" + Spaces(108)), 120, minimum[19]);
                 AssertLine(Bottom(120), 120, minimum[20]);
-                AssertLine("q quit", 6, minimum[21]);
+                AssertLine(OverviewFooter, 93, minimum[21]);
 
                 var chartsGone = LiveDashboardLayout.Render(new[] { ManyErrorsSnapshot(20) }, DefaultView, 120, 16, ColorMode.None);
                 Assert.HasCount(16, chartsGone);
@@ -579,7 +579,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Box(" 1× (0.0/s)  S · E1" + Spaces(97)), 120, chartsGone[12]);
                 AssertLine(Box("+19 more" + Spaces(108)), 120, chartsGone[13]);
                 AssertLine(Bottom(120), 120, chartsGone[14]);
-                AssertLine("q quit", 6, chartsGone[15]);
+                AssertLine(OverviewFooter, 93, chartsGone[15]);
                 foreach (var line in chartsGone)
                     Assert.DoesNotContain(RequestsChartTitle, line.Text);
 
@@ -588,7 +588,7 @@ public partial class LiveDashboardLayoutTests
                 AssertLine(Bottom(120), 120, dropped[10]);
                 AssertLine(string.Empty, 0, dropped[11]);
                 AssertLine(string.Empty, 0, dropped[13]);
-                AssertLine("q quit", 6, dropped[14]);
+                AssertLine(OverviewFooter, 93, dropped[14]);
                 foreach (var line in dropped)
                     Assert.DoesNotContain("Errors", line.Text);
             })
@@ -633,7 +633,7 @@ public partial class LiveDashboardLayoutTests
     public async Task Verify_hostile_steps_and_errors_never_break_the_frame()
     {
         await Scenario()
-            .Step("At every width from 1 to 220 and height from 1 to 60, with a row selected, the frame is exactly the height, the footer owns the last row (cut to the width below its six columns), no line exceeds the width and no surrogate pair is split", context =>
+            .Step("At every width from 1 to 220 and height from 1 to 60, with a row selected, the frame is exactly the height, the footer owns the last row (as many of the overview's hints as fit before the quit hint, which is cut to the width below its six columns), no line exceeds the width and no surrogate pair is split", context =>
             {
                 var snapshots = new[] { HostileSnapshot() };
                 var viewState = new LiveDashboardViewState { SelectedStepIndex = 1 };
@@ -644,7 +644,9 @@ public partial class LiveDashboardLayoutTests
                         var lines = LiveDashboardLayout.Render(snapshots, viewState, width, height, ColorMode.TrueColor);
 
                         Assert.HasCount(height, lines, $"Row count at {width}×{height}");
-                        Assert.AreEqual(Math.Min(6, width), lines[height - 1].Width, $"Footer at {width}×{height}");
+                        Assert.AreEqual(ExpectedOverviewFooterWidth(width), lines[height - 1].Width, $"Footer at {width}×{height}");
+                        if (width >= 6)
+                            Assert.EndsWith(Sgr(Bold, "q") + " quit", lines[height - 1].Text, $"Footer at {width}×{height}");
                         AssertMaximumWidth(width, lines);
                         AssertNoLoneSurrogate(lines, $"{width}×{height}");
                     }

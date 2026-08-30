@@ -24,8 +24,12 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// rendering, the single force-refreshed Record after cleanup, the terminal restored exactly
 /// once on every exit path with the summary written afterwards, the live view's own failure
 /// being reported without displacing the run's failure, and the keys polled on every tick —
-/// the quit key landing in the Ctrl+C stop path while the loop renders on until Stop, other
-/// keys drained and ignored, and the reader never consulted without a live view. On a
+/// the quit key landing in the Ctrl+C stop path while the loop renders on until Stop, every
+/// other key reaching the view state through the key handler and showing on that tick's
+/// frame, a pause freezing the frame but not the sampling (no write while the samples keep
+/// coming, a repaint over the frozen snapshots on a key — which acts on the frozen picture,
+/// not on the live one — the current snapshots on resume), keys without a binding drained
+/// and ignored, and the reader never consulted without a live view. On a
 /// redirected or non-ANSI output the same loop writes plain stats lines instead: pinned are
 /// the exact lines per sample and per phase transition with hand-derived numbers from the real
 /// collector, the final line's outcome vocabulary, the summary following the final line, and
@@ -731,6 +735,10 @@ public class ConsoleManagerTests : Test
                 Assert.IsFalse(harness.State.CancellationToken.IsCancellationRequested);
                 Assert.IsNull(harness.State.ExecutionStoppedReason);
                 Assert.HasCount(3, harness.Writer.Writes);
+                // Enter and the arrow found no step on view, so the view state is untouched too.
+                Assert.AreEqual(LiveDashboardView.Overview, harness.ConsoleManager.ViewState.View);
+                Assert.IsNull(harness.ConsoleManager.ViewState.SelectedStepIndex);
+                Assert.IsFalse(harness.ConsoleManager.ViewState.IsPaused);
 
                 await harness.ConsoleManager.StopRealtimeConsoleOutput();
             })
@@ -793,6 +801,202 @@ public class ConsoleManagerTests : Test
                 harness.AssertSummaryFollowsRestore();
                 var failureLine = Assert.ContainsSingle(harness.MarkupEvents());
                 Assert.AreEqual("[red]Live view failed: InvalidOperationException: Cannot read keys when input is redirected.[/]", failureLine);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_keys_reach_the_view_state_and_a_pause_freezes_the_frame_but_not_the_sampling()
+    {
+        await Scenario()
+            .Step("p pauses on its tick: that frame carries the badge, the samples keep coming while no frame is written, and p again writes a frame from the current snapshots", async context =>
+            {
+                var harness = new Harness();
+                // Twelve rows show both tile rows: the elapsed clock is on the second row's value line.
+                harness.Writer.WindowHeight = 12;
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+                await harness.Host.RunTick(At(1));
+                Assert.HasCount(3, harness.Writer.Writes);
+                Assert.Contains("00:00:01", harness.Writer.Writes[2]);
+                Assert.IsFalse(harness.ConsoleManager.ViewState.IsPaused);
+
+                harness.Host.Reader.Press(LiveDashboardKeyHandler.PauseKey);
+                await harness.Host.RunTick(At(1.25));
+                Assert.IsTrue(harness.ConsoleManager.ViewState.IsPaused);
+                Assert.HasCount(4, harness.Writer.Writes);
+                Assert.Contains(LiveDashboardLayout.PausedBadgeText, harness.Writer.Writes[3]);
+
+                // Three samples arrive while paused: the view moves on, the terminal does not.
+                await harness.Host.RunTick(At(2));
+                await harness.Host.RunTick(At(3));
+                await harness.Host.RunTick(At(4));
+                await harness.Host.RunTick(At(4.25));
+                Assert.AreEqual(TimeSpan.FromSeconds(4), harness.ConsoleManager.LiveSnapshots[0].Duration);
+                Assert.HasCount(4, harness.Writer.Writes);
+
+                harness.Host.Reader.Press(LiveDashboardKeyHandler.PauseKey);
+                await harness.Host.RunTick(At(4.5));
+                Assert.IsFalse(harness.ConsoleManager.ViewState.IsPaused);
+                Assert.HasCount(5, harness.Writer.Writes);
+                Assert.DoesNotContain(LiveDashboardLayout.PausedBadgeText, harness.Writer.Writes[4]);
+                Assert.Contains("00:00:04", harness.Writer.Writes[4]);
+
+                // And the spinner is back to a frame per tick.
+                await harness.Host.RunTick(At(4.75));
+                Assert.HasCount(6, harness.Writer.Writes);
+
+                await harness.ConsoleManager.StopRealtimeConsoleOutput();
+            })
+            .Step("A key while paused repaints over the frozen snapshots — the help footer is the only line written, the clock stands — and resuming jumps to now", async context =>
+            {
+                var harness = new Harness();
+                harness.Writer.WindowHeight = 12;
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+                await harness.Host.RunTick(At(1));
+                harness.Host.Reader.Press(LiveDashboardKeyHandler.PauseKey);
+                await harness.Host.RunTick(At(1.25));
+                await harness.Host.RunTick(At(2));
+                Assert.HasCount(4, harness.Writer.Writes);
+                Assert.AreEqual(TimeSpan.FromSeconds(2), harness.ConsoleManager.LiveSnapshots[0].Duration);
+
+                harness.Host.Reader.Press(new ConsoleKeyInfo(LiveDashboardKeyHandler.HelpKey, ConsoleKey.Oem2, shift: true, alt: false, control: false));
+                await harness.Host.RunTick(At(2.25));
+
+                Assert.IsTrue(harness.ConsoleManager.ViewState.ShowHelp);
+                Assert.IsTrue(harness.ConsoleManager.ViewState.IsPaused);
+                Assert.HasCount(5, harness.Writer.Writes);
+                Assert.AreEqual(
+                    AnsiCodes.BeginSynchronizedOutput + AnsiCodes.MoveCursor(12, 1) + AnsiCodes.Reset + AnsiCodes.EraseLine + "? close · Esc close · q quit" + AnsiCodes.EndSynchronizedOutput,
+                    harness.Writer.Writes[4]);
+
+                await harness.Host.RunTick(At(3));
+                Assert.HasCount(5, harness.Writer.Writes);
+
+                harness.Host.Reader.Press(LiveDashboardKeyHandler.PauseKey);
+                await harness.Host.RunTick(At(3.25));
+                Assert.HasCount(6, harness.Writer.Writes);
+                Assert.Contains("00:00:03", harness.Writer.Writes[5]);
+                Assert.DoesNotContain(LiveDashboardLayout.PausedBadgeText, harness.Writer.Writes[5]);
+
+                await harness.ConsoleManager.StopRealtimeConsoleOutput();
+            })
+            .Step("3, the arrows, Escape, Enter and 1 reach the state on their tick, the footer follows the view, and the step keys wait for a step to be on view", async context =>
+            {
+                // At 60 columns the log's footer keeps four hints before the quit hint (51
+                // columns; the fifth would make it 61), the overview's four (51) and the
+                // step detail's four (51).
+                var harness = new Harness();
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+
+                harness.Host.Reader.Press('3');
+                await harness.Host.RunTick(At(1));
+                Assert.AreEqual(LiveDashboardView.ErrorLog, harness.ConsoleManager.ViewState.View);
+                Assert.Contains("Esc back · ↑↓ scroll · 1 overview · 2 step · q quit", harness.Writer.Writes[2]);
+
+                harness.Host.Reader.Press(ConsoleKey.DownArrow);
+                harness.Host.Reader.Press(ConsoleKey.DownArrow);
+                await harness.Host.RunTick(At(1.25));
+                Assert.AreEqual(2, harness.ConsoleManager.ViewState.ErrorLogScroll);
+                Assert.IsNull(harness.ConsoleManager.ViewState.SelectedStepIndex);
+
+                harness.Host.Reader.Press(ConsoleKey.Escape);
+                await harness.Host.RunTick(At(1.5));
+                Assert.AreEqual(LiveDashboardView.Overview, harness.ConsoleManager.ViewState.View);
+                Assert.Contains("1 overview · 2 step · 3 errors · ↑↓ select · q quit", harness.Writer.Writes[4]);
+
+                // The init placeholder has no step, so Enter and the arrow select nothing.
+                harness.Host.Reader.Press(ConsoleKey.DownArrow);
+                harness.Host.Reader.Press(ConsoleKey.Enter);
+                await harness.Host.RunTick(At(1.75));
+                Assert.AreEqual(LiveDashboardView.Overview, harness.ConsoleManager.ViewState.View);
+                Assert.IsNull(harness.ConsoleManager.ViewState.SelectedStepIndex);
+
+                // Once the model publishes the scenario's step, the arrow selects it and Enter
+                // opens its detail.
+                harness.CompleteInitAndStartMeasurement(At(1.8));
+                harness.RecordIterations(3);
+                await harness.Host.RunTick(At(2));
+                Assert.ContainsSingle(harness.ConsoleManager.LiveSnapshots[0].Steps);
+
+                harness.Host.Reader.Press(ConsoleKey.DownArrow);
+                harness.Host.Reader.Press(ConsoleKey.Enter);
+                await harness.Host.RunTick(At(2.25));
+                Assert.AreEqual(LiveDashboardView.StepDetail, harness.ConsoleManager.ViewState.View);
+                Assert.AreEqual(0, harness.ConsoleManager.ViewState.SelectedStepIndex);
+                Assert.Contains("Esc back · ↑↓ step · 1 overview · 3 errors · q quit", harness.Writer.Writes[harness.Writer.Writes.Count - 1]);
+
+                harness.Host.Reader.Press('1');
+                await harness.Host.RunTick(At(2.5));
+                Assert.AreEqual(LiveDashboardView.Overview, harness.ConsoleManager.ViewState.View);
+                Assert.AreEqual(0, harness.ConsoleManager.ViewState.SelectedStepIndex);
+
+                await harness.ConsoleManager.StopRealtimeConsoleOutput();
+            })
+            .Step("A key while paused acts on the frozen picture, not the live one: paused before the run's step is on view, ↓ and Enter select nothing although the live picture has the step by then, and the same keys reach it once the pause ends", async context =>
+            {
+                var harness = new Harness();
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+
+                // The pause begins on the init placeholder, which has no step.
+                harness.Host.Reader.Press(LiveDashboardKeyHandler.PauseKey);
+                await harness.Host.RunTick(At(1));
+                Assert.IsTrue(harness.ConsoleManager.ViewState.IsPaused);
+                Assert.IsEmpty(harness.ConsoleManager.LiveSnapshots[0].Steps);
+
+                // The run finds its step while the picture is frozen without one.
+                harness.CompleteInitAndStartMeasurement(At(1.5));
+                harness.RecordIterations(3);
+                await harness.Host.RunTick(At(2));
+                Assert.ContainsSingle(harness.ConsoleManager.LiveSnapshots[0].Steps);
+
+                // Over the live picture the arrow would select the step and Enter open its
+                // detail; the frozen picture has no step to select, so neither moves.
+                harness.Host.Reader.Press(ConsoleKey.DownArrow);
+                harness.Host.Reader.Press(ConsoleKey.Enter);
+                await harness.Host.RunTick(At(2.25));
+                Assert.IsNull(harness.ConsoleManager.ViewState.SelectedStepIndex);
+                Assert.AreEqual(LiveDashboardView.Overview, harness.ConsoleManager.ViewState.View);
+
+                // Resumed, the picture shows the step and the same keys reach it.
+                harness.Host.Reader.Press(LiveDashboardKeyHandler.PauseKey);
+                await harness.Host.RunTick(At(2.5));
+                Assert.IsFalse(harness.ConsoleManager.ViewState.IsPaused);
+
+                harness.Host.Reader.Press(ConsoleKey.DownArrow);
+                harness.Host.Reader.Press(ConsoleKey.Enter);
+                await harness.Host.RunTick(At(2.75));
+                Assert.AreEqual(0, harness.ConsoleManager.ViewState.SelectedStepIndex);
+                Assert.AreEqual(LiveDashboardView.StepDetail, harness.ConsoleManager.ViewState.View);
+
+                await harness.ConsoleManager.StopRealtimeConsoleOutput();
+            })
+            .Step("The quit key still stops the run through the Ctrl+C path and leaves the view state as the other keys left it", async context =>
+            {
+                var harness = new Harness();
+                harness.ConsoleManager.StartRealtimeConsoleOutputIfEnabled();
+                await harness.Host.WaitForParkedTick();
+                harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
+
+                harness.Host.Reader.Press('3');
+                harness.Host.Reader.Press('q');
+                await harness.Host.RunTick(At(1));
+                await harness.WaitForStopRequest();
+
+                harness.AssertStoppedLikeCtrlC();
+                Assert.AreEqual(LiveDashboardView.ErrorLog, harness.ConsoleManager.ViewState.View);
+                Assert.IsFalse(harness.ConsoleManager.ViewState.IsPaused);
+
+                await harness.ConsoleManager.Complete();
+                harness.AssertEnteredAndRestoredOnce();
+                harness.AssertSummaryFollowsRestore();
             })
             .Run();
     }

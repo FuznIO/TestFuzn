@@ -8,7 +8,8 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// sequences that enter and leave the alternate screen, that the terminal is restored exactly
 /// once on every exit path (completion, an exception, cancellation), that each render reads the
 /// writer's size once and paints the layout at that size through the diff renderer, and that
-/// the spinner advances one glyph per render.
+/// the spinner advances one glyph per render — and holds while the passed view state is
+/// paused, so a paused render of an unchanged state writes nothing.
 /// </summary>
 [TestClass]
 public class LiveDashboardTests : Test
@@ -73,7 +74,7 @@ public class LiveDashboardTests : Test
                 var writer = new FakeTerminalWriter();
                 using var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) });
 
-                Assert.ThrowsExactly<InvalidOperationException>(() => dashboard.Render());
+                Assert.ThrowsExactly<InvalidOperationException>(() => dashboard.Render(LiveDashboardViewState.Default));
                 Assert.IsEmpty(writer.Writes);
             })
             .Run();
@@ -90,7 +91,7 @@ public class LiveDashboardTests : Test
                 dashboard.Start();
                 writer.ClearWrites();
 
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
 
                 var flush = Assert.ContainsSingle(writer.Writes);
                 var expectedLines = LiveDashboardLayout.Render(new[] { WarmupSnapshot(42) }, LiveDashboardViewState.Default, 40, 6, ColorMode.None, SparklineGlyphSet.Braille, "⠋");
@@ -100,17 +101,17 @@ public class LiveDashboardTests : Test
                 // below 64 columns the tiles wrap, and the first row's three boxes share 38
                 // columns as 13, 13 and 12.
                 Assert.Contains(AnsiCodes.MoveCursor(1, 1) + TitleLine("⠋") + AnsiCodes.MoveCursor(2, 1) + "╭───────────╮ ╭───────────╮ ╭──────────╮", flush);
-                Assert.EndsWith(AnsiCodes.MoveCursor(6, 1) + "q quit" + AnsiCodes.EndSynchronizedOutput, flush);
+                Assert.EndsWith(AnsiCodes.MoveCursor(6, 1) + "1 overview · 2 step · 3 errors · q quit" + AnsiCodes.EndSynchronizedOutput, flush);
             })
             .Step("An unchanged data state repaints only the spinner on the title row", context =>
             {
                 var writer = new FakeTerminalWriter { WindowWidth = 40, WindowHeight = 6 };
                 using var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) });
                 dashboard.Start();
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
                 writer.ClearWrites();
 
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
 
                 var flush = Assert.ContainsSingle(writer.Writes);
                 Assert.AreEqual(SynchronizedFlush(RepaintedLine(1, TitleLine("⠙"))), flush);
@@ -120,18 +121,18 @@ public class LiveDashboardTests : Test
                 var writer = new FakeTerminalWriter { WindowWidth = 40, WindowHeight = 6 };
                 using var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) });
                 dashboard.Start();
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
                 writer.ClearWrites();
 
                 writer.WindowWidth = 50;
                 writer.WindowHeight = 7;
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
 
                 var flush = Assert.ContainsSingle(writer.Writes);
                 var expectedLines = LiveDashboardLayout.Render(new[] { WarmupSnapshot(42) }, LiveDashboardViewState.Default, 50, 7, ColorMode.None, SparklineGlyphSet.Braille, "⠙");
                 Assert.HasCount(7, expectedLines);
                 Assert.AreEqual(FullRedraw(expectedLines), flush);
-                Assert.EndsWith(AnsiCodes.MoveCursor(7, 1) + "q quit" + AnsiCodes.EndSynchronizedOutput, flush);
+                Assert.EndsWith(AnsiCodes.MoveCursor(7, 1) + "1 overview · 2 step · 3 errors · q quit" + AnsiCodes.EndSynchronizedOutput, flush);
             })
             .Step("Each render reads the width and the height exactly once, and Start reads neither", context =>
             {
@@ -142,12 +143,12 @@ public class LiveDashboardTests : Test
                 Assert.AreEqual(0, writer.WindowWidthReadCount);
                 Assert.AreEqual(0, writer.WindowHeightReadCount);
 
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
                 Assert.AreEqual(1, writer.WindowWidthReadCount);
                 Assert.AreEqual(1, writer.WindowHeightReadCount);
 
-                dashboard.Render();
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
+                dashboard.Render(LiveDashboardViewState.Default);
                 Assert.AreEqual(3, writer.WindowWidthReadCount);
                 Assert.AreEqual(3, writer.WindowHeightReadCount);
             })
@@ -159,7 +160,7 @@ public class LiveDashboardTests : Test
                 writer.ClearWrites();
                 writer.WindowSizeReadFailure = new IOException("The handle is invalid.");
 
-                Assert.ThrowsExactly<IOException>(() => dashboard.Render());
+                Assert.ThrowsExactly<IOException>(() => dashboard.Render(LiveDashboardViewState.Default));
                 Assert.IsEmpty(writer.Writes);
             })
             .Run();
@@ -177,11 +178,11 @@ public class LiveDashboardTests : Test
                 var snapshots = new[] { WarmupSnapshot(42) };
                 using var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => snapshots);
                 dashboard.Start();
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
                 writer.ClearWrites();
 
                 snapshots[0] = WarmupSnapshot(43);
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
 
                 var flush = Assert.ContainsSingle(writer.Writes);
                 Assert.AreEqual(
@@ -197,7 +198,7 @@ public class LiveDashboardTests : Test
                 dashboard.Start();
                 writer.ClearWrites();
 
-                Assert.ThrowsExactly<InvalidOperationException>(() => dashboard.Render());
+                Assert.ThrowsExactly<InvalidOperationException>(() => dashboard.Render(LiveDashboardViewState.Default));
                 Assert.IsEmpty(writer.Writes);
             })
             .Run();
@@ -212,11 +213,11 @@ public class LiveDashboardTests : Test
                 var writer = new FakeTerminalWriter { WindowWidth = 40, WindowHeight = 6 };
                 using var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) });
                 dashboard.Start();
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
                 writer.ClearWrites();
 
                 for (var render = 0; render < BrailleSpinnerFrames.Length; render++)
-                    dashboard.Render();
+                    dashboard.Render(LiveDashboardViewState.Default);
 
                 Assert.HasCount(BrailleSpinnerFrames.Length, writer.Writes);
                 for (var index = 1; index < BrailleSpinnerFrames.Length; index++)
@@ -231,18 +232,87 @@ public class LiveDashboardTests : Test
                 dashboard.Start();
                 writer.ClearWrites();
 
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
                 Assert.Contains(AnsiCodes.MoveCursor(1, 1) + TitleLine(AsciiSpinnerFrames[0]), Assert.ContainsSingle(writer.Writes));
                 writer.ClearWrites();
 
                 for (var render = 0; render < AsciiSpinnerFrames.Length; render++)
-                    dashboard.Render();
+                    dashboard.Render(LiveDashboardViewState.Default);
 
                 Assert.HasCount(AsciiSpinnerFrames.Length, writer.Writes);
                 for (var index = 1; index < AsciiSpinnerFrames.Length; index++)
                     Assert.AreEqual(SynchronizedFlush(RepaintedLine(1, TitleLine(AsciiSpinnerFrames[index]))), writer.Writes[index - 1]);
 
                 Assert.AreEqual(SynchronizedFlush(RepaintedLine(1, TitleLine(AsciiSpinnerFrames[0]))), writer.Writes[AsciiSpinnerFrames.Length - 1]);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_view_state_reaches_the_frame_and_a_pause_holds_the_spinner()
+    {
+        await Scenario()
+            .Step("The view state's footer is laid out: the error log's hints replace the overview's on the last row", context =>
+            {
+                // At 40 columns the log's footer is "Esc back · ↑↓ scroll · q quit", 29
+                // columns — its next hint would make it 42.
+                var writer = new FakeTerminalWriter { WindowWidth = 40, WindowHeight = 6 };
+                using var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) });
+                dashboard.Start();
+                dashboard.Render(LiveDashboardViewState.Default);
+                writer.ClearWrites();
+
+                dashboard.Render(LiveDashboardViewState.Default with { View = LiveDashboardView.ErrorLog });
+
+                var flush = Assert.ContainsSingle(writer.Writes);
+                Assert.AreEqual(SynchronizedFlush(RepaintedLine(1, TitleLine("⠙")), RepaintedLine(6, "Esc back · ↑↓ scroll · q quit")), flush);
+            })
+            .Step("Paused, the badge joins the title and the spinner holds its glyph, so further paused renders of the same state write nothing; resuming shows the held glyph once more and then advances", context =>
+            {
+                var writer = new FakeTerminalWriter { WindowWidth = 40, WindowHeight = 6 };
+                using var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) });
+                dashboard.Start();
+                dashboard.Render(LiveDashboardViewState.Default);
+                writer.ClearWrites();
+
+                var paused = LiveDashboardViewState.Default with { IsPaused = true };
+                dashboard.Render(paused);
+                Assert.AreEqual(SynchronizedFlush(RepaintedLine(1, TitleLine("⠙") + " · " + LiveDashboardLayout.PausedBadgeText)), Assert.ContainsSingle(writer.Writes));
+                writer.ClearWrites();
+
+                dashboard.Render(paused);
+                dashboard.Render(paused);
+                Assert.IsEmpty(writer.Writes);
+                // Every render still reads the size once: a resize while paused is caught.
+                Assert.AreEqual(4, writer.WindowWidthReadCount);
+                Assert.AreEqual(4, writer.WindowHeightReadCount);
+
+                dashboard.Render(LiveDashboardViewState.Default);
+                Assert.AreEqual(SynchronizedFlush(RepaintedLine(1, TitleLine("⠙"))), Assert.ContainsSingle(writer.Writes));
+                writer.ClearWrites();
+
+                dashboard.Render(LiveDashboardViewState.Default);
+                Assert.AreEqual(SynchronizedFlush(RepaintedLine(1, TitleLine("⠹"))), Assert.ContainsSingle(writer.Writes));
+            })
+            .Step("A resize while paused is a full redraw at the new size, laid out with the held glyph and the badge", context =>
+            {
+                var writer = new FakeTerminalWriter { WindowWidth = 40, WindowHeight = 6 };
+                using var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) });
+                dashboard.Start();
+                dashboard.Render(LiveDashboardViewState.Default);
+                var paused = LiveDashboardViewState.Default with { IsPaused = true };
+                dashboard.Render(paused);
+                writer.ClearWrites();
+
+                writer.WindowWidth = 50;
+                writer.WindowHeight = 7;
+                dashboard.Render(paused);
+
+                var flush = Assert.ContainsSingle(writer.Writes);
+                var expectedLines = LiveDashboardLayout.Render(new[] { WarmupSnapshot(42) }, paused, 50, 7, ColorMode.None, SparklineGlyphSet.Braille, "⠙");
+                Assert.HasCount(7, expectedLines);
+                Assert.AreEqual(FullRedraw(expectedLines), flush);
+                Assert.Contains(AnsiCodes.MoveCursor(1, 1) + TitleLine("⠙") + " · " + LiveDashboardLayout.PausedBadgeText, flush);
             })
             .Run();
     }
@@ -256,7 +326,7 @@ public class LiveDashboardTests : Test
                 var writer = new FakeTerminalWriter { WindowWidth = 40, WindowHeight = 6 };
                 var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) });
                 dashboard.Start();
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
                 writer.ClearWrites();
 
                 dashboard.Dispose();
@@ -269,14 +339,14 @@ public class LiveDashboardTests : Test
                 var writer = new FakeTerminalWriter { WindowWidth = 40, WindowHeight = 6 };
                 var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) });
                 dashboard.Start();
-                dashboard.Render();
+                dashboard.Render(LiveDashboardViewState.Default);
                 dashboard.Dispose();
                 writer.ClearWrites();
 
                 dashboard.Dispose();
 
                 Assert.IsEmpty(writer.Writes);
-                Assert.ThrowsExactly<ObjectDisposedException>(() => dashboard.Render());
+                Assert.ThrowsExactly<ObjectDisposedException>(() => dashboard.Render(LiveDashboardViewState.Default));
                 Assert.ThrowsExactly<ObjectDisposedException>(() => dashboard.Start());
                 Assert.IsEmpty(writer.Writes);
             })
@@ -305,7 +375,7 @@ public class LiveDashboardTests : Test
                     using (var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) }))
                     {
                         dashboard.Start();
-                        dashboard.Render();
+                        dashboard.Render(LiveDashboardViewState.Default);
                         throw new InvalidOperationException("The run body failed.");
                     }
                 });
@@ -322,10 +392,10 @@ public class LiveDashboardTests : Test
                     using (var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) }))
                     {
                         dashboard.Start();
-                        dashboard.Render();
+                        dashboard.Render(LiveDashboardViewState.Default);
                         cancellation.Cancel();
                         cancellation.Token.ThrowIfCancellationRequested();
-                        dashboard.Render();
+                        dashboard.Render(LiveDashboardViewState.Default);
                     }
                 });
 
@@ -338,8 +408,8 @@ public class LiveDashboardTests : Test
                 using (var dashboard = new LiveDashboard(writer, LiveCapabilities(), () => new[] { WarmupSnapshot(42) }))
                 {
                     dashboard.Start();
-                    dashboard.Render();
-                    dashboard.Render();
+                    dashboard.Render(LiveDashboardViewState.Default);
+                    dashboard.Render(LiveDashboardViewState.Default);
                 }
 
                 AssertRestoredOnce(writer);

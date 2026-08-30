@@ -5,10 +5,15 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// while it runs and paints <see cref="LiveDashboardLayout"/> frames through a
 /// <see cref="FrameRenderer"/>. <see cref="Start"/> enters the alternate screen, hides the
 /// cursor and disables auto-wrap. Each <see cref="Render"/> reads the terminal size once, asks
-/// the snapshot provider for the scenarios' current views, lays the frame out at that size and
-/// hands it to the renderer (which repaints only what changed), advancing the running-status
-/// spinner one glyph per call — a caller rendering at <see cref="RenderInterval"/> animates the
-/// spinner and shows each 1 Hz data sample within a quarter second of it being published.
+/// the snapshot provider for the scenarios' current views, lays the frame out at that size
+/// under the caller's <see cref="LiveDashboardViewState"/> and hands it to the renderer (which
+/// repaints only what changed), advancing the running-status spinner one glyph per call — a
+/// caller rendering at <see cref="RenderInterval"/> animates the spinner and shows each 1 Hz
+/// data sample within a quarter second of it being published. While the state is paused the
+/// spinner holds its glyph instead, so a render whose snapshots and state have not changed
+/// lays out the very frame the renderer last painted and writes nothing: a paused caller can
+/// keep rendering every tick — a key that changes the state or a resize still repaints — and
+/// the terminal stays quiet in between.
 /// <see cref="Dispose"/> restores the terminal — SGR reset, auto-wrap re-enabled, cursor shown,
 /// alternate screen left — in one write, exactly once, and only when the dashboard was started;
 /// callers keep the dashboard in a using/finally so the terminal is restored on completion,
@@ -81,10 +86,13 @@ internal sealed class LiveDashboard : IDisposable
 
     /// <summary>
     /// Renders one frame: reads the terminal size once, lays out the provider's current
-    /// snapshots at that size with the spinner's next glyph, and hands the frame to the diff
-    /// renderer, so an unchanged data state repaints only the spinner. Throws when not started.
+    /// snapshots at that size under the given view state with the spinner's next glyph, and
+    /// hands the frame to the diff renderer, so an unchanged data state repaints only the
+    /// spinner. A paused state holds the spinner on its current glyph — the frame then changes
+    /// only with the snapshots, the state or the size, and an unchanged one writes nothing.
+    /// Throws when not started.
     /// </summary>
-    public void Render()
+    public void Render(LiveDashboardViewState viewState)
     {
         ThrowIfDisposed();
         if (!_isStarted)
@@ -100,10 +108,11 @@ internal sealed class LiveDashboard : IDisposable
             throw new InvalidOperationException("The snapshots provider returned null.");
 
         var spinnerGlyph = _spinnerFrames[_spinnerFrameIndex];
-        _spinnerFrameIndex = (_spinnerFrameIndex + 1) % _spinnerFrames.Length;
+        if (!viewState.IsPaused)
+            _spinnerFrameIndex = (_spinnerFrameIndex + 1) % _spinnerFrames.Length;
 
         _frame.Clear();
-        _frame.AddLines(LiveDashboardLayout.Render(snapshots, LiveDashboardViewState.Default, width, height, _capabilities.ColorMode, _sparklineGlyphSet, spinnerGlyph));
+        _frame.AddLines(LiveDashboardLayout.Render(snapshots, viewState, width, height, _capabilities.ColorMode, _sparklineGlyphSet, spinnerGlyph));
         _renderer.Render(_frame, width, height);
     }
 

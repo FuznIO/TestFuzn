@@ -69,10 +69,11 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// timeline.
 /// </para>
 /// <para>
-/// <b>Charts.</b> Two <see cref="ChartWidget"/> panels over the whole sample window — stretched
-/// from the first sample and scrolling once the window outgrows the body, with no time window
-/// until one is chosen interactively — in a <see cref="PanelWidget"/> frame each, the axis in
-/// the secondary style. Each panel's header is its chart's legend: the series named top-down,
+/// <b>Charts.</b> Two <see cref="ChartWidget"/> panels over the view state's time window
+/// (<see cref="LiveDashboardViewState.TimeWindow"/>: the newest that many samples, every sample
+/// without one) — stretched from the window's first sample and scrolling once the window
+/// outgrows the body — in a <see cref="PanelWidget"/> frame each, the axis in the secondary
+/// style. Each panel's header is its chart's legend: the series named top-down,
 /// which is their paint order, so the first name is always the series whose newest value the
 /// ▶ annotation shows (the widget annotates its first series). "requests — ok / failed": the
 /// per-interval ok and failed counts (<see cref="LiveMetricsSnapshot.OkDeltaSeries"/>,
@@ -103,7 +104,9 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// </para>
 /// <para>
 /// <b>Heatmap.</b> A full-width "latency heatmap" panel under the charts: a
-/// <see cref="HeatmapWidget"/> over <see cref="LiveMetricsSnapshot.LatencyBucketSeries"/>,
+/// <see cref="HeatmapWidget"/> over <see cref="LiveMetricsSnapshot.LatencyBucketSeries"/>, the
+/// charts' time window applied to it the same way (the newest that many samples, one per
+/// column at the right of the body),
 /// <see cref="HeatmapHeight"/> rows for the fifteen <see cref="LatencyBuckets"/> — the widget
 /// merges every pair below the slowest bucket — labelled by their inclusive upper bounds,
 /// "≤ 1 ms" through "≤ 30 s" and "> 30 s" for the open-ended last one, in the secondary style.
@@ -250,6 +253,26 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// leave that column a cell short and pull its neighbour's title row a cell left — when that
 /// column keeps <see cref="MinimumWidthForLogo"/>; the footer is one for the frame either
 /// way, and the view state's step selection applies in every column alike.
+/// </para>
+/// <para>
+/// <b>Interaction.</b> The rest of the view state: the view, the pause and the help, which
+/// <see cref="LiveDashboardKeyHandler"/> sets. While the state is paused every section's
+/// status badge is followed by a dim middle dot and <c>⏸ paused</c> in
+/// <see cref="TerminalPalette.PausedStyle"/> — part of the badge, so it comes before the phase
+/// label and is never dropped for it; the numbers on screen are then the console manager's
+/// frozen snapshots, and the layout only says so. The footer is a <see cref="KeyHintBarWidget"/>
+/// line of the view's hints followed, last and always, by the quit hint (<see cref="QuitKey"/>):
+/// the overview's <c>1 overview · 2 step · 3 errors · ↑↓ select · ⏎ detail · p pause ·
+/// +- window · ? help · q quit</c>, the step detail's <c>Esc back · ↑↓ step · 1 overview ·
+/// 3 errors · p pause · +- window · ? help · q quit</c>, the error log's <c>Esc back ·
+/// ↑↓ scroll · 1 overview · 2 step · p pause · ? help · q quit</c>, and <c>? close ·
+/// Esc close · q quit</c> whatever the view while the help is up. The widget drops the hints
+/// that do not fit from the right, which would take the quit hint first, so the footer is the
+/// longest prefix of the view's hints that fits the width together with the quit hint — the
+/// view's hints go from the right, the quit hint never — and the quit hint alone, cut to the
+/// width with the widget's ellipsis, below its six columns. Every view lays out the overview
+/// body under its own footer until the step detail and the error log have bodies of their own;
+/// <see cref="LiveDashboardViewState.ErrorLogScroll"/> and the help have nothing to render yet.
 /// </para>
 /// Alternate-screen entry/exit and the render loop are the caller's job. Stateless and
 /// thread-safe.
@@ -403,8 +426,56 @@ internal static class LiveDashboardLayout
     /// <summary>The key the footer advertises for a graceful stop of the run; the console manager acts on it in either case.</summary>
     public const char QuitKey = 'q';
 
-    private static readonly KeyHint[] FooterHints = { new KeyHint(QuitKey.ToString(), "quit") };
+    /// <summary>The paused badge's text, after the status badge on every section's title line while the view state is paused.</summary>
+    public const string PausedBadgeText = "⏸ paused";
 
+    // The footer's hints: the quit hint closes every view's set, and the view's own hints are
+    // given up from the right before it (see the class summary's Interaction).
+    private static readonly KeyHint QuitHint = new KeyHint(QuitKey.ToString(), "quit");
+
+    private static readonly KeyHint[] OverviewHints =
+    {
+        new KeyHint("1", "overview"),
+        new KeyHint("2", "step"),
+        new KeyHint("3", "errors"),
+        new KeyHint("↑↓", "select"),
+        new KeyHint("⏎", "detail"),
+        new KeyHint(LiveDashboardKeyHandler.PauseKey.ToString(), "pause"),
+        new KeyHint(LiveDashboardKeyHandler.WidenTimeWindowKey.ToString() + LiveDashboardKeyHandler.NarrowTimeWindowKey, "window"),
+        new KeyHint(LiveDashboardKeyHandler.HelpKey.ToString(), "help")
+    };
+
+    private static readonly KeyHint[] StepDetailHints =
+    {
+        new KeyHint("Esc", "back"),
+        new KeyHint("↑↓", "step"),
+        new KeyHint("1", "overview"),
+        new KeyHint("3", "errors"),
+        new KeyHint(LiveDashboardKeyHandler.PauseKey.ToString(), "pause"),
+        new KeyHint(LiveDashboardKeyHandler.WidenTimeWindowKey.ToString() + LiveDashboardKeyHandler.NarrowTimeWindowKey, "window"),
+        new KeyHint(LiveDashboardKeyHandler.HelpKey.ToString(), "help")
+    };
+
+    private static readonly KeyHint[] ErrorLogHints =
+    {
+        new KeyHint("Esc", "back"),
+        new KeyHint("↑↓", "scroll"),
+        new KeyHint("1", "overview"),
+        new KeyHint("2", "step"),
+        new KeyHint(LiveDashboardKeyHandler.PauseKey.ToString(), "pause"),
+        new KeyHint(LiveDashboardKeyHandler.HelpKey.ToString(), "help")
+    };
+
+    private static readonly KeyHint[] HelpHints =
+    {
+        new KeyHint(LiveDashboardKeyHandler.HelpKey.ToString(), "close"),
+        new KeyHint("Esc", "close")
+    };
+
+    // The chart and heatmap panels' options: the layout's own formats and styles over every
+    // sample, shared across renders (the options are immutable); a view state's time window
+    // is laid over a copy per render (ChartOptionsFor, HeatmapOptionsFor), so only a windowed
+    // frame allocates.
     private static readonly ChartOptions RequestsChartOptions = new ChartOptions { ValueFormatter = FormatCountLabel, AxisStyle = TerminalPalette.SecondaryStyle };
     private static readonly ChartOptions LatencyChartOptions = new ChartOptions { ValueFormatter = FormatResponseTimeLabel, AxisStyle = TerminalPalette.SecondaryStyle };
     private static readonly HeatmapOptions LatencyHeatmapOptions = new HeatmapOptions { LabelStyle = TerminalPalette.SecondaryStyle };
@@ -474,7 +545,8 @@ internal static class LiveDashboardLayout
     /// to the rows above the footer on the last row, each section's optional rows given up in
     /// the order the class summary describes; the unclipped content plus the footer, every
     /// optional row in, for a smaller height. A width below 1 renders nothing. The view
-    /// state's step selection applies to every section alike. The glyph set is passed through
+    /// state's step selection, pause badge and time window apply to every section alike, and
+    /// its view and help choose the footer's hints (the Interaction paragraph). The glyph set is passed through
     /// to the tile trends, the chart panels and the step trends so the caller can match it to
     /// the terminal's font support. The spinner glyph, when given, is drawn in place of the
     /// dot on a running scenario's status badge — a single-column glyph the caller's render
@@ -527,8 +599,50 @@ internal static class LiveDashboardLayout
                 lines.Add(BlankLine);
         }
 
-        lines.AddRange(KeyHintBarWidget.Render(FooterHints, width, colorMode));
+        lines.AddRange(RenderFooter(viewState, width, colorMode));
         return lines;
+    }
+
+    // The footer: the longest prefix of the view's hints that fits the width together with the
+    // quit hint, else the quit hint alone, cut to the width by the widget. A candidate fits
+    // when the widget renders it whole at an unbounded width no wider than the width — measured
+    // through the widget itself, so the fit follows its hint format and separator wherever they
+    // go — and that rendering is the footer: a line that fits renders the same at any width,
+    // so the winner is not rendered twice. The width is 1 or more here, so the widget always
+    // returns its one line.
+    private static IReadOnlyList<RenderedLine> RenderFooter(LiveDashboardViewState viewState, int width, ColorMode colorMode)
+    {
+        var viewHints = FooterHintsFor(viewState);
+        for (var count = viewHints.Length; count > 0; count--)
+        {
+            var hints = new KeyHint[count + 1];
+            Array.Copy(viewHints, hints, count);
+            hints[count] = QuitHint;
+
+            var candidate = KeyHintBarWidget.Render(hints, int.MaxValue, colorMode);
+            if (candidate[0].Width <= width)
+                return candidate;
+        }
+
+        return KeyHintBarWidget.Render(new[] { QuitHint }, width, colorMode);
+    }
+
+    // The view's own hints, before the quit hint: how to close the help while it is up,
+    // whatever the view, else the view's set.
+    private static KeyHint[] FooterHintsFor(LiveDashboardViewState viewState)
+    {
+        if (viewState.ShowHelp)
+            return HelpHints;
+
+        switch (viewState.View)
+        {
+            case LiveDashboardView.StepDetail:
+                return StepDetailHints;
+            case LiveDashboardView.ErrorLog:
+                return ErrorLogHints;
+            default:
+                return OverviewHints;
+        }
     }
 
     /// <summary>
@@ -712,7 +826,7 @@ internal static class LiveDashboardLayout
         var includeTimeline = snapshot.PlanEntries.Count > 0 && HasRowsFor(height, MinimumHeightForTimeline);
 
         var header = new List<RenderedLine>();
-        header.Add(RenderTitleLine(snapshot, width, colorMode, spinnerGlyph, includeLogo, includePhaseLabel: !includeTimeline));
+        header.Add(RenderTitleLine(snapshot, viewState.IsPaused, width, colorMode, spinnerGlyph, includeLogo, includePhaseLabel: !includeTimeline));
         AddTileRows(header, snapshot, thresholds, width, height, colorMode, sparklineGlyphSet);
 
         if (includeTimeline)
@@ -732,10 +846,10 @@ internal static class LiveDashboardLayout
         lines.AddRange(header);
 
         if (plan.IncludeRequestsChart || plan.IncludeLatencyChart)
-            AddChartPanels(lines, snapshot, thresholds, plan, width, colorMode, sparklineGlyphSet);
+            AddChartPanels(lines, snapshot, thresholds, plan, viewState.TimeWindow, width, colorMode, sparklineGlyphSet);
 
         if (plan.IncludeHeatmap)
-            lines.AddRange(RenderHeatmapPanel(snapshot, width, plan.HeatmapHeight, colorMode));
+            lines.AddRange(RenderHeatmapPanel(snapshot, viewState.TimeWindow, width, plan.HeatmapHeight, colorMode));
 
         lines.AddRange(requests);
 
@@ -927,14 +1041,17 @@ internal static class LiveDashboardLayout
         return height < 1 || height >= minimumHeight;
     }
 
-    // The scenario name and status badge — the phase label after them when the section shows no
-    // timeline and the line keeps its full width with it — with the compact logo right-aligned
-    // on the same row when requested: the title is fitted to the columns left of the reserved
-    // logo area, so the two can never overlap.
-    private static RenderedLine RenderTitleLine(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode, string? spinnerGlyph, bool includeLogo, bool includePhaseLabel)
+    // The scenario name and status badge, the paused badge after it while the viewer has
+    // paused — the phase label after them when the section shows no timeline and the line
+    // keeps its full width with it — with the compact logo right-aligned on the same row when
+    // requested: the title is fitted to the columns left of the reserved logo area, so the two
+    // can never overlap.
+    private static RenderedLine RenderTitleLine(LiveMetricsSnapshot snapshot, bool isPaused, int width, ColorMode colorMode, string? spinnerGlyph, bool includeLogo, bool includePhaseLabel)
     {
         var titleWidth = includeLogo ? width - LogoWidget.CompactWidth - ColumnGap : width;
         var titleMarkup = "[bold]" + MarkupParser.Escape(snapshot.ScenarioName) + "[/]  " + StatusBadgeMarkup(snapshot, spinnerGlyph);
+        if (isPaused)
+            titleMarkup += " [" + TerminalPalette.SecondaryStyle + "]·[/] [" + TerminalPalette.PausedStyle + "]" + PausedBadgeText + "[/]";
 
         if (includePhaseLabel && snapshot.PhaseLabel.Length > 0)
         {
@@ -1395,7 +1512,7 @@ internal static class LiveDashboardLayout
     // — the column over, at an odd width, going to the latency chart, unlike the tile boxes
     // and the scenario columns, which widen the first — so the joined rows are exactly the
     // frame width; stacked, each at the full width, requests first.
-    private static void AddChartPanels(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, SectionPlan plan, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    private static void AddChartPanels(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, SectionPlan plan, int? timeWindow, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
         if (plan.SideBySideCharts)
         {
@@ -1403,8 +1520,8 @@ internal static class LiveDashboardLayout
             var rightWidth = width - ColumnGap - leftWidth;
             var panels = new[]
             {
-                RenderRequestsChartPanel(snapshot, leftWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet),
-                RenderLatencyChartPanel(snapshot, thresholds, rightWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet)
+                RenderRequestsChartPanel(snapshot, timeWindow, leftWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet),
+                RenderLatencyChartPanel(snapshot, thresholds, timeWindow, rightWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet)
             };
             var panelWidths = new[] { leftWidth, rightWidth };
 
@@ -1415,16 +1532,35 @@ internal static class LiveDashboardLayout
         }
 
         if (plan.IncludeRequestsChart)
-            lines.AddRange(RenderRequestsChartPanel(snapshot, width, plan.ChartBodyHeight, colorMode, sparklineGlyphSet));
+            lines.AddRange(RenderRequestsChartPanel(snapshot, timeWindow, width, plan.ChartBodyHeight, colorMode, sparklineGlyphSet));
 
         if (plan.IncludeLatencyChart)
-            lines.AddRange(RenderLatencyChartPanel(snapshot, thresholds, width, plan.ChartBodyHeight, colorMode, sparklineGlyphSet));
+            lines.AddRange(RenderLatencyChartPanel(snapshot, thresholds, timeWindow, width, plan.ChartBodyHeight, colorMode, sparklineGlyphSet));
+    }
+
+    // A chart panel's options over the view state's time window: the shared defaults as they
+    // are without a window, else a copy of them carrying the window.
+    private static ChartOptions ChartOptionsFor(ChartOptions defaults, int? timeWindow)
+    {
+        if (timeWindow == null)
+            return defaults;
+
+        return new ChartOptions { ValueFormatter = defaults.ValueFormatter, AxisStyle = defaults.AxisStyle, TimeWindow = timeWindow };
+    }
+
+    // The heatmap panel's options over the view state's time window, the same way.
+    private static HeatmapOptions HeatmapOptionsFor(int? timeWindow)
+    {
+        if (timeWindow == null)
+            return LatencyHeatmapOptions;
+
+        return new HeatmapOptions { LabelStyle = LatencyHeatmapOptions.LabelStyle, TimeWindow = timeWindow };
     }
 
     // The per-interval ok and failed counts as two areas on one count scale, failed painted
     // over ok so a failed count shows at the bottom in its own colour; the annotation is the
     // first series' — the newest ok count.
-    private static IReadOnlyList<RenderedLine> RenderRequestsChartPanel(LiveMetricsSnapshot snapshot, int panelWidth, int bodyHeight, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    private static IReadOnlyList<RenderedLine> RenderRequestsChartPanel(LiveMetricsSnapshot snapshot, int? timeWindow, int panelWidth, int bodyHeight, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
         var series = new[]
         {
@@ -1432,7 +1568,7 @@ internal static class LiveDashboardLayout
             new ChartSeries(snapshot.FailedDeltaSeries) { Style = TerminalPalette.FailedStyle }
         };
 
-        var chart = ChartWidget.Render(series, panelWidth - PanelWidget.ContentOverhead, bodyHeight, colorMode, sparklineGlyphSet, RequestsChartOptions);
+        var chart = ChartWidget.Render(series, panelWidth - PanelWidget.ContentOverhead, bodyHeight, colorMode, sparklineGlyphSet, ChartOptionsFor(RequestsChartOptions, timeWindow));
         return PanelWidget.Render(RequestsChartHeader, chart, panelWidth, colorMode);
     }
 
@@ -1441,7 +1577,7 @@ internal static class LiveDashboardLayout
     // a cell the line passes shows only the line's dots — every non-latency reading a gap; a
     // declared p95 or p99 limit as a flat line over the p95 series' samples, so it spans the
     // same columns and shares the scale, in the style the title's legend gives it.
-    private static IReadOnlyList<RenderedLine> RenderLatencyChartPanel(LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, int panelWidth, int bodyHeight, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
+    private static IReadOnlyList<RenderedLine> RenderLatencyChartPanel(LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, int? timeWindow, int panelWidth, int bodyHeight, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
         var series = new List<ChartSeries>
         {
@@ -1457,7 +1593,7 @@ internal static class LiveDashboardLayout
         if (thresholds.ResponseTimePercentile99 != null)
             series.Add(LimitLine(thresholds.ResponseTimePercentile99, sampleCount, TerminalPalette.FailedStyle));
 
-        var chart = ChartWidget.Render(series, panelWidth - PanelWidget.ContentOverhead, bodyHeight, colorMode, sparklineGlyphSet, LatencyChartOptions);
+        var chart = ChartWidget.Render(series, panelWidth - PanelWidget.ContentOverhead, bodyHeight, colorMode, sparklineGlyphSet, ChartOptionsFor(LatencyChartOptions, timeWindow));
         return PanelWidget.Render(LatencyChartHeader(thresholds), chart, panelWidth, colorMode);
     }
 
@@ -1490,11 +1626,12 @@ internal static class LiveDashboardLayout
         return header;
     }
 
-    // The latency bucket counts per sample as a heatmap, the fifteen buckets labelled by their
-    // bounds and merged into the plan's bodyHeight rows by the widget, in a full-width panel.
-    private static IReadOnlyList<RenderedLine> RenderHeatmapPanel(LiveMetricsSnapshot snapshot, int width, int bodyHeight, ColorMode colorMode)
+    // The latency bucket counts per sample as a heatmap over the charts' time window, the
+    // fifteen buckets labelled by their bounds and merged into the plan's bodyHeight rows by
+    // the widget, in a full-width panel.
+    private static IReadOnlyList<RenderedLine> RenderHeatmapPanel(LiveMetricsSnapshot snapshot, int? timeWindow, int width, int bodyHeight, ColorMode colorMode)
     {
-        var heatmap = HeatmapWidget.Render(snapshot.LatencyBucketSeries, LatencyBucketLabels, width - PanelWidget.ContentOverhead, bodyHeight, colorMode, LatencyHeatmapOptions);
+        var heatmap = HeatmapWidget.Render(snapshot.LatencyBucketSeries, LatencyBucketLabels, width - PanelWidget.ContentOverhead, bodyHeight, colorMode, HeatmapOptionsFor(timeWindow));
         return PanelWidget.Render(HeatmapHeader, heatmap, width, colorMode);
     }
 

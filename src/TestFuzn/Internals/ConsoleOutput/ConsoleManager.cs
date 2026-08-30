@@ -32,8 +32,19 @@ namespace Fuzn.TestFuzn.Internals.Logger;
 /// the same cancellation path Ctrl+C takes (<see cref="TestExecutionState.RequestStop"/>), so
 /// the run winds down exactly as after Ctrl+C while the loop keeps rendering through cleanup
 /// (the request runs the run's cancellation callbacks off the loop thread, and the stop
-/// observes its outcome); every other key is drained and ignored, and keys are read nowhere
-/// else, so input is never touched without the dashboard.
+/// observes its outcome); every other key goes to <see cref="LiveDashboardKeyHandler"/>, which
+/// derives the next <see cref="LiveDashboardViewState"/> — the view, the step selection, the
+/// pause, the time window, the help — from the one this manager owns and hands the dashboard
+/// on every frame, so a key shows on the next tick's frame; a key without a binding changes
+/// nothing. Keys are read nowhere else, so input is never touched without the dashboard.
+/// Pausing (<see cref="LiveDashboardKeyHandler.PauseKey"/>) freezes the picture, not the
+/// sampling: the loop keeps sampling at 1 Hz, but from the pause on the dashboard is given the
+/// snapshots as they were when the pause began, so the frame — the badge added — holds still
+/// and, with the dashboard's spinner held too, nothing is written until a key changes the
+/// state (the keys act on the frozen snapshots as well, and the frame is repainted over them,
+/// so the viewer can switch views or move the selection through a frozen picture — never
+/// onto a step it does not show) or the terminal is resized (the frozen frame laid out again
+/// at the new size); resuming hands the live snapshots back, so the next frame jumps to now.
 /// Frameworks without real-time output (MSTest) and standard tests get no live view, only the
 /// summary. A failure inside the live view never hides the results: the terminal is restored
 /// at once and the run continues without a live view, the summary is still written, and the
@@ -63,6 +74,8 @@ internal class ConsoleManager
     private LiveStatsWriter? _liveStatsWriter;
     private ScenarioLiveMetrics?[] _liveMetrics = Array.Empty<ScenarioLiveMetrics?>();
     private LiveMetricsSnapshot[] _liveSnapshots = Array.Empty<LiveMetricsSnapshot>();
+    private LiveMetricsSnapshot[]? _frozenSnapshots;
+    private LiveDashboardViewState _viewState = LiveDashboardViewState.Default;
     private DateTime _nextSampleTime;
     private bool _isLiveViewStopped;
     private Exception? _liveViewException;
@@ -98,6 +111,13 @@ internal class ConsoleManager
     /// by a fresh immutable snapshot on every sample.
     /// </summary>
     internal IReadOnlyList<LiveMetricsSnapshot> LiveSnapshots => _liveSnapshots;
+
+    /// <summary>
+    /// The viewer's current interaction state — what the dashboard renders under: the
+    /// default until a key changes it, then whatever the last handled key left. Read on the
+    /// loop thread; a test reads it with the loop parked.
+    /// </summary>
+    internal LiveDashboardViewState ViewState => _viewState;
 
     /// <summary>
     /// The quit key's stop request, once one has been made (null before): completes when the
@@ -149,8 +169,9 @@ internal class ConsoleManager
             throw new InvalidOperationException("The live view host returned no terminal reader.");
 
         // The dashboard reads the snapshot array on every render; the sampling loop replaces
-        // entries with fresh immutable snapshots, so a frame never sees a torn view.
-        var liveDashboard = new LiveDashboard(_liveViewHost.CreateTerminalWriter(), capabilities, () => _liveSnapshots);
+        // entries with fresh immutable snapshots, so a frame never sees a torn view — and
+        // while the viewer has paused, the copy frozen at the pause instead.
+        var liveDashboard = new LiveDashboard(_liveViewHost.CreateTerminalWriter(), capabilities, SnapshotsForFrame);
         _liveDashboard = liveDashboard;
         _liveViewLoop = Task.Run(() => RunLiveView(liveDashboard, terminalReader, null, _ctSource.Token));
     }
@@ -190,7 +211,7 @@ internal class ConsoleManager
                 }
 
                 if (liveDashboard != null)
-                    liveDashboard.Render();
+                    liveDashboard.Render(_viewState);
 
                 // Returns normally on cancellation (DelayHelper.Delay swallows the
                 // TaskCanceledException) — load-bearing: a normal stop must not take the
@@ -218,22 +239,50 @@ internal class ConsoleManager
     /// cancellation callbacks off this thread — one per in-flight delay, consumer and request
     /// on a real load run — so the loop keeps painting while the pipeline tears down, as it
     /// does when Ctrl+C runs them on the signal thread; the request's task is kept for
-    /// <see cref="StopRealtimeConsoleOutput"/> to observe. Every other key is ignored, and the
-    /// loop itself is not stopped here: it keeps rendering through cleanup until the runner's
-    /// Stop. A repeated quit key finds the stop already requested and is a no-op. Runs on the
-    /// loop thread; the request is safe against the runner thread stopping the live view at the
-    /// same time.
+    /// <see cref="StopRealtimeConsoleOutput"/> to observe. The loop itself is not stopped here:
+    /// it keeps rendering through cleanup until the runner's Stop. A repeated quit key finds
+    /// the stop already requested and is a no-op. Every other key goes to the
+    /// <see cref="LiveDashboardKeyHandler"/> over the snapshots on view
+    /// (<see cref="SnapshotsForFrame"/>: the frozen copy while paused, so a key acts on the
+    /// picture the viewer sees — a step the run has found since the pause began is not on a
+    /// frozen picture, so it cannot be selected through one), and the state it returns is
+    /// what the tick renders; the tick a pause begins on freezes a copy of the live snapshots
+    /// for the dashboard, and the tick it ends on lets them go. Runs on the loop thread; the
+    /// request is safe against the runner thread stopping the live view at the same time.
     /// </summary>
     private void HandleKeys(ITerminalReader terminalReader)
     {
         while (terminalReader.TryReadKey(out var key))
         {
-            if (!IsQuitKey(key))
-                continue;
+            if (IsQuitKey(key))
+            {
+                if (_stopRequest == null)
+                    _stopRequest = _testExecutionState.RequestStop();
 
-            if (_stopRequest == null)
-                _stopRequest = _testExecutionState.RequestStop();
+                continue;
+            }
+
+            var viewState = LiveDashboardKeyHandler.Apply(_viewState, key, SnapshotsForFrame());
+            if (viewState.IsPaused && !_viewState.IsPaused)
+                _frozenSnapshots = (LiveMetricsSnapshot[])_liveSnapshots.Clone();
+            else if (!viewState.IsPaused)
+                _frozenSnapshots = null;
+
+            _viewState = viewState;
         }
+    }
+
+    /// <summary>
+    /// The snapshots the dashboard lays a frame out from: the live ones, or while the viewer
+    /// has paused the copy frozen when the pause began, so the picture holds still while the
+    /// sampling behind it goes on.
+    /// </summary>
+    private IReadOnlyList<LiveMetricsSnapshot> SnapshotsForFrame()
+    {
+        if (_frozenSnapshots != null)
+            return _frozenSnapshots;
+
+        return _liveSnapshots;
     }
 
     /// <summary>
