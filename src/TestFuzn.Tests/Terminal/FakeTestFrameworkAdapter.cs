@@ -24,6 +24,9 @@ internal sealed class FakeTestFrameworkAdapter : ITestFrameworkAdapter
     /// <summary>The prefix of the event recorded for a plain write, followed by the message.</summary>
     public const string WriteEventPrefix = "write:";
 
+    /// <summary>The event recorded for a table write; the table itself lands in <see cref="Tables"/>.</summary>
+    public const string TableEvent = "table";
+
     private readonly List<string> _events;
     private readonly CancellationTokenSource _cancellation = new CancellationTokenSource();
 
@@ -58,9 +61,15 @@ internal sealed class FakeTestFrameworkAdapter : ITestFrameworkAdapter
         Record(WriteEventPrefix + message);
     }
 
+    /// <summary>The tables written through the adapter, in order and as handed over — the MSTest adapter strips their markup, this one keeps it.</summary>
+    public List<TableData> Tables { get; } = new List<TableData>();
+
     public void WriteTable(TableData table)
     {
-        Record("table");
+        lock (_events)
+            Tables.Add(table);
+
+        Record(TableEvent);
     }
 
     public void WriteMarkup(string text)

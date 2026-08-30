@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals;
 using Fuzn.TestFuzn.Internals.ConsoleOutput;
@@ -40,6 +41,7 @@ internal sealed class LiveViewDemo
 
     private readonly ILiveViewHost _liveViewHost;
     private readonly TimeSpan _duration;
+    private readonly Scenario _scenario;
 
     /// <summary>
     /// The execution state of the run in progress — or, once <see cref="Run"/> has returned, the
@@ -50,14 +52,33 @@ internal sealed class LiveViewDemo
     /// <param name="liveViewHost">The clock, the terminal and the delays: the real console in production, a fake in tests.</param>
     /// <param name="duration">What the scripted run takes, init and cleanup included; at least <see cref="LiveViewDemoScript.MinimumDuration"/>.</param>
     internal LiveViewDemo(ILiveViewHost liveViewHost, TimeSpan duration)
+        : this(liveViewHost, duration, LiveViewDemoScript.CreateScenario())
+    {
+    }
+
+    /// <param name="liveViewHost">The clock, the terminal and the delays: the real console in production, a fake in tests.</param>
+    /// <param name="duration">What the scripted run takes, init and cleanup included; at least <see cref="LiveViewDemoScript.MinimumDuration"/>.</param>
+    /// <param name="scenario">
+    /// The scenario the scripted load is recorded against — always
+    /// <see cref="LiveViewDemoScript.CreateScenario"/>'s in production. A test hands in one whose
+    /// thresholds the run cannot hold, to drive the violated-verdict path the demo's own
+    /// thresholds are chosen never to take. Single-use, and so is the demo built over it:
+    /// <see cref="LiveViewDemoScript.Init"/> adds the simulations to it where a real run's
+    /// SetupSimulations adds them, so a scenario a demo has already run would carry them twice.
+    /// Build a fresh scenario per demo — the runner core's factory does, per run.
+    /// </param>
+    internal LiveViewDemo(ILiveViewHost liveViewHost, TimeSpan duration, Scenario scenario)
     {
         if (liveViewHost == null)
             throw new ArgumentNullException(nameof(liveViewHost), "Live view host cannot be null.");
         if (duration < LiveViewDemoScript.MinimumDuration)
             throw new ArgumentOutOfRangeException(nameof(duration), duration, "The demo runs for at least " + LiveViewDemoScript.MinimumDuration.TotalSeconds + " seconds.");
+        if (scenario == null)
+            throw new ArgumentNullException(nameof(scenario), "Scenario cannot be null.");
 
         _liveViewHost = liveViewHost;
         _duration = duration;
+        _scenario = scenario;
     }
 
     /// <summary>
@@ -72,8 +93,9 @@ internal sealed class LiveViewDemo
     /// <summary>
     /// Runs the demo to its end over the given framework adapter — the standalone adapter, whose
     /// Ctrl+C handler cancels the token the state links — and returns when the summary has been
-    /// written. Throws <see cref="OperationCanceledException"/> after the summary when the run
-    /// was stopped, as <see cref="TestRunner"/> does.
+    /// written. Throws after the summary exactly as <see cref="TestRunner"/> does: the run's
+    /// first exception — a violated threshold verdict, the scripted run's only kind — rethrown
+    /// first, then <see cref="OperationCanceledException"/> when the run was stopped.
     /// </summary>
     public async Task Run(ITestFrameworkAdapter testFramework)
     {
@@ -89,7 +111,7 @@ internal sealed class LiveViewDemo
 
         try
         {
-            testExecutionState.Init(testFramework, new DemoTest(), LiveViewDemoScript.CreateScenario());
+            testExecutionState.Init(testFramework, new DemoTest(), _scenario);
             var script = new LiveViewDemoScript(testExecutionState, _liveViewHost, _duration);
 
             try
@@ -105,6 +127,14 @@ internal sealed class LiveViewDemo
 
             await script.Cleanup();
             await consoleManager.Complete();
+
+            // The run's first exception, rethrown once cleanup and the summary are done, exactly
+            // where and as the test runner rethrows it: the scripted run's only source of one is
+            // a violated threshold verdict, which must fail the demo run the way it fails a test
+            // — the runner core traces it and exits 1. The demo's thresholds are chosen to hold
+            // cumulatively, so this is the mirror of a real run's path, not one the demo takes.
+            if (testExecutionState.FirstException != null)
+                ExceptionDispatchInfo.Capture(testExecutionState.FirstException).Throw();
 
             if (testExecutionState.CancellationToken.IsCancellationRequested)
                 throw new OperationCanceledException(testExecutionState.CancellationToken);

@@ -37,6 +37,7 @@ internal class StandaloneRunnerCore
 
     private readonly ILiveViewHost _liveViewHost;
     private readonly DiscoverTests _discoverTests;
+    private readonly Func<TimeSpan, LiveViewDemo> _demoFactory;
 
     public StandaloneRunnerCore()
         : this(new ConsoleLiveViewHost())
@@ -52,6 +53,18 @@ internal class StandaloneRunnerCore
     /// <param name="liveViewHost">The host the test selection menu, the startup banner, the live view demo and a failed run's exception run over: the real console and clock in production, a fake in tests.</param>
     /// <param name="discoverTests">The discovery of the assembly's tests: reflection in production, hand-made tests in unit tests.</param>
     internal StandaloneRunnerCore(ILiveViewHost liveViewHost, DiscoverTests discoverTests)
+        : this(liveViewHost, discoverTests, null)
+    {
+    }
+
+    /// <param name="liveViewHost">The host the test selection menu, the startup banner, the live view demo and a failed run's exception run over: the real console and clock in production, a fake in tests.</param>
+    /// <param name="discoverTests">The discovery of the assembly's tests: reflection in production, hand-made tests in unit tests.</param>
+    /// <param name="demoFactory">
+    /// Builds the demo the <see cref="DemoFlag"/> runs, from the duration the command line asked
+    /// for; null for the production one, over this core's host. A test hands in a demo whose
+    /// thresholds the scripted run cannot hold, to drive the exit code a violated verdict earns.
+    /// </param>
+    internal StandaloneRunnerCore(ILiveViewHost liveViewHost, DiscoverTests discoverTests, Func<TimeSpan, LiveViewDemo>? demoFactory)
     {
         if (liveViewHost == null)
             throw new ArgumentNullException(nameof(liveViewHost), "Live view host cannot be null.");
@@ -60,6 +73,11 @@ internal class StandaloneRunnerCore
 
         _liveViewHost = liveViewHost;
         _discoverTests = discoverTests;
+
+        if (demoFactory == null)
+            demoFactory = duration => new LiveViewDemo(liveViewHost, duration);
+
+        _demoFactory = demoFactory;
     }
 
     public async Task<int> Run<TStartup>(Assembly testAssembly,
@@ -80,7 +98,7 @@ internal class StandaloneRunnerCore
             if (!ArgumentsParser.TryGetDuration(parsedArgs, DemoDurationArgument, LiveViewDemoScript.MinimumDuration, LiveViewDemoScript.DefaultDuration, out var demoDuration))
                 return WriteInvocationError(testFrameworkInstanceCreator, DemoDurationUsage);
 
-            return await RunWithAdapter(testFrameworkInstanceCreator, adapter => new LiveViewDemo(_liveViewHost, demoDuration).Run(adapter));
+            return await RunWithAdapter(testFrameworkInstanceCreator, adapter => _demoFactory(demoDuration).Run(adapter));
         }
 
         // A --test-name without a value — bare, or with a space instead of = — parses as a bare

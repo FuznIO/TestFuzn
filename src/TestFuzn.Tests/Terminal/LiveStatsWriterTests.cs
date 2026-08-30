@@ -1,5 +1,6 @@
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Terminal;
+using Fuzn.TestFuzn.Internals.Thresholds;
 
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
@@ -31,7 +32,9 @@ public class LiveStatsWriterTests : Test
         double percentile95Ms = 0,
         TestStatus status = TestStatus.Passed,
         string? statusDetail = null,
-        bool isCompleted = false)
+        bool isCompleted = false,
+        IReadOnlyList<ThresholdResult>? thresholdResults = null,
+        IReadOnlyList<LiveThreshold>? liveThresholds = null)
     {
         var requestsPerSecondSeries = Array.Empty<double>();
         if (currentRate != null)
@@ -40,6 +43,14 @@ public class LiveStatsWriterTests : Test
         TimeSpan? plannedDuration = null;
         if (plannedSeconds != null)
             plannedDuration = TimeSpan.FromSeconds(plannedSeconds.Value);
+
+        var verdict = Array.Empty<ThresholdResult>() as IReadOnlyList<ThresholdResult>;
+        if (thresholdResults != null)
+            verdict = thresholdResults;
+
+        var liveReadings = Array.Empty<LiveThreshold>() as IReadOnlyList<LiveThreshold>;
+        if (liveThresholds != null)
+            liveReadings = liveThresholds;
 
         return new LiveMetricsSnapshot
         {
@@ -55,8 +66,36 @@ public class LiveStatsWriterTests : Test
             RequestsPerSecondSeries = requestsPerSecondSeries,
             Status = status,
             StatusDetail = statusDetail,
-            IsCompleted = isCompleted
+            IsCompleted = isCompleted,
+            Thresholds = liveReadings,
+            ThresholdResults = verdict
         };
+    }
+
+    /// <summary>
+    /// A verdict of <paramref name="passedCount"/> held thresholds followed by
+    /// <paramref name="breachedCount"/> violated ones — the counts are all the final line reads.
+    /// </summary>
+    private static IReadOnlyList<ThresholdResult> Verdict(int passedCount, int breachedCount)
+    {
+        var threshold = new Threshold(ThresholdMetric.ErrorRate, 0.01, ThresholdComparison.LessThanOrEqualTo);
+        var results = new List<ThresholdResult>();
+        for (var index = 0; index < passedCount; index++)
+            results.Add(new ThresholdResult(threshold, 0.0, true));
+        for (var index = 0; index < breachedCount; index++)
+            results.Add(new ThresholdResult(threshold, 0.5, false));
+
+        return results;
+    }
+
+    /// <summary>
+    /// The live per-interval reading of one declared threshold, breaching — what a stopped run's
+    /// final snapshot still carries where its verdict, never taken, is empty.
+    /// </summary>
+    private static IReadOnlyList<LiveThreshold> BreachingLiveReading()
+    {
+        var threshold = new Threshold(ThresholdMetric.ErrorRate, 0.01, ThresholdComparison.LessThanOrEqualTo);
+        return new[] { new LiveThreshold(threshold, 0.5, ThresholdState.Breached, TimeSpan.FromSeconds(3)) };
     }
 
     [Test]
@@ -198,6 +237,48 @@ public class LiveStatsWriterTests : Test
                     "[Checkout flow] completed  elapsed 00:00:12  total 3  ok 3  failed 0  p95 10 ms",
                     "[Search flow] completed  elapsed 00:00:12  total 1  ok 1  failed 0  p95 10 ms"
                 }, Lines(writer));
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_the_final_line_reports_the_threshold_verdict()
+    {
+        await Scenario()
+            .Step("A verdict every threshold held reads ok, after the p95 and before any reason", context =>
+            {
+                var snapshot = Snapshot(phaseLabel: "completed", elapsedSeconds: 20, ok: 500, percentile95Ms: 320, isCompleted: true, thresholdResults: Verdict(passedCount: 2, breachedCount: 0));
+                Assert.AreEqual("[Checkout flow] completed  elapsed 00:00:20  total 500  ok 500  failed 0  p95 320 ms  thresholds: ok", LiveStatsWriter.FormatFinalLine(snapshot, isStopped: false));
+            })
+            .Step("A violated verdict reads breached with the count of the violations, not of the thresholds", context =>
+            {
+                var snapshot = Snapshot(phaseLabel: "completed", elapsedSeconds: 20, ok: 490, failed: 10, percentile95Ms: 320, status: TestStatus.Failed, statusDetail: "Threshold violated: error rate 2.04 % > 2 %", isCompleted: true, thresholdResults: Verdict(passedCount: 2, breachedCount: 1));
+                Assert.AreEqual("[Checkout flow] failed  elapsed 00:00:20  total 500  ok 490  failed 10  p95 320 ms  thresholds: breached (1)  reason: Threshold violated: error rate 2.04 % > 2 %", LiveStatsWriter.FormatFinalLine(snapshot, isStopped: false));
+
+                var bothBreached = Snapshot(phaseLabel: "completed", elapsedSeconds: 20, ok: 490, failed: 10, percentile95Ms: 320, isCompleted: true, thresholdResults: Verdict(passedCount: 0, breachedCount: 2));
+                Assert.EndsWith("thresholds: breached (2)", LiveStatsWriter.FormatFinalLine(bothBreached, isStopped: false));
+            })
+            .Step("A scenario that declared no threshold has no field at all", context =>
+            {
+                var noThresholds = Snapshot(phaseLabel: "completed", elapsedSeconds: 20, ok: 500, percentile95Ms: 320, isCompleted: true);
+                Assert.AreEqual("[Checkout flow] completed  elapsed 00:00:20  total 500  ok 500  failed 0  p95 320 ms", LiveStatsWriter.FormatFinalLine(noThresholds, isStopped: false));
+            })
+            .Step("Nor has a stopped run that did declare thresholds: it carries their live readings but no verdict, and the field reports the verdict alone — a breaching reading on a run nobody judged must read as neither ok nor breached", context =>
+            {
+                // The state the collector leaves behind on a stop: the declared thresholds' last
+                // per-interval readings still published, breaching one included, while the
+                // cumulative verdict — taken where the AssertWhenDone callback runs, which a
+                // stopped run never reaches — stays empty.
+                var stopped = Snapshot(phaseLabel: "completed", elapsedSeconds: 20, ok: 500, percentile95Ms: 320, isCompleted: true, liveThresholds: BreachingLiveReading());
+                Assert.IsNotEmpty(stopped.Thresholds);
+                Assert.IsEmpty(stopped.ThresholdResults);
+
+                Assert.AreEqual("[Checkout flow] stopped  elapsed 00:00:20  total 500  ok 500  failed 0  p95 320 ms", LiveStatsWriter.FormatFinalLine(stopped, isStopped: true));
+            })
+            .Step("The sample lines never carry the verdict: it exists only once the run has completed", context =>
+            {
+                var snapshot = Snapshot(phaseLabel: "completed", elapsedSeconds: 20, ok: 500, percentile95Ms: 320, thresholdResults: Verdict(passedCount: 1, breachedCount: 1));
+                Assert.DoesNotContain("thresholds", LiveStatsWriter.FormatStatsLine(snapshot));
             })
             .Run();
     }

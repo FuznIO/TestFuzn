@@ -335,8 +335,9 @@ public class MarkupParserTests : Test
     public async Task Verify_strip_markup_matches_markup_helper_for_repo_constant_strings()
     {
         // The CONSTANT markup strings the framework writes through ITestFrameworkAdapter.WriteMarkup
-        // today — ConsoleWriter's MSTest-path summary lines, ConsoleManager's live view failure,
-        // StandaloneRunnerCore's skip and invocation-error lines, HttpPlugin's captured request —
+        // and WriteTable today — ConsoleWriter's MSTest-path summary lines and the cells of its
+        // threshold verdict table, ConsoleManager's live view failure, StandaloneRunnerCore's skip
+        // and invocation-error lines, HttpPlugin's captured request —
         // and the TestSelectionMenu's prompt-fallback lines, with bracket-free representative
         // values for the interpolated parts. The MSTest adapter strips through MarkupHelper (and
         // its own regex), so both strip paths must agree on these; the standalone summary's own
@@ -351,6 +352,9 @@ public class MarkupParserTests : Test
             "[red]Status: Stopped[/]\r\n",
             "[red]Status: Stopped, reason: Assert failed[/]\r\n",
             "[green]Status: Completed successfully.[/]\r\n",
+            "[bold]Thresholds:[/]",
+            "[green]Ok[/]",
+            "[red]Breached[/]",
             "[red]Assert exceptions:[/]",
             "  [red]Expected response time to be below 100ms[/]",
             "[red]Errors by Step:[/]",

@@ -30,7 +30,9 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// line reports how the run ended, so it says completed where the badge says Passed and has
 /// stopped, which no badge has. The outcome is followed by the frozen run duration, the totals
 /// and the cumulative p95 (the final sample's interval p95 is empty: the reports drained the
-/// interval histogram first, which is also why no rate is on the final line).
+/// interval histogram first, which is also why no rate is on the final line), then — for a
+/// scenario whose declared thresholds were judged — the completion verdict as
+/// "thresholds: ok" or "thresholds: breached (n)", and the failure reason last.
 /// Numbers are formatted by <see cref="LiveDashboardLayout"/>'s formatters, so the lines and
 /// the dashboard agree. Text from outside — scenario names, assert messages — is sanitized as
 /// the dashboard sanitizes it (every control character becomes a space), so a line can neither
@@ -155,11 +157,13 @@ internal sealed class LiveStatsWriter
     }
 
     /// <summary>
-    /// "[scenario] {status}  elapsed {hh:mm:ss}  total {n}  ok {n}  failed {n}  p95 {ms}[  reason: {detail}]":
+    /// "[scenario] {status}  elapsed {hh:mm:ss}  total {n}  ok {n}  failed {n}  p95 {ms}[  thresholds: ok | breached {n}][  reason: {detail}]":
     /// the status is failed when the scenario's status is Failed, skipped when Skipped, stopped
     /// when the run was stopped or the scenario's measurement never completed (the run ended
-    /// before it — the exception follows), else completed; the reason is the status detail,
-    /// when there is one.
+    /// before it — the exception follows), else completed; the thresholds field reports the
+    /// completion verdict (see <see cref="ThresholdsText"/>); the reason is the status detail,
+    /// when there is one. The reason comes last, since it is free text a reader cannot tell the
+    /// end of.
     /// </summary>
     internal static string FormatFinalLine(LiveMetricsSnapshot snapshot, bool isStopped)
     {
@@ -171,10 +175,42 @@ internal sealed class LiveStatsWriter
         line.Append(FieldSeparator).Append("elapsed ").Append(LiveDashboardLayout.FormatClock(snapshot.Duration));
         AppendTotals(line, snapshot);
         AppendResponseTimePercentile95(line, snapshot);
+
+        var thresholds = ThresholdsText(snapshot);
+        if (thresholds != null)
+            line.Append(FieldSeparator).Append("thresholds: ").Append(thresholds);
+
         if (snapshot.StatusDetail != null)
             line.Append(FieldSeparator).Append("reason: ").Append(snapshot.StatusDetail);
 
         return line.ToString();
+    }
+
+    /// <summary>
+    /// The completion verdict as the final line reports it: "ok" when every declared threshold
+    /// held, "breached (n)" with the count of those that did not. Null — no field at all — when
+    /// the scenario has no verdict to report: it declared no threshold, or the run was stopped
+    /// before the verdict was taken, and a run that was never judged must not read as one that
+    /// passed. The verdict, never the live readings: an interval that breached does not make a
+    /// cumulative verdict that held read as breached.
+    /// </summary>
+    private static string? ThresholdsText(LiveMetricsSnapshot snapshot)
+    {
+        var thresholdResults = snapshot.ThresholdResults;
+        if (thresholdResults == null || thresholdResults.Count == 0)
+            return null;
+
+        var breachedCount = 0;
+        foreach (var thresholdResult in thresholdResults)
+        {
+            if (!thresholdResult.Passed)
+                breachedCount++;
+        }
+
+        if (breachedCount == 0)
+            return "ok";
+
+        return "breached (" + LiveDashboardLayout.FormatCount(breachedCount) + ")";
     }
 
     private static string FinalStatus(LiveMetricsSnapshot snapshot, bool isStopped)

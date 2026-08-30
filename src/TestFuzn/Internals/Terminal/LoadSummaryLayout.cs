@@ -1,4 +1,5 @@
 using Fuzn.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Internals.Thresholds;
 using Fuzn.TestFuzn.Internals.Utils;
 
 namespace Fuzn.TestFuzn.Internals.Terminal;
@@ -14,7 +15,12 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// <c>Global Metrics</c> panel with the scenario's requests table — titled
 /// <c>Scenario Requests</c>: total, ok and failed counts with their rates — and its
 /// response-time table (min, mean, max, standard deviation, median, p75, p95, p99 for the ok
-/// and the failed requests), one <c>Step … Details</c> panel per step with the same two tables
+/// and the failed requests), a <c>Thresholds</c> panel right after it with the completion
+/// verdict of every declared threshold in declaration order (its metric's label, the relation
+/// and limit it was declared with, the metric's cumulative value at completion and <c>✓</c> or
+/// <c>✗</c>) — rendered only for a scenario that has a verdict, so one that declared no
+/// threshold, and one whose run was stopped before the verdict was taken, have no such panel —
+/// one <c>Step … Details</c> panel per step with the same two tables
 /// — the requests table titled <c>Step Requests</c> and carrying a <c>Skipped</c> row, since a
 /// step's total counts the iterations that reached it (an earlier step's failure skips the
 /// steps after it, so a later step's total legitimately falls short of the scenario's) — and,
@@ -25,7 +31,8 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// two sit side by side when both fit inside the panel and stack otherwise, and a
 /// response-time spread too wide for the panel is split into two tables of four columns, then
 /// four tables of two. <see cref="MeasureMinimumWidth"/> is the width at which the narrowest
-/// split, the requests tables and the summary's label/value lines all fit; below it the
+/// split, the requests tables, the summary's label/value lines and the thresholds table of a
+/// scenario that has a verdict all fit — whichever of them is widest binds; below it the
 /// summary is laid out at that minimum instead of the given width, so its lines then exceed
 /// the width (the standalone adapter lays out at its default width in that case, and the
 /// terminal wraps). Only text is ever truncated: a scenario name in the summary lines, a step
@@ -39,10 +46,17 @@ internal static class LoadSummaryLayout
     internal const string SummaryHeader = "Load Test Summary";
     internal const string SimulationsHeader = "Load Simulations";
     internal const string GlobalMetricsHeader = "Global Metrics";
+    internal const string ThresholdsHeader = "Thresholds";
     internal const string ErrorsHeader = "Errors by Step";
     internal const string ScenarioRequestsTitle = "Scenario Requests";
     internal const string StepRequestsTitle = "Step Requests";
     internal const string ResponseTimesTitle = "Response Times";
+
+    /// <summary>The verdict glyph of a threshold that held.</summary>
+    internal const string ThresholdPassedGlyph = "✓";
+
+    /// <summary>The verdict glyph of a threshold that was violated.</summary>
+    internal const string ThresholdBreachedGlyph = "✗";
 
     // The summary panel's labels: the table's column headers, and, when the row does not fit,
     // the label of each line, padded to the widest of them.
@@ -82,6 +96,17 @@ internal static class LoadSummaryLayout
         HeaderColumn("Metric"),
         NumberColumn("Count"),
         NumberColumn("RPS")
+    };
+
+    // The threshold verdict's columns: what was declared, then what was measured, then whether
+    // it held. The limit and the measured value are numbers, right-aligned as the metric tables
+    // align theirs; the verdict is one glyph.
+    private static readonly TableColumn[] ThresholdColumns =
+    {
+        HeaderColumn("Metric"),
+        NumberColumn("Limit"),
+        NumberColumn("Actual"),
+        HeaderColumn("Result")
     };
 
     private static readonly TableColumn[] ResponseTimeColumns =
@@ -127,9 +152,11 @@ internal static class LoadSummaryLayout
 
     /// <summary>
     /// The narrowest width at which the summary shows every number whole: the requests tables,
-    /// the narrowest split of the response-time spreads and the summary's label/value lines
-    /// of every scenario and step all fit inside a panel. Only text is truncated at or above
-    /// it; below it <see cref="Render"/> lays out at this width instead of the given one.
+    /// the narrowest split of the response-time spreads, the summary's label/value lines and the
+    /// thresholds table of every scenario and step all fit inside a panel. Any of the four can be
+    /// the binding one — a scenario whose verdict is wider than its numbers is measured by its
+    /// thresholds table — so the minimum is the widest of them all. Only text is truncated at or
+    /// above it; below it <see cref="Render"/> lays out at this width instead of the given one.
     /// </summary>
     public static int MeasureMinimumWidth(IEnumerable<KeyValuePair<Scenario, ScenarioLoadResult>> scenarioLoadResults)
     {
@@ -143,6 +170,7 @@ internal static class LoadSummaryLayout
         {
             contentWidth = Math.Max(contentWidth, SummaryLinesMinimumWidth(result.Key, result.Value));
             contentWidth = Math.Max(contentWidth, MetricsMinimumWidth(ScenarioRequestsTitle, result.Value.RequestCount, result.Value.Ok, result.Value.Failed, null));
+            contentWidth = Math.Max(contentWidth, ThresholdsMinimumWidth(result.Value.ThresholdResults));
 
             if (result.Value.Steps == null)
                 continue;
@@ -181,6 +209,11 @@ internal static class LoadSummaryLayout
         lines.AddRange(PanelWidget.Render(HeaderMarkup(SummaryHeader), SummaryLines(scenario, result, innerWidth, colorMode), width, colorMode));
         lines.AddRange(PanelWidget.Render(HeaderMarkup(SimulationsHeader), SimulationLines(scenario, innerWidth), width, colorMode));
         lines.AddRange(PanelWidget.Render(HeaderMarkup(GlobalMetricsHeader), MetricsLines(ScenarioRequestsTitle, result.RequestCount, result.Ok, result.Failed, null, innerWidth, colorMode), width, colorMode));
+
+        // The completion verdict, right after the metrics it was read from; a scenario that
+        // declared no threshold — or one whose run was stopped before the verdict — has none.
+        if (result.ThresholdResults != null && result.ThresholdResults.Count > 0)
+            lines.AddRange(PanelWidget.Render(HeaderMarkup(ThresholdsHeader), ThresholdLines(result.ThresholdResults, innerWidth, colorMode), width, colorMode));
 
         if (result.Steps != null)
         {
@@ -470,6 +503,51 @@ internal static class LoadSummaryLayout
             Styled(style, stats.ResponseTimePercentile95.ToTestFuznResponseTime()),
             Styled(style, stats.ResponseTimePercentile99.ToTestFuznResponseTime())
         };
+    }
+
+    // The verdict of every declared threshold in declaration order: what it was declared as —
+    // its metric's label and the relation it required against its limit — the metric's
+    // cumulative value at completion, and whether it held. The table is only ever rendered at
+    // its natural width, as the metric tables are, so a value is never cut short.
+    private static IReadOnlyList<RenderedLine> ThresholdLines(IReadOnlyList<ThresholdResult> thresholdResults, int innerWidth, ColorMode colorMode)
+    {
+        var rows = ThresholdRows(thresholdResults);
+        return TableWidget.Render(ThresholdColumns, rows, Math.Max(innerWidth, TableWidget.MeasureNaturalWidth(ThresholdColumns, rows)), colorMode);
+    }
+
+    // The content width the verdict table needs to show every value whole; zero when the
+    // scenario has no verdict, which renders no panel at all.
+    private static int ThresholdsMinimumWidth(IReadOnlyList<ThresholdResult> thresholdResults)
+    {
+        if (thresholdResults == null || thresholdResults.Count == 0)
+            return 0;
+
+        return TableWidget.MeasureNaturalWidth(ThresholdColumns, ThresholdRows(thresholdResults));
+    }
+
+    private static List<IReadOnlyList<string?>> ThresholdRows(IReadOnlyList<ThresholdResult> thresholdResults)
+    {
+        var rows = new List<IReadOnlyList<string?>>(thresholdResults.Count);
+        foreach (var thresholdResult in thresholdResults)
+        {
+            var threshold = thresholdResult.Threshold;
+            var verdict = Styled(TerminalPalette.FailedStyle, ThresholdBreachedGlyph);
+            if (thresholdResult.Passed)
+                verdict = Styled(TerminalPalette.OkStyle, ThresholdPassedGlyph);
+
+            // The metric's label and the formatted values come from the thresholds' own
+            // formatter and carry no bracket, but they are escaped all the same: nothing the
+            // summary renders reaches the markup parser unescaped.
+            rows.Add(new[]
+            {
+                MarkupParser.Escape(ThresholdFormat.Label(threshold.Metric)),
+                MarkupParser.Escape(ThresholdFormat.RequiredComparisonSymbol(threshold.Comparison) + " " + ThresholdFormat.FormatValue(threshold.Metric, threshold.Limit)),
+                MarkupParser.Escape(ThresholdFormat.FormatValue(threshold.Metric, thresholdResult.Current)),
+                verdict
+            });
+        }
+
+        return rows;
     }
 
     // Every step's distinct errors with their counts, under the step's name; a message wider

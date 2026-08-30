@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.State;
+using Fuzn.TestFuzn.Internals.Thresholds;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Adapters;
@@ -10,6 +11,15 @@ namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 
 internal class ConsoleWriter
 {
+    /// <summary>The heading over the MSTest path's threshold verdict table.</summary>
+    internal const string ThresholdsHeading = "[bold]Thresholds:[/]";
+
+    /// <summary>The verdict of a threshold that held, in the MSTest path's table.</summary>
+    internal const string ThresholdPassedText = "[green]Ok[/]";
+
+    /// <summary>The verdict of a threshold that was violated, in the MSTest path's table.</summary>
+    internal const string ThresholdBreachedText = "[red]Breached[/]";
+
     private TestExecutionState _testExecutionState = null!;
 
     public void WriteSummary(TestExecutionState testExecutionState)
@@ -154,6 +164,47 @@ internal class ConsoleWriter
 
             WriteReportLink(testFramework);
         }
+    }
+
+    /// <summary>
+    /// The completion verdict of the scenario's declared thresholds, written after the metrics
+    /// it was read from: a heading and one table row per threshold in declaration order — the
+    /// metric's label, the relation and limit it was declared with, the metric's cumulative
+    /// value at completion, and <see cref="ThresholdPassedText"/> or
+    /// <see cref="ThresholdBreachedText"/>. Nothing is written for a scenario without a verdict:
+    /// one that declared no threshold, or whose run was stopped before the verdict was taken.
+    /// This is the MSTest path's summary — the standalone adapter renders the verdict itself, in
+    /// its own <c>Thresholds</c> panel — so it stays plain ASCII: the relation reads "&lt;=" and
+    /// "&gt;=", never "≤" and "≥", and the verdict is a word, never a glyph. The cells are markup
+    /// the adapter strips (see <see cref="ThresholdsHeading"/> and the verdict constants).
+    /// </summary>
+    private static void WriteThresholds(ITestFrameworkAdapter testFramework, ScenarioLoadResult loadResult)
+    {
+        var thresholdResults = loadResult.ThresholdResults;
+        if (thresholdResults == null || thresholdResults.Count == 0)
+            return;
+
+        var table = new TableData();
+        table.Columns.AddRange(new[] { "Metric", "Limit", "Actual", "Result" });
+        foreach (var thresholdResult in thresholdResults)
+        {
+            var threshold = thresholdResult.Threshold;
+            var verdict = ThresholdBreachedText;
+            if (thresholdResult.Passed)
+                verdict = ThresholdPassedText;
+
+            table.Rows.Add(new List<string>
+            {
+                ThresholdFormat.Label(threshold.Metric),
+                ThresholdFormat.RequiredComparisonSymbolAscii(threshold.Comparison) + " " + ThresholdFormat.FormatValue(threshold.Metric, threshold.Limit),
+                ThresholdFormat.FormatValue(threshold.Metric, thresholdResult.Current),
+                verdict
+            });
+        }
+
+        testFramework.Write(Environment.NewLine);
+        testFramework.WriteMarkup(ThresholdsHeading);
+        testFramework.WriteTable(table);
     }
 
     private void WriteReportLink(ITestFrameworkAdapter testFramework)
@@ -453,6 +504,8 @@ internal class ConsoleWriter
             }
 
             testFramework.WriteAdvancedTable(table);
+
+            WriteThresholds(testFramework, loadResult);
 
             WriteReportLink(testFramework);
 

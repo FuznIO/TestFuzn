@@ -5,6 +5,7 @@ using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Internals.Terminal;
+using Fuzn.TestFuzn.Internals.Thresholds;
 using Fuzn.TestFuzn.Tests.StandaloneRunner;
 using Fuzn.TestFuzn.Tests.Terminal;
 
@@ -64,6 +65,120 @@ public class ConsoleWriterTests : Test
     private static List<string> MarkupEvents(List<string> events)
     {
         return events.Where(eventName => eventName.StartsWith(FakeTestFrameworkAdapter.MarkupEventPrefix, StringComparison.Ordinal)).Select(eventName => eventName.Substring(FakeTestFrameworkAdapter.MarkupEventPrefix.Length)).ToList();
+    }
+
+    /// <summary>
+    /// A three-threshold verdict covering both comparison directions and both outcomes: a p95
+    /// maximum that held at 320 ms of 500, an error-rate maximum breached at 2.5 % of 2, and a
+    /// request-rate minimum that held at 64 of 50.
+    /// </summary>
+    private static IReadOnlyList<ThresholdResult> ThresholdVerdict()
+    {
+        return new[]
+        {
+            new ThresholdResult(new Threshold(ThresholdMetric.ResponseTimePercentile95, 500, ThresholdComparison.LessThanOrEqualTo), 320, true),
+            new ThresholdResult(new Threshold(ThresholdMetric.ErrorRate, 0.02, ThresholdComparison.LessThanOrEqualTo), 0.025, false),
+            new ThresholdResult(new Threshold(ThresholdMetric.RequestsPerSecond, 50, ThresholdComparison.GreaterThanOrEqualTo), 64, true)
+        };
+    }
+
+    [Test]
+    public async Task Verify_the_MSTest_path_writes_the_threshold_verdict_as_a_table()
+    {
+        await Scenario()
+            .Step("The verdict follows the metrics table as a heading and one row per threshold in declaration order, in the metric's unit", context =>
+            {
+                var events = new List<string>();
+                var adapter = new FakeTestFrameworkAdapter(events) { SupportsRealTimeConsoleOutput = false };
+                var state = LoadState(adapter);
+                state.LoadCollectors["Checkout flow"].SetThresholdResults(ThresholdVerdict());
+
+                new ConsoleWriter().WriteSummary(state);
+
+                // The heading is written right after the metrics table and before the report link.
+                var tableIndex = events.IndexOf("advanced-table");
+                Assert.IsGreaterThan(0, tableIndex);
+                Assert.AreEqual(FakeTestFrameworkAdapter.MarkupEventPrefix + ConsoleWriter.ThresholdsHeading, events[tableIndex + 2]);
+                Assert.AreEqual(FakeTestFrameworkAdapter.TableEvent, events[tableIndex + 3]);
+
+                var table = Assert.ContainsSingle(adapter.Tables);
+                CollectionAssert.AreEqual(new[] { "Metric", "Limit", "Actual", "Result" }, table.Columns);
+                CollectionAssert.AreEqual(new[] { "p95", "<= 500 ms", "320 ms", ConsoleWriter.ThresholdPassedText }, table.Rows[0]);
+                CollectionAssert.AreEqual(new[] { "error rate", "<= 2 %", "2.5 %", ConsoleWriter.ThresholdBreachedText }, table.Rows[1]);
+                CollectionAssert.AreEqual(new[] { "rps", ">= 50", "64", ConsoleWriter.ThresholdPassedText }, table.Rows[2]);
+            })
+            .Step("A scenario without a verdict writes neither heading nor table", context =>
+            {
+                var events = new List<string>();
+                var adapter = new FakeTestFrameworkAdapter(events) { SupportsRealTimeConsoleOutput = false };
+
+                new ConsoleWriter().WriteSummary(LoadState(adapter));
+
+                Assert.IsEmpty(adapter.Tables);
+                Assert.DoesNotContain(FakeTestFrameworkAdapter.MarkupEventPrefix + ConsoleWriter.ThresholdsHeading, events);
+            })
+            .Step("A violation also reaches the summary's assert section, as an assert failure's message does: the execution manager records it as the scenario's assert-when-done exception", context =>
+            {
+                var events = new List<string>();
+                var adapter = new FakeTestFrameworkAdapter(events) { SupportsRealTimeConsoleOutput = false };
+                var state = LoadState(adapter);
+                var verdict = ThresholdVerdict();
+                var collector = state.LoadCollectors["Checkout flow"];
+                collector.SetThresholdResults(verdict);
+                var violation = new ThresholdViolationException(verdict.Where(thresholdResult => !thresholdResult.Passed).ToList());
+                collector.SetAssertWhenDoneException(violation);
+
+                new ConsoleWriter().WriteSummary(state);
+
+                Assert.AreEqual("Threshold violated: error rate 2.5 % > 2 %", violation.Message);
+                var assertSection = Assert.ContainsSingle(MarkupEvents(events).Where(markup => markup.StartsWith("[red]Assert exceptions:[/]", StringComparison.Ordinal)));
+                Assert.Contains("  [red]" + violation.Message + "[/]", assertSection);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_the_threshold_verdict_golden_through_the_real_MSTest_adapter()
+    {
+        await Scenario()
+            .Step("Through the MSTest adapter the verdict is a plain ASCII box: the markup stripped, the relations \"<=\" and \">=\", the verdict a word — no glyph, no escape, nothing outside ASCII", context =>
+            {
+                var testContext = new RecordingTestContext();
+                var adapter = new MsTestRunnerAdapter(testContext);
+                var state = LoadState(adapter);
+                state.LoadCollectors["Checkout flow"].SetThresholdResults(ThresholdVerdict());
+
+                new ConsoleWriter().WriteSummary(state);
+
+                // The adapter pads every column to the widest of its header and cells — "error
+                // rate" 10, "<= 500 ms" 9, "Actual" 6, "Breached" 8 — inside "| " and " |" with
+                // " | " between, so the box is 10+9+6+8 + 4 + 3*3 = 46 columns.
+                var expected = new[]
+                {
+                    "+------------+-----------+--------+----------+",
+                    "| Metric     | Limit     | Actual | Result   |",
+                    "+------------+-----------+--------+----------+",
+                    "| p95        | <= 500 ms | 320 ms | Ok       |",
+                    "| error rate | <= 2 %    | 2.5 %  | Breached |",
+                    "| rps        | >= 50     | 64     | Ok       |",
+                    "+------------+-----------+--------+----------+"
+                };
+
+                var headingIndex = testContext.Lines.IndexOf("Thresholds:");
+                Assert.IsGreaterThan(0, headingIndex);
+                CollectionAssert.AreEqual(expected, testContext.Lines.GetRange(headingIndex + 1, expected.Length));
+
+                // The verdict's own lines only — the heading and the box. The rest of the summary
+                // carries text this test does not own: the report link is a path, and a machine
+                // whose temp or home directory is named in anything but ASCII would fail here for
+                // a reason that has nothing to do with the verdict.
+                foreach (var line in testContext.Lines.GetRange(headingIndex, expected.Length + 1))
+                {
+                    foreach (var character in line)
+                        Assert.IsLessThan((char)128, character, "Non-ASCII character in the MSTest path's verdict: " + line);
+                }
+            })
+            .Run();
     }
 
     [Test]

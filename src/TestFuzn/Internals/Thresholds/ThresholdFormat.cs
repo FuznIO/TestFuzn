@@ -6,7 +6,8 @@ namespace Fuzn.TestFuzn.Internals.Thresholds;
 /// How thresholds and their values are described — shared by <see cref="Threshold.ToString"/>,
 /// <see cref="ThresholdResult.ToString"/> (and through it the
 /// <see cref="ThresholdViolationException"/> message) and the dashboard: the metric's short
-/// label (mean, p95, p99, error rate, rps), the comparison symbols, and a value in the metric's
+/// label (mean, p95, p99, error rate, rps), the comparison symbols — "≤" and "≥" wherever the
+/// output can carry them, "&lt;=" and "&gt;=" where it stays ASCII — and a value in the metric's
 /// unit printed in the invariant culture — a response time in milliseconds with at most one
 /// decimal ("812.4 ms"), the error rate as a percentage with three significant digits ("50 %",
 /// "2.4 %", "0.0333 %" — so one failure in thousands never reads as "0 %"), the request rate
@@ -65,6 +66,25 @@ internal static class ThresholdFormat
                 return "≤";
             case ThresholdComparison.GreaterThanOrEqualTo:
                 return "≥";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(comparison), comparison, "Unknown threshold comparison.");
+        }
+    }
+
+    /// <summary>
+    /// <see cref="RequiredComparisonSymbol"/> in plain ASCII — "&lt;=" for a maximum, "&gt;=" for a
+    /// minimum — for the outputs that stay ASCII rather than emitting "≤" and "≥": the MSTest
+    /// adapter's summary, which writes through <see cref="Fuzn.TestFuzn.Contracts.Adapters.ITestFrameworkAdapter"/>
+    /// to a test host's plain text log.
+    /// </summary>
+    public static string RequiredComparisonSymbolAscii(ThresholdComparison comparison)
+    {
+        switch (comparison)
+        {
+            case ThresholdComparison.LessThanOrEqualTo:
+                return "<=";
+            case ThresholdComparison.GreaterThanOrEqualTo:
+                return ">=";
             default:
                 throw new ArgumentOutOfRangeException(nameof(comparison), comparison, "Unknown threshold comparison.");
         }

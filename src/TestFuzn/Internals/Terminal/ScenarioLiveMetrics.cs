@@ -191,6 +191,7 @@ internal sealed class ScenarioLiveMetrics
                 IntervalRequestsPerSecond = newestInterval.RequestsPerSecond,
                 IntervalLatency = newestInterval.Latency,
                 Thresholds = thresholds,
+                ThresholdResults = snapshot.ThresholdResults,
                 Samples = MaterializeSamples(_samples),
                 RequestsPerSecondSeries = requestsPerSecondSeries,
                 OkDeltaSeries = okDeltaSeries,

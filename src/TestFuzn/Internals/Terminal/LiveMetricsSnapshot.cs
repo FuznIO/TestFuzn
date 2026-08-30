@@ -143,6 +143,19 @@ internal sealed class LiveMetricsSnapshot
     /// </summary>
     public IReadOnlyList<LiveThreshold> Thresholds { get; init; } = Array.Empty<LiveThreshold>();
 
+    /// <summary>
+    /// The completion verdict of the same thresholds, as the collector carries it on
+    /// <see cref="ScenarioLoadResult.ThresholdResults"/>: each one's cumulative value and whether
+    /// it held, in declaration order. Empty for every sample of the run — the verdict is taken
+    /// once, where the AssertWhenDone callback runs, after the last measurement — so only the
+    /// final sample taken after the run has completed carries it, which is the sample the plain
+    /// stats writer's final line reports it from. Empty too when the scenario declares no
+    /// threshold and when the run was stopped, since a stopped run is never judged. Distinct
+    /// from <see cref="Thresholds"/>, the per-interval live readings: those can breach where the
+    /// cumulative verdict holds, and the verdict is the authority.
+    /// </summary>
+    public IReadOnlyList<ThresholdResult> ThresholdResults { get; init; } = Array.Empty<ThresholdResult>();
+
     /// <summary>The ring buffer's per-second samples, oldest first, newest last.</summary>
     public IReadOnlyList<LiveMetricsSample> Samples { get; init; } = Array.Empty<LiveMetricsSample>();
 

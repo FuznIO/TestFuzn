@@ -5,6 +5,7 @@ using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 using Fuzn.TestFuzn.Internals.Results.Load;
 using Fuzn.TestFuzn.Internals.Terminal;
+using Fuzn.TestFuzn.Internals.Thresholds;
 
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
@@ -72,6 +73,43 @@ public class LoadSummaryLayoutTests : Test
         Record(collector, TestStatus.Failed, StepResult(BrowseStep, StepStatus.Failed, 2116, new InvalidOperationException("HTTP 503 Service Unavailable")), StepResult(OrderStep, StepStatus.Skipped, 0));
 
         return FinishCollecting(scenario, collector, TestStatus.Passed);
+    }
+
+    /// <summary>
+    /// The goldens' scenario with a threshold verdict on it: the same recorded run, plus the
+    /// three declared thresholds of <see cref="ThresholdVerdict"/> stored on the collector as the
+    /// execution manager stores them at completion. The verdict's numbers are chosen here rather
+    /// than evaluated, so the panel's golden pins the layout alone — how a verdict is reached is
+    /// <see cref="ThresholdEvaluatorTests"/>'s, and that the real evaluator's verdict reaches
+    /// this panel is pinned by
+    /// <see cref="Verify_the_thresholds_panel_shows_the_verdict_the_evaluator_reached"/>.
+    /// </summary>
+    private static KeyValuePair<Scenario, ScenarioLoadResult> CollectThresholdedCheckoutFlow()
+    {
+        var collector = StartCollecting(out var scenario);
+
+        Record(collector, TestStatus.Passed, StepResult(BrowseStep, StepStatus.Passed, 10), StepResult(OrderStep, StepStatus.Passed, 30));
+        Record(collector, TestStatus.Passed, StepResult(BrowseStep, StepStatus.Passed, 20), StepResult(OrderStep, StepStatus.Passed, 30));
+        Record(collector, TestStatus.Failed, StepResult(BrowseStep, StepStatus.Failed, 10, new InvalidOperationException("Connection refused")), StepResult(OrderStep, StepStatus.Skipped, 0));
+
+        collector.SetThresholdResults(ThresholdVerdict());
+
+        return FinishCollecting(scenario, collector, TestStatus.Passed);
+    }
+
+    /// <summary>
+    /// A three-threshold verdict covering both comparison directions and both outcomes: a p95
+    /// maximum that held at 320 ms of 500, an error-rate maximum breached at 2.5 % of 2, and a
+    /// request-rate minimum that held at 64 of 50.
+    /// </summary>
+    private static IReadOnlyList<ThresholdResult> ThresholdVerdict()
+    {
+        return new[]
+        {
+            new ThresholdResult(new Threshold(ThresholdMetric.ResponseTimePercentile95, 500, ThresholdComparison.LessThanOrEqualTo), 320, true),
+            new ThresholdResult(new Threshold(ThresholdMetric.ErrorRate, 0.02, ThresholdComparison.LessThanOrEqualTo), 0.025, false),
+            new ThresholdResult(new Threshold(ThresholdMetric.RequestsPerSecond, 50, ThresholdComparison.GreaterThanOrEqualTo), 64, true)
+        };
     }
 
     private static ScenarioLoadCollector StartCollecting(out Scenario scenario)
@@ -178,6 +216,42 @@ public class LoadSummaryLayoutTests : Test
             Bottom()
         };
     }
+
+    /// <summary>
+    /// The thresholds panel's plain golden, derived by hand from <see cref="ThresholdVerdict"/>.
+    /// Four columns — the metric's label left-aligned, its declared relation and limit and its
+    /// measured value right-aligned as numbers, the verdict glyph left-aligned — each as wide as
+    /// the widest of its header and cells: "error rate" makes the first 10, "≤ 500 ms" the
+    /// second 8, "Actual" and "320 ms" the third 6, and the "Result" header the fourth 6. With
+    /// the two-space separators that is 36 columns, which the panel pads out to its width.
+    /// </summary>
+    private static string[] ThresholdsPanelGolden(int width = Width)
+    {
+        return new[]
+        {
+            Top(LoadSummaryLayout.ThresholdsHeader, width),
+            Row("Metric         Limit  Actual  Result", width),
+            Row("p95         ≤ 500 ms  320 ms  ✓", width),
+            Row("error rate     ≤ 2 %   2.5 %  ✗", width),
+            Row("rps             ≥ 50      64  ✓", width),
+            Bottom(width)
+        };
+    }
+
+    /// <summary>
+    /// The plain golden of a scenario carrying a verdict: <see cref="PlainGolden"/> with the
+    /// thresholds panel spliced in right after the Global Metrics panel, which ends at the
+    /// fifteenth line.
+    /// </summary>
+    private static string[] ThresholdedPlainGolden()
+    {
+        var lines = new List<string>(PlainGolden("Passed"));
+        lines.InsertRange(GlobalMetricsPanelEnd, ThresholdsPanelGolden());
+        return lines.ToArray();
+    }
+
+    /// <summary>The index the thresholds panel starts at: right after the Global Metrics panel's closing line.</summary>
+    private const int GlobalMetricsPanelEnd = 15;
 
     /// <summary>
     /// The plain golden of the same scenario at 60 columns: the tables stack, the response-time
@@ -332,6 +406,76 @@ public class LoadSummaryLayoutTests : Test
     }
 
     [Test]
+    public async Task Verify_thresholds_panel_golden_after_global_metrics()
+    {
+        await Scenario()
+            .Step("The verdict is a panel of its own right after Global Metrics: one row per threshold in declaration order, with its relation and limit, its measured value and its glyph", context =>
+            {
+                var lines = LoadSummaryLayout.Render(new[] { CollectThresholdedCheckoutFlow() }, Width, ColorMode.None);
+
+                AssertGolden(ThresholdedPlainGolden(), lines, Width);
+            })
+            .Step("A scenario without a verdict gets no panel at all — the summary is exactly what it was", context =>
+            {
+                var lines = LoadSummaryLayout.Render(new[] { CollectCheckoutFlow() }, Width, ColorMode.None);
+
+                AssertGolden(PlainGolden("Passed"), lines, Width);
+                Assert.DoesNotContain(Top(LoadSummaryLayout.ThresholdsHeader), lines.Select(line => line.Text).ToList());
+            })
+            .Step("In TrueColor the panel is the plain golden styled: a held threshold's glyph green, a violated one's red, the header in the dashboard's accent", context =>
+            {
+                var lines = LoadSummaryLayout.Render(new[] { CollectThresholdedCheckoutFlow() }, Width, ColorMode.TrueColor);
+
+                var expected = ThresholdedPlainGolden();
+                Assert.HasCount(expected.Length, lines);
+                for (var index = 0; index < expected.Length; index++)
+                {
+                    Assert.AreEqual(expected[index], SgrSequence.Replace(lines[index].Text, string.Empty), $"Stripped line mismatch at row {index}");
+                    Assert.AreEqual(Width, lines[index].Width, $"Width mismatch at row {index}");
+                }
+
+                Assert.StartsWith("╭─ \u001b[1;38;2;255;157;61m" + LoadSummaryLayout.ThresholdsHeader + "\u001b[0m ", lines[GlobalMetricsPanelEnd].Text);
+                Assert.Contains("\u001b[2mMetric\u001b[0m", lines[GlobalMetricsPanelEnd + 1].Text);
+                Assert.Contains("\u001b[38;5;2m" + LoadSummaryLayout.ThresholdPassedGlyph + "\u001b[0m", lines[GlobalMetricsPanelEnd + 2].Text);
+                Assert.Contains("\u001b[38;5;9m" + LoadSummaryLayout.ThresholdBreachedGlyph + "\u001b[0m", lines[GlobalMetricsPanelEnd + 3].Text);
+            })
+            .Run();
+    }
+
+    [Test]
+    public async Task Verify_the_thresholds_panel_shows_the_verdict_the_evaluator_reached()
+    {
+        await Scenario()
+            .Step("The evaluator's own verdict on the collected result reaches the panel: one failed request of three is a 33.3 % error rate, over its 10 % limit", context =>
+            {
+                var collector = StartCollecting(out var scenario);
+                Record(collector, TestStatus.Passed, StepResult(BrowseStep, StepStatus.Passed, 10), StepResult(OrderStep, StepStatus.Passed, 30));
+                Record(collector, TestStatus.Passed, StepResult(BrowseStep, StepStatus.Passed, 20), StepResult(OrderStep, StepStatus.Passed, 30));
+                Record(collector, TestStatus.Failed, StepResult(BrowseStep, StepStatus.Failed, 10, new InvalidOperationException("Connection refused")), StepResult(OrderStep, StepStatus.Skipped, 0));
+
+                // Only the error rate is declared, so every column of the golden row below is
+                // sized by a value this test fixes — no response time, whose exact milliseconds
+                // are HdrHistogram's to round.
+                var thresholds = new[] { new Threshold(ThresholdMetric.ErrorRate, 0.1, ThresholdComparison.LessThanOrEqualTo) };
+                var verdict = ThresholdEvaluator.EvaluateVerdict(thresholds, collector.GetCurrentResult(true));
+                collector.SetThresholdResults(verdict);
+                var result = FinishCollecting(scenario, collector, TestStatus.Failed);
+
+                var thresholdResult = Assert.ContainsSingle(verdict);
+                Assert.IsFalse(thresholdResult.Passed);
+                Assert.AreEqual(1.0 / 3.0, thresholdResult.Current);
+
+                // The columns are as wide as the widest of their header and their one cell:
+                // "error rate" 10, "Limit" and "≤ 10 %" 6, "Actual" and "33.3 %" 6, "Result" 6.
+                var texts = LoadSummaryLayout.Render(new[] { result }, Width, ColorMode.None).Select(line => line.Text).ToList();
+                Assert.Contains(Top(LoadSummaryLayout.ThresholdsHeader), texts);
+                Assert.Contains(Row("Metric       Limit  Actual  Result"), texts);
+                Assert.Contains(Row("error rate  ≤ 10 %  33.3 %  " + LoadSummaryLayout.ThresholdBreachedGlyph), texts);
+            })
+            .Run();
+    }
+
+    [Test]
     public async Task Verify_load_summary_golden_at_60_columns_stacks_the_tables_and_splits_the_spread()
     {
         await Scenario()
@@ -348,13 +492,19 @@ public class LoadSummaryLayoutTests : Test
     public async Task Verify_no_number_is_ever_cut_at_any_width()
     {
         await Scenario()
-            .Step("From 40 to 200 columns, with two-digit and five-digit response times alike, every line is exactly the width and no cell is ever truncated", context =>
+            .Step("From each fixture's own minimum width up to 200 columns, with two-digit and five-digit response times alike, every line is exactly the width and no cell is ever truncated", context =>
             {
-                var resultSets = new[] { new[] { CollectCheckoutFlow() }, new[] { CollectSlowCheckoutFlow() } };
+                var resultSets = new[] { new[] { CollectCheckoutFlow() }, new[] { CollectSlowCheckoutFlow() }, new[] { CollectThresholdedCheckoutFlow() } };
                 foreach (var results in resultSets)
                 {
-                    Assert.IsLessThanOrEqualTo(40, LoadSummaryLayout.MeasureMinimumWidth(results));
-                    for (var width = 40; width <= 200; width++)
+                    // The sweep asks for widths it can be given: below a result set's own minimum
+                    // Render lays out at that minimum instead, which is the next step's subject.
+                    // Taking the floor from the production measurement — never the widths, which
+                    // are the sweep's own — keeps a fixture whose numbers grow from breaking this
+                    // test for a reason it does not pin. 40 columns is the narrowest layout the
+                    // summary has, so no fixture starts below it.
+                    var startWidth = Math.Max(40, LoadSummaryLayout.MeasureMinimumWidth(results));
+                    for (var width = startWidth; width <= 200; width++)
                     {
                         var lines = LoadSummaryLayout.Render(results, width, ColorMode.None);
 

@@ -118,7 +118,9 @@ public class LiveViewDemoTests : Test
                     "sim 1/2: Gradual Load 10→100 rps",
                     "sim 2/2: Fixed Load 100 rps"
                 }, PhaseLabels(lines).Take(4).ToList());
-                Assert.MatchesRegex(@"^\[Checkout flow \(demo\)\] completed  elapsed 00:00:20  total " + MeasurementIterationCount + "  ok " + (MeasurementIterationCount - FailureCount) + "  failed " + FailureCount + @"  p95 .+$", lines[lines.Count - 1]);
+                // The final line ends in the completion verdict: the demo declares two thresholds
+                // and its cumulative statistics hold both, so it reads ok.
+                Assert.MatchesRegex(@"^\[Checkout flow \(demo\)\] completed  elapsed 00:00:20  total " + MeasurementIterationCount + "  ok " + (MeasurementIterationCount - FailureCount) + "  failed " + FailureCount + @"  p95 .+  thresholds: ok$", lines[lines.Count - 1]);
                 Assert.AreEqual(1, lines.Count(line => line.StartsWith(ScenarioLinePrefix + "completed", StringComparison.Ordinal)));
 
                 harness.AssertSummaryFollowsLastTerminalWrite();
@@ -167,6 +169,60 @@ public class LiveViewDemoTests : Test
                 Assert.AreEqual(0, harness.Host.PendingWaiterCount);
             })
             .Run();
+    }
+
+    [Test]
+    public async Task Verify_a_violated_threshold_verdict_fails_the_run_with_exit_code_1_as_an_assert_does()
+    {
+        await Scenario()
+            .Step("A threshold no run can hold makes the verdict violated: the runner core traces the violation and exits 1, where the same demo with the script's own thresholds exits 0", async context =>
+            {
+                var harness = new Harness(supportsLiveView: false, DemoDuration, ViolatingScenario);
+
+                var exitCode = await harness.RunDemoThroughRunnerCore();
+
+                Assert.AreEqual(1, exitCode);
+
+                // The assert-when-done pathway, unchanged: the exception is the run's first, the
+                // scenario's assert-when-done failure, and both the scenario and the test result
+                // are Failed — exactly what an AssertWhenDone failure leaves behind.
+                var exception = Assert.IsInstanceOfType<ThresholdViolationException>(harness.State.FirstException);
+                var result = harness.State.LoadCollectors[LiveViewDemoScript.ScenarioName].GetCurrentResult(true);
+                Assert.AreSame(exception, result.AssertWhenDoneException);
+                Assert.AreEqual(TestStatus.Failed, result.Status);
+                Assert.AreEqual(TestStatus.Failed, harness.State.TestResult.Status);
+                Assert.ContainsSingle(exception.Violations);
+
+                // The run completed — a verdict never stops a run — so the stopped line is not
+                // what was written: the violation is traced, as any run failure is.
+                Assert.AreEqual(ExecutionStatus.Completed, harness.State.ExecutionStatus);
+                var lines = harness.PlainLines();
+                Assert.DoesNotContain(StandaloneRunnerCore.RunStoppedMessage, lines);
+                Assert.Contains(nameof(ThresholdViolationException) + ": " + exception.Message, lines);
+            })
+            .Step("The plain final line reports the same verdict the exit code came from: failed, breached, and the violation as the reason", async context =>
+            {
+                var harness = new Harness(supportsLiveView: false, DemoDuration, ViolatingScenario);
+
+                await Assert.ThrowsExactlyAsync<ThresholdViolationException>(async () => await harness.RunDemo());
+
+                var finalLine = harness.PlainLines().Last(line => line.StartsWith(ScenarioLinePrefix, StringComparison.Ordinal));
+                Assert.StartsWith(ScenarioLinePrefix + "failed  ", finalLine);
+                Assert.Contains("  thresholds: breached (1)  reason: Threshold violated: mean ", finalLine);
+            })
+            .Run();
+    }
+
+    /// <summary>
+    /// A fresh demo scenario with a mean response time of one millisecond added to its thresholds
+    /// — a limit no run of the scripted load can hold, so the completion verdict is violated
+    /// where the script's own two thresholds always hold.
+    /// </summary>
+    private static Scenario ViolatingScenario()
+    {
+        var scenario = LiveViewDemoScript.CreateScenario();
+        new ThresholdsBuilder(scenario.Thresholds).ResponseTimeMean(TimeSpan.FromMilliseconds(1));
+        return scenario;
     }
 
     [Test]
@@ -232,7 +288,19 @@ public class LiveViewDemoTests : Test
 
         public FakeTestFrameworkAdapter TestFramework { get; }
 
-        public LiveViewDemo Demo { get; }
+        /// <summary>
+        /// The demo the harness runs: the one built for <see cref="Duration"/>, replaced by the
+        /// one the runner core asked the harness's factory for — from the same scenario source,
+        /// for the duration the command line named — once the core has run.
+        /// </summary>
+        public LiveViewDemo Demo { get; private set; }
+
+        /// <summary>
+        /// Where every demo this harness builds gets its scenario. A factory, not one scenario:
+        /// the demo's script adds the simulations to the scenario it runs, so two demos over one
+        /// instance would run different load profiles — the second one's twice over.
+        /// </summary>
+        private readonly Func<Scenario> _createScenario;
 
         public FakeTerminalWriter Writer => Host.Writer;
 
@@ -261,6 +329,14 @@ public class LiveViewDemoTests : Test
         /// <param name="supportsLiveView">Live view capabilities (interactive, ANSI, no color so frames stay plain) or a redirected output and input.</param>
         /// <param name="duration">What the demo runs for.</param>
         public Harness(bool supportsLiveView, TimeSpan duration)
+            : this(supportsLiveView, duration, LiveViewDemoScript.CreateScenario)
+        {
+        }
+
+        /// <param name="supportsLiveView">Live view capabilities (interactive, ANSI, no color so frames stay plain) or a redirected output and input.</param>
+        /// <param name="duration">What the demo runs for.</param>
+        /// <param name="createScenario">Builds the scenario a demo records against — the script's own, or one whose thresholds the run cannot hold — once per demo.</param>
+        public Harness(bool supportsLiveView, TimeSpan duration, Func<Scenario> createScenario)
         {
             Duration = duration;
             TerminalCapabilities capabilities;
@@ -277,7 +353,8 @@ public class LiveViewDemoTests : Test
                     Events.Add(TerminalEventPrefix + text);
             };
             TestFramework = new FakeTestFrameworkAdapter(Events);
-            Demo = new LiveViewDemo(Host, duration);
+            _createScenario = createScenario;
+            Demo = new LiveViewDemo(Host, duration, createScenario());
         }
 
         /// <summary>Runs the demo as the runner core does; a scheduling deadlock fails the test by timeout instead of hanging it.</summary>
@@ -292,10 +369,19 @@ public class LiveViewDemoTests : Test
             return await RunThroughRunnerCore(new[] { "run", "--" + StandaloneRunnerCore.DemoFlag, "--" + StandaloneRunnerCore.DemoDurationArgument + "=" + (int)Duration.TotalSeconds });
         }
 
-        /// <summary>Runs the runner core over this harness's host and adapter with the given command line, for the exit code.</summary>
+        /// <summary>
+        /// Runs the runner core over this harness's host and adapter with the given command line,
+        /// for the exit code. The core runs a demo of this harness's own — a fresh scenario from
+        /// the source it was built with, not the script's default, as the production factory
+        /// builds a fresh one — for the duration the command line asks for.
+        /// </summary>
         public async Task<int> RunThroughRunnerCore(string[] args)
         {
-            var runnerCore = new StandaloneRunnerCore(Host);
+            var runnerCore = new StandaloneRunnerCore(Host, new DiscoverTests(), duration =>
+            {
+                Demo = new LiveViewDemo(Host, duration, _createScenario());
+                return Demo;
+            });
             return await runnerCore.Run<FakeStartup>(typeof(LiveViewDemoTests).Assembly, args, () => TestFramework).WaitAsync(RunTimeout);
         }
 
