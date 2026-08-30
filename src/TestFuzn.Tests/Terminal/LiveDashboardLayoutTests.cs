@@ -28,7 +28,9 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// one level short of its right neighbour. The rich ramp's boundary columns are worked in the
 /// comments; the columns between follow the interpolation. The heatmap tests in this file are worked in
 /// sixths: a cell's step is ceil(count × 6 / max(total, the median total)). The chart, heatmap
-/// and height-order tests continue in LiveDashboardLayoutTests.Charts.cs.
+/// and height-order tests continue in LiveDashboardLayoutTests.Charts.cs, the steps table and
+/// error ticker tests in LiveDashboardLayoutTests.Steps.cs, and the multi-scenario column
+/// goldens in LiveDashboardLayoutTests.Columns.cs.
 /// </summary>
 [TestClass]
 public partial class LiveDashboardLayoutTests : Test

@@ -11,8 +11,10 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// — a title line (scenario name, status badge, the compact logo top-right when the width
 /// allows), a KPI tile row, the plan's timeline, a requests chart and a latency chart, a
 /// latency heatmap, a requests panel with Ok/Failed rows (count, current rate and the
-/// response-time spread), a per-step live table, and an error ticker — closed by a key-hint
-/// footer that owns the window's last row. Pure composition of the widgets in this namespace:
+/// response-time spread), a per-step live table, and an error ticker — the sections stacked,
+/// or side by side as columns from <see cref="MinimumWidthForColumns"/> columns of width (the
+/// Columns paragraph), and closed by a key-hint footer that owns the window's last row. Pure
+/// composition of the widgets in this namespace:
 /// everything shown comes from the passed <see cref="LiveMetricsSnapshot"/>s and the
 /// viewer's <see cref="LiveDashboardViewState"/> (no console, no clock — elapsed, ETA and the
 /// error ticker's ages are snapshot values), so identical inputs render an identical frame,
@@ -189,7 +191,8 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// section gives rows back in one order. The first four steps follow the window's height
 /// alone; the rest are taken only while the section still overruns its budget — the rows
 /// above the footer, less what the sections before it took (a section stacked under another,
-/// a wrapped tile block) — each step only while it does, so a section pays what it owes and
+/// a row of columns under another, a wrapped tile block) — each step only while it does, so a
+/// section pays what it owes and
 /// no more wherever a step can be measured out:
 /// <list type="number">
 /// <item><description>the heatmap panel goes below <see cref="MinimumHeightForHeatmap"/> rows;</description></item>
@@ -216,12 +219,44 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// requests panel whole, and one of 10 or 11 rows the requests panel cut after its header
 /// lines.
 /// </para>
+/// <para>
+/// <b>Columns.</b> Two or more scenarios render side by side from
+/// <see cref="MinimumWidthForColumns"/> columns of width — three abreast from
+/// <see cref="MinimumWidthForThreeColumns"/> with three or more, never more than three — and
+/// stack, one section under another with a blank line between, below that width or with one
+/// scenario. The columns share the width less a <see cref="ColumnGap"/>-column gap between
+/// neighbours equally, the columns left over widening the first columns by one each, the way
+/// the tile boxes share a row; the thresholds are where the narrowest column reaches
+/// <see cref="MinimumWidthForCharts"/> — two and three scenarios' worth of it with the gaps
+/// between, 122 and 184 — so a column has its charts from the first width it exists at (two
+/// chartless columns would be worse than the stacked frame they replace), and the widths
+/// just past a threshold (123; 185 and 186) widen the first columns by the leftover. A column
+/// is the full section laid out at the column's width, the pieces going by that width as
+/// they would in a window that wide — the tiles wrap, the charts stack, the ticker sheds its
+/// ages — except the heatmap, which a column never shows whatever the height: its rows are
+/// what a column cannot spare, and that is column mode's one rule of its own. The scenarios
+/// are dealt into rows of columns in order — with more scenarios than columns the next row
+/// starts under the first, after a blank line, its scenarios at the same column widths and
+/// any column it leaves empty blank, so every scenario in the frame is the width of its
+/// column — and each row of columns is fitted into the rows the ones before it left, every
+/// column against that same budget; a row's columns are padded with blank lines to its
+/// tallest and joined row by row into lines of exactly the width — a column's line wider
+/// than its column (a layout bug: every piece renders to the width it is given) is cut to it
+/// with an ellipsis rather than trusted, since a frame row past the window would wrap on a
+/// real terminal and corrupt every row below. The logo rides the last column of the first
+/// row of columns alone — the frame's top-right, where the stacked frame puts it, and never a
+/// column with a right neighbour: the compact logo's lightning is declared two columns wide
+/// (<see cref="LogoWidget.CompactWidth"/>), and a terminal that draws it single-width would
+/// leave that column a cell short and pull its neighbour's title row a cell left — when that
+/// column keeps <see cref="MinimumWidthForLogo"/>; the footer is one for the frame either
+/// way, and the view state's step selection applies in every column alike.
+/// </para>
 /// Alternate-screen entry/exit and the render loop are the caller's job. Stateless and
 /// thread-safe.
 /// </summary>
 internal static class LiveDashboardLayout
 {
-    /// <summary>Below this width the compact logo is dropped from the first section's title line.</summary>
+    /// <summary>Below this width the title line that carries the compact logo — the first section's in the stacked frame, the last column's of the first row of columns — drops it.</summary>
     public const int MinimumWidthForLogo = 80;
 
     /// <summary>Below this width the chart panels and the heatmap panel are dropped.</summary>
@@ -238,6 +273,12 @@ internal static class LiveDashboardLayout
 
     /// <summary>Below this width the error ticker's entries carry no current rate.</summary>
     public const int MinimumWidthForErrorRates = 60;
+
+    /// <summary>From this width two or more scenarios render side by side as two columns — two of <see cref="MinimumWidthForCharts"/> and the gap between them, the width at which the narrower column reaches the charts' width; below it they stack.</summary>
+    public const int MinimumWidthForColumns = (2 * MinimumWidthForCharts) + ColumnGap;
+
+    /// <summary>From this width three or more scenarios render as three columns — three of <see cref="MinimumWidthForCharts"/> and the two gaps between them, the width at which the narrowest column reaches the charts' width — and never more.</summary>
+    public const int MinimumWidthForThreeColumns = (3 * MinimumWidthForCharts) + (2 * ColumnGap);
 
     /// <summary>
     /// The narrowest box the tiles share one row at: the eight-column clock or requests label
@@ -339,8 +380,8 @@ internal static class LiveDashboardLayout
     // declared p99 or mean threshold adds its tile after them.
     private const int StandardTileCount = 5;
 
-    // Columns between horizontally adjacent pieces: title and logo, the two chart panels, and
-    // the timeline bar and the phase label after it.
+    // Columns between horizontally adjacent pieces: title and logo, the two chart panels, the
+    // timeline bar and the phase label after it, and two scenario columns.
     private const int ColumnGap = 2;
 
     // The rows a PanelWidget adds around its content: the top and bottom borders.
@@ -424,19 +465,21 @@ internal static class LiveDashboardLayout
     };
 
     /// <summary>
-    /// Renders the full dashboard frame for the given scenario snapshots, in order, under the
-    /// viewer's state, at the given window size. Returns one <see cref="RenderedLine"/> per
-    /// terminal row, ready for <see cref="FrameBuffer.AddLines(IEnumerable{RenderedLine})"/>:
-    /// exactly <paramref name="height"/> rows for a height of 1 or more, the content clipped
-    /// or padded to the rows above the footer on the last row, each section's optional rows
-    /// given up in the order the class summary describes; the unclipped content plus the
-    /// footer, every optional row in, for a smaller height. A width below 1 renders nothing.
-    /// The view state's step selection applies to every section alike. The glyph set is
-    /// passed through to the tile trends, the chart panels and the step trends so the caller
-    /// can match it to the terminal's font support. The spinner glyph, when given, is drawn
-    /// in place of the dot on a running scenario's status badge — a single-column glyph the
-    /// caller's render loop advances per frame; null keeps the dot, and finished badges
-    /// (passed, failed, skipped) always keep theirs.
+    /// Renders the full dashboard frame for the given scenario snapshots, in order — stacked,
+    /// or side by side in columns from <see cref="MinimumWidthForColumns"/> columns of width,
+    /// as the class summary's Columns describes — under the viewer's state, at the given
+    /// window size. Returns one <see cref="RenderedLine"/> per terminal row, ready for
+    /// <see cref="FrameBuffer.AddLines(IEnumerable{RenderedLine})"/>: exactly
+    /// <paramref name="height"/> rows for a height of 1 or more, the content clipped or padded
+    /// to the rows above the footer on the last row, each section's optional rows given up in
+    /// the order the class summary describes; the unclipped content plus the footer, every
+    /// optional row in, for a smaller height. A width below 1 renders nothing. The view
+    /// state's step selection applies to every section alike. The glyph set is passed through
+    /// to the tile trends, the chart panels and the step trends so the caller can match it to
+    /// the terminal's font support. The spinner glyph, when given, is drawn in place of the
+    /// dot on a running scenario's status badge — a single-column glyph the caller's render
+    /// loop advances per frame; null keeps the dot, and finished badges (passed, failed,
+    /// skipped) always keep theirs.
     /// </summary>
     public static IReadOnlyList<RenderedLine> Render(IReadOnlyList<LiveMetricsSnapshot> snapshots, LiveDashboardViewState viewState, int width, int height, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet = SparklineGlyphSet.Braille, string? spinnerGlyph = null)
     {
@@ -451,17 +494,25 @@ internal static class LiveDashboardLayout
         var remainingRows = height >= 1 ? height - 1 : int.MaxValue;
 
         var lines = new List<RenderedLine>();
-        for (var index = 0; index < snapshots.Count; index++)
+        var columnCount = ColumnCount(snapshots.Count, width);
+        if (columnCount > 1)
         {
-            if (index > 0)
+            AddColumnRows(lines, snapshots, viewState, width, height, columnCount, remainingRows, colorMode, sparklineGlyphSet, spinnerGlyph);
+        }
+        else
+        {
+            for (var index = 0; index < snapshots.Count; index++)
             {
-                lines.Add(BlankLine);
-                remainingRows--;
-            }
+                if (index > 0)
+                {
+                    lines.Add(BlankLine);
+                    remainingRows--;
+                }
 
-            var sectionStart = lines.Count;
-            AddScenarioSection(lines, snapshots[index], viewState, width, height, remainingRows, colorMode, sparklineGlyphSet, spinnerGlyph, includeLogo: index == 0 && width >= MinimumWidthForLogo);
-            remainingRows -= lines.Count - sectionStart;
+                var sectionStart = lines.Count;
+                AddScenarioSection(lines, snapshots[index], viewState, width, height, remainingRows, colorMode, sparklineGlyphSet, spinnerGlyph, includeLogo: index == 0 && width >= MinimumWidthForLogo, includeHeatmap: true);
+                remainingRows -= lines.Count - sectionStart;
+            }
         }
 
         // The footer owns the last row: content is cut to the rows above it (a frame taller
@@ -489,12 +540,173 @@ internal static class LiveDashboardLayout
         return (tileCount * MinimumTileBoxWidth) + ((tileCount - 1) * TileRowWidget.Gap);
     }
 
+    // The columns the frame renders the snapshots in: one below MinimumWidthForColumns or with
+    // a single snapshot, two from there, and three from MinimumWidthForThreeColumns with three
+    // or more snapshots — never more.
+    private static int ColumnCount(int snapshotCount, int width)
+    {
+        if (snapshotCount < 2 || width < MinimumWidthForColumns)
+            return 1;
+
+        if (snapshotCount >= 3 && width >= MinimumWidthForThreeColumns)
+            return 3;
+
+        return 2;
+    }
+
+    // The widths of count pieces that share the width less gap columns between neighbours
+    // equally, the columns left over widening the first pieces by one each: the tile boxes'
+    // rule, which the tile row mirrors (AddTileRow) and the scenario columns follow.
+    private static int[] ShareWidth(int count, int width, int gap)
+    {
+        var available = width - ((count - 1) * gap);
+        var baseWidth = Math.DivRem(available, count, out var leftover);
+        var widths = new int[count];
+        for (var index = 0; index < count; index++)
+            widths[index] = baseWidth + (index < leftover ? 1 : 0);
+
+        return widths;
+    }
+
+    // The snapshots dealt into rows of columnCount columns, in order, each row of columns
+    // fitted into the rows the ones before it left with a blank line between rows: every
+    // column of a row is the full section at its column's width, without the heatmap, planned
+    // against the same budget, and the row's columns are padded to its tallest and joined row
+    // by row. A last row with fewer snapshots than columns leaves its spare columns blank. The
+    // logo goes to the last column of the first row alone — the frame's top-right, never a
+    // column with a right neighbour — when its width allows one.
+    private static void AddColumnRows(List<RenderedLine> lines, IReadOnlyList<LiveMetricsSnapshot> snapshots, LiveDashboardViewState viewState, int width, int height, int columnCount, int remainingRows, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet, string? spinnerGlyph)
+    {
+        var columnWidths = ShareWidth(columnCount, width, ColumnGap);
+        for (var first = 0; first < snapshots.Count; first += columnCount)
+        {
+            if (first > 0)
+            {
+                lines.Add(BlankLine);
+                remainingRows--;
+            }
+
+            var columns = new IReadOnlyList<RenderedLine>[columnCount];
+            var tallest = 0;
+            for (var column = 0; column < columnCount; column++)
+            {
+                var section = new List<RenderedLine>();
+                var index = first + column;
+                if (index < snapshots.Count)
+                    AddScenarioSection(section, snapshots[index], viewState, columnWidths[column], height, remainingRows, colorMode, sparklineGlyphSet, spinnerGlyph, includeLogo: first == 0 && column == columnCount - 1 && columnWidths[column] >= MinimumWidthForLogo, includeHeatmap: false);
+
+                columns[column] = section;
+                tallest = Math.Max(tallest, section.Count);
+            }
+
+            for (var row = 0; row < tallest; row++)
+                lines.Add(JoinSideBySide(columns, columnWidths, row));
+
+            remainingRows -= tallest;
+        }
+    }
+
+    // One frame line of pieces laid side by side — scenario columns, the chart pair, the
+    // title and the logo: each piece's line for that row (a blank one past the piece's last)
+    // padded to the piece's width by its declared width and joined with the gap; the widths
+    // and the gaps between them add up to the line's, which it declares. A line wider than
+    // its piece is cut to it (CutToWidth) rather than trusted, so a row can never outgrow the
+    // width the frame is laid out for.
+    private static RenderedLine JoinSideBySide(IReadOnlyList<RenderedLine>[] pieces, int[] widths, int row)
+    {
+        var text = new StringBuilder();
+        var width = 0;
+        for (var index = 0; index < pieces.Length; index++)
+        {
+            if (index > 0)
+            {
+                text.Append(' ', ColumnGap);
+                width += ColumnGap;
+            }
+
+            var line = row < pieces[index].Count ? pieces[index][row] : BlankLine;
+            if (line.Width > widths[index])
+                line = CutToWidth(line, widths[index]);
+
+            text.Append(line.Text).Append(' ', widths[index] - line.Width);
+            width += widths[index];
+        }
+
+        return new RenderedLine(text.ToString(), width);
+    }
+
+    // A line cut to a width it exceeds: its first width − 1 columns and an ellipsis, as
+    // MarkupText cuts markup — a column per character, a cut that would split a surrogate
+    // pair backing off one and the row padded out — with every SGR sequence on the way kept
+    // (they take no column) and the styling closed by a reset after the cut when the line
+    // carried any. No widget emits such a line, each renders to the width it is given, and a
+    // rendered line's text is final, never parsed back — so this is the one place the layout
+    // reads past a line's escapes, and only to contain a fault: a frame row wider than the
+    // window would wrap on a real terminal and corrupt every row below it.
+    private static RenderedLine CutToWidth(RenderedLine line, int width)
+    {
+        if (width < 1)
+            return BlankLine;
+
+        var text = line.Text;
+        var cut = new StringBuilder(text.Length);
+        var kept = 0;
+        var styled = false;
+        var position = 0;
+        while (position < text.Length && kept < width - 1)
+        {
+            var character = text[position];
+            if (character == AnsiCodes.Escape[0])
+            {
+                var end = EndOfEscapeSequence(text, position);
+                cut.Append(text, position, end - position);
+                position = end;
+                styled = true;
+                continue;
+            }
+
+            if (char.IsHighSurrogate(character) && position + 1 < text.Length && char.IsLowSurrogate(text[position + 1]) && kept + 2 > width - 1)
+                break;
+
+            cut.Append(character);
+            kept++;
+            position++;
+        }
+
+        cut.Append(MarkupText.Ellipsis);
+        if (styled)
+            cut.Append(AnsiCodes.Reset);
+
+        cut.Append(' ', width - 1 - kept);
+        return new RenderedLine(cut.ToString(), width);
+    }
+
+    // The index past the escape sequence starting at position: a CSI sequence — the escape,
+    // '[', its parameter and intermediate bytes and its final byte — the only kind the
+    // engine's styling emits; an escape byte that starts no such sequence is one on its own.
+    private static int EndOfEscapeSequence(string text, int position)
+    {
+        var end = position + 1;
+        if (end < text.Length && text[end] == '[')
+        {
+            end++;
+            while (end < text.Length && text[end] >= ' ' && text[end] <= '?')
+                end++;
+
+            if (end < text.Length && text[end] >= '@' && text[end] <= '~')
+                end++;
+        }
+
+        return end;
+    }
+
     // One scenario's section: the header block (title, tiles, timeline, status detail, a
     // blank), the chart and heatmap panels, the requests panel, the steps table and the errors
     // panel — the header and the requests panel rendered first, and the step rows sorted and
     // the error entries laid out (their line counts are what the budget trims by), since the
-    // budget steps of the drop order fit the rest of the section around them.
-    private static void AddScenarioSection(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, LiveDashboardViewState viewState, int width, int height, int budget, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet, string? spinnerGlyph, bool includeLogo)
+    // budget steps of the drop order fit the rest of the section around them. The heatmap is
+    // offered only when the caller allows it: a column never shows one.
+    private static void AddScenarioSection(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, LiveDashboardViewState viewState, int width, int height, int budget, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet, string? spinnerGlyph, bool includeLogo, bool includeHeatmap)
     {
         var thresholds = new DeclaredThresholds(snapshot.Thresholds);
         var includeTimeline = snapshot.PlanEntries.Count > 0 && HasRowsFor(height, MinimumHeightForTimeline);
@@ -515,7 +727,7 @@ internal static class LiveDashboardLayout
         var steps = SortStepsByPain(snapshot.Steps);
         var errorEntries = RenderErrorEntries(snapshot, width, colorMode);
         var distinctErrorCount = Math.Max(snapshot.DistinctErrorCount, snapshot.Errors.Count);
-        var plan = PlanSection(width, height, header.Count + requests.Count, budget, steps.Count, errorEntries, distinctErrorCount);
+        var plan = PlanSection(width, height, header.Count + requests.Count, budget, steps.Count, errorEntries, distinctErrorCount, includeHeatmap);
 
         lines.AddRange(header);
 
@@ -536,21 +748,22 @@ internal static class LiveDashboardLayout
 
     // Which of the section's optional pieces render, how tall the heatmap and chart bodies
     // are, and how many step rows and error entries: the height steps of the drop order
-    // first, from the window's height alone, then the budget steps in the class summary's
-    // order, each taken only while the section's rows — fixedRows for the header block and
-    // the requests panel, plus the pieces still in — exceed the budget. Panel frames count,
-    // and so does the "+N more" line a trimmed table gains: a table's rows are given back one
-    // at a time while that still saves a row and a row remains, and a table that cannot keep
-    // a row goes whole. Nothing given back is taken back: a later step that frees more than
-    // the section still owed leaves the earlier ones as they are.
-    private static SectionPlan PlanSection(int width, int height, int fixedRows, int budget, int stepCount, IReadOnlyList<IReadOnlyList<RenderedLine>> errorEntries, int distinctErrorCount)
+    // first, from the window's height alone (the heatmap only where the caller offers it —
+    // never in a column), then the budget steps in the class summary's order, each taken only
+    // while the section's rows — fixedRows for the header block and the requests panel, plus
+    // the pieces still in — exceed the budget. Panel frames count, and so does the "+N more"
+    // line a trimmed table gains: a table's rows are given back one at a time while that
+    // still saves a row and a row remains, and a table that cannot keep a row goes whole.
+    // Nothing given back is taken back: a later step that frees more than the section still
+    // owed leaves the earlier ones as they are.
+    private static SectionPlan PlanSection(int width, int height, int fixedRows, int budget, int stepCount, IReadOnlyList<IReadOnlyList<RenderedLine>> errorEntries, int distinctErrorCount, bool includeHeatmap)
     {
         var includeCharts = width >= MinimumWidthForCharts;
         var sideBySideCharts = width >= MinimumWidthForChartsSideBySide;
         var chartBodyHeight = HasRowsFor(height, MinimumHeightForTallCharts) ? ChartHeight : CompactChartHeight;
         var includeRequestsChart = includeCharts;
         var includeLatencyChart = includeCharts;
-        var heatmapHeight = includeCharts && HasRowsFor(height, MinimumHeightForHeatmap) ? HeatmapHeight : 0;
+        var heatmapHeight = includeHeatmap && includeCharts && HasRowsFor(height, MinimumHeightForHeatmap) ? HeatmapHeight : 0;
         var stepRowCount = stepCount;
         var includeSteps = stepRowCount > 0;
         var errorEntryCount = errorEntries.Count;
@@ -733,9 +946,12 @@ internal static class LiveDashboardLayout
         if (!includeLogo)
             return MarkupText.RenderTruncated(titleMarkup, width, colorMode);
 
-        var logo = LogoWidget.Render(LogoWidget.CompactWidth, LogoWidget.CompactHeight, colorMode);
-        var title = MarkupText.RenderFitted(titleMarkup, titleWidth, colorMode);
-        return new RenderedLine(title.Text + new string(' ', ColumnGap) + logo[0].Text, width);
+        var pieces = new[]
+        {
+            new[] { MarkupText.RenderFitted(titleMarkup, titleWidth, colorMode) },
+            LogoWidget.Render(LogoWidget.CompactWidth, LogoWidget.CompactHeight, colorMode)
+        };
+        return JoinSideBySide(pieces, new[] { titleWidth, LogoWidget.CompactWidth }, 0);
     }
 
     // The status badge; only the running badge animates — its dot gives way to the caller's
@@ -779,24 +995,19 @@ internal static class LiveDashboardLayout
         AddTileRow(lines, snapshot, thresholds, options, firstRowCount, count - firstRowCount, width, colorMode, sparklineGlyphSet);
     }
 
+    // Each tile is built for the inner width the widget will give its box — the boxes' equal
+    // share of the width less the gaps, the leftover columns widening the first boxes by one,
+    // less the borders and padding — mirrored here so a tile's texts can be sized to the box
+    // they land in. Too small to fit anything at degenerate widths, where the widget drops
+    // tiles anyway.
     private static void AddTileRow(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, TileOptions options, int firstTile, int count, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
+        var boxWidths = ShareWidth(count, width, TileRowWidget.Gap);
         var tiles = new StatTile[count];
         for (var index = 0; index < count; index++)
-            tiles[index] = BuildTile(snapshot, thresholds, options, firstTile + index, TileInnerWidth(index, count, width));
+            tiles[index] = BuildTile(snapshot, thresholds, options, firstTile + index, boxWidths[index] - PanelWidget.ContentOverhead);
 
         lines.AddRange(TileRowWidget.Render(tiles, width, colorMode, sparklineGlyphSet));
-    }
-
-    // The inner width the widget gives box index of count at this width — its equal share of
-    // the width less the gaps, the leftover columns widening the first boxes by one, less the
-    // borders and padding — mirrored here so a tile's texts can be sized to the box they land
-    // in. Too small to fit anything at degenerate widths, where the widget drops tiles anyway.
-    private static int TileInnerWidth(int index, int count, int width)
-    {
-        var available = width - ((count - 1) * TileRowWidget.Gap);
-        var baseWidth = Math.DivRem(available, count, out var leftover);
-        return baseWidth + (index < leftover ? 1 : 0) - PanelWidget.ContentOverhead;
     }
 
     private static StatTile BuildTile(LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, TileOptions options, int index, int innerWidth)
@@ -1180,20 +1391,25 @@ internal static class LiveDashboardLayout
     }
 
     // The chart panels the plan kept: side by side, the requests chart on the left and the
-    // latency chart on the right with the panel widths summing to the full width less the gap,
-    // so the joined rows are exactly the frame width; stacked, each at the full width, requests
-    // first.
+    // latency chart on the right with the panel widths summing to the full width less the gap
+    // — the column over, at an odd width, going to the latency chart, unlike the tile boxes
+    // and the scenario columns, which widen the first — so the joined rows are exactly the
+    // frame width; stacked, each at the full width, requests first.
     private static void AddChartPanels(List<RenderedLine> lines, LiveMetricsSnapshot snapshot, DeclaredThresholds thresholds, SectionPlan plan, int width, ColorMode colorMode, SparklineGlyphSet sparklineGlyphSet)
     {
         if (plan.SideBySideCharts)
         {
             var leftWidth = (width - ColumnGap) / 2;
             var rightWidth = width - ColumnGap - leftWidth;
-            var left = RenderRequestsChartPanel(snapshot, leftWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet);
-            var right = RenderLatencyChartPanel(snapshot, thresholds, rightWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet);
+            var panels = new[]
+            {
+                RenderRequestsChartPanel(snapshot, leftWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet),
+                RenderLatencyChartPanel(snapshot, thresholds, rightWidth, plan.ChartBodyHeight, colorMode, sparklineGlyphSet)
+            };
+            var panelWidths = new[] { leftWidth, rightWidth };
 
-            for (var row = 0; row < left.Count; row++)
-                lines.Add(new RenderedLine(left[row].Text + new string(' ', ColumnGap) + right[row].Text, width));
+            for (var row = 0; row < panels[0].Count; row++)
+                lines.Add(JoinSideBySide(panels, panelWidths, row));
 
             return;
         }
