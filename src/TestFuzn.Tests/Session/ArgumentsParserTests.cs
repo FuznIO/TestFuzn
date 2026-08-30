@@ -5,14 +5,20 @@ namespace Fuzn.TestFuzn.Tests.Session;
 
 /// <summary>
 /// Pins <see cref="ArgumentsParser"/>: the <c>--key=value</c> form as it always parsed, the bare
-/// boolean flag form (<c>--demo</c>) beside it in either order, and the documented behaviour
+/// boolean flag form (<c>--demo</c>) beside it in either order, the documented behaviour
 /// for an unknown flag (recorded, harmless), a repeated one (last wins) and an explicit value
-/// (<c>--demo=false</c> is not set).
+/// (<c>--demo=false</c> is not set), and the whole-seconds duration reader behind
+/// <c>--demo-duration</c>: the default for an absent argument, the duration for a readable one,
+/// and false — the caller's invocation error — for anything else.
 /// </summary>
 [TestClass]
 public class ArgumentsParserTests : Test
 {
     private const string DemoFlag = StandaloneRunnerCore.DemoFlag;
+    private const string DemoDurationArgument = StandaloneRunnerCore.DemoDurationArgument;
+
+    private static readonly TimeSpan MinimumDuration = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan DefaultDuration = TimeSpan.FromSeconds(60);
 
     private static ArgumentsParser CreateParser()
     {
@@ -103,4 +109,40 @@ public class ArgumentsParserTests : Test
             })
             .Run();
     }
+
+    [Test]
+    public async Task Verify_a_duration_argument_reads_whole_seconds_and_reports_an_unreadable_one()
+    {
+        await Scenario()
+            .Step("An absent argument is no error: the default stands. A whole number of seconds at or above the minimum is the duration, whatever spacing or quotes it came in", context =>
+            {
+                Assert.IsTrue(ArgumentsParser.TryGetDuration(CreateParser().Parse(new[] { "run", "--demo" }), DemoDurationArgument, MinimumDuration, DefaultDuration, out var absent));
+                Assert.AreEqual(DefaultDuration, absent);
+                Assert.IsTrue(ArgumentsParser.TryGetDuration(null, DemoDurationArgument, MinimumDuration, DefaultDuration, out var noArguments));
+                Assert.AreEqual(DefaultDuration, noArguments);
+
+                foreach (var seconds in new[] { 20, 21, 45, 3600 })
+                {
+                    var parsed = CreateParser().Parse(new[] { "run", "--demo-duration=" + seconds });
+                    Assert.IsTrue(ArgumentsParser.TryGetDuration(parsed, DemoDurationArgument, MinimumDuration, DefaultDuration, out var duration), seconds.ToString());
+                    Assert.AreEqual(TimeSpan.FromSeconds(seconds), duration, seconds.ToString());
+                }
+
+                var quoted = CreateParser().Parse(new[] { "run", "--demo-duration=' 30 '" });
+                Assert.IsTrue(ArgumentsParser.TryGetDuration(quoted, DemoDurationArgument, MinimumDuration, DefaultDuration, out var spaced));
+                Assert.AreEqual(TimeSpan.FromSeconds(30), spaced);
+            })
+            .Step("A value below the minimum, a fraction, text, an empty value, a bare flag or a number too large is unreadable: false, with the default left in place for the caller to report the error over", context =>
+            {
+                foreach (var argument in new[] { "--demo-duration=19", "--demo-duration=0", "--demo-duration=-1", "--demo-duration=30.5", "--demo-duration=30s", "--demo-duration=", "--demo-duration", "--demo-duration=99999999999" })
+                {
+                    var parsed = CreateParser().Parse(new[] { "run", argument });
+
+                    Assert.IsFalse(ArgumentsParser.TryGetDuration(parsed, DemoDurationArgument, MinimumDuration, DefaultDuration, out var duration), argument);
+                    Assert.AreEqual(DefaultDuration, duration, argument);
+                }
+            })
+            .Run();
+    }
+
 }

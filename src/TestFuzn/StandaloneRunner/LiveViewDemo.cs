@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals;
@@ -16,7 +17,9 @@ namespace Fuzn.TestFuzn.StandaloneRunner;
 /// supports the live view, the plain stats lines on a redirected or non-ANSI one, chosen by the
 /// production host's real capability detection — over a real, initialized
 /// <see cref="TestExecutionState"/> whose scenario's collector a <see cref="LiveViewDemoScript"/>
-/// fills with a scripted synthetic load run of about twenty seconds. <see cref="Run"/> mirrors
+/// fills with a scripted synthetic load run of the duration the runner core was asked for
+/// (<c>--demo-duration</c>, <see cref="LiveViewDemoScript.DefaultDuration"/> when none was
+/// given), incident and declared thresholds and all. <see cref="Run"/> mirrors
 /// <see cref="TestRunner"/>'s lifecycle step for step — init, execute, cleanup, then the console
 /// manager's Complete with the summary in the normal buffer, the live view stopped in a finally
 /// on every exit path — so the quit key and Ctrl+C stop the demo through the same cancellation
@@ -24,18 +27,19 @@ namespace Fuzn.TestFuzn.StandaloneRunner;
 /// summary and then reports its cancellation, which the runner core prints and exits 1 on, as
 /// it does for a stopped test. Only the reports are skipped: the demo has no results directory.
 /// The demo opens with the same <see cref="StartupBanner"/> a test run opens with — its
-/// scenario name as the subject — written through the host's terminal before the live view
-/// starts, so the two entry paths look alike in the scrollback.
+/// scenario name as the subject and its duration on the detail line — written through the host's
+/// terminal before the live view starts, so the two entry paths look alike in the scrollback.
 /// </summary>
 internal sealed class LiveViewDemo
 {
     /// <summary>The banner's label on its title line, ahead of the demo scenario's name.</summary>
     internal const string RunningDemoLabel = "Running demo:";
 
-    /// <summary>The banner's detail line: what the demo runs against.</summary>
-    internal const string DemoDetail = "synthetic load, no target system";
+    /// <summary>What the banner's detail line says the demo runs against, ahead of its duration.</summary>
+    internal const string DemoDetailPrefix = "synthetic load, no target system · ";
 
     private readonly ILiveViewHost _liveViewHost;
+    private readonly TimeSpan _duration;
 
     /// <summary>
     /// The execution state of the run in progress — or, once <see cref="Run"/> has returned, the
@@ -43,17 +47,26 @@ internal sealed class LiveViewDemo
     /// </summary>
     internal TestExecutionState? TestExecutionState { get; private set; }
 
-    public LiveViewDemo()
-        : this(new ConsoleLiveViewHost())
-    {
-    }
-
-    internal LiveViewDemo(ILiveViewHost liveViewHost)
+    /// <param name="liveViewHost">The clock, the terminal and the delays: the real console in production, a fake in tests.</param>
+    /// <param name="duration">What the scripted run takes, init and cleanup included; at least <see cref="LiveViewDemoScript.MinimumDuration"/>.</param>
+    internal LiveViewDemo(ILiveViewHost liveViewHost, TimeSpan duration)
     {
         if (liveViewHost == null)
             throw new ArgumentNullException(nameof(liveViewHost), "Live view host cannot be null.");
+        if (duration < LiveViewDemoScript.MinimumDuration)
+            throw new ArgumentOutOfRangeException(nameof(duration), duration, "The demo runs for at least " + LiveViewDemoScript.MinimumDuration.TotalSeconds + " seconds.");
 
         _liveViewHost = liveViewHost;
+        _duration = duration;
+    }
+
+    /// <summary>
+    /// The banner's detail line for a run of the given duration: what the demo runs against and
+    /// how long its scripted load runs, so the scrollback records which demo was watched.
+    /// </summary>
+    internal static string DemoDetail(TimeSpan duration)
+    {
+        return DemoDetailPrefix + duration.TotalSeconds.ToString("0.#", CultureInfo.InvariantCulture) + " s";
     }
 
     /// <summary>
@@ -77,7 +90,7 @@ internal sealed class LiveViewDemo
         try
         {
             testExecutionState.Init(testFramework, new DemoTest(), LiveViewDemoScript.CreateScenario());
-            var script = new LiveViewDemoScript(testExecutionState, _liveViewHost);
+            var script = new LiveViewDemoScript(testExecutionState, _liveViewHost, _duration);
 
             try
             {
@@ -115,7 +128,7 @@ internal sealed class LiveViewDemo
         if (terminalWriter == null)
             throw new InvalidOperationException("The live view host returned no terminal writer.");
 
-        StartupBanner.Write(terminalWriter, RunningDemoLabel, LiveViewDemoScript.ScenarioName, DemoDetail, capabilities.ColorMode);
+        StartupBanner.Write(terminalWriter, RunningDemoLabel, LiveViewDemoScript.ScenarioName, DemoDetail(_duration), capabilities.ColorMode);
     }
 
     /// <summary>The test the demo runs as — the state's test result and the summary need one; no test method is ever invoked.</summary>

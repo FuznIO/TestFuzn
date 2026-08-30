@@ -10,6 +10,12 @@ internal class StandaloneRunnerCore
     /// <summary>The bare flag that runs the live view demo instead of a test: <c>run --demo</c>.</summary>
     internal const string DemoFlag = "demo";
 
+    /// <summary>The argument that sets how long the demo runs: <c>--demo-duration=&lt;seconds&gt;</c>.</summary>
+    internal const string DemoDurationArgument = "demo-duration";
+
+    /// <summary>The invocation error for a <c>--demo-duration</c> that is not a whole number of seconds of at least the demo's minimum.</summary>
+    internal static readonly string DemoDurationUsage = "--demo-duration takes whole seconds, at least " + (int)LiveViewDemoScript.MinimumDuration.TotalSeconds + ": --demo-duration=<seconds>";
+
     /// <summary>The argument that selects the test to run: <c>--test-name=&lt;FullyQualifiedName&gt;</c>.</summary>
     internal const string TestNameArgument = "test-name";
 
@@ -66,9 +72,16 @@ internal class StandaloneRunnerCore
         Console.OutputEncoding = Encoding.UTF8;
 
         // The live view demo needs no test, Startup or target system: it plays a scripted load
-        // run through the same adapter and exit-code path a test takes.
+        // run of --demo-duration seconds (the script's default when none is given) through the
+        // same adapter and exit-code path a test takes. A duration that is not whole seconds of
+        // at least the script's minimum is an invocation error, reported as a bare --test-name is.
         if (ArgumentsParser.HasFlag(parsedArgs, DemoFlag))
-            return await RunWithAdapter(testFrameworkInstanceCreator, adapter => new LiveViewDemo(_liveViewHost).Run(adapter));
+        {
+            if (!ArgumentsParser.TryGetDuration(parsedArgs, DemoDurationArgument, LiveViewDemoScript.MinimumDuration, LiveViewDemoScript.DefaultDuration, out var demoDuration))
+                return WriteInvocationError(testFrameworkInstanceCreator, DemoDurationUsage);
+
+            return await RunWithAdapter(testFrameworkInstanceCreator, adapter => new LiveViewDemo(_liveViewHost, demoDuration).Run(adapter));
+        }
 
         // A --test-name without a value — bare, or with a space instead of = — parses as a bare
         // flag: an invocation error, reported before any test is discovered or the menu is

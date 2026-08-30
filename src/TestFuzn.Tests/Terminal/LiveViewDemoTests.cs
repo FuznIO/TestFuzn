@@ -9,8 +9,9 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// Pins <see cref="LiveViewDemo.Run"/> — the demo's run over the real console manager and
 /// execution state — hermetically, on virtual time: one host shared by the console manager's
 /// loop and the demo script whose clock advances only when both are waiting, to the earliest
-/// wake time, so exactly one of them runs at a time and the whole ~20 s demo plays
-/// deterministically in milliseconds. Pinned: on a terminal with live view support the
+/// wake time, so exactly one of them runs at a time and the whole demo — the shortest one the
+/// runner accepts, since what is pinned here holds at every duration — plays deterministically
+/// in milliseconds. Pinned: on a terminal with live view support the
 /// alternate screen is entered and left exactly once with the cursor restored and the summary
 /// written once after the restore; on a redirected output the plain lines carry no escape byte
 /// and end in the completed line with the exact totals, the summary after it; the state is
@@ -18,8 +19,10 @@ namespace Fuzn.TestFuzn.Tests.Terminal;
 /// the Ctrl+C path, the terminal restored and the cancellation reported after the summary; and
 /// the runner core maps a completed demo to exit code 0 and a stopped one to 1. On both output
 /// paths the startup banner — the same three lines a test run opens with, the demo scenario as
-/// the subject — is the first terminal output, written through the host before the live view
-/// starts; nothing goes through the adapter's markup.
+/// the subject and its duration on the detail line — is the first terminal output, written
+/// through the host before the live view starts; nothing goes through the adapter's markup. And
+/// the runner core's <c>--demo-duration</c>: the run lasts what it names, the script's default
+/// when it is absent, and an unreadable one is an invocation error with nothing run.
 /// </summary>
 [TestClass]
 public class LiveViewDemoTests : Test
@@ -29,15 +32,26 @@ public class LiveViewDemoTests : Test
     private const string TerminalEventPrefix = "terminal:";
     private const string ScenarioLinePrefix = "[" + LiveViewDemoScript.ScenarioName + "] ";
 
-    // The demo's banner as written on a terminal without color (both harness hosts render plain).
-    private static readonly string[] BannerWrites =
-    {
-        "⚡ TestFuzn" + Environment.NewLine,
-        LiveViewDemo.RunningDemoLabel + " " + LiveViewDemoScript.ScenarioName + Environment.NewLine,
-        LiveViewDemo.DemoDetail + Environment.NewLine
-    };
+    // The demo runs at its shortest here: what these tests pin — the frames, the plain lines, the
+    // stop and the exit codes — is the same at every duration, and the shortest run keeps the
+    // virtual-time replay small. The totals are the shortest run's, pinned by the script's tests.
+    private static readonly TimeSpan DemoDuration = LiveViewDemoScript.MinimumDuration;
+    private const int MeasurementIterationCount = 1453;
+    private const int FailureCount = 21;
 
     private static readonly TimeSpan RunTimeout = TimeSpan.FromSeconds(30);
+
+    // The demo's banner as written on a terminal without color (both harness hosts render plain),
+    // its detail line naming the duration the run was asked for.
+    private static string[] BannerWrites(TimeSpan duration)
+    {
+        return new[]
+        {
+            "⚡ TestFuzn" + Environment.NewLine,
+            LiveViewDemo.RunningDemoLabel + " " + LiveViewDemoScript.ScenarioName + Environment.NewLine,
+            LiveViewDemo.DemoDetail(duration) + Environment.NewLine
+        };
+    }
 
     private static DateTime At(double seconds)
     {
@@ -62,12 +76,12 @@ public class LiveViewDemoTests : Test
                 harness.AssertBannerFirst();
                 Assert.IsEmpty(harness.MarkupEvents());
 
-                // The banner's three writes, then the script's 19 s at the 250 ms render cadence:
-                // 76 frames between entering and leaving, every one repainted (the spinner
+                // The banner's three writes, then the script's 20 s at the 250 ms render cadence:
+                // 80 frames between entering and leaving, every one repainted (the spinner
                 // advances per frame); the loop's tick due when the run ends is cancelled before
                 // it renders.
-                Assert.HasCount(StartupBanner.Height + 78, harness.Writer.Writes);
-                Assert.AreEqual(At(19), harness.Host.UtcNow);
+                Assert.HasCount(StartupBanner.Height + 82, harness.Writer.Writes);
+                Assert.AreEqual(At(DemoDuration.TotalSeconds), harness.Host.UtcNow);
                 Assert.AreEqual(ExecutionStatus.Completed, harness.State.ExecutionStatus);
                 Assert.IsGreaterThan(0, harness.Host.Reader.TryReadKeyCallCount);
             })
@@ -101,10 +115,10 @@ public class LiveViewDemoTests : Test
                 {
                     "init",
                     "warmup: Fixed Load 10 rps",
-                    "sim 1/2: Gradual Load 10→80 rps",
-                    "sim 2/2: Fixed Load 80 rps"
+                    "sim 1/2: Gradual Load 10→100 rps",
+                    "sim 2/2: Fixed Load 100 rps"
                 }, PhaseLabels(lines).Take(4).ToList());
-                Assert.MatchesRegex(@"^\[Checkout flow \(demo\)\] completed  elapsed 00:00:19  total 840  ok 807  failed 33  p95 .+$", lines[lines.Count - 1]);
+                Assert.MatchesRegex(@"^\[Checkout flow \(demo\)\] completed  elapsed 00:00:20  total " + MeasurementIterationCount + "  ok " + (MeasurementIterationCount - FailureCount) + "  failed " + FailureCount + @"  p95 .+$", lines[lines.Count - 1]);
                 Assert.AreEqual(1, lines.Count(line => line.StartsWith(ScenarioLinePrefix + "completed", StringComparison.Ordinal)));
 
                 harness.AssertSummaryFollowsLastTerminalWrite();
@@ -155,6 +169,49 @@ public class LiveViewDemoTests : Test
             .Run();
     }
 
+    [Test]
+    public async Task Verify_the_demo_duration_argument_decides_how_long_the_demo_runs_and_an_invalid_one_is_an_invocation_error()
+    {
+        await Scenario()
+            .Step("--demo-duration=25 plays the scripted load for 25 seconds, the banner naming the duration", async context =>
+            {
+                var harness = new Harness(supportsLiveView: false, TimeSpan.FromSeconds(25));
+
+                var exitCode = await harness.RunDemoThroughRunnerCore();
+
+                Assert.AreEqual(0, exitCode);
+                harness.AssertBannerFirst();
+                Assert.AreEqual(At(25), harness.Host.UtcNow);
+                Assert.IsEmpty(harness.MarkupEvents());
+            })
+            .Step("Without the argument the demo runs for its default duration", async context =>
+            {
+                var harness = new Harness(supportsLiveView: false, LiveViewDemoScript.DefaultDuration);
+
+                var exitCode = await harness.RunThroughRunnerCore(new[] { "run", "--" + StandaloneRunnerCore.DemoFlag });
+
+                Assert.AreEqual(0, exitCode);
+                harness.AssertBannerFirst();
+                Assert.AreEqual(At(LiveViewDemoScript.DefaultDuration.TotalSeconds), harness.Host.UtcNow);
+            })
+            .Step("A duration below the minimum, a fractional one, text, an empty value or a bare flag is an invocation error: the usage message through the adapter and exit code 1, with no banner and no run", async context =>
+            {
+                foreach (var argument in new[] { "--demo-duration=19", "--demo-duration=0", "--demo-duration=-5", "--demo-duration=20.5", "--demo-duration=abc", "--demo-duration=", "--demo-duration" })
+                {
+                    var harness = new Harness(supportsLiveView: false);
+
+                    var exitCode = await harness.RunThroughRunnerCore(new[] { "run", "--" + StandaloneRunnerCore.DemoFlag, argument });
+
+                    Assert.AreEqual(1, exitCode, argument);
+                    var usage = Assert.ContainsSingle(harness.MarkupEvents());
+                    Assert.AreEqual("[red]" + StandaloneRunnerCore.DemoDurationUsage + "[/]", usage, argument);
+                    Assert.IsEmpty(harness.Writer.Writes, argument);
+                    Assert.AreEqual(At(0), harness.Host.UtcNow, argument);
+                }
+            })
+            .Run();
+    }
+
     /// <summary>The phase labels from the plain lines, in order of appearance.</summary>
     private static List<string> PhaseLabels(List<string> lines)
     {
@@ -192,9 +249,20 @@ public class LiveViewDemoTests : Test
             }
         }
 
+        /// <summary>What the demo was asked to run for — the banner names it and the runner core is given it.</summary>
+        public TimeSpan Duration { get; }
+
         /// <param name="supportsLiveView">Live view capabilities (interactive, ANSI, no color so frames stay plain) or a redirected output and input.</param>
         public Harness(bool supportsLiveView)
+            : this(supportsLiveView, DemoDuration)
         {
+        }
+
+        /// <param name="supportsLiveView">Live view capabilities (interactive, ANSI, no color so frames stay plain) or a redirected output and input.</param>
+        /// <param name="duration">What the demo runs for.</param>
+        public Harness(bool supportsLiveView, TimeSpan duration)
+        {
+            Duration = duration;
             TerminalCapabilities capabilities;
             if (supportsLiveView)
                 capabilities = new TerminalCapabilities(isInteractive: true, supportsAnsi: true, colorMode: ColorMode.None);
@@ -209,7 +277,7 @@ public class LiveViewDemoTests : Test
                     Events.Add(TerminalEventPrefix + text);
             };
             TestFramework = new FakeTestFrameworkAdapter(Events);
-            Demo = new LiveViewDemo(Host);
+            Demo = new LiveViewDemo(Host, duration);
         }
 
         /// <summary>Runs the demo as the runner core does; a scheduling deadlock fails the test by timeout instead of hanging it.</summary>
@@ -218,11 +286,17 @@ public class LiveViewDemoTests : Test
             await Demo.Run(TestFramework).WaitAsync(RunTimeout);
         }
 
-        /// <summary>Runs <c>run --demo</c> through the runner core over this harness's host, for the exit code.</summary>
+        /// <summary>Runs <c>run --demo</c> through the runner core over this harness's host, asking for its duration, for the exit code.</summary>
         public async Task<int> RunDemoThroughRunnerCore()
         {
+            return await RunThroughRunnerCore(new[] { "run", "--" + StandaloneRunnerCore.DemoFlag, "--" + StandaloneRunnerCore.DemoDurationArgument + "=" + (int)Duration.TotalSeconds });
+        }
+
+        /// <summary>Runs the runner core over this harness's host and adapter with the given command line, for the exit code.</summary>
+        public async Task<int> RunThroughRunnerCore(string[] args)
+        {
             var runnerCore = new StandaloneRunnerCore(Host);
-            return await runnerCore.Run<FakeStartup>(typeof(LiveViewDemoTests).Assembly, new[] { "run", "--" + StandaloneRunnerCore.DemoFlag }, () => TestFramework).WaitAsync(RunTimeout);
+            return await runnerCore.Run<FakeStartup>(typeof(LiveViewDemoTests).Assembly, args, () => TestFramework).WaitAsync(RunTimeout);
         }
 
         /// <summary>Presses the quit key once the virtual clock has reached the given time; the loop reads it on its next tick.</summary>
@@ -267,11 +341,11 @@ public class LiveViewDemoTests : Test
                 return Events.Where(eventName => eventName.StartsWith(FakeTestFrameworkAdapter.MarkupEventPrefix, StringComparison.Ordinal)).Select(eventName => eventName.Substring(FakeTestFrameworkAdapter.MarkupEventPrefix.Length)).ToList();
         }
 
-        /// <summary>The startup banner's three plain lines are the first terminal writes.</summary>
+        /// <summary>The startup banner's three plain lines, its detail line naming the run's duration, are the first terminal writes.</summary>
         public void AssertBannerFirst()
         {
             Assert.IsGreaterThanOrEqualTo(StartupBanner.Height, Writer.Writes.Count);
-            CollectionAssert.AreEqual(BannerWrites, Writer.Writes.Take(StartupBanner.Height).ToList());
+            CollectionAssert.AreEqual(BannerWrites(Duration), Writer.Writes.Take(StartupBanner.Height).ToList());
         }
 
         /// <summary>The alternate screen was entered once (the first write after the banner) and restored once (the last write); nothing follows the restore.</summary>
