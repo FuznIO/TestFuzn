@@ -9,7 +9,7 @@
 ### Getting Started
 - [Getting Started](getting-started.md) — Installation, project setup, quick start
 - [MSTest Compatibility](mstest.md) — Attribute mapping, lifecycle, what's supported
-- [Standalone Runner](standalone-runner.md) — Live load test dashboard, test selection menu and `run --demo` from the test project's own entry point
+- [Standalone Runner](standalone-runner.md) — Live load test dashboard, its views and keys, test selection menu and `run --demo` from the test project's own entry point
 
 ### Writing Tests
 - [Scenarios](scenarios.md) — Standard vs load tests, `[Test]` attribute, execution flow
@@ -29,7 +29,7 @@
 - [Web UI Testing with Playwright](playwright-testing.md) — Browser automation, device emulation, UI load testing
 
 ### Load Testing
-- [Load Testing](load-testing.md) — Simulations, warmup, assertions, statistics
+- [Load Testing](load-testing.md) — Simulations, warmup, assertions, thresholds, statistics
 - [InfluxDB & Grafana](influxdb-grafana.md) — Real-time metrics streaming
 
 ### Configuration

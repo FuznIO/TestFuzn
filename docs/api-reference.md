@@ -78,7 +78,22 @@
 | `Simulations(Action/Func)` | Configure load simulations |
 | `AssertWhileRunning(Action)` | Add runtime assertions |
 | `AssertWhenDone(Action)` | Add post-execution assertions |
+| `Thresholds(Action)` | Declare pass/fail thresholds on the scenario's load statistics |
 | `IncludeScenario(ScenarioBuilder)` | Include an additional scenario to execute in parallel with the main scenario. Multiple calls add multiple scenarios. |
+
+---
+
+## Thresholds
+
+Declared through `Load().Thresholds(...)`; each metric can be declared once per scenario. Evaluated once when the load test completes — a violation fails the test with a `ThresholdViolationException` — and tracked live on the standalone runner's dashboard.
+
+| Method | Description |
+|--------|-------------|
+| `ResponseTimeMean(TimeSpan maximum)` | Maximum mean response time of successful requests |
+| `ResponseTimePercentile95(TimeSpan maximum)` | Maximum 95th-percentile response time of successful requests |
+| `ResponseTimePercentile99(TimeSpan maximum)` | Maximum 99th-percentile response time of successful requests |
+| `ErrorRate(double maximum)` | Maximum share of failed requests among all requests, from 0 to 1 |
+| `RequestsPerSecond(double minimum)` | Minimum request rate |
 
 ---
 

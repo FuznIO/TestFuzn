@@ -15,7 +15,7 @@ Built on top of **MSTest v4**, TestFuzn provides a fluent, scenario-based approa
 - 🌐 **Web UI testing with Microsoft Playwright** — Automate and validate browser-based applications using Playwright — works with any web app, no matter what language or framework it's built in.
 - 💻 **C# / .NET first** — Write all your tests in C#. Leverages the power of .NET to keep things fast and flexible.
 - ✅ **MSTest compatible** — Built-in support for the widely used MSTest framework — reuse what you already know and love.
-- 🖥️ **Live load test dashboard** — Run load tests from the test project's own entry point and watch progress, ETA, sparklines, per-step stats and errors live in the terminal. See [Standalone Runner](standalone-runner.md).
+- 🖥️ **Live load test dashboard** — Run load tests from the test project's own entry point and watch KPI tiles, request and latency charts, a latency heatmap, per-step stats and errors live in the terminal — with threshold gauges, step detail and error log views, and pause. See [Standalone Runner](standalone-runner.md).
 - 📈 **Real-time statistics** — Stream load test metrics to InfluxDB/Grafana for live monitoring.
 
 ### 💸 License & Usage

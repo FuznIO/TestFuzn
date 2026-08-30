@@ -23,9 +23,6 @@ internal static class TerminalPalette
     /// <summary>Panel headers on the dashboard and in the summaries: bold, in the warm accent.</summary>
     public const string PanelHeaderStyle = "bold #ff9d3d";
 
-    /// <summary>The filled cells of the dashboard's progress bar.</summary>
-    public const string ProgressBarStyle = "#ff9d3d";
-
     /// <summary>The simulation phase label on the dashboard's timeline and title line.</summary>
     public const string PhaseStyle = "#ffcf6b";
 

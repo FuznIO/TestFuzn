@@ -6,8 +6,9 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// <summary>
 /// The planned shape of a scenario's load run, computed once from the ordered typed simulation
 /// configs (`Scenario.SimulationsInternal`, warmup simulations always first). Provides the
-/// planned durations the dashboard's progress bar and ETA are computed from, and the current
-/// phase label for a given elapsed time within a segment. Durations are the configured values —
+/// planned durations behind the dashboard's elapsed tile — its planned total, progress gauge and
+/// time remaining — the entries the timeline lays out as its segments, and the current phase
+/// label for a given elapsed time within a segment. Durations are the configured values —
 /// actual wall time can run slightly longer (producer scheduling, warmup queue drain), which
 /// callers absorb by clamping progress. A count-based simulation (OneTimeLoad, count-based
 /// FixedConcurrentLoad) has no planned duration: any such entry makes the affected planned

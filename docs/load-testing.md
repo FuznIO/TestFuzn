@@ -267,6 +267,64 @@ Final validation after test completion:
 
 ---
 
+## Thresholds
+
+Thresholds are the declarative counterpart of `AssertWhenDone`: instead of writing the check, you declare the limit and TestFuzn evaluates it for you — and, because the limit is a value rather than a callback, the standalone runner's live dashboard can track it while the test runs.
+
+```csharp
+.Load().Thresholds(thresholds =>
+{
+    thresholds.ResponseTimePercentile95(TimeSpan.FromMilliseconds(500));
+    thresholds.ResponseTimePercentile99(TimeSpan.FromSeconds(1));
+    thresholds.ErrorRate(0.01);              // At most 1 failed request in 100
+    thresholds.RequestsPerSecond(50);        // At least 50 requests per second
+})
+```
+
+Each threshold holds one scenario-level statistic of the measurement phase to a limit. Warmup traffic is never counted.
+
+| Method | Requires |
+|--------|----------|
+| `ResponseTimeMean(TimeSpan)` | The mean response time of successful requests to stay at or below the maximum |
+| `ResponseTimePercentile95(TimeSpan)` | The 95th-percentile response time of successful requests to stay at or below the maximum |
+| `ResponseTimePercentile99(TimeSpan)` | The 99th-percentile response time of successful requests to stay at or below the maximum |
+| `ErrorRate(double)` | The share of failed requests among all requests to stay at or below the maximum, as a fraction from 0 to 1 |
+| `RequestsPerSecond(double)` | The request rate to reach at least the minimum |
+
+A value exactly equal to the limit passes. Each metric can be declared once per scenario — declaring it twice throws — while `Thresholds()` itself may be called more than once.
+
+### Live State vs. Completion Verdict
+
+A threshold is read twice over, against two different numbers, and it is worth keeping them apart.
+
+**Live**, on the dashboard, each threshold is evaluated against the **newest one-second interval** — the same numbers the interval tiles show — and drives its tile's colour:
+
+| State | Maximum-style threshold | Minimum-style threshold |
+|-------|-------------------------|-------------------------|
+| Ok | Below 80 % of the limit | Above 125 % of the limit |
+| Warning | From 80 % of the limit up to the limit | From the limit up to 125 % of it |
+| Breached | Past the limit | Below the limit |
+
+Nothing is judged before the measurement phase: during init and warmup every threshold shows a placeholder Ok state, since the interval numbers still carry warmup traffic that the verdict will never see. An idle interval with no requests at all reads Ok for the error rate — there is no share to take — but its rate of zero does breach a `RequestsPerSecond` minimum, a stalled target being exactly what that threshold is for. The live rate is the interval's total, failed requests included, where the verdict counts only the successful ones. Once the run leaves measurement the last measurement states are frozen and kept on screen, so the final frame still shows the breach the verdict is about to report. A zero limit has no warning band.
+
+**At completion** the same thresholds are evaluated once more as the **verdict**, against the cumulative statistics of the whole measurement phase: the Ok mean, p95 or p99, the failed share of all measurement requests, or the cumulative Ok `RequestsPerSecond`. This is the number the summary's **Thresholds** panel reports and the only one that decides the outcome. A run can therefore breach a threshold live during a bad minute and still pass, which is the point of having both.
+
+The verdict is only taken when the load test completes. A run stopped by `q`, `Ctrl+C` or a failing `AssertWhileWarmingUp` or `AssertWhileRunning` is never judged, and reports no verdict at all; a failing `AssertWhenDone` does not stop the run, so the verdict is still taken.
+
+### Interaction With Asserts
+
+A violated threshold fails the test exactly as a failed assertion does. The verdict is evaluated at the same point as `AssertWhenDone`: the scenario is marked failed, the run still completes its cleanup and writes its summary, and the test then observes a `ThresholdViolationException` whose message lists every violation:
+
+```
+Threshold violated: p95 812 ms > 500 ms; error rate 2.4 % > 1 %
+```
+
+`ThresholdViolationException.Violations` carries the failed results behind that message. When an `AssertWhenDone` assertion fails as well, its failure is the one reported.
+
+The verdict is reported either way — passed or violated — as a **Thresholds** table of the metric, the declared limit, the measured value and the result: in the standalone runner's summary panel, and under `dotnet test` in MSTest's test output as a plain ASCII table with `<=` / `>=` and the words `Ok` / `Breached`. See [Standalone Runner](standalone-runner.md#final-summary).
+
+---
+
 ## Statistics
 
 Available metrics for assertions:

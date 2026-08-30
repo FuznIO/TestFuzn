@@ -382,7 +382,7 @@ public class MarkupParserTests : Test
     [Test]
     public async Task Verify_strip_markup_preserves_bracketed_data_unlike_markup_helper()
     {
-        // Deliberate divergence, documented in Phase 4: the repo's interpolated markup templates
+        // A deliberate divergence: the repo's interpolated markup templates
         // (assert messages, step names, error texts) can carry brackets in their values.
         // MarkupParser.StripMarkup keeps a bracketed group that is not a valid tag as literal
         // data, while the legacy regex-based MarkupHelper.StripMarkup removes every bracketed

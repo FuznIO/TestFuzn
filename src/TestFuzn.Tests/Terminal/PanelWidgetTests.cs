@@ -103,7 +103,7 @@ public class PanelWidgetTests : Test
             .Step("Widgets rendered at the inner width embed with aligned borders and closed styling", context =>
             {
                 var content = new List<RenderedLine>();
-                content.AddRange(ProgressBarWidget.Render(0.5, 16, ColorMode.TrueColor, barStyle: "green"));
+                content.AddRange(SparklineWidget.Render(new double[] { 8, 7, 6, 5, 4, 3, 2, 1 }, 16, ColorMode.TrueColor, SparklineGlyphSet.Blocks, "red"));
                 content.AddRange(SparklineWidget.Render(new double[] { 1, 2, 3, 4, 5, 6, 7, 8 }, 16, ColorMode.TrueColor, SparklineGlyphSet.Blocks, "green"));
 
                 var lines = PanelWidget.Render("[bold]Load[/]", content, 20, ColorMode.TrueColor);
@@ -112,7 +112,7 @@ public class PanelWidgetTests : Test
                     new[]
                     {
                         "╭─ \u001b[1mLoad\u001b[0m ───────────╮",
-                        "│ \u001b[38;5;2m██████\u001b[0m░░░░░  50% │",
+                        "│ \u001b[38;5;9m        █▇▆▅▄▃▂▁\u001b[0m │",
                         "│ \u001b[38;5;2m        ▁▂▃▄▅▆▇█\u001b[0m │",
                         "╰──────────────────╯"
                     },
@@ -138,7 +138,7 @@ public class PanelWidgetTests : Test
             })
             .Step("A rendered line wider than the inner width fails loud", context =>
             {
-                var overlong = ProgressBarWidget.Render(0.5, 17, ColorMode.TrueColor);
+                var overlong = SparklineWidget.Render(new double[] { 1, 2, 3 }, 17, ColorMode.TrueColor, SparklineGlyphSet.Blocks, "green");
 
                 Assert.ThrowsExactly<ArgumentException>(() => PanelWidget.Render(null, overlong, 20, ColorMode.TrueColor));
             })

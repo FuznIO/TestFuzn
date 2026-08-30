@@ -23,7 +23,7 @@
 - ✅ **MSTest compatible**  
   Built-in support for the widely used MSTest framework — reuse what you already know and love.
 - 🖥️ **Live load test dashboard**  
-  Run load tests from the test project's own entry point and watch progress, ETA, sparklines, per-step stats and errors live in the terminal — rendered by TestFuzn's own terminal engine, with no third-party console dependency.
+  Run load tests from the test project's own entry point and watch KPI tiles, request and latency charts, a latency heatmap, per-step stats and errors live in the terminal — with threshold gauges, a step detail and error log view, and pause — rendered by TestFuzn's own terminal engine, with no third-party console dependency.
 
 ## 📦 NuGet Packages
 

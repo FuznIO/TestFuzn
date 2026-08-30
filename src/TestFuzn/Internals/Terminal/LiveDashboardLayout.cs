@@ -155,10 +155,9 @@ namespace Fuzn.TestFuzn.Internals.Terminal;
 /// handler moves the selection along,
 /// and <see cref="DisplayedPosition"/> is where a selection sits in it — the row the table
 /// marks, the position the step detail's header counts.
-/// Keying the selection by declaration index is a deliberate change of the Phase 3 rule,
-/// which keyed it by displayed row: the sort reshuffles the rows whenever failure shares tie
-/// and the interval p95s fluctuate, so a selection keyed by row jumped between steps on its
-/// own, a second at a time.
+/// The selection is deliberately keyed by declaration index rather than by displayed row:
+/// the sort reshuffles the rows whenever failure shares tie and the interval p95s fluctuate,
+/// so a selection keyed by row would jump between steps on its own, a second at a time.
 /// </para>
 /// <para>
 /// <b>Errors.</b> An "Errors" panel — the ticker — of the snapshot's distinct errors, most
@@ -3093,8 +3092,8 @@ internal static class LiveDashboardLayout
     }
 
     // The scenario's declared thresholds sorted onto the tiles and the latency chart: the one
-    // on each standard tile's metric (the last declared, should a metric repeat), the p99 one
-    // for the chart's limit line, and, in declaration order, those that add a tile of their own.
+    // on each standard tile's metric (the last declared, should a metric repeat), the p95 and p99
+    // ones for the chart's limit lines, and, in declaration order, those that add a tile of their own.
     private sealed class DeclaredThresholds
     {
         public LiveThreshold? RequestsPerSecond { get; }
