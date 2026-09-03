@@ -786,6 +786,16 @@ li:last-child { padding-bottom: 0; }
     font-weight: 500;
 }
 
+/* Iteration breakdown under the total duration in the test row */
+.duration-detail {
+    display: block;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: var(--space-1);
+    white-space: nowrap;
+}
+
 /* Status cell in the test row */
 .status-cell {
     display: inline-flex;

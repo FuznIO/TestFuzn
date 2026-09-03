@@ -35,11 +35,32 @@ internal class ConsumerManager
             new ParallelOptions { MaxDegreeOfParallelism = int.MaxValue, CancellationToken = cancellationToken },
             async (message, ct) =>
         {
-            await _executeScenarioMessageHandler.Execute(message);
+            var failed = false;
 
-            _testExecutionState.RemoveFromQueues(message);
+            try
+            {
+                await _executeScenarioMessageHandler.Execute(message);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Actions outside the steps (BeforeIteration, AfterIteration, cleanup actions and
+                // plugin iteration cleanup) are not guarded by ExecuteStepHandler. Letting the
+                // exception escape here tears down the consumer while the producers keep waiting
+                // for the queue to drain, which deadlocks the test run.
+                failed = true;
 
-            if (_testExecutionState.IsScenarioExecutionComplete(message.ScenarioName))
+                _testExecutionState.FirstException ??= ex;
+                _testExecutionState.TestResult.Status = TestStatus.Failed;
+
+                if (_testExecutionState.TestResult.TestType == TestType.Load)
+                    _testExecutionState.LoadCollectors[message.ScenarioName].SetStatus(TestStatus.Failed);
+            }
+            finally
+            {
+                _testExecutionState.RemoveFromQueues(message);
+            }
+
+            if (!failed && _testExecutionState.IsScenarioExecutionComplete(message.ScenarioName))
             {
                 if (_testExecutionState.TestResult.TestType == TestType.Load)
                 {

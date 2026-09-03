@@ -637,13 +637,13 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine(@$"<td class=""{cssClass}"">{(isOkRow ? "Ok" : "Failed")}</td>");
         b.AppendLine(@$"<td class=""{cssClass}"">{stats.RequestCount}</td>");
         b.AppendLine(@$"<td class=""{cssClass}"">{stats.RequestsPerSecond}</td>");
-        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMean.ToTestFuznResponseTime()}</td>");
-        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMedian.ToTestFuznResponseTime()}</td>");
-        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimePercentile75.ToTestFuznResponseTime()}</td>");
-        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimePercentile99.ToTestFuznResponseTime()}</td>");
-        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMin.ToTestFuznResponseTime()}</td>");
-        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMax.ToTestFuznResponseTime()}</td>");
-        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}</td>");
+        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMean.ToTestFuznResponseTimeHtml()}</td>");
+        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMedian.ToTestFuznResponseTimeHtml()}</td>");
+        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimePercentile75.ToTestFuznResponseTimeHtml()}</td>");
+        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimePercentile99.ToTestFuznResponseTimeHtml()}</td>");
+        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMin.ToTestFuznResponseTimeHtml()}</td>");
+        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMax.ToTestFuznResponseTimeHtml()}</td>");
+        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeStandardDeviation.ToTestFuznResponseTimeHtml()}</td>");
     }
 
     private void WriteChartScripts(LoadReportData loadReportData, StringBuilder b)
