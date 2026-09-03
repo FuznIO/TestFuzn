@@ -1,4 +1,4 @@
-using Fuzn.TestFuzn.Contracts;
+﻿using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Internals.Utils;
@@ -368,7 +368,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             b.AppendLine("</td>");
             b.AppendLine($@"<td><span class=""type-pill"">{E(typeText)}</span></td>");
             b.AppendLine($@"<td><span class=""status-cell"">{icon}<span class=""status-text"">{statusText}</span></span></td>");
-            b.AppendLine($"<td>{testResult.Value.TestRunDuration().ToTestFuznReadableString()}</td>");
+            b.AppendLine($"<td>{DurationCell(testResult.Value)}</td>");
             b.AppendLine("<td>");
             if (testResult.Value.Tags != null && testResult.Value.Tags.Count > 0)
             {
@@ -378,6 +378,23 @@ internal class StandardHtmlReportWriter : IStandardReport
             b.AppendLine("</td>");
             b.AppendLine("</tr>");
         }
+    }
+    
+    private static string DurationCell(TestResult sr)
+    {
+        var total = sr.TestRunDuration().ToTestFuznReadableString();
+
+        if (sr.TestType == TestType.Load || sr.TotalCount <= 1)
+            return total;
+
+        var counts = $"{sr.TotalCount} iterations";
+
+        if (sr.FailedCount > 0)
+            counts += $", {sr.FailedCount} failed";
+
+        var average = TimeSpan.FromTicks((long)sr.IterationResults.Average(i => i.Duration().Ticks));
+
+        return $@"{total}<span class=""duration-detail"">{counts} &middot; {average.ToTestFuznResponseTimeHtml()} avg</span>";
     }
 
     private void WriteTestDetails(StringBuilder b, TestResult sr, string icon, string? reportLink)
@@ -424,9 +441,9 @@ internal class StandardHtmlReportWriter : IStandardReport
 
         b.AppendLine("<table>");
         b.AppendLine("<tr><th>Phase</th><th>Duration</th><th>Started</th><th>Ended</th></tr>");
-        b.AppendLine($"<tr><td>Init</td><td>{sr.InitDuration().ToTestFuznResponseTime()}</td><td>{sr.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.InitEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
-        b.AppendLine($"<tr><td>Execution</td><td>{sr.ExecuteDuration().ToTestFuznResponseTime()}</td><td>{sr.ExecuteStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.ExecuteEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
-        b.AppendLine($"<tr><td>Cleanup</td><td>{sr.CleanupDuration().ToTestFuznResponseTime()}</td><td>{sr.CleanupStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
+        b.AppendLine($"<tr><td>Init</td><td>{sr.InitDuration().ToTestFuznResponseTimeHtml()}</td><td>{sr.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.InitEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
+        b.AppendLine($"<tr><td>Execution</td><td>{sr.ExecuteDuration().ToTestFuznResponseTimeHtml()}</td><td>{sr.ExecuteStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.ExecuteEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
+        b.AppendLine($"<tr><td>Cleanup</td><td>{sr.CleanupDuration().ToTestFuznResponseTimeHtml()}</td><td>{sr.CleanupStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
         b.AppendLine($"<tr><td>Total Test Run</td><td>{sr.TestRunDuration().ToTestFuznReadableString()}</td><td>{sr.StartTime().ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.EndTime().ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
         b.AppendLine("</table>");
 
@@ -467,7 +484,7 @@ internal class StandardHtmlReportWriter : IStandardReport
                 var itStatusText = iteration.Passed ? "Passed" : "Failed";
 
                 b.AppendLine("<tr>");
-                b.Append($@"<td>→ {itIcon} Iteration #{i}");
+                b.Append($@"<td>→ {itIcon} Iteration #{i + 1}");
                 var inputDataString = iteration.InputData?.ToString();
                 var inputDataText = string.IsNullOrEmpty(inputDataString) ? "(empty)" : E(inputDataString);
                 b.Append($" - Input: {inputDataText}");
@@ -475,7 +492,7 @@ internal class StandardHtmlReportWriter : IStandardReport
                 WriteIterationDetailsToggle(b, iteration);
                 b.AppendLine("</td>");
                 b.AppendLine($@"<td><span class=""status-cell"">{itIcon}<span class=""status-text"">{itStatusText}</span></span></td>");
-                b.AppendLine($"<td>{iteration.Duration().ToTestFuznResponseTime()}</td>");
+                b.AppendLine($"<td>{iteration.Duration().ToTestFuznResponseTimeHtml()}</td>");
                 b.AppendLine("</tr>");
 
                 foreach (var stepResult in iteration.StepResults)
@@ -495,10 +512,10 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine("</table>");
         b.AppendLine("<table>");
         b.AppendLine("<tr><th>Phase</th><th>Duration</th><th>Started</th><th>Ended</th></tr>");
-        b.AppendLine($"<tr><td>Init</td><td>{iteration.InitDuration().ToTestFuznResponseTime()}</td><td>{iteration.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.InitEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
-        b.AppendLine($"<tr><td>Execution</td><td>{iteration.ExecuteDuration().ToTestFuznResponseTime()}</td><td>{iteration.ExecuteStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.ExecuteEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
-        b.AppendLine($"<tr><td>Cleanup</td><td>{iteration.CleanupDuration().ToTestFuznResponseTime()}</td><td>{iteration.CleanupStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
-        b.AppendLine($"<tr><td>Total Iteration Run</td><td>{iteration.Duration().ToTestFuznResponseTime()}</td><td>{iteration.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine($"<tr><td>Init</td><td>{iteration.InitDuration().ToTestFuznResponseTimeHtml()}</td><td>{iteration.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.InitEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine($"<tr><td>Execution</td><td>{iteration.ExecuteDuration().ToTestFuznResponseTimeHtml()}</td><td>{iteration.ExecuteStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.ExecuteEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine($"<tr><td>Cleanup</td><td>{iteration.CleanupDuration().ToTestFuznResponseTimeHtml()}</td><td>{iteration.CleanupStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine($"<tr><td>Total Iteration Run</td><td>{iteration.Duration().ToTestFuznResponseTimeHtml()}</td><td>{iteration.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
         b.AppendLine("</table></details>");
     }
 
@@ -549,7 +566,7 @@ internal class StandardHtmlReportWriter : IStandardReport
 
         b.AppendLine("</td>");
         b.AppendLine($@"<td><span class=""status-cell"">{icon}<span class=""status-text"">{statusText}</span></span></td>");
-        b.AppendLine($"<td>{stepResult.Duration.ToTestFuznResponseTime()}</td>");
+        b.AppendLine($"<td>{stepResult.Duration.ToTestFuznResponseTimeHtml()}</td>");
         b.AppendLine("</tr>");
 
         if (stepResult.StepResults != null && stepResult.StepResults.Count > 0)
