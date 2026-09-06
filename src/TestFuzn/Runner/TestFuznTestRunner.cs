@@ -2,9 +2,9 @@
 using Fuzn.TestFuzn.Internals;
 using Spectre.Console;
 
-namespace Fuzn.TestFuzn.StandaloneRunner;
+namespace Fuzn.TestFuzn.Runner;
 
-internal class StandaloneTestRunner
+internal class TestFuznTestRunner
 {
     internal async Task RunTest<TStartup>(string[] args, ITestFrameworkAdapter testFramework, 
         DiscoveredTest testInfo)

@@ -74,9 +74,9 @@ Your test project should use `MSTest.Sdk`:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fuzn.TestFuzn" Version="0.7.3" />
-    <PackageReference Include="Fuzn.TestFuzn.Adapters.MSTest" Version="0.7.3" />
-    <PackageReference Include="Fuzn.TestFuzn.Plugins.Http" Version="0.7.3" />
+    <PackageReference Include="Fuzn.TestFuzn" Version="0.7.6" />
+    <PackageReference Include="Fuzn.TestFuzn.Adapters.MSTest" Version="0.7.6" />
+    <PackageReference Include="Fuzn.TestFuzn.Plugins.Http" Version="0.7.6" />
   </ItemGroup>
 
 </Project>
@@ -91,6 +91,8 @@ Your test project should use `MSTest.Sdk`:
 **JetBrains Rider** does not discover Testing Platform tests until you turn that support on, so your tests simply never appear in the Unit Tests window. Enable it once in **Settings | Build, Execution, Deployment | Unit Testing | Testing Platform** (`Ctrl+Alt+S`), using the option at the top of that page, then reload the solution.
 
 **Visual Studio**, **VS Code** (with the C# Dev Kit extension) and `dotnet test` need no extra setup.
+
+For live console output while a load test runs, see [Test Runners](test-runners.md).
 
 ---
 

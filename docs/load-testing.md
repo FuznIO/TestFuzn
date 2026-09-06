@@ -136,6 +136,10 @@ Available properties on `WarmupStats`:
 
 ---
 
+## Watching a Load Test Run
+
+Under the default MSTest runner there is no console output while a load test runs. Pass `--runner=testfuzn` to run it under TestFuzn's own runner instead, which prints live statistics as the test executes. See [Test Runners](test-runners.md).
+
 ## Simulations
 
 Define load patterns to simulate real-world traffic:

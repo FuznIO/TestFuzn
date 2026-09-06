@@ -7,8 +7,10 @@
 ## Table of Contents
 
 ### Getting Started
+- [Upgrading](../UPGRADING.md) — Breaking changes and the steps to move across them
 - [Getting Started](getting-started.md) — Installation, project setup, quick start
 - [MSTest Compatibility](mstest.md) — Attribute mapping, lifecycle, what's supported
+- [Test Runners](test-runners.md) — MSTest vs TestFuzn runner, `--runner`, live console output
 
 ### Writing Tests
 - [Scenarios](scenarios.md) — Standard vs load tests, `[Test]` attribute, execution flow

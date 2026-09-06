@@ -6,6 +6,7 @@ public class ClassLifecycleTests : Test, IBeforeClass, IAfterClass, IBeforeTest
     internal static int BeforeClassCallCount = 0;
     internal static bool AfterClassCalled = false;
     internal static bool BeforeClassCalledBeforeBeforeTest = false;
+    internal static bool AnyTestExecuted = false;
     private bool _beforeTestCalled = false;
 
     public Task BeforeClass(Context context)
@@ -23,6 +24,7 @@ public class ClassLifecycleTests : Test, IBeforeClass, IAfterClass, IBeforeTest
     public Task BeforeTest(Context context)
     {
         _beforeTestCalled = true;
+        AnyTestExecuted = true;
 
         if (BeforeClassCallCount > 0)
             BeforeClassCalledBeforeBeforeTest = true;

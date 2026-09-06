@@ -87,6 +87,8 @@ jobs:
         name: Release v${{ steps.get-version.outputs.version }}
         tag_name: v${{ steps.get-version.outputs.version }}
         generate_release_notes: true
+        body: |
+          Upgrading? See [UPGRADING.md](https://github.com/FuznIO/TestFuzn/blob/main/UPGRADING.md) for the steps across each breaking change.
         files: |
           src/TestFuzn/bin/Release/*.nupkg
           src/TestFuzn.Plugins.Playwright/bin/Release/*.nupkg

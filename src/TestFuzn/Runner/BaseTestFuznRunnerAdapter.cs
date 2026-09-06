@@ -5,13 +5,13 @@ using Fuzn.TestFuzn.Contracts.Results.Load;
 using System.Reflection;
 using Fuzn.TestFuzn.Contracts.Adapters;
 
-namespace Fuzn.TestFuzn.StandaloneRunner;
+namespace Fuzn.TestFuzn.Runner;
 
-internal abstract class BaseStandaloneRunnerAdapter : ITestFrameworkAdapter, IDisposable
+internal abstract class BaseTestFuznRunnerAdapter : ITestFrameworkAdapter, IDisposable
 {
     private readonly CancellationTokenSource _cts = new();
 
-    protected BaseStandaloneRunnerAdapter()
+    protected BaseTestFuznRunnerAdapter()
     {
         Console.CancelKeyPress += (_, e) =>
         {

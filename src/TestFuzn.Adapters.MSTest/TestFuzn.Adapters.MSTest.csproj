@@ -9,6 +9,7 @@
     <Description>MSTest plugin for TestFuzn</Description>
     <PackageTags>testing;unit-testing;e2e;load-testing;dotnet;TestFuzn;mstest</PackageTags>
     <Authors>Fuzn</Authors>
+    <IsTestingPlatformApplication>false</IsTestingPlatformApplication>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Testing.Platform" PrivateAssets="all" />
     <PackageReference Include="MSTest.TestFramework" />
   </ItemGroup>
 

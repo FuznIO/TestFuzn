@@ -5,6 +5,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <EnableMSTestRunner>true</EnableMSTestRunner>
+    <GenerateTestingPlatformEntryPoint>false</GenerateTestingPlatformEntryPoint>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
   </PropertyGroup>
