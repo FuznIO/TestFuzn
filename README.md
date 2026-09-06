@@ -1,8 +1,9 @@
 # TestFuzn
 **TestFuzn** (pronounced "testfusion") is a unified testing framework that brings together **unit tests**, **end-to-end tests**, and **load tests** in a single, streamlined experience. It’s designed to bridge the gap between developers and testers by offering clean, readable tests, reports and a consistent testing approach.
 
-🚧 **Beta**  
-> TestFuzn is currently in **beta**. Breaking changes may occur until a stable release.
+🚧 **Pre-1.0**  
+> TestFuzn is on a **0.x** version. Breaking changes may occur until 1.0.
+> Upgrading? See [UPGRADING.md](UPGRADING.md) for the steps across each breaking change.
 
 📚 **Documentation:**  
 👉 https://github.com/FuznIO/TestFuzn/blob/main/docs/README.md

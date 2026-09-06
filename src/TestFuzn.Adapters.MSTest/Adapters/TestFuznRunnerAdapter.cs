@@ -1,9 +1,9 @@
-﻿using Fuzn.TestFuzn.StandaloneRunner;
+﻿using Fuzn.TestFuzn.Runner;
 using System.Reflection;
 
 namespace Fuzn.TestFuzn.Adapters;
 
-internal class StandaloneRunnerAdapter : BaseStandaloneRunnerAdapter
+internal class TestFuznRunnerAdapter : BaseTestFuznRunnerAdapter
 {
     public override async Task ExecuteTestMethod(ITest test, MethodInfo methodInfo)
     {

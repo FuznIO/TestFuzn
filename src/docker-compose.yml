@@ -33,9 +33,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./TestFuzn.Tests.Runner/provisioning/dashboards.yml:/etc/grafana/provisioning/dashboards/main.yaml
-      - ./TestFuzn.Tests.Runner/provisioning/dashboards:/var/lib/grafana/dashboards
-      - ./TestFuzn.Tests.Runner/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ../examples/influxdb-grafana/provisioning/dashboards.yml:/etc/grafana/provisioning/dashboards/main.yaml
+      - ../examples/influxdb-grafana/provisioning/dashboards:/var/lib/grafana/dashboards
+      - ../examples/influxdb-grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin

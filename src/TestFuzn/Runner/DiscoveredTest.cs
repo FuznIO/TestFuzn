@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace Fuzn.TestFuzn.StandaloneRunner;
+namespace Fuzn.TestFuzn.Runner;
 
 internal class DiscoveredTest
 {

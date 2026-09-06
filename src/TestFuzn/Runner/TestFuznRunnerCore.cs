@@ -2,9 +2,9 @@
 using System.Reflection;
 using System.Text;
 
-namespace Fuzn.TestFuzn.StandaloneRunner;
+namespace Fuzn.TestFuzn.Runner;
 
-internal class StandaloneRunnerCore
+internal class TestFuznRunnerCore
 {
     public async Task Run<TStartup>(Assembly testAssembly, 
         string[] args, Func<ITestFrameworkAdapter> testFrameworkInstanceCreator)
@@ -37,7 +37,7 @@ internal class StandaloneRunnerCore
         var adapter = testFrameworkInstanceCreator();
         try
         {
-            await new StandaloneTestRunner().RunTest<TStartup>(args, adapter, testInfo);
+            await new TestFuznTestRunner().RunTest<TStartup>(args, adapter, testInfo);
         }
         finally
         {

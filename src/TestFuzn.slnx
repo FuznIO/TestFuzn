@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/Solution Items/">
     <File Path="../.gitignore" />
     <File Path="../AGENTS.md" />
@@ -6,6 +6,8 @@
     <File Path="Directory.Build.props" />
     <File Path="../.github/workflows/publish-package.yml" />
     <File Path="../README.md" />
+    <File Path="../UPGRADING.md" />
+    <File Path="Start-TestServices.ps1" />
   </Folder>
   <Folder Name="/Docs/">
     <File Path="../docs/api-reference.md" />
@@ -24,8 +26,10 @@
     <File Path="../docs/scenarios.md" />
     <File Path="../docs/shared-data.md" />
     <File Path="../docs/shared-steps.md" />
+    <File Path="../docs/test-runners.md" />
     <File Path="../docs/steps.md" />
     <File Path="../docs/test-reports.md" />
+    <File Path="../UPGRADING.md" />
   </Folder>
   <Folder Name="/Sample/">
     <Project Path="SampleApp.Tests/SampleApp.Tests.csproj" />
@@ -40,6 +44,5 @@
   <Project Path="TestFuzn.Tests/TestFuzn.Tests.csproj" />
   <Project Path="TestFuzn.Tests.Attributes/TestFuzn.Tests.Attributes.csproj" />
   <Project Path="TestFuzn.Tests.DefaultHttpClient/TestFuzn.Tests.DefaultHttpClient.csproj" />
-  <Project Path="TestFuzn.Tests.Runner/TestFuzn.Tests.Runner.csproj" />
   <Project Path="TestWebApp/TestWebApp.csproj" />
 </Solution>
