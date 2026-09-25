@@ -23,6 +23,8 @@
   Write all your tests in C#. Leverages the power of .NET to keep things fast and flexible.
 - ✅ **MSTest compatible**  
   Built-in support for the widely used MSTest framework — reuse what you already know and love.
+- 🖥️ **Live load test view**  
+  Run load tests with `--runner=testfuzn` and watch the phases, per-step stats and errors live in the terminal, with the same sections and names as the HTML report.
 
 ## 🚀 A Quick Look
 
@@ -65,8 +67,26 @@ Now make it a load test — same scenario, same steps, two extra lines:
 
 ```csharp
         await Scenario<Product>()
-            .Step("Create a product", async (context) => { /* unchanged */ })
-            .Step("Read the product back", async (context) => { /* unchanged */ })
+            .Step("Create a product", async (context) =>
+            {
+                context.Model.Id = Guid.NewGuid();
+                context.Model.Name = "Keyboard";
+                context.Model.Price = 49;
+
+                var response = await context.CreateHttpRequest("https://localhost:5001/api/products")
+                    .WithContent(context.Model)
+                    .Post();
+
+                Assert.IsTrue(response.IsSuccessful);
+            })
+            .Step("Read the product back", async (context) =>
+            {
+                var response = await context.CreateHttpRequest($"https://localhost:5001/api/products/{context.Model.Id}")
+                    .Get<Product>();
+
+                Assert.IsTrue(response.IsSuccessful);
+                Assert.AreEqual("Keyboard", response.Data!.Name);
+            })
 
             // 50 iterations per second for 30 seconds
             .Load().Simulations((context, simulations) =>

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Contracts.Adapters;
@@ -12,23 +12,6 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
 
     public bool SupportsRealTimeConsoleOutput => false;
     public CancellationToken CancellationToken => _testContext.CancellationToken;
-
-    public ConsoleColor ForegroundColor
-    {
-        get;
-        set;
-    }
-    public ConsoleColor BackgroundColor 
-    {
-        get;
-        set;
-    }
-
-    public int WindowWidth
-    {
-        get;
-        set;
-    }
 
     public async Task ExecuteTestMethod(ITest test, MethodInfo methodInfo)
     {
@@ -53,15 +36,6 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
             // Handle any other exceptions
             throw new Exception("An error occurred while executing the test method.", ex);
         }
-    }
-
-    public CursorPosition GetCursorPosition()
-    {
-        return new CursorPosition(-1, -1);
-    }
-
-    public void SetCursorPosition(int left, int top)
-    {
     }
 
     public void Write(string message, params object?[] args)
@@ -194,7 +168,7 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
         _testContext.WriteLine(BorderLine());
     }
 
-    public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults)
+    public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults, string reportPath, string executionEnvironment, string targetEnvironment)
     {
         throw new NotImplementedException("Should not happen");
     }

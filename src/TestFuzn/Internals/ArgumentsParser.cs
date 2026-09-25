@@ -1,7 +1,11 @@
-﻿namespace Fuzn.TestFuzn.Internals;
+namespace Fuzn.TestFuzn.Internals;
 
 internal class ArgumentsParser
 {
+    public const string FlagValue = "true";
+
+    private const string ArgumentPrefix = "--";
+
     private readonly IEnvironmentWrapper _environmentWrapper;
 
     public ArgumentsParser(IEnvironmentWrapper environmentWrapper)
@@ -12,20 +16,27 @@ internal class ArgumentsParser
     public Dictionary<string, string> Parse(string[] args)
     {
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-    
+
         if (args == null || args.Length == 0)
             return result;
 
         foreach (var arg in args)
         {
-            if (!arg.StartsWith("--"))
+            if (!arg.StartsWith(ArgumentPrefix))
                 continue;
 
             var parts = arg.Split('=', 2);
             if (parts.Length != 2)
-                continue;
+            {
+                var flag = parts[0].Substring(ArgumentPrefix.Length);
+                if (flag.Length == 0)
+                    continue;
 
-            var key = parts[0].Substring(2);
+                result[flag] = FlagValue;
+                continue;
+            }
+
+            var key = parts[0].Substring(ArgumentPrefix.Length);
             var value = parts[1].Trim().Trim('\'', '"');
             result[key] = value;
         }
@@ -33,7 +44,7 @@ internal class ArgumentsParser
         return result;
     }
 
-    public string GetValueFromArgsOrEnvironmentVariable(Dictionary<string, string> parsedArgs, string argsKey, string envKey)
+    public string GetValueFromArgsOrEnvironmentVariable(Dictionary<string, string>? parsedArgs, string argsKey, string envKey)
     {
         // First try to get from command arguments
         if (parsedArgs != null && parsedArgs.TryGetValue(argsKey, out var value))

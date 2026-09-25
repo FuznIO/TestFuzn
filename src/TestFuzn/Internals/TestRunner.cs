@@ -88,6 +88,7 @@ internal class TestRunner
         }
         finally
         {
+            await _consoleManager.StopRealtimeConsoleOutput();
             _testExecutionState.Dispose();
         }
     }

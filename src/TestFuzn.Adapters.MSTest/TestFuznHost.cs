@@ -38,8 +38,7 @@ public static class TestFuznHost
 
         if (string.Equals(runner, TestFuznRunner, StringComparison.OrdinalIgnoreCase))
         {
-            await new TestFuznRunnerCore().Run<TStartup>(testAssembly, remaining, () => new TestFuznRunnerAdapter());
-            return 0;
+            return await new TestFuznRunnerCore().Run<TStartup>(testAssembly, remaining, () => new TestFuznRunnerAdapter());
         }
 
         if (!string.Equals(runner, MsTestRunner, StringComparison.OrdinalIgnoreCase))

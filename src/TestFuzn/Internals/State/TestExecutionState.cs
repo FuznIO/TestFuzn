@@ -74,6 +74,17 @@ internal class TestExecutionState : IDisposable
         }
     }
 
+    public Task RequestStop()
+    {
+        if (_cancellationTokenSource == null)
+            throw new InvalidOperationException("The test execution state has not been initialized; there is no run to stop.");
+
+        if (_cancellationTokenSource.IsCancellationRequested)
+            return Task.CompletedTask;
+
+        return _cancellationTokenSource.CancelAsync();
+    }
+
     public void EnqueueScenarioExecution(ExecuteScenarioMessage message)
     {
         MessageQueue.Add(message);
