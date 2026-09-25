@@ -4,7 +4,7 @@ namespace Fuzn.TestFuzn.Runner;
 
 internal class DiscoverTests
 {
-    public List<DiscoveredTest> GetTests(Assembly assembly)
+    public virtual List<DiscoveredTest> GetTests(Assembly assembly)
     {
         var scenarioTests = new List<DiscoveredTest>();
 
@@ -25,7 +25,7 @@ internal class DiscoverTests
 
                 if (!hasTestAttribute)
                     continue;
-                
+
                 var test = new DiscoveredTest();
                 test.Name = type.FullName + "." +  method.Name;
                 test.Class = type;

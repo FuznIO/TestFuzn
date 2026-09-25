@@ -29,6 +29,7 @@ Tests reach `TestWebApp` and `SampleApp.WebApp` over HTTP; both run in Docker. S
 - Thread safety matters in load paths — no shared mutable state between iterations. Use `Scenario<TModel>` or `SetSharedData`/`GetSharedData`, never a captured local.
 - Keep tests portable across test framework adapters (the MSTest runner and the TestFuzn runner). Use TestFuzn's own `[Test]` and `Context`, not MSTest-specific APIs such as `TestContext`.
 - Use `Context.Logger`, not `Console.WriteLine`.
+- Framework console output goes through `ITestFrameworkAdapter` or the terminal engine's `ITerminalWriter`/`ILiveViewHost` seams (`src/TestFuzn/Internals/Terminal/`), never `System.Console` directly.
 - Use MSTest v4 assertions — specific ones (`Assert.IsGreaterThan`, `Assert.HasCount`, `Assert.ThrowsExactly<T>`) over `Assert.IsTrue` with an expression, and over `StringAssert` / `[ExpectedException]`.
 - Prefix tests expected to throw or fail with `ShouldFail_`.
 - Use explicit `if` for null checks — not `?.`, `??` or `??=`.

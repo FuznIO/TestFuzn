@@ -1,250 +1,116 @@
-﻿using Spectre.Console;
-using System.Text;
-using Fuzn.TestFuzn.ConsoleOutput;
-using Fuzn.TestFuzn.Contracts.Results.Load;
+using System.Globalization;
 using System.Reflection;
+using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Internals.Terminal;
 
 namespace Fuzn.TestFuzn.Runner;
 
 internal abstract class BaseTestFuznRunnerAdapter : ITestFrameworkAdapter, IDisposable
 {
+    internal const int DefaultWidth = 120;
+
+    internal const int MinimumWidth = 40;
+
     private readonly CancellationTokenSource _cts = new();
+    private readonly ILiveViewHost _liveViewHost;
+    private readonly ConsoleCancelEventHandler _cancelKeyPressHandler;
+    private TerminalCapabilities? _capabilities;
+    private ITerminalWriter? _terminalWriter;
+    private bool _isDisposed;
 
     protected BaseTestFuznRunnerAdapter()
+        : this(new ConsoleLiveViewHost())
     {
-        Console.CancelKeyPress += (_, e) =>
+    }
+
+    protected BaseTestFuznRunnerAdapter(ILiveViewHost liveViewHost)
+    {
+        if (liveViewHost == null)
+            throw new ArgumentNullException(nameof(liveViewHost), "Live view host cannot be null.");
+
+        _liveViewHost = liveViewHost;
+
+        _cancelKeyPressHandler = (_, e) =>
         {
             e.Cancel = true;
             _cts.Cancel();
         };
+        Console.CancelKeyPress += _cancelKeyPressHandler;
     }
 
     public bool SupportsRealTimeConsoleOutput => true;
     public CancellationToken CancellationToken => _cts.Token;
 
-    public ConsoleColor ForegroundColor
-    {
-        get => Console.ForegroundColor;
-        set => Console.ForegroundColor = value;
-    }
-    public ConsoleColor BackgroundColor
-    {
-        get => Console.BackgroundColor;
-        set => Console.BackgroundColor = value;
-    }
-
-    public int WindowWidth => Console.WindowWidth;
-
     public abstract Task ExecuteTestMethod(ITest test, MethodInfo methodInfo);
+
+    public void Write(string message, params object?[] args)
+    {
+        var text = message;
+        if (text == null)
+            text = string.Empty;
+
+        if (args != null && args.Length > 0)
+            text = string.Format(CultureInfo.CurrentCulture, text, args);
+
+        TerminalWriter.Write(text + Environment.NewLine);
+    }
+
+    public void WriteMarkup(string text)
+    {
+        TerminalWriter.Write(MarkupRenderer.Render(text, ColorMode) + Environment.NewLine);
+    }
+
+    public void WriteTable(TableData table)
+    {
+        if (table == null)
+            throw new ArgumentNullException(nameof(table), "Table cannot be null.");
+
+        var columns = new List<TableColumn>();
+        foreach (var column in table.Columns)
+            columns.Add(new TableColumn(TextOrEmpty(column)));
+
+        var rows = new List<IReadOnlyList<string?>>();
+        foreach (var row in table.Rows)
+            rows.Add(row);
+
+        var width = MeasureWidth();
+        var panelWidth = Math.Min(width, TableWidget.MeasureNaturalWidth(columns, rows) + PanelWidget.ContentOverhead);
+        var content = TableWidget.Render(columns, rows, panelWidth - PanelWidget.ContentOverhead, ColorMode);
+        WriteLines(PanelWidget.Render(null, content, panelWidth, ColorMode));
+    }
+
+    public void WritePanel(string[] messages, string header)
+    {
+        if (messages == null)
+            throw new ArgumentNullException(nameof(messages), "Messages cannot be null.");
+
+        var contentWidth = 0;
+        foreach (var message in messages)
+            contentWidth = Math.Max(contentWidth, MarkupText.Measure(message));
+
+        var naturalWidth = Math.Max(contentWidth + PanelWidget.ContentOverhead, MarkupText.Measure(header) + 5);
+        var panelWidth = Math.Min(MeasureWidth(), naturalWidth);
+        WriteLines(PanelWidget.Render(header, messages, panelWidth, ColorMode));
+    }
 
     public void WriteAdvancedTable(AdvancedTable table)
     {
-        int colCount = table.ColumnCount;
-        int[] colWidths = new int[colCount];
-
-        foreach (var row in table.Rows)
-        {
-            if (row.IsDivider) continue;
-            int col = 0;
-            foreach (var cell in row.Cells)
-            {
-                int span = cell.ColSpan;
-                int contentWidth = cell.GetContentWidth();
-                if (span == 1)
-                {
-                    if (contentWidth > colWidths[col])
-                        colWidths[col] = contentWidth;
-                }
-                else
-                {
-                    int perCol = (contentWidth + span - 1) / span;
-                    for (int i = 0; i < span; i++)
-                    {
-                        if (perCol > colWidths[col + i])
-                            colWidths[col + i] = perCol;
-                    }
-                }
-                col += span;
-            }
-        }
-
-        for (int i = 0; i < colWidths.Length; i++)
-            colWidths[i] += 4;
-
-        string BorderLine() => "+" + string.Join("-", colWidths.Select(w => new string('-', w))) + "+";
-        AnsiConsole.WriteLine(BorderLine());
-
-        foreach (var row in table.Rows)
-        {
-            if (row.IsDivider)
-            {
-                AnsiConsole.WriteLine(BorderLine());
-                continue;
-            }
-
-            var line = "|";
-            int col = 0;
-            foreach (var cell in row.Cells)
-            {
-                int span = cell.ColSpan;
-                int spanWidth = colWidths.Skip(col).Take(span).Sum() + (span - 1);
-                line += cell.Render(spanWidth) + "|";
-                col += span;
-            }
-            AnsiConsole.WriteLine(line);
-        }
-        AnsiConsole.WriteLine(BorderLine());
+        WriteLines(AdvancedTableLayout.Render(table, MeasureWidth(), ColorMode));
     }
 
-    public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults)
+    public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults, string reportPath, string executionEnvironment, string targetEnvironment)
     {
-        //AnsiConsole.Clear();
-        foreach (var scenario in scenarioLoadResults)
-        {
-            // ── Header Panel ──────────────────────────────────────────────────────────────
-            var headerTable = new Table().Border(TableBorder.Rounded).Expand();
-            headerTable.AddColumn(new TableColumn("[yellow]Scenario[/]").Centered());
-            headerTable.AddColumn(new TableColumn("[yellow]Execution Time[/]").Centered());
-            headerTable.AddColumn(new TableColumn("[yellow]Test Run Time[/]").Centered());
-            headerTable.AddColumn(new TableColumn("[yellow]Status[/]").Centered());
+        if (scenarioLoadResults == null)
+            throw new ArgumentNullException(nameof(scenarioLoadResults), "Scenario load results cannot be null.");
 
-            headerTable.AddRow(
-                $"{scenario.Key.Name}",
-                $"{scenario.Value.TotalExecutionDuration.ToTestFuznFormattedDuration()}",
-                $"{(scenario.Value.TestRunTotalDuration()).ToTestFuznFormattedDuration()}",
-                $"{(scenario.Value.Status == TestStatus.Passed ? "[green]Passed[/]" : "[red]Failed[/]")}"
-            );
+        var width = MeasureWidth();
+        if (width < LoadSummaryLayout.MeasureMinimumWidth(scenarioLoadResults))
+            width = DefaultWidth;
 
-            AnsiConsole
-                .Write(new Panel(headerTable)
-                    .Header("[bold white on blue] Load Test Summary [/]")
-                    .Expand());
-
-            // ── Load Simulations ─────────────────────────────────────────────────────────
-            var loads = new Table { Border = TableBorder.Rounded, Expand = true };
-            loads.AddColumn("Type");
-            foreach (var simulations in scenario.Key.SimulationsInternal)
-                loads.AddRow($"{simulations.GetDescription()}");
-
-            AnsiConsole
-                .Write(new Panel(loads)
-                    .Header("[bold white on blue] Load Simulations [/]")
-                    .Expand());
-
-            // ── Global Metrics ───────────────────────────────────────────────────────────
-            var reqTable = CreateRequestsTable(scenario.Value.RequestCount, scenario.Value.Ok, scenario.Value.Failed);
-            var respTable = CreateResponseTimeTable(scenario.Value.Ok, scenario.Value.Failed);
-
-            var summaryGrid = new Grid().AddColumn().AddColumn();
-            summaryGrid.AddRow(reqTable, respTable);
-
-            AnsiConsole.Write(new Panel(summaryGrid)
-                .Header("[bold]Global Metrics[/]")
-                .Border(BoxBorder.Rounded)
-                .Expand());
-
-            // ── Per-Step Metrics ────────────────────────────────────────────────────────
-            foreach (var step in scenario.Value.Steps)
-            {
-                reqTable = CreateRequestsTable(step.Value.RequestCount, step.Value.Ok, step.Value.Failed);
-                var stepGrid = new Grid().AddColumn().AddColumn();
-                var responseTimeTable = CreateResponseTimeTable(step.Value.Ok, step.Value.Failed);
-
-                stepGrid.AddRow(reqTable, responseTimeTable);
-
-                AnsiConsole.Write(new Panel(stepGrid)
-                    .Header($"[bold white on darkgreen] Step {step.Key} Details [/]")
-                    .Border(BoxBorder.Rounded)
-                    .Expand());
-            }
-
-            // Errors
-            var errorSection = new StringBuilder();
-            foreach (var step in scenario.Value.Steps)
-            {
-                if (step.Value.Errors?.Count > 0)
-                {
-                    errorSection.AppendLine($"[red]{step.Key}:[/]");
-                    foreach (var error in step.Value.Errors)
-                        errorSection.AppendLine($"  [red]{error.Key} (Count: {error.Value.Count})[/]");
-                }
-            }
-            if (errorSection.Length > 0)
-            {
-                AnsiConsole
-                    .Write(new Panel(new Markup(errorSection.ToString()))
-                        .Header("[bold red] Errors by Step [/]")
-                        .Expand());
-            }
-        }
-    }
-
-    private Table CreateResponseTimeTable(string min, string mean, string max, string stdDev, string median, string p75, string p95, string p99)
-    {
-        var table = new Table { Border = TableBorder.Minimal };
-        table.Title("[blue]Response Times[/]");
-        table.AddColumn("[u]Min[/]");
-        table.AddColumn("[u]Mean[/]");
-        table.AddColumn("[u]Max[/]");
-        table.AddColumn("[u]StdDev[/]");
-        table.AddColumn("[u]Median[/]");
-        table.AddColumn("[u]P75[/]");
-        table.AddColumn("[u]P95[/]");
-        table.AddColumn("[u]P99[/]");
-        table.AddRow(min, mean, max, stdDev, median, p75, p95, p99);
-        return table;
-    }
-
-    private Table CreateResponseTimeTable(Stats ok, Stats failed)
-    {
-        var table = new Table { Border = TableBorder.Minimal };
-        table.Title("[blue]Response Times[/]");
-        table.AddColumn("[u]Metric[/]");
-        table.AddColumn("[u]Min[/]");
-        table.AddColumn("[u]Mean[/]");
-        table.AddColumn("[u]Max[/]");
-        table.AddColumn("[u]StdDev[/]");
-        table.AddColumn("[u]Median[/]");
-        table.AddColumn("[u]P75[/]");
-        table.AddColumn("[u]P95[/]");
-        table.AddColumn("[u]P99[/]");
-        table.AddRow(
-            $"[green]Ok[/]",
-            $"[green]{ok.ResponseTimeMin.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeMean.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeMax.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimeMedian.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimePercentile75.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimePercentile95.ToTestFuznResponseTime()}[/]",
-            $"[green]{ok.ResponseTimePercentile99.ToTestFuznResponseTime()}[/]"
-        );
-        table.AddRow(
-            $"[red]Failed[/]",
-            $"[red]{failed.ResponseTimeMin.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeMean.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeMax.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeStandardDeviation.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimeMedian.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimePercentile75.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimePercentile95.ToTestFuznResponseTime()}[/]",
-            $"[red]{failed.ResponseTimePercentile99.ToTestFuznResponseTime()}[/]"
-        );
-        return table;
-    }
-
-    private Table CreateRequestsTable(int totalRequests, Stats ok, Stats failed)
-    {
-        var table = new Table { Border = TableBorder.Minimal };
-        table.Title("[green]Requests[/]");
-        table.AddColumn("[u]Metric[/]");
-        table.AddColumn("[u]Count[/]");
-        table.AddColumn("[u]RPS[/]");
-        table.AddRow("Total", $"{totalRequests}", "");
-        table.AddRow("[green]OK[/]", $"{ok.RequestCount}", $"{ok.RequestsPerSecond}");
-        table.AddRow("[red]Failed[/]", $"{failed.RequestCount}", $"{failed.RequestsPerSecond}");
-        return table;
+        var header = new LoadViewHeader { ExecutionEnvironment = executionEnvironment, TargetEnvironment = targetEnvironment };
+        WriteLines(LoadSummaryLayout.Render(scenarioLoadResults, width, ColorMode, reportPath, header));
     }
 
     public string TestResultsDirectory
@@ -259,47 +125,6 @@ internal abstract class BaseTestFuznRunnerAdapter : ITestFrameworkAdapter, IDisp
         }
     }
 
-    public CursorPosition GetCursorPosition()
-    {
-        var cursorPosition = Console.GetCursorPosition();
-
-        return new CursorPosition(cursorPosition.Left, cursorPosition.Top);
-    }
-
-    public void SetCursorPosition(int left, int top)
-    {
-        Console.SetCursorPosition(left, top);
-    }
-
-    public void Write(string message, params object?[] args)
-    {
-        Console.WriteLine(message, args);
-    }
-
-    public void WriteTable(TableData table)
-    {
-        var t = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderColor(Color.SeaGreen1);
-        foreach (var col in table.Columns)
-            t.AddColumn(new TableColumn(col));
-        foreach (var row in table.Rows)
-            t.AddRow(row.ToArray());
-        AnsiConsole.Write(t);
-    }
-
-    public void WriteMarkup(string text)
-    {
-        AnsiConsole.MarkupLine(text);
-    }
-
-    public void WritePanel(string[] messages, string header)
-    {
-        AnsiConsole.Write(new Panel(string.Join(Environment.NewLine, messages))
-            .Border(BoxBorder.Rounded)
-            .Header(header, Justify.Center));
-    }
-
     public void SetCurrentTestAsSkipped()
     {
         throw new ScenarioRunModeIgnoreException();
@@ -312,6 +137,67 @@ internal abstract class BaseTestFuznRunnerAdapter : ITestFrameworkAdapter, IDisp
 
     public void Dispose()
     {
+        if (_isDisposed)
+            return;
+
+        _isDisposed = true;
+        Console.CancelKeyPress -= _cancelKeyPressHandler;
         _cts.Dispose();
+    }
+
+    private TerminalCapabilities Capabilities
+    {
+        get
+        {
+            if (_capabilities == null)
+                _capabilities = _liveViewHost.DetectCapabilities();
+
+            return _capabilities;
+        }
+    }
+
+    private ITerminalWriter TerminalWriter
+    {
+        get
+        {
+            if (_terminalWriter == null)
+            {
+                var terminalWriter = _liveViewHost.CreateTerminalWriter();
+                if (terminalWriter == null)
+                    throw new InvalidOperationException("The live view host returned no terminal writer.");
+
+                _terminalWriter = terminalWriter;
+            }
+
+            return _terminalWriter;
+        }
+    }
+
+    private ColorMode ColorMode => Capabilities.ColorMode;
+
+    private int MeasureWidth()
+    {
+        if (!Capabilities.SupportsAnsi)
+            return DefaultWidth;
+
+        var width = TerminalWriter.WindowWidth;
+        if (width < MinimumWidth)
+            return DefaultWidth;
+
+        return width;
+    }
+
+    private void WriteLines(IReadOnlyList<RenderedLine> lines)
+    {
+        foreach (var line in lines)
+            TerminalWriter.Write(line.Text + Environment.NewLine);
+    }
+
+    private static string TextOrEmpty(string? text)
+    {
+        if (text == null)
+            return string.Empty;
+
+        return text;
     }
 }

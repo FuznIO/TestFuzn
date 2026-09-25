@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Contracts.Results.Load;
@@ -11,7 +11,6 @@ namespace Fuzn.TestFuzn.Internals.ConsoleOutput;
 internal class ConsoleWriter
 {
     private TestExecutionState _testExecutionState = null!;
-    private CursorPosition? _cursorPosition;
 
     public void WriteSummary(TestExecutionState testExecutionState)
     {
@@ -159,11 +158,45 @@ internal class ConsoleWriter
 
     private void WriteReportLink(ITestFrameworkAdapter testFramework)
     {
-        var reportPath = Path.Combine(_testExecutionState.TestSession.TestsResultsDirectory, "TestReport.html");
-        var fullPath = Path.GetFullPath(reportPath);
         testFramework.Write(Environment.NewLine);
-        testFramework.Write($"Report: {fullPath}");
+        testFramework.Write(ReportLinkText());
         testFramework.Write(Environment.NewLine);
+    }
+
+    private string ReportLinkText()
+    {
+        return $"Report: {ReportPath()}";
+    }
+
+    private string ExecutionEnvironment()
+    {
+        var configuration = _testExecutionState.TestSession.Configuration;
+        if (configuration == null)
+            return string.Empty;
+
+        return TextOrEmpty(configuration.ExecutionEnvironment);
+    }
+
+    private string TargetEnvironment()
+    {
+        var configuration = _testExecutionState.TestSession.Configuration;
+        if (configuration == null)
+            return string.Empty;
+
+        return TextOrEmpty(configuration.TargetEnvironment);
+    }
+
+    private static string TextOrEmpty(string? value)
+    {
+        if (value == null)
+            return string.Empty;
+
+        return value;
+    }
+
+    private string ReportPath()
+    {
+        return Path.GetFullPath(Path.Combine(_testExecutionState.TestSession.TestsResultsDirectory, "TestReport.html"));
     }
 
     private static void AddCommentsAndAttachmentsRows(AdvancedTable table, StepStandardResult stepResult, string indent)
@@ -201,9 +234,6 @@ internal class ConsoleWriter
     {
         var testFramework = _testExecutionState.TestFramework;
 
-        if (_cursorPosition == null)
-            _cursorPosition = testFramework.GetCursorPosition();
-
         if (testFramework.SupportsRealTimeConsoleOutput)
         {
             var loadtestResults = new Dictionary<Scenario, ScenarioLoadResult>();
@@ -213,7 +243,7 @@ internal class ConsoleWriter
                 loadtestResults.TryAdd(scenario, _testExecutionState.LoadCollectors[scenario.Name].GetCurrentResult());
             }
             
-            testFramework.WriteSummary(loadtestResults.First().Value.StartTime(), _testExecutionState.TestRunDuration(), loadtestResults);
+            testFramework.WriteSummary(loadtestResults.First().Value.StartTime(), _testExecutionState.TestRunDuration(), loadtestResults, ReportPath(), ExecutionEnvironment(), TargetEnvironment());
             return;
         }
 
@@ -223,9 +253,17 @@ internal class ConsoleWriter
         if (_testExecutionState.IsConsumingCompleted || _testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
         {
             if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
-                testFramework.WriteMarkup($"[red]Status: Stopped, reason: {_testExecutionState.ExecutionStoppedReason.Message}[/]\r\n");
+            {
+                var stoppedReason = _testExecutionState.ExecutionStoppedReason;
+                if (stoppedReason == null)
+                    testFramework.WriteMarkup("[red]Status: Stopped[/]\r\n");
+                else
+                    testFramework.WriteMarkup($"[red]Status: Stopped, reason: {stoppedReason.Message}[/]\r\n");
+            }
             else
+            {
                 testFramework.WriteMarkup("[green]Status: Completed successfully.[/]\r\n");
+            }
         }
 
         foreach (var scenario in _testExecutionState.Scenarios)

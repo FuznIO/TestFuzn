@@ -1,4 +1,4 @@
-﻿using Fuzn.TestFuzn.ConsoleOutput;
+using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using System.Reflection;
 
@@ -9,17 +9,12 @@ internal interface ITestFrameworkAdapter
     Task ExecuteTestMethod(ITest test, MethodInfo methodInfo);
     bool SupportsRealTimeConsoleOutput { get; }
     CancellationToken CancellationToken { get; }
-    ConsoleColor ForegroundColor { get; set; }
-    ConsoleColor BackgroundColor { get; set; }
-    int WindowWidth { get; }
-    CursorPosition GetCursorPosition();
-    void SetCursorPosition(int left, int top);
     void Write(string message, params object?[] args);
     void WriteTable(TableData table);
     void WriteMarkup(string text);
     void WritePanel(string[] messages, string header);
     public void WriteAdvancedTable(AdvancedTable table);
-    public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults);
+    public void WriteSummary(DateTime testRunStartDateTime, TimeSpan totalRunDuration, Dictionary<Scenario, ScenarioLoadResult> scenarioLoadResults, string reportPath, string executionEnvironment, string targetEnvironment);
     string TestResultsDirectory { get; }
     void SetCurrentTestAsSkipped();
     void ThrowTestFuznIsNotInitializedException();

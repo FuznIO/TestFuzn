@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Text;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Load;
@@ -427,6 +427,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<th>Mean (ms)</th>");
         b.AppendLine("<th>Median (ms)</th>");
         b.AppendLine("<th>P75 (ms)</th>");
+        b.AppendLine("<th>P95 (ms)</th>");
         b.AppendLine("<th>P99 (ms)</th>");
         b.AppendLine("<th>Min (ms)</th>");
         b.AppendLine("<th>Max (ms)</th>");
@@ -516,6 +517,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<th>Mean (ms)</th>");
         b.AppendLine("<th>Median (ms)</th>");
         b.AppendLine("<th>P75 (ms)</th>");
+        b.AppendLine("<th>P95 (ms)</th>");
         b.AppendLine("<th>P99 (ms)</th>");
         b.AppendLine("<th>Min (ms)</th>");
         b.AppendLine("<th>Max (ms)</th>");
@@ -640,6 +642,7 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMean.ToTestFuznResponseTimeHtml()}</td>");
         b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMedian.ToTestFuznResponseTimeHtml()}</td>");
         b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimePercentile75.ToTestFuznResponseTimeHtml()}</td>");
+        b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimePercentile95.ToTestFuznResponseTimeHtml()}</td>");
         b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimePercentile99.ToTestFuznResponseTimeHtml()}</td>");
         b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMin.ToTestFuznResponseTimeHtml()}</td>");
         b.AppendLine(@$"<td class=""{cssClass}"">{stats.ResponseTimeMax.ToTestFuznResponseTimeHtml()}</td>");
