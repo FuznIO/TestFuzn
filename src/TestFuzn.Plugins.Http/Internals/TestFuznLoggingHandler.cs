@@ -47,7 +47,9 @@ internal class TestFuznLoggingHandler(HttpGlobalState globalState) : DelegatingH
         try
         {
             var response = await base.SendAsync(request, cancellationToken);
-            
+            if (context.StepInfo != null)
+                context.StepInfo.CountStatusCode((int)response.StatusCode);
+
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
             LogResponse(context, verbosity, response, responseBody);

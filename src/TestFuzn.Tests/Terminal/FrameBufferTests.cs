@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class FrameBufferTests : Test
 {
     [Test]
@@ -42,8 +43,7 @@ public class FrameBufferTests : Test
 
                 Assert.ContainsSingle(frame.Lines);
                 Assert.AreEqual("", frame.Lines[0]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -111,8 +111,7 @@ public class FrameBufferTests : Test
                 Assert.HasCount(2, frame.Lines);
                 Assert.AreEqual("Requests", frame.Lines[0]);
                 Assert.AreEqual("128", frame.Lines[1]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -127,8 +126,7 @@ public class FrameBufferTests : Test
                 frame.Clear();
 
                 Assert.IsEmpty(frame.Lines);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -148,7 +146,6 @@ public class FrameBufferTests : Test
                 Assert.ThrowsExactly<ArgumentNullException>(() => frame.AddLines((IEnumerable<string>)null!));
                 Assert.ThrowsExactly<ArgumentNullException>(() => frame.AddLines(new[] { "Valid line", null! }));
                 Assert.ThrowsExactly<ArgumentNullException>(() => frame.AddLines((IEnumerable<RenderedLine>)null!));
-            })
-            .Run();
+            });
     }
 }

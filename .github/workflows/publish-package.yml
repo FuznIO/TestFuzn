@@ -45,7 +45,7 @@ jobs:
           "src/TestFuzn.Plugins.Http/TestFuzn.Plugins.Http.csproj"
           "src/TestFuzn.Plugins.Playwright/TestFuzn.Plugins.Playwright.csproj"
           "src/TestFuzn.Plugins.WebSocket/TestFuzn.Plugins.WebSocket.csproj"
-          "src/TestFuzn.Sinks.InfluxDB/TestFuzn.Sinks.InfluxDB.csproj"
+          "src/TestFuzn.Worker/TestFuzn.Worker.csproj"
         )
         for proj in "${PROJECTS[@]}"; do
           dotnet restore "$proj"
@@ -58,7 +58,7 @@ jobs:
         dotnet pack src/TestFuzn.Plugins.Playwright/TestFuzn.Plugins.Playwright.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
         dotnet pack src/TestFuzn.Plugins.Http/TestFuzn.Plugins.Http.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
         dotnet pack src/TestFuzn.Adapters.MSTest/TestFuzn.Adapters.MSTest.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
-        dotnet pack src/TestFuzn.Sinks.InfluxDB/TestFuzn.Sinks.InfluxDB.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
+        dotnet pack src/TestFuzn.Worker/TestFuzn.Worker.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
         dotnet pack src/TestFuzn.Plugins.WebSocket/TestFuzn.Plugins.WebSocket.csproj --configuration Release --no-build /p:Version=${{ steps.get-version.outputs.version }}
 
     - name: Create and push tag
@@ -78,7 +78,7 @@ jobs:
         dotnet nuget push src/TestFuzn.Plugins.Playwright/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFuzn.Plugins.Http/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFuzn.Adapters.MSTest/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        dotnet nuget push src/TestFuzn.Sinks.InfluxDB/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        dotnet nuget push src/TestFuzn.Worker/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         dotnet nuget push src/TestFuzn.Plugins.WebSocket/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
     - name: Create GitHub Release
@@ -94,7 +94,7 @@ jobs:
           src/TestFuzn.Plugins.Playwright/bin/Release/*.nupkg
           src/TestFuzn.Plugins.Http/bin/Release/*.nupkg
           src/TestFuzn.Adapters.MSTest/bin/Release/*.nupkg
-          src/TestFuzn.Sinks.InfluxDB/bin/Release/*.nupkg
+          src/TestFuzn.Worker/bin/Release/*.nupkg
           src/TestFuzn.Plugins.WebSocket/bin/Release/*.nupkg
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -11,6 +11,7 @@
 - [Getting Started](getting-started.md) — Installation, project setup, quick start
 - [MSTest Compatibility](mstest.md) — Attribute mapping, lifecycle, what's supported
 - [Test Runners](test-runners.md) — MSTest vs TestFuzn runner, `--runner=testfuzn`, the live view
+- [Use With AI](ai.md) — Prompts to set up TestFuzn and write tests and load tests with a coding agent
 
 ### Writing Tests
 - [Scenarios](scenarios.md) — Standard vs load tests, `[Test]` attribute, execution flow
@@ -30,8 +31,11 @@
 - [Web UI Testing with Playwright](playwright-testing.md) — Browser automation, device emulation, UI load testing
 
 ### Load Testing
-- [Load Testing](load-testing.md) — Simulations, warmup, assertions, statistics
-- [InfluxDB & Grafana](influxdb-grafana.md) — Real-time metrics streaming
+- [Load Testing](load-testing.md) — Simulations, warmup, assertions, run-once hooks, statistics
+- [Cluster Runs](cluster-runs.md) — `--cluster`, load split, input data
+- [Set Up Worker Machines](worker-setup.md) — Cockpit, the worker app, Docker, Kubernetes
+- [Run From a Pipeline](pipelines.md) — Cluster load tests in CI
+- [Cockpit](cockpit.md) — Live graphs and results in Cockpit
 
 ### Configuration
 - [Configuration](configuration.md) — `appsettings.json`, `ConfigurationManager` API

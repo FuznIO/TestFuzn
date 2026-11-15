@@ -13,8 +13,7 @@ public async Task Standard_test_with_variables()
 
     await Scenario()
         .Step("Authenticate", context => { authToken = "abc123"; })
-        .Step("Use Token", context => { Console.WriteLine(authToken); })
-        .Run();
+        .Step("Use Token", context => { Console.WriteLine(authToken); });
 }
 ```
 
@@ -71,8 +70,7 @@ public async Task Custom_context_example()
         {
             Assert.IsNotNull(context.Model.AuthToken);
             Assert.AreEqual("Test Product", context.Model.NewProduct?.Name);
-        })
-        .Run();
+        });
 }
 ```
 

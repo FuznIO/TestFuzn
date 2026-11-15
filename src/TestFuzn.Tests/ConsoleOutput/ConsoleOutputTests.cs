@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ConsoleOutput
 {
     [TestClass]
+    [Tags("integration")]
     public class ConsoleOutputTests : Test
     {
         [Test]
@@ -13,8 +14,7 @@
                 .Step("Step 4", (context) => { })
                 .Step("Step 5", (context) => { })
                 .Step("Step 6", (context) => { })
-                .Step("Step 7", (context) => { })
-                .Run();
+                .Step("Step 7", (context) => { });
         }
 
         [Test]
@@ -30,11 +30,11 @@
                 .Step("Step 4", (context) => { })
                 .Step("Step 5", (context) => { })
                 .Step("Step 6", (context) => { })
-                .Step("Step 7", (context) => { })
-                .Run();
+                .Step("Step 7", (context) => { });
         }
 
         [Test]
+        [Tags("load")]
         public async Task LoadTest()
         {
             await Scenario()
@@ -49,11 +49,11 @@
                 {
                     simulations.OneTimeLoad(5);
                     simulations.FixedLoad(2, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2));
-                })
-                .Run();
+                });
         }
 
         [Test]
+        [Tags("load")]
         public async Task LoadTest_MutipleScenarios()
         {
             var scenario2 = Scenario("Scenario2")
@@ -73,11 +73,11 @@
                 .Step("Step 6", (context) => { })
                 .Step("Step 7", (context) => { })
                 .Load().Simulations((context, simulations) => simulations.FixedLoad(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(20)))
-                .Load().IncludeScenario(scenario2)
-                .Run();
+                .Load().IncludeScenario(scenario2);
         }
 
         [Test]
+        [Tags("load")]
         public async Task LoadTest_WithError()
         {
             int i = 0;
@@ -94,11 +94,11 @@
                 })
                 .Step("Step 6", (context) => { })
                 .Step("Step 7", (context) => { })
-                .Load().Simulations((context, simulations) => simulations.OneTimeLoad(2))
-                .Run();
+                .Load().Simulations((context, simulations) => simulations.OneTimeLoad(2));
         }
 
         [Test]
+        [Tags("load")]
         public async Task LoadTest_LongRunning()
         {
             int i = 0;
@@ -117,12 +117,12 @@
                 })
                 .Step("Step 6", (context) => { })
                 .Step("Step 7", (context) => { })
-                .Load().Simulations((context, simulations) => simulations.FixedLoad(400, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60)))
-                .Run();
+                .Load().Simulations((context, simulations) => simulations.FixedLoad(400, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60)));
         }
 
 
         [Test]
+        [Tags("load")]
         public async Task LoadTest_LongRunning2()
         {
             await Scenario()
@@ -133,8 +133,7 @@
                 .Step("Step 5", (context) => { })
                 .Step("Step 6", (context) => { })
                 .Step("Step 7", (context) => { })
-                .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60)))
-                .Run();
+                .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60)));
         }
 
         public class User(string name, string email)

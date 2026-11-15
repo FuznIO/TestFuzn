@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Warmup;
 
 [TestClass]
+[Tags("integration", "load")]
 public class WarmupTests : Test
 {
     [Test]
@@ -24,8 +25,7 @@ public class WarmupTests : Test
             .Load().AssertWhenDone((context, stats) =>
             {
                 Assert.AreEqual(30, executionCount);
-                Assert.AreEqual(20, stats.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(20, stats.Count);
+            });
     }
 }

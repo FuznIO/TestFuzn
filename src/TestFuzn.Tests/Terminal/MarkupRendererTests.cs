@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class MarkupRendererTests : Test
 {
     private static readonly Dictionary<string, (int Colors16Code, int PaletteIndex)> ExpectedNameCodes = new()
@@ -62,8 +63,7 @@ public class MarkupRendererTests : Test
                     var rendered = MarkupRenderer.Render($"[on {pair.Key}]x[/]", ColorMode.TrueColor);
                     Assert.AreEqual($"\u001b[48;5;{pair.Value.PaletteIndex}mx\u001b[0m", rendered, $"Background mismatch for {pair.Key}");
                 }
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -79,8 +79,7 @@ public class MarkupRendererTests : Test
             {
                 Assert.AreEqual("\u001b[32mx\u001b[0m", MarkupRenderer.Render("[darkgreen]x[/]", ColorMode.Colors16));
                 Assert.AreEqual("\u001b[42mx\u001b[0m", MarkupRenderer.Render("[on darkgreen]x[/]", ColorMode.Colors16));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -122,8 +121,7 @@ public class MarkupRendererTests : Test
             {
                 Assert.AreEqual("x", MarkupRenderer.Render("[default]x[/]", ColorMode.Colors16));
                 Assert.AreEqual("x", MarkupRenderer.Render("[none]x[/]", ColorMode.TrueColor));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -152,8 +150,7 @@ public class MarkupRendererTests : Test
                 Assert.AreEqual(
                     "\u001b[1mTotal elapsed Time:\u001b[0m \u001b[93m00:01\u001b[0m",
                     MarkupRenderer.Render("[bold]Total elapsed Time:[/] [yellow]00:01[/]", ColorMode.Colors16));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -174,8 +171,7 @@ public class MarkupRendererTests : Test
                 Assert.AreEqual(
                     "\u001b[91ma\u001b[0m\u001b[1;91mb\u001b[0m\u001b[91mc\u001b[0m",
                     MarkupRenderer.Render("[red]a[bold]b[/]c[/]", ColorMode.Colors16));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -223,8 +219,7 @@ public class MarkupRendererTests : Test
                     "\u001b[1ma\u001b[0m\n\u001b[1mb\u001b[0m",
                     MarkupRenderer.Render("[bold]a\nb[/]", ColorMode.Monochrome));
                 Assert.AreEqual("a\r\nb", MarkupRenderer.Render("[green]a\r\nb[/]", ColorMode.None));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -254,8 +249,7 @@ public class MarkupRendererTests : Test
 
                 Assert.AreEqual("x", rendered);
                 Assert.DoesNotContain("\u001b", rendered);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -277,8 +271,7 @@ public class MarkupRendererTests : Test
                 Assert.AreEqual("\u001b[32mx\u001b[0m", MarkupRenderer.Render("[#005f00]x[/]", ColorMode.Colors16));
                 Assert.AreEqual("\u001b[42mx\u001b[0m", MarkupRenderer.Render("[on #005f00]x[/]", ColorMode.Colors16));
                 Assert.AreEqual("\u001b[90mx\u001b[0m", MarkupRenderer.Render("[#808080]x[/]", ColorMode.Colors16));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -296,8 +289,7 @@ public class MarkupRendererTests : Test
             {
                 Assert.AreEqual("Scenario", MarkupRenderer.Render("[u]Scenario[/]", ColorMode.None));
                 Assert.AreEqual("x", MarkupRenderer.Render("[bold #ff8800]x[/]", ColorMode.None));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -329,8 +321,7 @@ public class MarkupRendererTests : Test
                 Assert.AreEqual(string.Empty, MarkupRenderer.Render((string?)null, ColorMode.Colors16));
                 Assert.AreEqual(string.Empty, MarkupRenderer.Render(string.Empty, ColorMode.TrueColor));
                 Assert.AreEqual(string.Empty, MarkupRenderer.Render((string?)null, ColorMode.None));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -360,7 +351,6 @@ public class MarkupRendererTests : Test
             {
                 Assert.AreEqual(string.Empty, MarkupRenderer.Render(new List<StyledSpan>(), ColorMode.TrueColor));
                 Assert.ThrowsExactly<ArgumentNullException>(() => MarkupRenderer.Render((IReadOnlyList<StyledSpan>)null!, ColorMode.TrueColor));
-            })
-            .Run();
+            });
     }
 }

@@ -3,7 +3,7 @@
 namespace Fuzn.TestFuzn.Tests.Attributes.Tags;
 
 [TestClass]
-[Tags("TagInclude1")]
+[Tags("TagInclude1", "integration")]
 [TargetEnvironments("test")]
 public class TagsAttributeIncludeOnClassTests : Test
 {
@@ -15,7 +15,6 @@ public class TagsAttributeIncludeOnClassTests : Test
             {
                 Assert.Contains("TagInclude1", TestSession.Current.Configuration.TagsFilterInclude);
                 await Task.CompletedTask;
-            })
-            .Run();
+            });
     }
 }

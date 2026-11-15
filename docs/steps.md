@@ -33,12 +33,20 @@ For simple tests where a step name isn't needed, the name can be omitted. Steps 
 
 ## Steps with IDs
 
+Every step has an id. Reports and Cockpit use it to follow a step from run to run.
+
+- **Not set:** TestFuzn makes one from the parent's id and the step name: the first 12 characters of a SHA-256 hash, such as `3f9a2c7e81b4`. It stays the same from run to run, and changes when the step or its parent is renamed.
+- **Set by hand:** the id is kept as written, so the step keeps its history when you rename it.
+
 ```csharp
 .Step("Important Step", "STEP-001", async context =>
 {
-    // Step with explicit ID for tracking
 })
 ```
+
+A sub-step takes an id the same way: `context.Step("Child Step", "STEP-002", ...)`.
+
+Step ids must be unique within a scenario. Two steps with the same id stop the test with an error that names both. The HTML report shows only ids set by hand; the XML report always has them.
 
 ## Sub-Steps
 

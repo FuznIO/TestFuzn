@@ -1,4 +1,6 @@
-﻿namespace Fuzn.TestFuzn.Internals.Execution;
+﻿using System.Diagnostics;
+
+namespace Fuzn.TestFuzn.Internals.Execution;
 
 internal class ExecuteScenarioMessage
 {
@@ -6,6 +8,7 @@ internal class ExecuteScenarioMessage
     public Scenario Scenario { get; }
     public string ScenarioName => Scenario.Name;
     public bool IsWarmup { get; }
+    public long EnqueuedTimestamp { get; } = Stopwatch.GetTimestamp();
 
     public ExecuteScenarioMessage(Scenario scenario, bool isWarmup)
     {

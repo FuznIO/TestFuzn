@@ -1,17 +1,39 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Fuzn.TestFuzn.Adapters;
 using Fuzn.TestFuzn.ConsoleOutput;
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Runner;
 
 namespace Fuzn.TestFuzn;
 
-internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdapter
+internal class MsTestRunnerAdapter : ITestFrameworkAdapter
 {
-    private readonly TestContext _testContext = testContext;
+    private readonly TestContext _testContext;
+    private readonly CancellationToken? _cancellationToken;
+
+    public MsTestRunnerAdapter(TestContext testContext)
+    {
+        _testContext = testContext;
+    }
+
+    private MsTestRunnerAdapter(TestContext testContext, CancellationToken cancellationToken)
+    {
+        _testContext = testContext;
+        _cancellationToken = cancellationToken;
+    }
+
+    /// <summary>
+    /// An adapter for the suite's Init and Cleanup, which run outside any test. It writes to the console.
+    /// </summary>
+    internal static MsTestRunnerAdapter ForSession(CancellationToken cancellationToken)
+    {
+        return new MsTestRunnerAdapter(new BasicMsTestContext("TestFuzn"), cancellationToken);
+    }
 
     public bool SupportsRealTimeConsoleOutput => false;
-    public CancellationToken CancellationToken => _testContext.CancellationToken;
+    public CancellationToken CancellationToken => _cancellationToken ?? _testContext.CancellationToken;
 
     public async Task ExecuteTestMethod(ITest test, MethodInfo methodInfo)
     {
@@ -173,18 +195,7 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
         throw new NotImplementedException("Should not happen");
     }
 
-    public string TestResultsDirectory
-    {
-        get
-        {
-            // _testContext.TestRunDirectory is the per-run deploy folder, e.g.
-            //   <buildOutput>\TestResults\Deploy_<machine> <timestamp>
-            // Walking up two levels lands at <buildOutput>, so TestFuzn writes its
-            // TestFuznResults folder as a sibling of MSTest's TestResults folder.
-            var testResultsFolder = Path.GetDirectoryName(_testContext.TestRunDirectory);
-            return Path.GetDirectoryName(testResultsFolder)!;
-        }
-    }
+    public string TestResultsDirectory => BaseTestFuznRunnerAdapter.DefaultTestResultsDirectory;
 
     private static string StripMarkup(string input)
     {
@@ -198,6 +209,6 @@ internal class MsTestRunnerAdapter(TestContext testContext) : ITestFrameworkAdap
 
     public void ThrowTestFuznIsNotInitializedException()
     {
-        throw new InvalidOperationException("TestFuzn is not initialized. Please ensure that TestFuznIntegration.Init() has been called from [AssemblyInitialize].");
+        throw new InvalidOperationException(MsTestSessionHandler.NotHostedMessage);
     }
 }

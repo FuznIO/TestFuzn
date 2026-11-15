@@ -4,11 +4,11 @@ internal class StepLoadResult
 {
     public string Name { get; internal set; }
     public string Id { get; internal set; }
-    public int RequestCount 
+    public int Count 
     { 
         get
         {
-            return Ok.RequestCount + Failed.RequestCount;
+            return Ok.Count + Failed.Count;
         }
     }
     public TimeSpan TotalExecutionDuration
@@ -23,5 +23,6 @@ internal class StepLoadResult
     public Stats Failed { get; internal set; }
     public int SkippedCount { get; internal set; }
     internal Dictionary<string, ErrorEntry> Errors { get; set; }
+    internal Dictionary<int, long>? StatusCodes { get; set; }
     public List<StepLoadResult> Steps { get; set; }
 }

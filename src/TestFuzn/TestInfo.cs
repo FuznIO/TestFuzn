@@ -10,6 +10,9 @@ public class TestInfo
     /// </summary>
     internal string Name { get; set; }
 
+    // True when [Test(Name = ...)] sets the name. Then it wins over the scenario name.
+    internal bool HasAttributeName { get; set; }
+
     /// <summary>
     /// Gets or sets the fully qualified name of the test.
     /// </summary>
@@ -20,6 +23,8 @@ public class TestInfo
     /// Used to correlate results across different test runs if Name changes.
     /// </summary>
     internal string? Id { get; set; }
+
+    internal bool IsIdAutomatic { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the test is skipped.
@@ -65,4 +70,7 @@ public class TestInfo
     /// Gets or sets the target environments the test is allowed to run against.
     /// </summary>
     internal List<string> TargetEnvironments { get; set; }
+
+    // Every scenario built in this test, so a scenario that was never awaited fails the test.
+    internal List<Scenario> BuiltScenarios { get; } = new();
 }

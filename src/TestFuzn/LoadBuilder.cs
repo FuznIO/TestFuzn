@@ -82,7 +82,76 @@ public class LoadBuilder<TModel>
         if (_scenarioBuilder.IncludeScenarios == null)
             _scenarioBuilder.IncludeScenarios = new();
 
+        scenarioBuilder.Scenario.IsUsed = true;
         _scenarioBuilder.IncludeScenarios.Add(() => scenarioBuilder.Scenario);
+        return _scenarioBuilder;
+    }
+
+    /// <summary>
+    /// Registers an action that runs once before the load starts, also when the load runs on several workers
+    /// (it then runs on the controller). Use it to create shared test data; read the returned data with
+    /// <see cref="Context.OnceData{T}"/>. The data must be JSON-serializable.
+    /// </summary>
+    /// <typeparam name="TData">The type of the data the action returns.</typeparam>
+    /// <param name="action">The asynchronous action that creates the data.</param>
+    /// <returns>The parent <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
+    public ScenarioBuilder<TModel> BeforeScenarioOnce<TData>(Func<Context, Task<TData>> action)
+    {
+        if (action == null)
+            throw _scenarioBuilder.BuildFailed(new ArgumentNullException(nameof(action), "Action cannot be null."));
+
+        _scenarioBuilder.Scenario.BeforeScenarioOnceAction = async context => await action(context);
+        return _scenarioBuilder;
+    }
+
+    /// <summary>
+    /// Registers an action that runs once before the load starts, also when the load runs on several workers
+    /// (it then runs on the controller). Read the returned data with <see cref="Context.OnceData{T}"/>.
+    /// The data must be JSON-serializable.
+    /// </summary>
+    /// <typeparam name="TData">The type of the data the action returns.</typeparam>
+    /// <param name="action">The synchronous action that creates the data.</param>
+    /// <returns>The parent <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
+    public ScenarioBuilder<TModel> BeforeScenarioOnce<TData>(Func<Context, TData> action)
+    {
+        if (action == null)
+            throw _scenarioBuilder.BuildFailed(new ArgumentNullException(nameof(action), "Action cannot be null."));
+
+        _scenarioBuilder.Scenario.BeforeScenarioOnceAction = context => Task.FromResult<object?>(action(context));
+        return _scenarioBuilder;
+    }
+
+    /// <summary>
+    /// Registers an action that runs once after the load has ended, also after a stop, so data created in
+    /// BeforeScenarioOnce is cleaned up. When the load runs on several workers it runs on the controller.
+    /// </summary>
+    /// <param name="action">The asynchronous cleanup action.</param>
+    /// <returns>The parent <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
+    public ScenarioBuilder<TModel> AfterScenarioOnce(Func<Context, Task> action)
+    {
+        if (action == null)
+            throw _scenarioBuilder.BuildFailed(new ArgumentNullException(nameof(action), "Action cannot be null."));
+
+        _scenarioBuilder.Scenario.AfterScenarioOnceAction = context => action(context);
+        return _scenarioBuilder;
+    }
+
+    /// <summary>
+    /// Registers an action that runs once after the load has ended, also after a stop, so data created in
+    /// BeforeScenarioOnce is cleaned up. When the load runs on several workers it runs on the controller.
+    /// </summary>
+    /// <param name="action">The synchronous cleanup action.</param>
+    /// <returns>The parent <see cref="ScenarioBuilder{TModel}"/> instance for method chaining.</returns>
+    public ScenarioBuilder<TModel> AfterScenarioOnce(Action<Context> action)
+    {
+        if (action == null)
+            throw _scenarioBuilder.BuildFailed(new ArgumentNullException(nameof(action), "Action cannot be null."));
+
+        _scenarioBuilder.Scenario.AfterScenarioOnceAction = context =>
+        {
+            action(context);
+            return Task.CompletedTask;
+        };
         return _scenarioBuilder;
     }
 

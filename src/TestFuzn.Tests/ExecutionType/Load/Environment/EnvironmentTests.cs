@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Environment;
 
 [TestClass]
+[Tags("integration", "load")]
 public class EnvironmentTests : Test
 {
 
@@ -35,13 +36,12 @@ public class EnvironmentTests : Test
             .Load().AssertWhenDone((context, stats) =>
             {
                 if (context.Info.TargetEnvironment == "")
-                    Assert.AreEqual(10, stats.RequestCount);
+                    Assert.AreEqual(10, stats.Count);
                 else if (context.Info.TargetEnvironment == "test")
-                    Assert.AreEqual(20, stats.RequestCount);
+                    Assert.AreEqual(20, stats.Count);
                 //else
                 //    Assert.Fail();
-            })
-            .Run();
+            });
     }
 
     public class User(string userId)

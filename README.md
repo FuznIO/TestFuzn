@@ -6,7 +6,7 @@
 > Upgrading? See [UPGRADING.md](UPGRADING.md) for the steps across each breaking change.
 
 📚 **Documentation:**  
-👉 https://github.com/FuznIO/TestFuzn/blob/main/docs/README.md
+👉 https://fuzn.io/docs/testfuzn
 
 ## ✨ Key Features
 - 🧪 **One framework for all test types**  
@@ -57,8 +57,7 @@ public class ProductTests : Test
 
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.AreEqual("Keyboard", response.Data!.Name);
-            })
-            .Run();
+            });
     }
 }
 ```
@@ -92,9 +91,8 @@ Now make it a load test — same scenario, same steps, two extra lines:
             .Load().Simulations((context, simulations) =>
                 simulations.FixedLoad(rate: 50, duration: TimeSpan.FromSeconds(30)))
             .Load().AssertWhenDone((context, stats) =>
-                Assert.AreEqual(0, stats.Failed.RequestCount))
+                Assert.AreEqual(0, stats.Failed.Count));
 
-            .Run();
 ```
 
 That's the whole idea: the test you already wrote becomes the load test. No second tool, no rewriting your scenario in another DSL — and you get response-time percentiles, throughput and an HTML report out of it.
@@ -110,7 +108,7 @@ Other simulations include `OneTimeLoad`, `GradualLoadIncrease`, `FixedConcurrent
 | [Fuzn.TestFuzn.Plugins.Http](https://www.nuget.org/packages/Fuzn.TestFuzn.Plugins.Http) | HTTP testing via Fuzn.FluentHttp |
 | [Fuzn.TestFuzn.Plugins.Playwright](https://www.nuget.org/packages/Fuzn.TestFuzn.Plugins.Playwright) | Browser automation with Playwright |
 | [Fuzn.TestFuzn.Plugins.WebSocket](https://www.nuget.org/packages/Fuzn.TestFuzn.Plugins.WebSocket) | WebSocket testing |
-| [Fuzn.TestFuzn.Sinks.InfluxDB](https://www.nuget.org/packages/Fuzn.TestFuzn.Sinks.InfluxDB) | Real-time metrics to InfluxDB |
+| [Fuzn.TestFuzn.Worker](https://www.nuget.org/packages/Fuzn.TestFuzn.Worker) | Worker app (`testfuzn-worker`) for cluster runs |
 
 ## 💸 License & Usage
 - 100% **free** — for personal, organizational, and commercial use.

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Fuzn.TestFuzn.Internals.Cluster;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Utils;
 
@@ -17,11 +18,12 @@ internal static class LiveDashboardLayout
     internal const string ScenariosTitle = "Scenarios";
     internal const string ScenarioPerformanceHeader = "Scenario Performance";
     internal const string StepErrorsHeader = "Step Errors";
-    internal const string RequestsHeader = "Requests";
-    internal const string TotalRequestsLabel = "Total Requests";
+    internal const string IterationsHeader = "Iterations";
+    internal const string TotalLabel = "Total Iterations";
     internal const string SuccessfulLabel = "Successful";
     internal const string FailedLabel = "Failed";
-    internal const string RequestsPerSecondLabel = "Requests/sec";
+    internal const string PerSecondLabel = "Iterations/s";
+    internal const string WarningsHeader = "Warnings";
 
     internal const string SectionHeaderStyle = "bold #ff9d3d";
     internal const string PanelHeaderStyle = SectionHeaderStyle;
@@ -50,8 +52,8 @@ internal static class LiveDashboardLayout
         MetricsTableLayout.HeaderColumn("Scenario"),
         MetricsTableLayout.HeaderColumn("Phase"),
         MetricsTableLayout.HeaderColumn("Status"),
-        MetricsTableLayout.NumberColumn("Requests"),
-        MetricsTableLayout.NumberColumn("RPS"),
+        MetricsTableLayout.NumberColumn("Iterations"),
+        MetricsTableLayout.NumberColumn("Iterations/s"),
         MetricsTableLayout.NumberColumn("Mean"),
         MetricsTableLayout.NumberColumn("Median"),
         MetricsTableLayout.NumberColumn("P95"),
@@ -67,7 +69,7 @@ internal static class LiveDashboardLayout
         new[] { 1, 3, 4, 9 }
     };
 
-    public static IReadOnlyList<RenderedLine> Render(IReadOnlyList<LiveMetricsSnapshot> snapshots, int width, int height, ColorMode colorMode, string? spinnerGlyph = null, LoadViewHeader? header = null)
+    public static IReadOnlyList<RenderedLine> Render(IReadOnlyList<LiveMetricsSnapshot> snapshots, int width, int height, ColorMode colorMode, string? spinnerGlyph = null, LoadViewHeader? header = null, IReadOnlyList<WorkerSummary>? workers = null, IReadOnlyList<string>? warnings = null)
     {
         if (snapshots == null)
             throw new ArgumentNullException(nameof(snapshots), "Snapshots cannot be null.");
@@ -91,6 +93,12 @@ internal static class LiveDashboardLayout
         else if (snapshots.Count > 1)
             AddScenarioOverview(content, snapshots, contentWidth, colorMode, spinnerGlyph);
 
+        if (workers != null && workers.Count > 0)
+            AddSection(content, WorkersLayout.Header, WorkersLayout.Render(workers, contentWidth, colorMode), contentWidth, colorMode);
+
+        if (warnings != null && warnings.Count > 0)
+            AddSection(content, WarningsHeader, RenderWarningLines(warnings, contentWidth, colorMode), contentWidth, colorMode);
+
         var lines = new List<RenderedLine> { new RenderedLine(new string(TopRuleGlyph, width), width) };
         lines.AddRange(Indent(content, contentWidth));
 
@@ -105,6 +113,18 @@ internal static class LiveDashboardLayout
         }
 
         lines.AddRange(Indent(KeyHintBarWidget.Render(FooterHints, contentWidth, colorMode), contentWidth));
+        return lines;
+    }
+
+    private static IReadOnlyList<RenderedLine> RenderWarningLines(IReadOnlyList<string> warnings, int width, ColorMode colorMode)
+    {
+        var lines = new List<RenderedLine>();
+        foreach (var warning in warnings)
+        {
+            foreach (var line in LoadSummaryLayout.WrapText(MarkupText.SanitizeControlCharacters(warning), width))
+                lines.Add(MarkupText.RenderTruncated("[" + WarningStyle + "]" + MarkupParser.Escape(line) + "[/]", width, colorMode));
+        }
+
         return lines;
     }
 
@@ -139,7 +159,7 @@ internal static class LiveDashboardLayout
         var phaseRows = TestPhasesLayout.Rows(snapshot.PhaseTimes, snapshot.HasWarmup, snapshot.Timestamp);
         AddSection(lines, TestPhasesLayout.Header, TestPhasesLayout.Render(phaseRows, width, colorMode, snapshot.Simulations), width, colorMode);
 
-        AddSection(lines, RequestsHeader, TotalsLines(snapshot, width, colorMode), width, colorMode);
+        AddSection(lines, IterationsHeader, TotalsLines(snapshot, width, colorMode), width, colorMode);
 
         AddSection(lines, StepPerformanceLayout.Header, StepPerformanceLayout.Render(StepRows(snapshot), width, colorMode), width, colorMode);
 
@@ -198,8 +218,8 @@ internal static class LiveDashboardLayout
         for (var index = 0; index < snapshots.Count; index++)
         {
             var snapshot = snapshots[index];
-            var failedCount = FormatCount(snapshot.Failed.RequestCount);
-            if (snapshot.Failed.RequestCount > 0)
+            var failedCount = FormatCount(snapshot.Failed.Count);
+            if (snapshot.Failed.Count > 0)
                 failedCount = MetricsTableLayout.Styled(FailedStyle, failedCount);
 
             rows.Add(new[]
@@ -208,11 +228,11 @@ internal static class LiveDashboardLayout
                 MarkupParser.Escape(snapshot.ScenarioName),
                 PhaseName(snapshot),
                 StatusMarkup(snapshot, spinnerGlyph),
-                FormatCount((long)snapshot.Ok.RequestCount + snapshot.Failed.RequestCount),
-                FormatCount(snapshot.RequestsPerSecond),
-                snapshot.Ok.ResponseTimeMean.ToTestFuznResponseTime(),
-                snapshot.Ok.ResponseTimeMedian.ToTestFuznResponseTime(),
-                snapshot.Ok.ResponseTimePercentile95.ToTestFuznResponseTime(),
+                FormatCount((long)snapshot.Ok.Count + snapshot.Failed.Count),
+                FormatCount(snapshot.PerSecond),
+                snapshot.Ok.DurationMean.ToTestFuznDuration(),
+                snapshot.Ok.DurationMedian.ToTestFuznDuration(),
+                snapshot.Ok.DurationPercentile95.ToTestFuznDuration(),
                 failedCount
             });
         }
@@ -250,31 +270,31 @@ internal static class LiveDashboardLayout
     private static void AddStatsRows(List<IReadOnlyList<string?>> rows, string name, LiveStats ok, LiveStats failed, bool alwaysShowFailed)
     {
         rows.Add(StatsRow(name, isOk: true, ok));
-        if (alwaysShowFailed || failed.RequestCount > 0)
+        if (alwaysShowFailed || failed.Count > 0)
             rows.Add(StatsRow(string.Empty, isOk: false, failed));
     }
 
     private static string?[] StatsRow(string name, bool isOk, LiveStats stats)
     {
-        return StepPerformanceLayout.Row(name, isOk, stats.RequestCount, stats.RequestsPerSecond, stats.ResponseTimeMean, stats.ResponseTimeMedian,
-            stats.ResponseTimePercentile75, stats.ResponseTimePercentile95, stats.ResponseTimePercentile99,
-            stats.ResponseTimeMin, stats.ResponseTimeMax, stats.ResponseTimeStandardDeviation);
+        return StepPerformanceLayout.Row(name, isOk, stats.Count, stats.PerSecond, stats.DurationMean, stats.DurationMedian,
+            stats.DurationPercentile75, stats.DurationPercentile90, stats.DurationPercentile95, stats.DurationPercentile99,
+            stats.DurationMin, stats.DurationMax, stats.DurationStandardDeviation);
     }
 
     private static IReadOnlyList<RenderedLine> TotalsLines(LiveMetricsSnapshot snapshot, int width, ColorMode colorMode)
     {
-        return TotalsLines((long)snapshot.Ok.RequestCount + snapshot.Failed.RequestCount, snapshot.Ok.RequestCount, snapshot.Failed.RequestCount,
-            snapshot.RequestsPerSecond, snapshot.HasWarmup, (long)snapshot.WarmupRequestCountOk + snapshot.WarmupRequestCountFailed, width, colorMode);
+        return TotalsLines((long)snapshot.Ok.Count + snapshot.Failed.Count, snapshot.Ok.Count, snapshot.Failed.Count,
+            snapshot.PerSecond, snapshot.HasWarmup, (long)snapshot.WarmupOkCount + snapshot.WarmupFailedCount, width, colorMode);
     }
 
-    internal static IReadOnlyList<RenderedLine> TotalsLines(long total, int okCount, int failedCount, int requestsPerSecond, bool hasWarmup, long warmupCount, int width, ColorMode colorMode)
+    internal static IReadOnlyList<RenderedLine> TotalsLines(long total, int okCount, int failedCount, int perSecond, bool hasWarmup, long warmupCount, int width, ColorMode colorMode)
     {
         var parts = new List<string>
         {
-            "[" + SecondaryStyle + "]" + TotalRequestsLabel + "[/] " + FormatCount(total),
+            "[" + SecondaryStyle + "]" + TotalLabel + "[/] " + FormatCount(total),
             "[" + SecondaryStyle + "]" + SuccessfulLabel + "[/] [" + OkStyle + "]" + FormatCount(okCount) + "[/] " + PercentageMarkup(okCount, total),
             "[" + SecondaryStyle + "]" + FailedLabel + "[/] [" + FailedStyle + "]" + FormatCount(failedCount) + "[/] " + PercentageMarkup(failedCount, total),
-            "[" + SecondaryStyle + "]" + RequestsPerSecondLabel + "[/] " + FormatCount(requestsPerSecond)
+            "[" + SecondaryStyle + "]" + PerSecondLabel + "[/] " + FormatCount(perSecond)
         };
 
         if (hasWarmup)

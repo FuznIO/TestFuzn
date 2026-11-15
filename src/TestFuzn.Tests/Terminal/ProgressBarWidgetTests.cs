@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class ProgressBarWidgetTests : Test
 {
     [Test]
@@ -30,8 +31,7 @@ public class ProgressBarWidgetTests : Test
                 Assert.AreEqual(
                     "███░░  50%",
                     Assert.ContainsSingle(ProgressBarWidget.Render(0.5, 10, ColorMode.None, barStyle: "green")).Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -48,8 +48,7 @@ public class ProgressBarWidgetTests : Test
             {
                 Assert.AreEqual("█████ 100%", Assert.ContainsSingle(ProgressBarWidget.Render(1.5, 10, ColorMode.None)).Text);
                 Assert.AreEqual("█████ 100%", Assert.ContainsSingle(ProgressBarWidget.Render(double.PositiveInfinity, 10, ColorMode.None)).Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -71,7 +70,6 @@ public class ProgressBarWidgetTests : Test
             .Step("A width below 1 renders nothing", context =>
             {
                 Assert.IsEmpty(ProgressBarWidget.Render(0.5, 0, ColorMode.None));
-            })
-            .Run();
+            });
     }
 }

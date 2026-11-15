@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class WindowsVirtualTerminalTests : Test
 {
     [Test]
@@ -15,7 +16,6 @@ public class WindowsVirtualTerminalTests : Test
 
                 if (!OperatingSystem.IsWindows())
                     Assert.IsTrue(enabled);
-            })
-            .Run();
+            });
     }
 }

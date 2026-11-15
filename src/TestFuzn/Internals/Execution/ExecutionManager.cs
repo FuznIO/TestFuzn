@@ -2,6 +2,7 @@
 using Fuzn.TestFuzn.Internals.Execution.Consumers;
 using Fuzn.TestFuzn.Internals.Execution.Producers;
 using Fuzn.TestFuzn.Contracts;
+using Fuzn.TestFuzn.Internals.Cluster;
 
 namespace Fuzn.TestFuzn.Internals.Execution;
 
@@ -61,21 +62,29 @@ internal class ExecutionManager
         if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
             return;
 
-        foreach (var scenario in _testExecutionState.Scenarios)
+        if (_testExecutionState.TestSession.Cluster.Role == ClusterRole.LoadChild)
+            return;
+
+        AssertWhenDone(_testExecutionState, _serviceProvider);
+    }
+
+    internal static void AssertWhenDone(TestExecutionState state, IServiceProvider serviceProvider)
+    {
+        foreach (var scenario in state.Scenarios)
         {
-            var scenarioCollector = _testExecutionState.LoadCollectors[scenario.Name];
+            var scenarioCollector = state.LoadCollectors[scenario.Name];
             var scenarioResult = scenarioCollector.GetCurrentResult();
             if (scenario.AssertWhenDoneAction != null)
             {
                 try
                 {
-                    var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "AssertWhenDoneAction", _testExecutionState.CancellationToken);
+                    var context = ContextFactory.CreateScenarioContext(state.TestSession, serviceProvider, state.TestFramework, "AssertWhenDoneAction", state.CancellationToken, scenario);
                     scenario.AssertWhenDoneAction(context, new AssertScenarioStats(scenarioResult));
                 }
                 catch (Exception e)
                 {
-                    _testExecutionState.FirstException = e;
-                    _testExecutionState.TestResult.Status = TestStatus.Failed;
+                    state.FirstException = e;
+                    state.TestResult.Status = TestStatus.Failed;
                     scenarioCollector.SetAssertWhenDoneException(e);
                     scenarioCollector.SetStatus(TestStatus.Failed);
                 }

@@ -23,4 +23,9 @@
     <None Include="../../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="buildTransitive\Fuzn.TestFuzn.Plugins.Playwright.props" Pack="true" PackagePath="buildTransitive\" />
+    <None Include="build\Fuzn.TestFuzn.Plugins.Playwright.props" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+
 </Project>

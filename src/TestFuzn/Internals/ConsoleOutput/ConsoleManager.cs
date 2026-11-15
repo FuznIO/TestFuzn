@@ -60,7 +60,8 @@ internal class ConsoleManager
     public void StartRealtimeConsoleOutputIfEnabled()
     {
         if (!_testExecutionState.TestFramework.SupportsRealTimeConsoleOutput
-            || _testExecutionState.TestType != TestType.Load)
+            || _testExecutionState.TestType != TestType.Load
+            || _testExecutionState.TestSession.Cluster.Role != Cluster.ClusterRole.None)
             return;
 
         var capabilities = _liveViewHost.DetectCapabilities();
@@ -83,7 +84,7 @@ internal class ConsoleManager
         if (terminalReader == null)
             throw new InvalidOperationException("The live view host returned no terminal reader.");
 
-        var liveDashboard = new LiveDashboard(_liveViewHost.CreateTerminalWriter(), capabilities, () => _liveSnapshots, header: BuildHeader());
+        var liveDashboard = new LiveDashboard(_liveViewHost.CreateTerminalWriter(), capabilities, () => _liveSnapshots, header: BuildHeader(), workersProvider: () => _testExecutionState.Workers, warningsProvider: Warnings);
         _liveDashboard = liveDashboard;
         _liveViewLoop = Task.Run(() => RunLiveView(liveDashboard, terminalReader, null, _ctSource.Token));
     }
@@ -109,7 +110,12 @@ internal class ConsoleManager
                     ScheduleNextSample(utcNow);
 
                     if (liveStatsWriter != null)
+                    {
                         liveStatsWriter.WriteSample(_liveSnapshots);
+                        var workers = _testExecutionState.Workers;
+                        if (workers.Count > 0)
+                            liveStatsWriter.WriteWorkers(workers);
+                    }
                 }
 
                 if (liveDashboard != null)
@@ -183,6 +189,12 @@ internal class ConsoleManager
             metrics.Record(snapshot, utcNow);
             _liveSnapshots[index] = metrics.Current;
         }
+    }
+
+    private IReadOnlyList<string> Warnings()
+    {
+        lock (_testExecutionState.Warnings)
+            return _testExecutionState.Warnings.ToList();
     }
 
     private LoadViewHeader BuildHeader()

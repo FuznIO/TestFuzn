@@ -1,9 +1,11 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
+[Tags("integration")]
 public class StepTests : Test
 {
     [Test]
+    [Tags("load")]
     public async Task Verify_Step_Syntax_For_Scenario_With_Default_StepContext()
     {
         bool step1Executed = false;
@@ -36,8 +38,7 @@ public class StepTests : Test
                 Assert.AreEqual("true", context.GetSharedData<string>("SharedStepOnAllStepContextTypes_Executed"));
                 step4Executed = true;
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(1))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(1));
 
         Assert.IsTrue(step1Executed);
         Assert.IsTrue(step2Executed);
@@ -46,6 +47,7 @@ public class StepTests : Test
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_Step_Syntax_For_Scenario_With_CustomStepContext()
     {
         bool step1Executed = false;
@@ -86,8 +88,7 @@ public class StepTests : Test
                 Assert.AreEqual("true", context.GetSharedData<string>("SharedStepOnAllStepContextTypes_Executed"));
                 step4Executed = true;
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(1))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(1));
 
         Assert.IsTrue(step1Executed);
         Assert.IsTrue(step2Executed);
@@ -105,8 +106,7 @@ public class StepTests : Test
             {
                 Assert.AreEqual("Step 1", context.StepInfo.Name);
                 executed = true;
-            })
-            .Run();
+            });
 
         Assert.IsTrue(executed);
     }
@@ -122,8 +122,7 @@ public class StepTests : Test
                 Assert.AreEqual("Step 1", context.StepInfo.Name);
                 executed = true;
                 await Task.CompletedTask;
-            })
-            .Run();
+            });
 
         Assert.IsTrue(executed);
     }
@@ -150,8 +149,7 @@ public class StepTests : Test
             {
                 Assert.AreEqual("Step 3", context.StepInfo.Name);
                 step3Executed = true;
-            })
-            .Run();
+            });
 
         Assert.IsTrue(step1Executed);
         Assert.IsTrue(step2Executed);
@@ -174,8 +172,7 @@ public class StepTests : Test
             {
                 Assert.AreEqual("Step 1", context.StepInfo.Name);
                 step2Executed = true;
-            })
-            .Run();
+            });
 
         Assert.IsTrue(step1Executed);
         Assert.IsTrue(step2Executed);
@@ -187,8 +184,7 @@ public class StepTests : Test
         try
         {
             await Scenario()
-                .Step("", (context) => { })
-                .Run();
+                .Step("", (context) => { });
 
             Assert.Fail();
         }
@@ -205,8 +201,7 @@ public class StepTests : Test
         {
             await Scenario()
                 .Step("Step1", (context) => { })
-                .Step("Step1", (context) => { })
-                .Run();
+                .Step("Step1", (context) => { });
 
             Assert.Fail();
         }

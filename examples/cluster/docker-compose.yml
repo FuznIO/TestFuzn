@@ -1,0 +1,15 @@
+# Workers for a small team on one VM. Cockpit is the hub of the cluster and runs on its own (it has its own
+# compose file); the workers only need to reach it. Set its TestFuzn worker key (COCKPIT_TESTFUZN_WORKER_KEY)
+# and give the same key to the workers:
+#   TESTFUZN_COCKPIT_URL=https://cockpit.example.com TESTFUZN_WORKER_KEY=... docker compose up -d
+services:
+  worker:
+    build: .
+    environment:
+      TESTFUZN_COCKPIT_URL: ${TESTFUZN_COCKPIT_URL}
+      TESTFUZN_WORKER_KEY: ${TESTFUZN_WORKER_KEY}
+      TESTFUZN_EXECUTION_ENVIRONMENT: cloud      # your own value
+    command: ["--pool", "default", "--work-dir", "/work"]
+    restart: on-failure
+    deploy:
+      replicas: 2

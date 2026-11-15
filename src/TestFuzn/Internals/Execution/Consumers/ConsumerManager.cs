@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts;
+using Fuzn.TestFuzn.Internals.Cluster;
 using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Execution.Consumers;
@@ -41,7 +42,7 @@ internal class ConsumerManager
             {
                 await _executeScenarioMessageHandler.Execute(message);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
                 // Actions outside the steps (BeforeIteration, AfterIteration, cleanup actions and
                 // plugin iteration cleanup) are not guarded by ExecuteStepHandler. Letting the
@@ -66,7 +67,8 @@ internal class ConsumerManager
                 {
                     var completedCollector = _testExecutionState.LoadCollectors[message.ScenarioName];
                     completedCollector.MarkPhaseAsCompleted(LoadTestPhase.Measurement, DateTime.UtcNow);
-                    await _executeScenarioMessageHandler.WriteToSinksAndSnapshotCollector(_testExecutionState, message.Scenario, () => completedCollector.GetCurrentResult(true), true);
+                    if (_testExecutionState.TestSession.Cluster.Role != ClusterRole.LoadChild)
+                        await _executeScenarioMessageHandler.WriteToSinksAndSnapshotCollector(_testExecutionState, message.Scenario, () => completedCollector.GetCurrentResult(true), true);
                 }
             }
         });

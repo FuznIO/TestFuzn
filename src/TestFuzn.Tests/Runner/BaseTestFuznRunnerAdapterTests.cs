@@ -7,6 +7,7 @@ using Fuzn.TestFuzn.Tests.Terminal;
 namespace Fuzn.TestFuzn.Tests.Runner;
 
 [TestClass]
+[Tags("unit")]
 public class BaseTestFuznRunnerAdapterTests : Test
 {
     private const string ReportPath = "C:/results/TestReport.html";
@@ -119,8 +120,7 @@ public class BaseTestFuznRunnerAdapterTests : Test
                 adapter.Dispose();
 
                 Assert.ThrowsExactly<ObjectDisposedException>(() => _ = adapter.CancellationToken);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -189,8 +189,7 @@ public class BaseTestFuznRunnerAdapterTests : Test
                 Assert.ThrowsExactly<ArgumentNullException>(() => adapter.WriteTable(null!));
                 Assert.ThrowsExactly<ArgumentNullException>(() => adapter.WritePanel(null!, "header"));
                 Assert.ThrowsExactly<ArgumentNullException>(() => adapter.WriteSummary(DateTime.UtcNow, TimeSpan.Zero, null!, ReportPath, ExecutionEnvironment, TargetEnvironment));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -240,8 +239,8 @@ public class BaseTestFuznRunnerAdapterTests : Test
                 var results = SmallResults();
                 foreach (var result in results.Values)
                 {
-                    result.Ok.ResponseTimeMin = TimeSpan.FromDays(500);
-                    result.Ok.ResponseTimeMean = TimeSpan.FromDays(500);
+                    result.Ok.DurationMin = TimeSpan.FromDays(500);
+                    result.Ok.DurationMean = TimeSpan.FromDays(500);
                 }
 
                 Assert.IsGreaterThan(40, LoadSummaryLayout.MeasureMinimumWidth(results));
@@ -267,7 +266,6 @@ public class BaseTestFuznRunnerAdapterTests : Test
                 CollectionAssert.AreEqual(ExpectedWrites(AdvancedTableLayout.Render(table, 60, ColorMode.TrueColor)), host.Writer.Writes.ToList());
                 foreach (var write in host.Writer.Writes)
                     Assert.AreEqual(60 + Environment.NewLine.Length, write.Length);
-            })
-            .Run();
+            });
     }
 }

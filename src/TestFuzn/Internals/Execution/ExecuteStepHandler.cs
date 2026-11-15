@@ -28,6 +28,8 @@ internal class ExecuteStepHandler
 
         var stepResult = new StepStandardResult();
         stepResult.Name = step.Name;
+        stepResult.Id = step.Id;
+        stepResult.IsIdAutomatic = step.IsIdAutomatic;
 
         AddResultToParentStep(step, stepResult);
 
@@ -41,7 +43,9 @@ internal class ExecuteStepHandler
             _iterationContext.ExecuteStepHandler = this;
 
             try
-            {    
+            {
+                if (step.ParentName != null)
+                    _iterationContext.Scenario.EnsureStepIdIsUnique(step);
                 await step.Action(stepContext);
 
                 if (CurrentScenarioStatus != null && CurrentScenarioStatus == TestStatus.Failed)
@@ -76,6 +80,9 @@ internal class ExecuteStepHandler
                         stepResult.Comments = new();
                         stepResult.Comments.AddRange(stepContext.StepInfo.Comments);
                     }
+
+                    if (stepContext.StepInfo.StatusCodes != null)
+                        stepResult.StatusCodes = new Dictionary<int, int>(stepContext.StepInfo.StatusCodes);
 
                     if (stepContext.StepInfo.Attachments != null && stepContext.StepInfo.Attachments.Count > 0)
                     {

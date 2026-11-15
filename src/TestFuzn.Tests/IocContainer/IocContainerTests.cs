@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Fuzn.TestFuzn.Tests.IocContainer;
 
 [TestClass]
+[Tags("integration")]
 public class IocContainerTests : Test
 {
     [Test]
@@ -22,13 +23,13 @@ public class IocContainerTests : Test
             {
                 var marker = context.ServicesProvider.GetRequiredService<SingletonMarker>();
                 step2InstanceId = marker.InstanceId;
-            })
-            .Run();
+            });
 
         Assert.AreEqual(step1InstanceId, step2InstanceId);
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_singleton_returns_same_instance_across_iterations()
     {
         var instanceIds = new ConcurrentBag<Guid>();
@@ -39,8 +40,7 @@ public class IocContainerTests : Test
                 var marker = context.ServicesProvider.GetRequiredService<SingletonMarker>();
                 instanceIds.Add(marker.InstanceId);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5));
 
         Assert.AreEqual(1, instanceIds.Distinct().Count());
     }
@@ -61,13 +61,13 @@ public class IocContainerTests : Test
             {
                 var marker = context.ServicesProvider.GetRequiredService<ScopedMarker>();
                 step2InstanceId = marker.InstanceId;
-            })
-            .Run();
+            });
 
         Assert.AreEqual(step1InstanceId, step2InstanceId);
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_scoped_returns_different_instance_per_iteration()
     {
         var instanceIds = new ConcurrentBag<Guid>();
@@ -78,8 +78,7 @@ public class IocContainerTests : Test
                 var marker = context.ServicesProvider.GetRequiredService<ScopedMarker>();
                 instanceIds.Add(marker.InstanceId);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5));
 
         Assert.AreEqual(5, instanceIds.Distinct().Count());
     }
@@ -100,8 +99,7 @@ public class IocContainerTests : Test
             {
                 var marker = context.ServicesProvider.GetRequiredService<ScopedMarker>();
                 iterationScopeInstanceId = marker.InstanceId;
-            })
-            .Run();
+            });
 
         Assert.IsNotNull(testScopeInstanceId);
         Assert.IsNotNull(iterationScopeInstanceId);
@@ -121,8 +119,7 @@ public class IocContainerTests : Test
                 var second = context.ServicesProvider.GetRequiredService<TransientMarker>();
                 firstInstanceId = first.InstanceId;
                 secondInstanceId = second.InstanceId;
-            })
-            .Run();
+            });
 
         Assert.AreNotEqual(firstInstanceId, secondInstanceId);
     }

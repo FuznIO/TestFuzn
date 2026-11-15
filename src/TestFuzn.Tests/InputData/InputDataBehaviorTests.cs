@@ -3,6 +3,7 @@
 namespace Fuzn.TestFuzn.Tests.InputData;
 
 [TestClass]
+[Tags("integration", "load")]
 public class InputDataBehaviorTests : Test
 {
     [Test]
@@ -31,10 +32,9 @@ public class InputDataBehaviorTests : Test
             })
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(8, stats.Ok.RequestCount);
+                Assert.AreEqual(8, stats.Ok.Count);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(8))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(8));
 
         Assert.AreEqual(3, userExecuted["user1"].Counter);
         Assert.AreEqual(3, userExecuted["user2"].Counter);
@@ -66,10 +66,9 @@ public class InputDataBehaviorTests : Test
             })
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(100, stats.Ok.RequestCount);
+                Assert.AreEqual(100, stats.Ok.Count);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(100))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(100));
 
         Assert.AreEqual(1, userExecuted["user1"].Counter);
         Assert.AreEqual(1, userExecuted["user2"].Counter);
@@ -102,10 +101,9 @@ public class InputDataBehaviorTests : Test
             })
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(30, stats.Ok.RequestCount);
+                Assert.AreEqual(30, stats.Ok.Count);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(30))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(30));
 
         Assert.IsGreaterThan(1, userExecuted["user1"].Counter);
         Assert.IsGreaterThan(1, userExecuted["user2"].Counter);
@@ -138,10 +136,9 @@ public class InputDataBehaviorTests : Test
             })
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(30, stats.Ok.RequestCount);
+                Assert.AreEqual(30, stats.Ok.Count);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(30))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(30));
 
         Assert.IsGreaterThan(1, userExecuted["user1"].Counter);
         Assert.IsGreaterThan(1, userExecuted["user2"].Counter);

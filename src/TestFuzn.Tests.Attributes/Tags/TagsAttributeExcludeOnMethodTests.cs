@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Attributes.Tags;
 
 [TestClass]
+[Tags("integration")]
 [TargetEnvironments("test")]
 public class TagsAttributeExcludeOnMethodTests : Test
 {

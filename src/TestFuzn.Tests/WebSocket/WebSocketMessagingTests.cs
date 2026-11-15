@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
+[Tags("integration")]
 public class WebSocketMessagingTests : Test
 {
     private const string WebSocketServerUrl = "wss://localhost:7058/ws";
@@ -24,8 +25,7 @@ public class WebSocketMessagingTests : Test
                 Assert.AreEqual(testMessage, receivedMessage.Text, "Echo server should return the same message");
 
                 await connection.Close();
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -52,8 +52,7 @@ public class WebSocketMessagingTests : Test
                 Assert.AreEqual(message.Content, receivedMessage.Data.Content);
 
                 await connection.Close();
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -78,7 +77,6 @@ public class WebSocketMessagingTests : Test
                 }
 
                 await connection.Close();
-            })
-            .Run();
+            });
     }
 }

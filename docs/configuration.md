@@ -92,8 +92,7 @@ public class ProductHttpTests : Test
                     .Get();
 
                 Assert.IsTrue(response.IsSuccessful);
-            })
-            .Run();
+            });
     }
 }
 ```

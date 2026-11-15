@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Attributes.Skipping;
 
 [TestClass]
+[Tags("integration")]
 [TargetEnvironments("test")]
 public class SkipAttributeOnMethodTests : Test
 {

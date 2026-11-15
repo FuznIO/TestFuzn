@@ -4,13 +4,13 @@ namespace Fuzn.TestFuzn.Internals.Utils;
 
 internal static class TimespanExtensions
 {
-    public static string ToTestFuznResponseTime(this TimeSpan duration)
-        => FormatResponseTime(duration, " ms");
+    public static string ToTestFuznDuration(this TimeSpan duration)
+        => FormatDuration(duration, " ms");
     
-    public static string ToTestFuznResponseTimeHtml(this TimeSpan duration)
-        => WebUtility.HtmlEncode(FormatResponseTime(duration, "ms"));
+    public static string ToTestFuznDurationHtml(this TimeSpan duration)
+        => WebUtility.HtmlEncode(FormatDuration(duration, "ms"));
 
-    private static string FormatResponseTime(TimeSpan duration, string unit)
+    private static string FormatDuration(TimeSpan duration, string unit)
     {
         if (duration <= TimeSpan.Zero)
             return "N/A";

@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 namespace Fuzn.TestFuzn.Tests.Http;
 
 [TestClass]
+[Tags("integration")]
 public class HttpTests : Test
 {
     public static async Task<string> GetAuthToken(Context context)
@@ -33,8 +34,7 @@ public class HttpTests : Test
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.IsNotNull(response.Data);
                 Assert.IsNotEmpty(response.Data, "Expected more than one product to be returned.");
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -52,11 +52,11 @@ public class HttpTests : Test
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.IsNotNull(response.Data);
                 Assert.IsNotEmpty(response.Data, "Expected more than one product to be returned.");
-            })
-            .Run();
+            });
     }
 
     [Test]
+    [Tags("load")]
     public async Task Ping_LoadTest()
     {
         await Scenario()
@@ -67,11 +67,11 @@ public class HttpTests : Test
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.AreEqual("Pong", response.Data);
             })
-            .Load().Simulations((context, simulations) => simulations.FixedLoad(10, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(10, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)));
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_Load()
     {
         var token = "";
@@ -91,11 +91,11 @@ public class HttpTests : Test
                 Assert.IsNotNull(response.Data);
                 Assert.IsNotEmpty(response.Data, "Expected more than one product to be returned.");
             })
-            .Load().Simulations((context, simulations) => simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)));
     }
 
     [Test]
+    [Tags("load")]
     public async Task Max_Load()
     {
         await Scenario()
@@ -106,8 +106,7 @@ public class HttpTests : Test
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.AreEqual("Pong", response.Data);
             })
-            .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.FixedLoad(500, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)));
     }
 
     [Test]
@@ -142,7 +141,6 @@ public class HttpTests : Test
                 Assert.AreEqual(productId, getResponse.Data.Id);
                 Assert.AreEqual(name, getResponse.Data.Name);
                 Assert.AreEqual(price, getResponse.Data.Price);
-            })
-            .Run();
+            });
     }
 }

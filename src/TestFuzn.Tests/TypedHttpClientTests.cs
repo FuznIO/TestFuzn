@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Plugins.Http;
 namespace Fuzn.TestFuzn.Tests;
 
 [TestClass]
+[Tags("integration")]
 public class TypedHttpClientTests : Test
 {
     [Test]
@@ -18,7 +19,6 @@ public class TypedHttpClientTests : Test
 
                 Assert.AreEqual(initialCount + 1, TestHttpClient.UsageCount,
                     "Typed HTTP client should have been used");
-            })
-            .Run();
+            });
     }
 }

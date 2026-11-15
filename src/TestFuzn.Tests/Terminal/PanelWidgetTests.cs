@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class PanelWidgetTests : Test
 {
     [Test]
@@ -54,8 +55,7 @@ public class PanelWidgetTests : Test
 
                 foreach (var line in lines)
                     Assert.DoesNotContain("\u001b", line.Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -92,8 +92,7 @@ public class PanelWidgetTests : Test
                 AssertLines(new[] { "╭────╮", "╰────╯" }, PanelWidget.Render(null, Array.Empty<string>(), 6, ColorMode.None), 6);
                 Assert.ThrowsExactly<ArgumentNullException>(() => PanelWidget.Render(null, (IReadOnlyList<string?>)null!, 10, ColorMode.None));
                 Assert.ThrowsExactly<ArgumentNullException>(() => PanelWidget.Render(null, (IReadOnlyList<RenderedLine>)null!, 10, ColorMode.None));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -145,8 +144,7 @@ public class PanelWidgetTests : Test
             .Step("Empty pre-rendered content renders just the borders", context =>
             {
                 AssertLines(new[] { "╭────╮", "╰────╯" }, PanelWidget.Render(null, Array.Empty<RenderedLine>(), 6, ColorMode.None), 6);
-            })
-            .Run();
+            });
     }
 
     private static void AssertLines(IReadOnlyList<string> expectedLines, IReadOnlyList<RenderedLine> actualLines, int expectedWidth)

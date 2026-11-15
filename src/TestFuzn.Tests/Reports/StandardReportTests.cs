@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Reports;
 
 [TestClass]
+[Tags("integration")]
 public class StandardReportTests : Test
 {
     [Test]
@@ -21,8 +22,7 @@ public class StandardReportTests : Test
             })
             .Step("Test Step 5", (context) =>
             {
-            })
-            .Run();
+            });
     }
 
     [Test(Description = "Text with more description")]
@@ -73,8 +73,7 @@ public class StandardReportTests : Test
             })
             .Step("Test Step 5", (context) =>
             {
-            })
-            .Run();
+            });
     }
 
 }

@@ -22,8 +22,9 @@ internal class PlaywrightPlugin : IContextPlugin
 
     public async Task InitSuite()
     {
+        // Only the configured browsers: a worker image then downloads what the tests use, not every browser.
         if (_configuration.InstallPlaywright)
-            Microsoft.Playwright.Program.Main(new[] { "install" });
+            Microsoft.Playwright.Program.Main(new[] { "install" }.Concat(_configuration.BrowserTypes).ToArray());
 
         Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
 

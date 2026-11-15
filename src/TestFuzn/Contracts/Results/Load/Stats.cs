@@ -2,15 +2,16 @@
 
 internal class Stats
 {
-    public int RequestCount { get; internal set; }
-    public int RequestsPerSecond { get; internal set; }
+    public int Count { get; internal set; }
+    public int PerSecond { get; internal set; }
     public TimeSpan TotalExecutionDuration { get; internal set; }
-    public TimeSpan ResponseTimeMin { get; internal set; }
-    public TimeSpan ResponseTimeMax { get; internal set; }
-    public TimeSpan ResponseTimeMean { get; internal set; }
-    public TimeSpan ResponseTimeStandardDeviation { get; internal set; }
-    public TimeSpan ResponseTimeMedian { get; internal set; }
-    public TimeSpan ResponseTimePercentile75 { get; internal set; }
-    public TimeSpan ResponseTimePercentile95 { get; internal set; }
-    public TimeSpan ResponseTimePercentile99 { get; internal set; }
+    public TimeSpan DurationMin { get; internal set; }
+    public TimeSpan DurationMax { get; internal set; }
+    public TimeSpan DurationMean { get; internal set; }
+    public TimeSpan DurationStandardDeviation { get; internal set; }
+    public TimeSpan DurationMedian { get; internal set; }
+    public TimeSpan DurationPercentile75 { get; internal set; }
+    public TimeSpan DurationPercentile90 { get; internal set; }
+    public TimeSpan DurationPercentile95 { get; internal set; }
+    public TimeSpan DurationPercentile99 { get; internal set; }
 }

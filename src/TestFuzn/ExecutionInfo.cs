@@ -28,6 +28,16 @@ public class ExecutionInfo
     public string TestRunId => TestSession.TestRunId;
 
     /// <summary>
+    /// Gets the zero-based index of the load worker running this iteration. Always 0 when the test runs on one machine.
+    /// </summary>
+    public int WorkerIndex => TestSession.Cluster.WorkerIndex;
+
+    /// <summary>
+    /// Gets the number of load workers sharing the run. Always 1 when the test runs on one machine.
+    /// </summary>
+    public int WorkerCount => TestSession.Cluster.WorkerCount;
+
+    /// <summary>
     /// Gets or sets the correlation ID for tracking across distributed systems.
     /// </summary>
     public string CorrelationId { get; set; }

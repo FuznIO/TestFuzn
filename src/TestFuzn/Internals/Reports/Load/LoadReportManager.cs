@@ -1,5 +1,8 @@
 ﻿using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Reports;
+using Fuzn.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Internals.Cluster;
+using Fuzn.TestFuzn.Internals.Results.Load;
 using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Load;
@@ -24,6 +27,11 @@ internal class LoadReportManager
         if (!_loadReports.Any())
             return;
 
+        // A load child writes no report, and a remote client downloads the controller's.
+        var cluster = _testSession.Cluster;
+        if (!cluster.ReportsEnabled || cluster.RunLoadTestsOnCluster)
+            return;
+
         var testInfo = testExecutionState.TestClassInstance.TestInfo;
 
         var data = new LoadReportData();
@@ -34,15 +42,33 @@ internal class LoadReportManager
         data.TestRunId = _testSession.TestRunId;
         data.Test = testExecutionState.TestResult;
         data.TestsResultsDirectory = _testSession.TestsResultsDirectory;
+        data.Workers = testExecutionState.Workers;
+        data.Warnings = testExecutionState.Warnings;
 
         foreach (var scenario in testExecutionState.Scenarios)
         {
-            var scenarioResult = testExecutionState.LoadCollectors[scenario.Name].GetCurrentResult(true);
+            var collector = testExecutionState.LoadCollectors[scenario.Name];
+            var scenarioResult = collector.GetCurrentResult(true);
             data.ScenarioResults.Add(scenarioResult);
-            data.Snapshots.Add(scenario.Name, testExecutionState.LoadSnapshotCollector.GetSnapshots(scenario.Name));
+            var snapshots = WithFinalSnapshot(testExecutionState.LoadSnapshotCollector.GetSnapshots(scenario.Name), scenarioResult, collector.GetOkState());
+            data.Snapshots.Add(scenario.Name, snapshots.Select(snapshot => snapshot.Result).ToList());
+            data.Timelines.Add(scenario.Name, EvenlySpreadSnapshots.Timeline(snapshots, scenario.SimulationsInternal));
+            var state = collector.GetState();
+            data.Distributions.Add(scenario.Name, DurationDistribution.From(state.Ok, state.Failed));
         }
 
         foreach (var loadReport in _loadReports)
             await loadReport.WriteReport(data);
+    }
+
+    private static IReadOnlyList<LoadSnapshot> WithFinalSnapshot(IReadOnlyList<LoadSnapshot> snapshots, ScenarioLoadResult result, StatsState ok)
+    {
+        var total = (result.Ok?.Count ?? 0) + (result.Failed?.Count ?? 0);
+        var last = snapshots.Count > 0 ? snapshots[^1].Result : null;
+        if (last != null && (last.Ok?.Count ?? 0) + (last.Failed?.Count ?? 0) >= total)
+            return snapshots;
+
+        var end = result.MeasurementEndTime != default ? result.MeasurementEndTime : DateTime.UtcNow;
+        return [.. snapshots, new LoadSnapshot(end, result, ok)];
     }
 }

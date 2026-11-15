@@ -1,0 +1,7 @@
+<Project>
+  <!-- Copy Playwright's node driver for every OS, so a build made on Windows also runs on Linux or macOS
+       workers in a cluster run. The cluster upload keeps only the workers' OS family. -->
+  <PropertyGroup>
+    <PlaywrightPlatform Condition="'$(PlaywrightPlatform)' == ''">all</PlaywrightPlatform>
+  </PropertyGroup>
+</Project>

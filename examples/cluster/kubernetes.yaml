@@ -1,0 +1,33 @@
+# Workers as a plain Deployment: no Service, no Ingress. They only call Cockpit, the hub of the cluster.
+# The worker key must match Cockpit's COCKPIT_TESTFUZN_WORKER_KEY:
+#   kubectl create secret generic testfuzn-worker --from-literal=key=...
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: testfuzn-worker-playwright }
+spec:
+  replicas: 3
+  selector: { matchLabels: { app: testfuzn-worker } }
+  template:
+    metadata: { labels: { app: testfuzn-worker } }
+    spec:
+      affinity:                       # spread workers over nodes
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector: { matchLabels: { app: testfuzn-worker } }
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: worker
+        image: mycompany/testfuzn-worker:1
+        args: ["--pool", "playwright", "--work-dir", "/work"]
+        env:
+        - { name: TESTFUZN_COCKPIT_URL, value: "https://cockpit.example.com" }
+        - name: TESTFUZN_WORKER_KEY
+          valueFrom: { secretKeyRef: { name: testfuzn-worker, key: key } }
+        - { name: TESTFUZN_EXECUTION_ENVIRONMENT, value: "cloud" }   # your own value
+        resources:                    # fixed CPU for stable results
+          requests: { cpu: "2", memory: 2Gi }
+          limits:   { cpu: "2", memory: 2Gi }
+        volumeMounts: [{ name: work, mountPath: /work }]
+      volumes: [{ name: work, emptyDir: {} }]

@@ -2,6 +2,7 @@
 namespace Fuzn.TestFuzn.Tests.ContextType;
 
 [TestClass]
+[Tags("integration", "load")]
 public class ContextTests : Test, IBeforeTest, IAfterTest
 {
     public Task BeforeTest(Context context)
@@ -57,7 +58,6 @@ public class ContextTests : Test, IBeforeTest, IAfterTest
                 Assert.IsFalse(string.IsNullOrEmpty(context.Info.TestRunId));
                 Assert.AreEqual("AfterScenario", context.StepInfo.Name);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(10))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(10));
     }
 }

@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Runner;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class TestSelectionMenuTests : Test
 {
     private const string EnterSequence = AnsiCodes.EnterAlternateScreen + AnsiCodes.HideCursor + AnsiCodes.DisableAutoWrap;
@@ -148,8 +149,7 @@ public class TestSelectionMenuTests : Test
                         RepaintedLine(10, "   1  Fuzn.Shop.Tests.CartTests.Verify_add_to_cart"),
                         RepaintedLine(11, "▸  2  Fuzn.Shop.Tests.CatalogTests.Verify_browse_products")),
                     host.Writer.Writes[2]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -194,8 +194,7 @@ public class TestSelectionMenuTests : Test
                 var diff = host.Writer.Writes[2];
                 Assert.StartsWith(AnsiCodes.BeginSynchronizedOutput + RepaintedLine(3, string.Empty) + RepaintedLine(4, string.Empty), diff);
                 Assert.EndsWith(RepaintedLine(23, "Filter: zzz▏  no matching tests") + AnsiCodes.EndSynchronizedOutput, diff);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -232,8 +231,7 @@ public class TestSelectionMenuTests : Test
                 Assert.AreEqual(0, host.Writer.WindowWidthReadCount);
                 Assert.AreEqual(0, host.Reader.TryReadKeyCallCount);
                 Assert.AreEqual(0, host.DelayCount);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -285,8 +283,7 @@ public class TestSelectionMenuTests : Test
                 await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await Select(redirected, Tests()));
                 Assert.AreEqual(0, redirected.Reader.ReadLineCallCount);
                 Assert.AreEqual(1, redirected.CreateTerminalWriterCallCount);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -324,8 +321,7 @@ public class TestSelectionMenuTests : Test
                 Assert.AreEqual(1, host.Writer.FailedWriteCount);
                 Assert.HasCount(2, host.Writer.Writes);
                 Assert.AreEqual(EnterSequence, host.Writer.Writes[0]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -381,8 +377,7 @@ public class TestSelectionMenuTests : Test
 
                 Assert.IsNull(await Select(host, Tests()));
                 Assert.AreEqual(2, host.DelayCount);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -435,8 +430,7 @@ public class TestSelectionMenuTests : Test
                 Assert.EndsWith(AnsiCodes.MoveCursor(40, 1) + "↑↓ move · enter run · type to filter · esc quit · pgup/pgdn page · home/end first/last" + AnsiCodes.EndSynchronizedOutput, redraw);
                 Assert.AreEqual(3, host.Writer.WindowWidthReadCount);
                 Assert.AreEqual(3, host.Writer.WindowHeightReadCount);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -507,8 +501,7 @@ public class TestSelectionMenuTests : Test
 
                 Assert.IsNull(await Select(host, tests));
                 Assert.AreEqual(" 1  Tests.Weird[bold]name[/]", PlainLines(host.Writer)[2]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -557,8 +550,7 @@ public class TestSelectionMenuTests : Test
                 await Assert.ThrowsExactlyAsync<IOException>(async () => await Select(host, Tests()));
                 Assert.AreEqual(1, host.Reader.ReadLineCallCount);
                 Assert.HasCount(16, PlainLines(host.Writer));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -591,8 +583,7 @@ public class TestSelectionMenuTests : Test
                 Assert.AreEqual("[1;32m" + Prompt + "[0m" + Environment.NewLine, host.Writer.Writes[15]);
                 Assert.AreEqual(0, host.Reader.TryReadKeyCallCount);
                 Assert.AreEqual(0, host.Writer.WindowWidthReadCount);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -610,7 +601,6 @@ public class TestSelectionMenuTests : Test
             .Step("The key poll cadence is twenty times per second", context =>
             {
                 Assert.AreEqual(TimeSpan.FromMilliseconds(50), TestSelectionMenu.PollInterval);
-            })
-            .Run();
+            });
     }
 }

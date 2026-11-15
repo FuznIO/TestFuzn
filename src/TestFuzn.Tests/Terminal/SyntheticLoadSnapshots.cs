@@ -17,18 +17,17 @@ internal static class SyntheticLoadSnapshots
         result.ScenarioName = "Checkout flow";
         result.Ok = BuildStats(ok, okPercentile95Ms);
         result.Failed = BuildStats(failed, 0);
-        result.WarmupRequestCountOk = warmupOk;
-        result.WarmupRequestCountFailed = warmupFailed;
-        result.RequestCount = ok + failed;
+        result.WarmupOkCount = warmupOk;
+        result.WarmupFailedCount = warmupFailed;
         result.Steps = new Dictionary<string, StepLoadResult>();
         return result;
     }
 
-    public static Stats BuildStats(int requestCount, double percentile95Ms)
+    public static Stats BuildStats(int count, double percentile95Ms)
     {
         var stats = new Stats();
-        stats.RequestCount = requestCount;
-        stats.ResponseTimePercentile95 = TimeSpan.FromMilliseconds(percentile95Ms);
+        stats.Count = count;
+        stats.DurationPercentile95 = TimeSpan.FromMilliseconds(percentile95Ms);
         return stats;
     }
 

@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals;
 namespace Fuzn.TestFuzn.Tests.Session;
 
 [TestClass]
+[Tags("unit")]
 public class ArgumentsParserTests : Test
 {
     private static ArgumentsParser CreateParser()
@@ -64,7 +65,6 @@ public class ArgumentsParserTests : Test
                 Assert.IsEmpty(CreateParser().Parse(Array.Empty<string>()));
                 Assert.IsEmpty(CreateParser().Parse(null!));
                 Assert.IsEmpty(CreateParser().Parse(new[] { "--" }));
-            })
-            .Run();
+            });
     }
 }

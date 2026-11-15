@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Plugins.Http;
 namespace Fuzn.TestFuzn.Tests.Http;
 
 [TestClass]
+[Tags("integration")]
 public class SerializerProviderTests : Test
 {
     [Test]
@@ -21,8 +22,7 @@ public class SerializerProviderTests : Test
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.IsNotNull(response.Data);
                 Assert.IsNotEmpty(response.Data, "Expected more than one product to be returned.");
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -45,7 +45,6 @@ public class SerializerProviderTests : Test
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.IsNotNull(response.Data);
                 Assert.IsNotEmpty(response.Data, "Expected more than one product to be returned.");
-            })
-            .Run();
+            });
     }
 }

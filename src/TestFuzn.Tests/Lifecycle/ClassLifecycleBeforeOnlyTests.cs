@@ -1,6 +1,7 @@
 namespace Fuzn.TestFuzn.Tests.Lifecycle;
 
 [TestClass]
+[Tags("integration")]
 public class ClassLifecycleBeforeOnlyTests : Test, IBeforeClass
 {
     internal static bool BeforeClassCalled = false;
@@ -18,7 +19,6 @@ public class ClassLifecycleBeforeOnlyTests : Test, IBeforeClass
             .Step("Verify BeforeClass was called", (context) =>
             {
                 Assert.IsTrue(BeforeClassCalled);
-            })
-            .Run();
+            });
     }
 }

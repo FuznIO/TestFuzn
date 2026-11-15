@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class LogoWidgetTests : Test
 {
     private const string BannerFirstRow = "████████╗███████╗███████╗████████╗███████╗██╗   ██╗███████╗███╗   ██╗";
@@ -69,8 +70,7 @@ public class LogoWidgetTests : Test
 
                 for (var row = 0; row < lines.Count; row++)
                     Assert.AreEqual(AnsiCodes.Bold + plainLines[row].Text + AnsiCodes.Reset, lines[row].Text, $"Row mismatch at row {row}");
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -107,8 +107,7 @@ public class LogoWidgetTests : Test
 
                 Assert.AreEqual(11, line.Width);
                 Assert.AreEqual(10, line.Text.Length);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -140,8 +139,7 @@ public class LogoWidgetTests : Test
 
                 Assert.IsEmpty(LogoWidget.Render(10, 1, ColorMode.None));
                 Assert.IsEmpty(LogoWidget.Render(11, 0, ColorMode.None));
-            })
-            .Run();
+            });
     }
 
     private static string ExpectedGradientRow(string artRow)

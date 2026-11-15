@@ -5,6 +5,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class ScenarioLiveMetricsTests : Test
 {
     private static ScenarioLiveMetrics CreateMetrics()
@@ -35,7 +36,7 @@ public class ScenarioLiveMetricsTests : Test
                 metrics.Record(SyntheticLoadSnapshots.Snapshot(ok: 5), SyntheticLoadSnapshots.At(0));
 
                 Assert.IsEmpty(metrics.Current.Samples);
-                Assert.AreEqual(5, metrics.Current.RequestCountOk);
+                Assert.AreEqual(5, metrics.Current.OkCount);
             })
             .Step("Subsequent Records append per-second deltas with the newest sample last", context =>
             {
@@ -48,30 +49,29 @@ public class ScenarioLiveMetricsTests : Test
                 Assert.HasCount(2, view.Samples);
                 Assert.AreEqual(10, view.Samples[0].OkDelta);
                 Assert.AreEqual(1, view.Samples[0].FailedDelta);
-                Assert.AreEqual(11.0, view.Samples[0].RequestsPerSecond);
+                Assert.AreEqual(11.0, view.Samples[0].PerSecond);
                 Assert.AreEqual(15, view.Samples[1].OkDelta);
                 Assert.AreEqual(2, view.Samples[1].FailedDelta);
-                Assert.AreEqual(17.0, view.Samples[1].RequestsPerSecond);
+                Assert.AreEqual(17.0, view.Samples[1].PerSecond);
                 Assert.AreEqual(SyntheticLoadSnapshots.At(2), view.Samples[1].Timestamp);
             })
-            .Step("The requests-per-second series mirrors the samples", context =>
+            .Step("The per-second series mirrors the samples", context =>
             {
                 var metrics = CreateMetrics();
                 metrics.Record(SyntheticLoadSnapshots.Snapshot(), SyntheticLoadSnapshots.At(0));
                 metrics.Record(SyntheticLoadSnapshots.Snapshot(ok: 10, failed: 1), SyntheticLoadSnapshots.At(1));
 
                 var view = metrics.Current;
-                Assert.HasCount(1, view.RequestsPerSecondSeries);
-                Assert.AreEqual(11.0, view.RequestsPerSecondSeries[0]);
-            })
-            .Run();
+                Assert.HasCount(1, view.PerSecondSeries);
+                Assert.AreEqual(11.0, view.PerSecondSeries[0]);
+            });
     }
 
     [Test]
     public async Task Verify_interval_math_and_non_advancing_timestamps()
     {
         await Scenario()
-            .Step("A Record whose timestamp does not advance appends nothing and loses no requests (synthetic clock)", context =>
+            .Step("A Record whose timestamp does not advance appends nothing and loses no iterations (synthetic clock)", context =>
             {
                 var metrics = CreateMetrics();
                 metrics.Record(SyntheticLoadSnapshots.Snapshot(), SyntheticLoadSnapshots.At(0));
@@ -81,17 +81,16 @@ public class ScenarioLiveMetricsTests : Test
                 metrics.Record(SyntheticLoadSnapshots.Snapshot(ok: 20), SyntheticLoadSnapshots.At(2));
                 var sample = Assert.ContainsSingle(metrics.Current.Samples);
                 Assert.AreEqual(20, sample.OkDelta);
-                Assert.AreEqual(10.0, sample.RequestsPerSecond);
+                Assert.AreEqual(10.0, sample.PerSecond);
             })
-            .Step("Current-interval RPS divides the delta by the interval's actual length", context =>
+            .Step("Current-interval rate divides the delta by the interval's actual length", context =>
             {
                 var metrics = CreateMetrics();
                 metrics.Record(SyntheticLoadSnapshots.Snapshot(), SyntheticLoadSnapshots.At(0));
                 metrics.Record(SyntheticLoadSnapshots.Snapshot(ok: 5), SyntheticLoadSnapshots.At(0.5));
 
-                Assert.AreEqual(10.0, Assert.ContainsSingle(metrics.Current.Samples).RequestsPerSecond);
-            })
-            .Run();
+                Assert.AreEqual(10.0, Assert.ContainsSingle(metrics.Current.Samples).PerSecond);
+            });
     }
 
     [Test]
@@ -112,8 +111,7 @@ public class ScenarioLiveMetricsTests : Test
                 Assert.AreEqual(1, view.Samples[1].FailedDelta);
                 Assert.AreEqual(2, view.Samples[2].OkDelta);
                 Assert.AreEqual(1, view.Samples[2].FailedDelta);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -132,9 +130,8 @@ public class ScenarioLiveMetricsTests : Test
                 Assert.HasCount(ScenarioLiveMetrics.SampleCapacity, view.Samples);
                 Assert.AreEqual(6, view.Samples[0].OkDelta);
                 Assert.AreEqual(appendedSamples, view.Samples[view.Samples.Count - 1].OkDelta);
-                Assert.HasCount(ScenarioLiveMetrics.SampleCapacity, view.RequestsPerSecondSeries);
-            })
-            .Run();
+                Assert.HasCount(ScenarioLiveMetrics.SampleCapacity, view.PerSecondSeries);
+            });
     }
 
     [Test]
@@ -145,37 +142,36 @@ public class ScenarioLiveMetricsTests : Test
             {
                 var snapshot = SyntheticLoadSnapshots.Snapshot();
                 snapshot.Ok = new Stats();
-                snapshot.Ok.RequestCount = 100;
-                snapshot.Ok.RequestsPerSecond = 10;
-                snapshot.Ok.ResponseTimeMin = TimeSpan.FromMilliseconds(5);
-                snapshot.Ok.ResponseTimeMax = TimeSpan.FromMilliseconds(900);
-                snapshot.Ok.ResponseTimeMean = TimeSpan.FromMilliseconds(50);
-                snapshot.Ok.ResponseTimeStandardDeviation = TimeSpan.FromMilliseconds(12);
-                snapshot.Ok.ResponseTimeMedian = TimeSpan.FromMilliseconds(45);
-                snapshot.Ok.ResponseTimePercentile75 = TimeSpan.FromMilliseconds(60);
-                snapshot.Ok.ResponseTimePercentile95 = TimeSpan.FromMilliseconds(80);
-                snapshot.Ok.ResponseTimePercentile99 = TimeSpan.FromMilliseconds(200);
-                snapshot.Failed.RequestCount = 7;
-                snapshot.Failed.ResponseTimePercentile95 = TimeSpan.FromMilliseconds(1500);
+                snapshot.Ok.Count = 100;
+                snapshot.Ok.PerSecond = 10;
+                snapshot.Ok.DurationMin = TimeSpan.FromMilliseconds(5);
+                snapshot.Ok.DurationMax = TimeSpan.FromMilliseconds(900);
+                snapshot.Ok.DurationMean = TimeSpan.FromMilliseconds(50);
+                snapshot.Ok.DurationStandardDeviation = TimeSpan.FromMilliseconds(12);
+                snapshot.Ok.DurationMedian = TimeSpan.FromMilliseconds(45);
+                snapshot.Ok.DurationPercentile75 = TimeSpan.FromMilliseconds(60);
+                snapshot.Ok.DurationPercentile95 = TimeSpan.FromMilliseconds(80);
+                snapshot.Ok.DurationPercentile99 = TimeSpan.FromMilliseconds(200);
+                snapshot.Failed.Count = 7;
+                snapshot.Failed.DurationPercentile95 = TimeSpan.FromMilliseconds(1500);
 
                 var metrics = CreateMetrics();
                 metrics.Record(snapshot, SyntheticLoadSnapshots.At(0));
 
                 var view = metrics.Current;
-                Assert.AreEqual(100, view.Ok.RequestCount);
-                Assert.AreEqual(10, view.Ok.RequestsPerSecond);
-                Assert.AreEqual(TimeSpan.FromMilliseconds(5), view.Ok.ResponseTimeMin);
-                Assert.AreEqual(TimeSpan.FromMilliseconds(900), view.Ok.ResponseTimeMax);
-                Assert.AreEqual(TimeSpan.FromMilliseconds(50), view.Ok.ResponseTimeMean);
-                Assert.AreEqual(TimeSpan.FromMilliseconds(12), view.Ok.ResponseTimeStandardDeviation);
-                Assert.AreEqual(TimeSpan.FromMilliseconds(45), view.Ok.ResponseTimeMedian);
-                Assert.AreEqual(TimeSpan.FromMilliseconds(60), view.Ok.ResponseTimePercentile75);
-                Assert.AreEqual(TimeSpan.FromMilliseconds(80), view.Ok.ResponseTimePercentile95);
-                Assert.AreEqual(TimeSpan.FromMilliseconds(200), view.Ok.ResponseTimePercentile99);
-                Assert.AreEqual(7, view.Failed.RequestCount);
-                Assert.AreEqual(TimeSpan.FromMilliseconds(1500), view.Failed.ResponseTimePercentile95);
-            })
-            .Run();
+                Assert.AreEqual(100, view.Ok.Count);
+                Assert.AreEqual(10, view.Ok.PerSecond);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(5), view.Ok.DurationMin);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(900), view.Ok.DurationMax);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(50), view.Ok.DurationMean);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(12), view.Ok.DurationStandardDeviation);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(45), view.Ok.DurationMedian);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(60), view.Ok.DurationPercentile75);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(80), view.Ok.DurationPercentile95);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(200), view.Ok.DurationPercentile99);
+                Assert.AreEqual(7, view.Failed.Count);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(1500), view.Failed.DurationPercentile95);
+            });
     }
 
     [Test]
@@ -279,8 +275,7 @@ public class ScenarioLiveMetricsTests : Test
                 var messages = view.Errors.Select(error => error.Message).ToList();
                 Assert.Contains("error-" + (ScenarioLiveMetrics.ErrorCapacity + 5), messages);
                 Assert.DoesNotContain("error-1", messages);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -291,8 +286,8 @@ public class ScenarioLiveMetricsTests : Test
             {
                 var snapshot = SyntheticLoadSnapshots.Snapshot(ok: 150, failed: 5);
                 var login = SyntheticLoadSnapshots.Step("Login", ok: 100);
-                login.Ok.ResponseTimeMean = TimeSpan.FromMilliseconds(50);
-                login.Ok.ResponseTimePercentile95 = TimeSpan.FromMilliseconds(80);
+                login.Ok.DurationMean = TimeSpan.FromMilliseconds(50);
+                login.Ok.DurationPercentile95 = TimeSpan.FromMilliseconds(80);
                 var checkout = SyntheticLoadSnapshots.Step("Checkout", ok: 50, failed: 5);
                 checkout.SkippedCount = 3;
                 SyntheticLoadSnapshots.AddStep(snapshot, login);
@@ -304,18 +299,18 @@ public class ScenarioLiveMetricsTests : Test
                 var view = metrics.Current;
                 Assert.HasCount(2, view.Steps);
                 Assert.AreEqual("Login", view.Steps[0].Name);
-                Assert.AreEqual(100, view.Steps[0].RequestCountOk);
-                Assert.AreEqual(0, view.Steps[0].RequestCountFailed);
+                Assert.AreEqual(100, view.Steps[0].OkCount);
+                Assert.AreEqual(0, view.Steps[0].FailedCount);
                 Assert.AreEqual(0, view.Steps[0].SkippedCount);
-                Assert.AreEqual(TimeSpan.FromMilliseconds(50), view.Steps[0].Ok.ResponseTimeMean);
-                Assert.AreEqual(TimeSpan.FromMilliseconds(80), view.Steps[0].Ok.ResponseTimePercentile95);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(50), view.Steps[0].Ok.DurationMean);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(80), view.Steps[0].Ok.DurationPercentile95);
                 Assert.AreEqual("Checkout", view.Steps[1].Name);
-                Assert.AreEqual(50, view.Steps[1].RequestCountOk);
-                Assert.AreEqual(5, view.Steps[1].RequestCountFailed);
+                Assert.AreEqual(50, view.Steps[1].OkCount);
+                Assert.AreEqual(5, view.Steps[1].FailedCount);
                 Assert.AreEqual(3, view.Steps[1].SkippedCount);
 
-                Assert.AreEqual(0.0, view.Steps[0].RequestsPerSecond);
-                Assert.AreEqual(0.0, view.Steps[0].AverageRequestsPerSecond);
+                Assert.AreEqual(0.0, view.Steps[0].PerSecond);
+                Assert.AreEqual(0.0, view.Steps[0].AveragePerSecond);
             })
             .Step("A step first seen mid-run gets an interval rate counted from zero (synthetic — real top-level steps exist from the start)", context =>
             {
@@ -328,27 +323,26 @@ public class ScenarioLiveMetricsTests : Test
 
                 var row = Assert.ContainsSingle(metrics.Current.Steps);
                 Assert.AreEqual("Late step", row.Name);
-                Assert.AreEqual(3.0, row.RequestsPerSecond, 1e-9);
+                Assert.AreEqual(3.0, row.PerSecond, 1e-9);
             })
             .Step("A snapshot missing stats or steps is tolerated with explicit defaults", context =>
             {
                 var bare = new ScenarioLoadResult();
                 bare.ScenarioName = "Checkout flow";
-                bare.WarmupRequestCountOk = 5;
+                bare.WarmupOkCount = 5;
 
                 var metrics = CreateMetrics();
                 metrics.Record(bare, SyntheticLoadSnapshots.At(0));
-                Assert.AreEqual(0, metrics.Current.RequestCountOk);
+                Assert.AreEqual(0, metrics.Current.OkCount);
                 Assert.IsEmpty(metrics.Current.Steps);
 
                 var bareLater = new ScenarioLoadResult();
                 bareLater.ScenarioName = "Checkout flow";
-                bareLater.WarmupRequestCountOk = 9;
+                bareLater.WarmupOkCount = 9;
                 metrics.Record(bareLater, SyntheticLoadSnapshots.At(1));
 
                 Assert.AreEqual(4, Assert.ContainsSingle(metrics.Current.Samples).OkDelta);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -411,13 +405,13 @@ public class ScenarioLiveMetricsTests : Test
                         var view = metrics.Current;
                         readCount++;
 
-                        if (view.Samples.Count != view.RequestsPerSecondSeries.Count)
+                        if (view.Samples.Count != view.PerSecondSeries.Count)
                             violations++;
 
                         for (var index = 0; index < view.Samples.Count; index++)
                         {
                             var sample = view.Samples[index];
-                            if (sample.OkDelta != 2 || sample.FailedDelta != 3 || sample.RequestsPerSecond != 5.0)
+                            if (sample.OkDelta != 2 || sample.FailedDelta != 3 || sample.PerSecond != 5.0)
                                 violations++;
                         }
                     } while (!writer.IsCompleted || readCount < minimumReadCount);
@@ -427,8 +421,7 @@ public class ScenarioLiveMetricsTests : Test
 
                 Assert.AreEqual(0, violations);
                 Assert.IsGreaterThanOrEqualTo(minimumReadCount, readCount);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -447,7 +440,6 @@ public class ScenarioLiveMetricsTests : Test
                 metrics.Record(SyntheticLoadSnapshots.Snapshot(ok: 5), unspecified);
 
                 Assert.AreEqual(5, Assert.ContainsSingle(metrics.Current.Samples).OkDelta);
-            })
-            .Run();
+            });
     }
 }

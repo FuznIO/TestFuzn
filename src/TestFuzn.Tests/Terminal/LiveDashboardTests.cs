@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class LiveDashboardTests : Test
 {
     private const string EnterSequence = AnsiCodes.EnterAlternateScreen + AnsiCodes.HideCursor + AnsiCodes.DisableAutoWrap;
@@ -63,8 +64,7 @@ public class LiveDashboardTests : Test
 
                 Assert.ThrowsExactly<InvalidOperationException>(() => dashboard.Render());
                 Assert.IsEmpty(writer.Writes);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -146,8 +146,7 @@ public class LiveDashboardTests : Test
 
                 Assert.ThrowsExactly<IOException>(() => dashboard.Render());
                 Assert.IsEmpty(writer.Writes);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -180,8 +179,7 @@ public class LiveDashboardTests : Test
 
                 Assert.ThrowsExactly<InvalidOperationException>(() => dashboard.Render());
                 Assert.IsEmpty(writer.Writes);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -224,8 +222,7 @@ public class LiveDashboardTests : Test
                     Assert.AreEqual(SynchronizedFlush(RepaintedLine(StatusRowNumber, StatusRow(AsciiSpinnerFrames[index]))), writer.Writes[index - 1]);
 
                 Assert.AreEqual(SynchronizedFlush(RepaintedLine(StatusRowNumber, StatusRow(AsciiSpinnerFrames[0]))), writer.Writes[AsciiSpinnerFrames.Length - 1]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -269,8 +266,7 @@ public class LiveDashboardTests : Test
                 dashboard.Dispose();
 
                 Assert.IsEmpty(writer.Writes);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -326,8 +322,7 @@ public class LiveDashboardTests : Test
                 AssertRestoredOnce(writer);
                 Assert.HasCount(4, writer.Writes);
                 Assert.AreEqual(EnterSequence, writer.Writes[0]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -354,8 +349,7 @@ public class LiveDashboardTests : Test
             .Step("The render cadence is about four frames per second", context =>
             {
                 Assert.AreEqual(TimeSpan.FromMilliseconds(250), LiveDashboard.RenderInterval);
-            })
-            .Run();
+            });
     }
 
     private static void AssertRestoredOnce(FakeTerminalWriter writer)

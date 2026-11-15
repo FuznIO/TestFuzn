@@ -1,6 +1,6 @@
 {
   "projectTitle": "TestFuzn",
-  "description": "Unified .NET testing framework — unit, end-to-end, and load tests in a single API. MSTest-compatible. Plugins for HTTP (Fuzn.FluentHttp), Playwright, and WebSocket. InfluxDB sink for real-time metrics.",
+  "description": "Unified .NET testing framework — unit, end-to-end, and load tests in a single API. MSTest-compatible. Plugins for HTTP (Fuzn.FluentHttp), Playwright, and WebSocket. Cluster load runs through Cockpit.",
   "folders": ["docs", "examples"],
   "excludeFolders": ["bin", "obj", "src", ".github"],
   "excludeFiles": ["**/*.cs"]

@@ -3,6 +3,7 @@
 namespace Fuzn.TestFuzn.Tests.InputData;
 
 [TestClass]
+[Tags("integration")]
 public class FilesTests : Test
 {
     [Test]
@@ -57,8 +58,7 @@ public class FilesTests : Test
                     Assert.Fail($"Unexpected user: {user.Username}");
                 }
             })
-            .Step("Assert", async context => { await Task.Delay(100); })
-            .Run();
+            .Step("Assert", async context => { await Task.Delay(100); });
     }
 
     [Test]
@@ -113,11 +113,11 @@ public class FilesTests : Test
                 {
                     Assert.Fail($"Unexpected user: {user.Username}");
                 }
-            })
-            .Run();
+            });
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_Csv_InputData_Load()
     {
         var dict = new ConcurrentDictionary<string, int>();
@@ -141,11 +141,11 @@ public class FilesTests : Test
                 foreach (var e in dict)
                     Assert.AreEqual(3, e.Value);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(9))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(9));
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_Json_InputData_Load()
     {
         var dict = new ConcurrentDictionary<string, int>();
@@ -168,7 +168,6 @@ public class FilesTests : Test
                 foreach (var e in dict)
                     Assert.AreEqual(3, e.Value);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(9))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(9));
     }
 }

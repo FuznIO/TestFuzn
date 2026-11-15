@@ -26,9 +26,9 @@ internal class StandardResultManager
 
         var groupResult = _suiteResult.GroupResults.GetOrAdd(testInfo.Group.Name, (key) => new GroupResult(testInfo.Group.Name));
 
-        if (!groupResult.TestResults.TryAdd(testResult.Name, testResult))
+        if (!groupResult.TestResults.TryAdd(testResult.FullName, testResult))
         {
-            throw new Exception($"Test name '{testResult.Name}' is duplicated, it already exists in group '{testInfo.Group.Name}'.");
+            throw new Exception($"Test '{testResult.FullName}' is duplicated, it already exists in group '{testInfo.Group.Name}'.");
         }
     }
 
@@ -36,9 +36,9 @@ internal class StandardResultManager
     {
         var groupResult = _suiteResult.GroupResults.GetOrAdd(testResult.Group.Name, (key) => new GroupResult(testResult.Group.Name));
 
-        if (!groupResult.TestResults.TryAdd(testResult.Name, testResult))
+        if (!groupResult.TestResults.TryAdd(testResult.FullName, testResult))
         {
-            throw new Exception($"Test name '{testResult.Name}' is duplicated, it already exists in group '{testResult.Group.Name}'.");
+            throw new Exception($"Test '{testResult.FullName}' is duplicated, it already exists in group '{testResult.Group.Name}'.");
         }
     }
 }

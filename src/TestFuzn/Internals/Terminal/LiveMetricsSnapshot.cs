@@ -32,15 +32,15 @@ internal sealed class LiveMetricsSnapshot
 
     public Exception? AssertWhenDoneException { get; init; }
 
-    public int RequestCountOk { get; init; }
+    public int OkCount { get; init; }
 
-    public int RequestCountFailed { get; init; }
+    public int FailedCount { get; init; }
 
-    public int WarmupRequestCountOk { get; init; }
+    public int WarmupOkCount { get; init; }
 
-    public int WarmupRequestCountFailed { get; init; }
+    public int WarmupFailedCount { get; init; }
 
-    public int RequestsPerSecond { get; init; }
+    public int PerSecond { get; init; }
 
     public LiveStats Ok { get; init; } = LiveStats.Empty;
 
@@ -48,7 +48,7 @@ internal sealed class LiveMetricsSnapshot
 
     public IReadOnlyList<LiveMetricsSample> Samples { get; init; } = Array.Empty<LiveMetricsSample>();
 
-    public IReadOnlyList<double> RequestsPerSecondSeries { get; init; } = Array.Empty<double>();
+    public IReadOnlyList<double> PerSecondSeries { get; init; } = Array.Empty<double>();
 
     public IReadOnlyList<LiveErrorEntry> Errors { get; init; } = Array.Empty<LiveErrorEntry>();
 

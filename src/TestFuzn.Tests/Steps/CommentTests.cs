@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
+[Tags("integration")]
 public class CommentTests : Test
 {
     [Test]
@@ -16,11 +17,11 @@ public class CommentTests : Test
             {
                 context.Comment("This is a comment #1 for Step 2.");
                 context.Comment("This is a comment #2 for Step 2.");
-            })
-            .Run();
+            });
     }
 
     [Test]
+    [Tags("load")]
     public async Task LoadTest_Comment_Should_Be_Written_To_Log()
     {
         await Scenario()
@@ -34,7 +35,6 @@ public class CommentTests : Test
                 context.Comment("This is a comment #1 for Step 2.");
                 context.Comment("This is a comment #2 for Step 2.");
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5));
     }
 }

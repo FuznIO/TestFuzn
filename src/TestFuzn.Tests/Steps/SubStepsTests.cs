@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
+[Tags("integration")]
 public class SubStepsTests : Test
 {
     [Test]
@@ -43,8 +44,7 @@ public class SubStepsTests : Test
                     Assert.AreEqual("Step 2.1", subContext1.StepInfo.Name);
                     subContext1.Comment("Comment for step 2.1");
                 });
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -90,12 +90,11 @@ public class SubStepsTests : Test
 
                     await Task.CompletedTask;
                 });
-            })
-            .Run();
+            });
     }
 
     [Test]
-    [Tags("Category1")]
+    [Tags("Category1", "load")]
     public async Task SubSteps_Async_Load()
     {
         await Scenario()
@@ -133,7 +132,6 @@ public class SubStepsTests : Test
                     await Task.CompletedTask;
                 });
             })
-            .Load().Simulations((context, builder) => builder.OneTimeLoad(50))
-            .Run();
+            .Load().Simulations((context, builder) => builder.OneTimeLoad(50));
     }
 }

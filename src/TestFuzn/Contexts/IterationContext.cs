@@ -1,5 +1,6 @@
 ﻿using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
+using Fuzn.TestFuzn.Internals;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn;
@@ -190,8 +191,8 @@ public abstract class IterationContext : Context
         var attachment = new Attachment();
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
         var extension = Path.GetExtension(fileName);
-        attachment.Name = $"{Info.CorrelationId}_{fileNameWithoutExtension}_{Guid.NewGuid().ToString("N")[..6]}{extension}";
-        attachment.Path = Path.Combine(directory, attachment.Name);
+        attachment.Name = fileName;
+        attachment.Path = Path.Combine(directory, $"{Info.CorrelationId}_{fileNameWithoutExtension}_{Guid.NewGuid().ToString("N")[..6]}{extension}");
         StepInfo.Attachments.Add(attachment);
 
         await writeFileAsync(attachment.Path);
@@ -209,6 +210,27 @@ public sealed class IterationContext<TModel> : IterationContext
     /// </summary>
     public TModel Model => (TModel) IterationState.Model;
 
+    private Step SubStep(string name, string? id)
+    {
+        var parentId = "";
+        if (StepInfo != null && StepInfo.Id != null)
+            parentId = StepInfo.Id;
+
+        var step = new Step();
+        step.ContextType = typeof(IterationContext<TModel>);
+        step.Name = name;
+        step.ParentName = StepInfo.Name;
+        step.ParentId = parentId;
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            step.Id = StableId.Of(parentId, name);
+            step.IsIdAutomatic = true;
+        }
+        else
+            step.Id = id;
+        return step;
+    }
+
     /// <summary>
     /// Defines and executes an asynchronous sub-step with an explicit identifier.
     /// </summary>
@@ -217,11 +239,7 @@ public sealed class IterationContext<TModel> : IterationContext
     /// <param name="action">The asynchronous action to execute.</param>
     public async Task Step(string name, string id, Func<IterationContext<TModel>, Task> action)
     {
-        var step = new Step();
-        step.ContextType = typeof(IterationContext<TModel>);
-        step.Name = name;
-        step.Id = id;
-        step.ParentName = StepInfo.Name;
+        var step = SubStep(name, id);
         step.Action = ctx => action((IterationContext<TModel>) ctx);
         await IterationState.ExecuteStepHandler.ExecuteStep(step);
     }
@@ -233,10 +251,7 @@ public sealed class IterationContext<TModel> : IterationContext
     /// <param name="action">The asynchronous action to execute.</param>
     public async Task Step(string name, Func<IterationContext<TModel>, Task> action)
     {
-        var step = new Step();
-        step.ContextType = typeof(IterationContext<TModel>);
-        step.Name = name;
-        step.ParentName = StepInfo.Name;
+        var step = SubStep(name, null);
         step.Action = ctx => action((IterationContext<TModel>) ctx);
         await IterationState.ExecuteStepHandler.ExecuteStep(step);
     }
@@ -249,11 +264,7 @@ public sealed class IterationContext<TModel> : IterationContext
     /// <param name="action">The synchronous action to execute.</param>
     public void Step(string name, string id, Action<IterationContext<TModel>> action)
     {
-        var step = new Step();
-        step.ContextType = typeof(IterationContext<TModel>);
-        step.Name = name;
-        step.Id = id;
-        step.ParentName = StepInfo.Name;
+        var step = SubStep(name, id);
         step.Action = (ctx) =>
             {
                 action((IterationContext<TModel>) ctx);
@@ -269,10 +280,7 @@ public sealed class IterationContext<TModel> : IterationContext
     /// <param name="action">The synchronous action to execute.</param>
     public void Step(string name, Action<IterationContext<TModel>> action)
     {
-        var step = new Step();
-        step.ContextType = typeof(IterationContext<TModel>);
-        step.Name = name;
-        step.ParentName = StepInfo.Name;
+        var step = SubStep(name, null);
         step.Action = (ctx) =>
             {
                 action((IterationContext<TModel>) ctx);

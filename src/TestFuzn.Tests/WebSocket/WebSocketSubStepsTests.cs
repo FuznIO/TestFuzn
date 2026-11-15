@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
+[Tags("integration")]
 public class WebSocketSubStepsTests : Test
 {
     private const string WebSocketServerUrl = "wss://localhost:7058/ws";
@@ -37,7 +38,6 @@ public class WebSocketSubStepsTests : Test
                     await connection.Close();
                     Assert.IsFalse(connection.IsConnected);
                 });
-            })
-            .Run();
+            });
     }
 }

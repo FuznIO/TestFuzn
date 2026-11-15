@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Assertions;
 
 [TestClass]
+[Tags("integration", "load")]
 public class AssertionTests : Test
 {
     [Test]
@@ -23,9 +24,8 @@ public class AssertionTests : Test
                 .Load().AssertWhileRunning((context, stats) =>
                 {
                     assertWhileRunningExecuted = true;
-                    Assert.AreEqual(0, stats.Failed.RequestCount);
-                })
-                .Run();
+                    Assert.AreEqual(0, stats.Failed.Count);
+                });
         }
         catch (AssertFailedException)
         {
@@ -51,8 +51,7 @@ public class AssertionTests : Test
             {
                 Assert.AreEqual(1.0, stats.OkRate);
                 Assert.AreEqual(0.0, stats.FailedRate);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -68,8 +67,7 @@ public class AssertionTests : Test
             {
                 Assert.AreEqual(0.0, stats.OkRate);
                 Assert.AreEqual(1.0, stats.FailedRate);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -89,8 +87,7 @@ public class AssertionTests : Test
             {
                 Assert.AreEqual(0.5, stats.OkRate);
                 Assert.AreEqual(0.5, stats.FailedRate);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -114,21 +111,20 @@ public class AssertionTests : Test
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(5, stats.RequestCount);
-                Assert.AreEqual(0, stats.Failed.RequestCount);
-                Assert.AreEqual(5, stats.Ok.RequestCount);
+                Assert.AreEqual(5, stats.Count);
+                Assert.AreEqual(0, stats.Failed.Count);
+                Assert.AreEqual(5, stats.Ok.Count);
 
-                Assert.AreEqual(5, stats.GetStep("Step 1").Ok.RequestCount);
-                Assert.AreEqual(0, stats.GetStep("Step 1").Failed.RequestCount);
+                Assert.AreEqual(5, stats.GetStep("Step 1").Ok.Count);
+                Assert.AreEqual(0, stats.GetStep("Step 1").Failed.Count);
 
-                Assert.AreEqual(0, stats.GetStep("Step 2").Failed.RequestCount);
-                Assert.AreEqual(5, stats.GetStep("Step 2").Ok.RequestCount);
-                Assert.AreEqual(5, stats.GetStep("Step 2.1").Ok.RequestCount);
-                Assert.AreEqual(0, stats.GetStep("Step 2.1").Failed.RequestCount);
-                Assert.AreEqual(5, stats.GetStep("Step 2.2").Ok.RequestCount);
-                Assert.AreEqual(0, stats.GetStep("Step 2.2").Failed.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(0, stats.GetStep("Step 2").Failed.Count);
+                Assert.AreEqual(5, stats.GetStep("Step 2").Ok.Count);
+                Assert.AreEqual(5, stats.GetStep("Step 2.1").Ok.Count);
+                Assert.AreEqual(0, stats.GetStep("Step 2.1").Failed.Count);
+                Assert.AreEqual(5, stats.GetStep("Step 2.2").Ok.Count);
+                Assert.AreEqual(0, stats.GetStep("Step 2.2").Failed.Count);
+            });
     }
 
 [Test]
@@ -152,18 +148,17 @@ public class AssertionTests : Test
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(5, stats.RequestCount);
-                Assert.AreEqual(5, stats.Failed.RequestCount);
-                Assert.AreEqual(0, stats.Ok.RequestCount);
-                Assert.AreEqual(5, stats.GetStep("Step 1").Ok.RequestCount);
-                Assert.AreEqual(0, stats.GetStep("Step 1").Failed.RequestCount);
-                Assert.AreEqual(5, stats.GetStep("Step 2").Failed.RequestCount);
-                Assert.AreEqual(0, stats.GetStep("Step 2").Ok.RequestCount);
-                Assert.AreEqual(5, stats.GetStep("Step 2.1").Ok.RequestCount);
-                Assert.AreEqual(0, stats.GetStep("Step 2.1").Failed.RequestCount);
-                Assert.AreEqual(0, stats.GetStep("Step 2.2").Ok.RequestCount);
-                Assert.AreEqual(5, stats.GetStep("Step 2.2").Failed.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(5, stats.Count);
+                Assert.AreEqual(5, stats.Failed.Count);
+                Assert.AreEqual(0, stats.Ok.Count);
+                Assert.AreEqual(5, stats.GetStep("Step 1").Ok.Count);
+                Assert.AreEqual(0, stats.GetStep("Step 1").Failed.Count);
+                Assert.AreEqual(5, stats.GetStep("Step 2").Failed.Count);
+                Assert.AreEqual(0, stats.GetStep("Step 2").Ok.Count);
+                Assert.AreEqual(5, stats.GetStep("Step 2.1").Ok.Count);
+                Assert.AreEqual(0, stats.GetStep("Step 2.1").Failed.Count);
+                Assert.AreEqual(0, stats.GetStep("Step 2.2").Ok.Count);
+                Assert.AreEqual(5, stats.GetStep("Step 2.2").Failed.Count);
+            });
     }
 }

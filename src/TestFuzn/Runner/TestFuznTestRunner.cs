@@ -1,5 +1,6 @@
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Internals;
+using Fuzn.TestFuzn.Internals.Cluster;
 using Fuzn.TestFuzn.Internals.Terminal;
 
 namespace Fuzn.TestFuzn.Runner;
@@ -19,7 +20,7 @@ internal class TestFuznTestRunner
     }
 
     internal async Task RunTest<TStartup>(string[] args, ITestFrameworkAdapter testFramework,
-        DiscoveredTest testInfo)
+        DiscoveredTest testInfo, ClusterSessionInfo? cluster = null)
         where TStartup : IStartup, new()
     {
         if (testFramework == null)
@@ -37,12 +38,15 @@ internal class TestFuznTestRunner
             throw new Exception($"Test class '{testInfo.Class.Name}' must implement {nameof(ITest)} interface.");
 
         var testSession = new TestSession("default");
+        if (cluster != null)
+            testSession.Cluster = cluster;
         TestSession.Default = testSession;
         try
         {
-            await testSession.Init<TStartup>(testFramework);
+            var parsedArgs = new ArgumentsParser(new EnvironmentWrapper()).Parse(args);
+            await testSession.Init<TStartup>(testFramework, parsedArgs);
 
-            if (iTestClassInstance is IBeforeClass beforeClass)
+            if (!testSession.Cluster.SkipSuiteHooks && iTestClassInstance is IBeforeClass beforeClass)
             {
                 var context = ContextFactory.CreateContext(testSession, testSession.ServiceProvider, testFramework, "BeforeClass");
                 await beforeClass.BeforeClass(context);
@@ -55,10 +59,12 @@ internal class TestFuznTestRunner
 
             if (invocationResult is Task task)
                 await task;
+
+            ScenarioRunGuard.ThrowIfNotRun(iTestClassInstance.TestInfo);
         }
         finally
         {
-            if (iTestClassInstance is IAfterClass afterClass)
+            if (!testSession.Cluster.SkipSuiteHooks && iTestClassInstance is IAfterClass afterClass)
             {
                 var context = ContextFactory.CreateContext(testSession, testSession.ServiceProvider, testFramework, "AfterClass");
                 await afterClass.AfterClass(context);

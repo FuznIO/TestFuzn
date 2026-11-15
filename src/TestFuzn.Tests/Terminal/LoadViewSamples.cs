@@ -31,11 +31,11 @@ internal static class LoadViewSamples
                 new SimulationInfo { Description = "Fixed Load - Rate: 10, Interval: 0:00:01, Duration: 0:00:30 (Warmup)", IsWarmup = true },
                 new SimulationInfo { Description = "Fixed Load - Rate: 400, Interval: 0:00:01, Duration: 0:05:00", IsWarmup = false }
             },
-            RequestCountOk = 12480,
-            RequestCountFailed = 32,
-            WarmupRequestCountOk = 1200,
-            WarmupRequestCountFailed = 3,
-            RequestsPerSecond = 142,
+            OkCount = 12480,
+            FailedCount = 32,
+            WarmupOkCount = 1200,
+            WarmupFailedCount = 3,
+            PerSecond = 142,
             Ok = Stats(12480, 142, 12, 38, 15, 35, 48, 72, 94, 312),
             Failed = Stats(32, 1, 88, 102, 20, 99, 110, 140, 160, 201),
             Errors = new[]
@@ -48,16 +48,16 @@ internal static class LoadViewSamples
                 new LiveStepMetrics
                 {
                     Name = "Add to cart",
-                    RequestCountOk = 6250,
-                    RequestCountFailed = 2,
+                    OkCount = 6250,
+                    FailedCount = 2,
                     Ok = Stats(6250, 71, 8, 18, 6, 16, 22, 40, 55, 120),
                     Failed = Stats(2, 1, 95, 102, 21, 99, 110, 140, 160, 980)
                 },
                 new LiveStepMetrics
                 {
                     Name = "Checkout",
-                    RequestCountOk = 6230,
-                    RequestCountFailed = 30,
+                    OkCount = 6230,
+                    FailedCount = 30,
                     Ok = Stats(6230, 69, 20, 58, 19, 52, 70, 90, 130, 410),
                     Failed = Stats(30, 1, 95, 102, 21, 99, 110, 140, 160, 980),
                     Steps = new[]
@@ -65,7 +65,7 @@ internal static class LoadViewSamples
                         new LiveStepMetrics
                         {
                             Name = "Pay",
-                            RequestCountOk = 6230,
+                            OkCount = 6230,
                             Ok = Stats(6230, 69, 10, 22, 7, 20, 26, 44, 61, 150)
                         }
                     }
@@ -83,7 +83,7 @@ internal static class LoadViewSamples
             Duration = TimeSpan.FromSeconds(42),
             Timestamp = Start.AddSeconds(42),
             PhaseTimes = new TestPhasesLayout.PhaseTimes { InitStart = Start, InitEnd = Start.AddSeconds(2), WarmupStart = Start.AddSeconds(2) },
-            RequestsPerSecond = 48,
+            PerSecond = 48,
             Simulations = new[] { new SimulationInfo { Description = "Gradual Load Increase - From: 10, To: 50, Duration: 0:02:00", IsWarmup = false } },
             Ok = Stats(2000, 48, 5, 12, 4, 11, 15, 22, 30, 90),
             Failed = Stats(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -111,10 +111,9 @@ internal static class LoadViewSamples
             Created = Start.AddSeconds(312),
             IsCompleted = true,
             Status = TestStatus.Failed,
-            RequestCount = 24000,
-            RequestsPerSecond = 397,
-            WarmupRequestCountOk = 1200,
-            WarmupRequestCountFailed = 3,
+            PerSecond = 397,
+            WarmupOkCount = 1200,
+            WarmupFailedCount = 3,
             Ok = CoreStats(16001, 265, 12, 38, 15, 35, 48, 72, 94, 312),
             Failed = CoreStats(7999, 132, 88, 102, 20, 99, 110, 140, 160, 201),
             AssertWhileRunningException = new InvalidOperationException("Assert.IsLessThan failed. p95 too high: 240 ms"),
@@ -139,39 +138,41 @@ internal static class LoadViewSamples
         return new Dictionary<Scenario, ScenarioLoadResult> { [scenario] = result };
     }
 
-    public static LiveStats Stats(int requestCount, int requestsPerSecond, double min, double mean, double standardDeviation,
+    public static LiveStats Stats(int count, int perSecond, double min, double mean, double standardDeviation,
         double median, double percentile75, double percentile95, double percentile99, double max)
     {
         return new LiveStats
         {
-            RequestCount = requestCount,
-            RequestsPerSecond = requestsPerSecond,
-            ResponseTimeMin = TimeSpan.FromMilliseconds(min),
-            ResponseTimeMean = TimeSpan.FromMilliseconds(mean),
-            ResponseTimeStandardDeviation = TimeSpan.FromMilliseconds(standardDeviation),
-            ResponseTimeMedian = TimeSpan.FromMilliseconds(median),
-            ResponseTimePercentile75 = TimeSpan.FromMilliseconds(percentile75),
-            ResponseTimePercentile95 = TimeSpan.FromMilliseconds(percentile95),
-            ResponseTimePercentile99 = TimeSpan.FromMilliseconds(percentile99),
-            ResponseTimeMax = TimeSpan.FromMilliseconds(max)
+            Count = count,
+            PerSecond = perSecond,
+            DurationMin = TimeSpan.FromMilliseconds(min),
+            DurationMean = TimeSpan.FromMilliseconds(mean),
+            DurationStandardDeviation = TimeSpan.FromMilliseconds(standardDeviation),
+            DurationMedian = TimeSpan.FromMilliseconds(median),
+            DurationPercentile75 = TimeSpan.FromMilliseconds(percentile75),
+            DurationPercentile90 = TimeSpan.FromMilliseconds(Math.Round((percentile75 + percentile95) / 2)),
+            DurationPercentile95 = TimeSpan.FromMilliseconds(percentile95),
+            DurationPercentile99 = TimeSpan.FromMilliseconds(percentile99),
+            DurationMax = TimeSpan.FromMilliseconds(max)
         };
     }
 
-    public static Stats CoreStats(int requestCount, int requestsPerSecond, double min, double mean, double standardDeviation,
+    public static Stats CoreStats(int count, int perSecond, double min, double mean, double standardDeviation,
         double median, double percentile75, double percentile95, double percentile99, double max)
     {
         return new Stats
         {
-            RequestCount = requestCount,
-            RequestsPerSecond = requestsPerSecond,
-            ResponseTimeMin = TimeSpan.FromMilliseconds(min),
-            ResponseTimeMean = TimeSpan.FromMilliseconds(mean),
-            ResponseTimeStandardDeviation = TimeSpan.FromMilliseconds(standardDeviation),
-            ResponseTimeMedian = TimeSpan.FromMilliseconds(median),
-            ResponseTimePercentile75 = TimeSpan.FromMilliseconds(percentile75),
-            ResponseTimePercentile95 = TimeSpan.FromMilliseconds(percentile95),
-            ResponseTimePercentile99 = TimeSpan.FromMilliseconds(percentile99),
-            ResponseTimeMax = TimeSpan.FromMilliseconds(max)
+            Count = count,
+            PerSecond = perSecond,
+            DurationMin = TimeSpan.FromMilliseconds(min),
+            DurationMean = TimeSpan.FromMilliseconds(mean),
+            DurationStandardDeviation = TimeSpan.FromMilliseconds(standardDeviation),
+            DurationMedian = TimeSpan.FromMilliseconds(median),
+            DurationPercentile75 = TimeSpan.FromMilliseconds(percentile75),
+            DurationPercentile90 = TimeSpan.FromMilliseconds(Math.Round((percentile75 + percentile95) / 2)),
+            DurationPercentile95 = TimeSpan.FromMilliseconds(percentile95),
+            DurationPercentile99 = TimeSpan.FromMilliseconds(percentile99),
+            DurationMax = TimeSpan.FromMilliseconds(max)
         };
     }
 }

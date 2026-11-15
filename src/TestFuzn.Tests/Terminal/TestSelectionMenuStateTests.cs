@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class TestSelectionMenuStateTests : Test
 {
     private static readonly string[] TestNames =
@@ -104,8 +105,7 @@ public class TestSelectionMenuStateTests : Test
 
                 state.PageDown();
                 Assert.AreEqual(1, state.HighlightedTest);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -174,8 +174,7 @@ public class TestSelectionMenuStateTests : Test
                 CollectionAssert.AreEqual(new[] { 2, 11 }, state.MatchingTests.ToList());
                 Assert.AreEqual(11, state.HighlightedTest);
                 Assert.AreEqual(0, state.FirstVisibleMatch);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -263,8 +262,7 @@ public class TestSelectionMenuStateTests : Test
                 state.AppendToFilter('\uD83D');
                 state.RemoveLastFilterCharacter();
                 Assert.AreEqual(string.Empty, state.Filter);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -362,8 +360,7 @@ public class TestSelectionMenuStateTests : Test
                 state.AppendToFilter('3');
                 Assert.AreEqual(2, state.HighlightedTest);
                 Assert.AreEqual(3, state.EnteredTestNumber);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -442,8 +439,7 @@ public class TestSelectionMenuStateTests : Test
 
                 Assert.AreEqual("a", state.Filter);
                 Assert.AreEqual(1, state.HighlightedTest);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -483,7 +479,6 @@ public class TestSelectionMenuStateTests : Test
             {
                 Assert.ThrowsExactly<ArgumentNullException>(() => new TestSelectionMenuState(null!));
                 Assert.ThrowsExactly<ArgumentNullException>(() => new TestSelectionMenuState(new string[] { null! }));
-            })
-            .Run();
+            });
     }
 }

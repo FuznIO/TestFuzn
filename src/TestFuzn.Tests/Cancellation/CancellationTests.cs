@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Internals.State;
 namespace Fuzn.TestFuzn.Tests.Cancellation;
 
 [TestClass]
+[Tags("integration")]
 public class CancellationTests : Test
 {
     [Test]
@@ -14,11 +15,11 @@ public class CancellationTests : Test
             {
                 Assert.AreNotEqual(CancellationToken.None, context.Info.CancellationToken);
                 Assert.IsFalse(context.Info.CancellationToken.IsCancellationRequested);
-            })
-            .Run();
+            });
     }
 
     [Test]
+    [Tags("load")]
     public async Task ShouldFail_CancellationToken_is_not_cancelled_on_controlled_stop()
     {
         CancellationToken capturedToken = default;
@@ -35,13 +36,12 @@ public class CancellationTests : Test
                 .Load().Simulations((context, simulations) => simulations.OneTimeLoad(1))
                 .Load().AssertWhileRunning((context, stats) =>
                 {
-                    Assert.AreEqual(0, stats.Failed.RequestCount);
+                    Assert.AreEqual(0, stats.Failed.Count);
                 })
                 .AssertInternalState(state =>
                 {
                     capturedStatus = state.TestExecutionState.ExecutionStatus;
-                })
-                .Run();
+                });
         }
         catch (AssertFailedException)
         {
@@ -55,6 +55,7 @@ public class CancellationTests : Test
     }
 
     [Test]
+    [Tags("load")]
     public async Task ShouldFail_Load_test_stops_producing_when_stopped()
     {
         var executionCount = 0;
@@ -71,13 +72,12 @@ public class CancellationTests : Test
                 .Load().Simulations((context, simulations) => simulations.FixedLoad(100, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10)))
                 .Load().AssertWhileRunning((context, stats) =>
                 {
-                    Assert.AreEqual(0, stats.Failed.RequestCount);
+                    Assert.AreEqual(0, stats.Failed.Count);
                 })
                 .AssertInternalState(state =>
                 {
                     capturedStatus = state.TestExecutionState.ExecutionStatus;
-                })
-                .Run();
+                });
         }
         catch (AssertFailedException)
         {
@@ -89,6 +89,7 @@ public class CancellationTests : Test
     }
 
     [Test]
+    [Tags("load")]
     public async Task ShouldFail_Cleanup_runs_after_controlled_stop()
     {
         var afterScenarioExecuted = false;
@@ -109,13 +110,12 @@ public class CancellationTests : Test
                 .Load().Simulations((context, simulations) => simulations.OneTimeLoad(1))
                 .Load().AssertWhileRunning((context, stats) =>
                 {
-                    Assert.AreEqual(0, stats.Failed.RequestCount);
+                    Assert.AreEqual(0, stats.Failed.Count);
                 })
                 .AssertInternalState(state =>
                 {
                     capturedStatus = state.TestExecutionState.ExecutionStatus;
-                })
-                .Run();
+                });
         }
         catch (AssertFailedException)
         {
@@ -127,6 +127,7 @@ public class CancellationTests : Test
     }
 
     [Test]
+    [Tags("load")]
     public async Task ShouldFail_Cleanup_context_has_uncancelled_token()
     {
         CancellationToken cleanupToken = default;
@@ -147,13 +148,12 @@ public class CancellationTests : Test
                 .Load().Simulations((context, simulations) => simulations.OneTimeLoad(1))
                 .Load().AssertWhileRunning((context, stats) =>
                 {
-                    Assert.AreEqual(0, stats.Failed.RequestCount);
+                    Assert.AreEqual(0, stats.Failed.Count);
                 })
                 .AssertInternalState(state =>
                 {
                     capturedStatus = state.TestExecutionState.ExecutionStatus;
-                })
-                .Run();
+                });
         }
         catch (AssertFailedException)
         {
@@ -166,6 +166,7 @@ public class CancellationTests : Test
     }
 
     [Test]
+    [Tags("load")]
     public async Task Context_plugin_cleanup_runs_for_every_iteration()
     {
         var capturedStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
@@ -179,9 +180,8 @@ public class CancellationTests : Test
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(5, stats.Ok.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(5, stats.Ok.Count);
+            });
 
         Assert.HasCount(5, capturedStates);
         Assert.IsTrue(capturedStates.All(s => s.CleanedUp),
@@ -189,6 +189,7 @@ public class CancellationTests : Test
     }
 
     [Test]
+    [Tags("load")]
     public async Task ShouldFail_Context_plugin_cleanup_runs_on_controlled_stop()
     {
         var capturedStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
@@ -205,9 +206,8 @@ public class CancellationTests : Test
                 .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
                 .Load().AssertWhileRunning((context, stats) =>
                 {
-                    Assert.AreEqual(0, stats.Failed.RequestCount);
-                })
-                .Run();
+                    Assert.AreEqual(0, stats.Failed.Count);
+                });
         }
         catch (AssertFailedException)
         {
@@ -232,8 +232,7 @@ public class CancellationTests : Test
                     var state = context.Internals.Plugins.GetState<TrackingContextPlugin.TrackingState>(typeof(TrackingContextPlugin));
                     capturedStates.Add(state);
                     throw new InvalidOperationException("Unexpected error");
-                })
-                .Run();
+                });
         }
         catch (InvalidOperationException)
         {

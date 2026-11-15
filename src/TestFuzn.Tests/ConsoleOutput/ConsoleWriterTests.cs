@@ -11,6 +11,7 @@ using Fuzn.TestFuzn.Tests.Terminal;
 namespace Fuzn.TestFuzn.Tests.ConsoleOutput;
 
 [TestClass]
+[Tags("unit")]
 public class ConsoleWriterTests : Test
 {
     private const string StepName = "Checkout step";
@@ -97,8 +98,7 @@ public class ConsoleWriterTests : Test
                 new ConsoleWriter().WriteSummary(state);
 
                 Assert.AreEqual("[green]Status: Completed successfully.[/]\r\n", MarkupEvents(events)[1]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -123,8 +123,7 @@ public class ConsoleWriterTests : Test
                 Assert.AreEqual(0, host.Writer.WindowWidthReadCount);
                 Assert.AreEqual(0, host.Writer.WindowHeightReadCount);
                 Assert.AreEqual(0, host.CreateTerminalReaderCallCount);
-            })
-            .Run();
+            });
     }
 
     private static int BaseTestFuznRunnerAdapterWidth()
@@ -190,7 +189,6 @@ public class ConsoleWriterTests : Test
                 CollectionAssert.AreEqual(expected, host.Writer.Writes.ToList());
                 foreach (var write in host.Writer.Writes)
                     Assert.DoesNotContain(AnsiCodes.Escape, write);
-            })
-            .Run();
+            });
     }
 }

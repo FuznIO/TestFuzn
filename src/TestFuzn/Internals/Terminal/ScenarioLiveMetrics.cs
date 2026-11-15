@@ -84,15 +84,15 @@ internal sealed class ScenarioLiveMetrics
                 AssertWhileWarmingUpException = snapshot.AssertWhileWarmingUpException,
                 AssertWhileRunningException = snapshot.AssertWhileRunningException,
                 AssertWhenDoneException = snapshot.AssertWhenDoneException,
-                RequestCountOk = okStats.RequestCount,
-                RequestCountFailed = failedStats.RequestCount,
-                WarmupRequestCountOk = snapshot.WarmupRequestCountOk,
-                WarmupRequestCountFailed = snapshot.WarmupRequestCountFailed,
-                RequestsPerSecond = snapshot.RequestsPerSecond,
+                OkCount = okStats.Count,
+                FailedCount = failedStats.Count,
+                WarmupOkCount = snapshot.WarmupOkCount,
+                WarmupFailedCount = snapshot.WarmupFailedCount,
+                PerSecond = snapshot.PerSecond,
                 Ok = okStats,
                 Failed = failedStats,
-                Samples = MaterializeSamples(out var requestsPerSecondSeries),
-                RequestsPerSecondSeries = requestsPerSecondSeries,
+                Samples = MaterializeSamples(out var perSecondSeries),
+                PerSecondSeries = perSecondSeries,
                 Errors = MaterializeErrors(),
                 Steps = MaterializeSteps(snapshot, timestamp)
             };
@@ -103,8 +103,8 @@ internal sealed class ScenarioLiveMetrics
 
     private void AppendSampleIfIntervalElapsed(ScenarioLoadResult snapshot, LiveStats okStats, LiveStats failedStats, DateTime timestamp)
     {
-        long okCumulative = (long)okStats.RequestCount + snapshot.WarmupRequestCountOk;
-        long failedCumulative = (long)failedStats.RequestCount + snapshot.WarmupRequestCountFailed;
+        long okCumulative = (long)okStats.Count + snapshot.WarmupOkCount;
+        long failedCumulative = (long)failedStats.Count + snapshot.WarmupFailedCount;
 
         if (!_hasBaseline)
         {
@@ -127,8 +127,8 @@ internal sealed class ScenarioLiveMetrics
         if (failedDelta < 0)
             failedDelta = 0;
 
-        var requestsPerSecond = (okDelta + failedDelta) / intervalSeconds;
-        var sample = new LiveMetricsSample(timestamp, (int)Math.Min(okDelta, int.MaxValue), (int)Math.Min(failedDelta, int.MaxValue), requestsPerSecond);
+        var perSecond = (okDelta + failedDelta) / intervalSeconds;
+        var sample = new LiveMetricsSample(timestamp, (int)Math.Min(okDelta, int.MaxValue), (int)Math.Min(failedDelta, int.MaxValue), perSecond);
 
         _samples[_nextSampleIndex] = sample;
         _nextSampleIndex = (_nextSampleIndex + 1) % SampleCapacity;
@@ -186,22 +186,22 @@ internal sealed class ScenarioLiveMetrics
         if (stats == null)
             return 0;
 
-        return stats.RequestCount;
+        return stats.Count;
     }
 
-    private LiveMetricsSample[] MaterializeSamples(out double[] requestsPerSecondSeries)
+    private LiveMetricsSample[] MaterializeSamples(out double[] perSecondSeries)
     {
         var count = _appendedSampleCount < SampleCapacity ? _appendedSampleCount : SampleCapacity;
         var oldestIndex = _appendedSampleCount <= SampleCapacity ? 0 : _nextSampleIndex;
 
         var samples = new LiveMetricsSample[count];
-        requestsPerSecondSeries = new double[count];
+        perSecondSeries = new double[count];
 
         for (var index = 0; index < count; index++)
         {
             var sample = _samples[(oldestIndex + index) % SampleCapacity];
             samples[index] = sample;
-            requestsPerSecondSeries[index] = sample.RequestsPerSecond;
+            perSecondSeries[index] = sample.PerSecond;
         }
 
         return samples;
@@ -264,7 +264,7 @@ internal sealed class ScenarioLiveMetrics
                     if (aggregated.TryGetValue(key, out var existing))
                         aggregated[key] = (existing.StepName, existing.Message, existing.Count + count);
                     else
-                        aggregated[key] = (step.Name, errorPair.Key, count);
+                        aggregated[key] = (step.Name, string.IsNullOrEmpty(errorPair.Value.Message) ? errorPair.Key : errorPair.Value.Message, count);
                 }
             }
 
@@ -313,11 +313,11 @@ internal sealed class ScenarioLiveMetrics
             rows.Add(new LiveStepMetrics
             {
                 Name = step.Name,
-                RequestCountOk = ok.RequestCount,
-                RequestCountFailed = failed.RequestCount,
+                OkCount = ok.Count,
+                FailedCount = failed.Count,
                 SkippedCount = step.SkippedCount,
-                RequestsPerSecond = intervalRate,
-                AverageRequestsPerSecond = ComputeAverageRequestsPerSecond(ok.RequestCount, failed.RequestCount, snapshot, timestamp),
+                PerSecond = intervalRate,
+                AveragePerSecond = ComputeAveragePerSecond(ok.Count, failed.Count, snapshot, timestamp),
                 Ok = ok,
                 Failed = failed,
                 Steps = step.Steps != null ? MaterializeSteps(step.Steps, snapshot, timestamp) : Array.Empty<LiveStepMetrics>()
@@ -327,7 +327,7 @@ internal sealed class ScenarioLiveMetrics
         return rows.ToArray();
     }
 
-    private static double ComputeAverageRequestsPerSecond(int okCount, int failedCount, ScenarioLoadResult snapshot, DateTime timestamp)
+    private static double ComputeAveragePerSecond(int okCount, int failedCount, ScenarioLoadResult snapshot, DateTime timestamp)
     {
         if (snapshot.MeasurementStartTime == default)
             return 0.0;
@@ -355,16 +355,17 @@ internal sealed class ScenarioLiveMetrics
 
         return new LiveStats
         {
-            RequestCount = stats.RequestCount,
-            RequestsPerSecond = stats.RequestsPerSecond,
-            ResponseTimeMin = stats.ResponseTimeMin,
-            ResponseTimeMax = stats.ResponseTimeMax,
-            ResponseTimeMean = stats.ResponseTimeMean,
-            ResponseTimeStandardDeviation = stats.ResponseTimeStandardDeviation,
-            ResponseTimeMedian = stats.ResponseTimeMedian,
-            ResponseTimePercentile75 = stats.ResponseTimePercentile75,
-            ResponseTimePercentile95 = stats.ResponseTimePercentile95,
-            ResponseTimePercentile99 = stats.ResponseTimePercentile99
+            Count = stats.Count,
+            PerSecond = stats.PerSecond,
+            DurationMin = stats.DurationMin,
+            DurationMax = stats.DurationMax,
+            DurationMean = stats.DurationMean,
+            DurationStandardDeviation = stats.DurationStandardDeviation,
+            DurationMedian = stats.DurationMedian,
+            DurationPercentile75 = stats.DurationPercentile75,
+            DurationPercentile90 = stats.DurationPercentile90,
+            DurationPercentile95 = stats.DurationPercentile95,
+            DurationPercentile99 = stats.DurationPercentile99
         };
     }
 

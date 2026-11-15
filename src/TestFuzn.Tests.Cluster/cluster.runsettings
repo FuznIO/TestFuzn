@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Runs one load test of this project on the workers instead of on this machine. Select one load test:
+  any other test in the same session fails without running. The pool, the worker count and the Cockpit
+  address and API key come from appsettings.json.
+
+  Visual Studio uses this file by itself (RunSettingsFilePath in the .csproj). dotnet test ignores that
+  property: pass the file with the settings option.
+-->
+<RunSettings>
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <TESTFUZN_CLUSTER>true</TESTFUZN_CLUSTER>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>

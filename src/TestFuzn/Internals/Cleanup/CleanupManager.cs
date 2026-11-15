@@ -1,4 +1,5 @@
-﻿using Fuzn.TestFuzn.Internals.State;
+﻿using Fuzn.TestFuzn.Internals.Cluster;
+using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Contracts.Adapters;
 
@@ -41,6 +42,10 @@ internal class CleanupManager
 
         await ExecuteCleanupTestMethod();
 
+        if (_testExecutionState.TestType == Contracts.TestType.Load
+            && _testExecutionState.TestSession.Cluster.Role == ClusterRole.None)
+            await OnceHooks.RunAfter(_testExecutionState, _serviceProvider);
+
         var timestampCompleted = DateTime.UtcNow;
 
         if (_testExecutionState.TestType == Contracts.TestType.Load)
@@ -56,7 +61,7 @@ internal class CleanupManager
 
     private async Task ExecuteCleanupScenario(ITestFrameworkAdapter testFramework, Scenario scenario)
     {
-        var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, testFramework, "AfterScenario");
+        var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, testFramework, "AfterScenario", default, scenario);
         await scenario.AfterScenarioAction(context);
     }
 

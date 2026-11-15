@@ -4,15 +4,15 @@ internal sealed class LiveStepMetrics
 {
     public string Name { get; init; } = string.Empty;
 
-    public int RequestCountOk { get; init; }
+    public int OkCount { get; init; }
 
-    public int RequestCountFailed { get; init; }
+    public int FailedCount { get; init; }
 
     public int SkippedCount { get; init; }
 
-    public double RequestsPerSecond { get; init; }
+    public double PerSecond { get; init; }
 
-    public double AverageRequestsPerSecond { get; init; }
+    public double AveragePerSecond { get; init; }
 
     public LiveStats Ok { get; init; } = LiveStats.Empty;
 

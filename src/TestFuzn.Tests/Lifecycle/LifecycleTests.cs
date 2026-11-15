@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Lifecycle;
 
 [TestClass]
+[Tags("integration")]
 public class LifecycleTests : Test, IBeforeTest, IAfterTest
 {
     private bool _beforeTestCalled = false;
@@ -49,8 +50,7 @@ public class LifecycleTests : Test, IBeforeTest, IAfterTest
             .AfterScenario((context) =>
             {
                 afterScenarioCalled = true;
-            })
-            .Run();
+            });
 
         Assert.IsTrue(beforeScenarioCalled);
         Assert.IsTrue(beforeIterationCalled);
@@ -61,6 +61,7 @@ public class LifecycleTests : Test, IBeforeTest, IAfterTest
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_lifecycle_sync_methods_with_context_load()
     {
         var beforeScenarioCalled = false;
@@ -86,8 +87,7 @@ public class LifecycleTests : Test, IBeforeTest, IAfterTest
             .AfterScenario((context) =>
             {
                 afterScenarioCalled = true;
-            })
-            .Run();
+            });
 
         Assert.IsTrue(beforeScenarioCalled);
         Assert.AreEqual(3, beforeIterationCalled);
@@ -125,8 +125,7 @@ public class LifecycleTests : Test, IBeforeTest, IAfterTest
             {
                 afterScenarioCalled = true;
                 await Task.CompletedTask;
-            })
-            .Run();
+            });
 
         Assert.IsTrue(beforeScenarioCalled);
         Assert.IsTrue(beforeIterationCalled);
@@ -135,6 +134,7 @@ public class LifecycleTests : Test, IBeforeTest, IAfterTest
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_lifecycle_async_methods_with_context_load()
     {
         var beforeScenarioCalled = false;
@@ -163,8 +163,7 @@ public class LifecycleTests : Test, IBeforeTest, IAfterTest
             {
                 afterScenarioCalled = true;
                 await Task.CompletedTask;
-            })
-            .Run();
+            });
 
         Assert.IsTrue(beforeScenarioCalled);
         Assert.AreEqual(3, beforeIterationCalled);

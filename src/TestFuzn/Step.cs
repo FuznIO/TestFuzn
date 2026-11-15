@@ -6,6 +6,8 @@ internal sealed class Step
 {
     public string Name { get; set; }
     public string Id { get; set; }
+    public bool IsIdAutomatic { get; set; }
+    public string? ParentId { get; set; }
     public string? ParentName { get; set; }
     public Func<IterationContext, Task> Action { get; set; }
     public Type ContextType { get; set; }

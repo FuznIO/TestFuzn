@@ -6,6 +6,7 @@ using SampleApp.WebApp.Models;
 namespace SampleApp.Tests;
 
 [TestClass]
+[Tags("load")]
 public partial class ProductLoadTests : Test
 {
     [Test]
@@ -89,8 +90,7 @@ public partial class ProductLoadTests : Test
             .Load().Simulations((context, simulations) => simulations.FixedLoad(100, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(15)))
             .Load().AssertWhenDone((context, result) =>
             {
-                Assert.AreEqual(0, result.Failed.RequestCount, "There should be no failing steps");
-            })
-            .Run();
+                Assert.AreEqual(0, result.Failed.Count, "There should be no failing steps");
+            });
     }
 }

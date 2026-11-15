@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class ExceptionRendererTests : Test
 {
     [Test]
@@ -61,8 +62,7 @@ public class ExceptionRendererTests : Test
             .Step("Null is rejected", context =>
             {
                 Assert.ThrowsExactly<ArgumentNullException>(() => ExceptionRenderer.Render(null!, ColorMode.None));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -101,8 +101,7 @@ public class ExceptionRendererTests : Test
                 var causedBy = lines.IndexOf("  Caused by: InvalidOperationException: Inner");
                 Assert.IsGreaterThan(1, causedBy);
                 Assert.StartsWith("     at ", lines[causedBy + 1]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -121,8 +120,7 @@ public class ExceptionRendererTests : Test
                 Assert.AreEqual("Exception: level 0", lines[0]);
                 Assert.AreEqual(new string(' ', 18) + "Caused by: Exception: level 9", lines[9]);
                 Assert.AreEqual(new string(' ', 20) + ExceptionRenderer.ElidedText, lines[10]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -149,8 +147,7 @@ public class ExceptionRendererTests : Test
                 Assert.IsGreaterThan(1, lines.Count);
                 Assert.StartsWith("\u001b[2m   at ", lines[1].Text);
                 Assert.EndsWith("\u001b[0m", lines[1].Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -178,8 +175,7 @@ public class ExceptionRendererTests : Test
             {
                 Assert.ThrowsExactly<ArgumentNullException>(() => ExceptionRenderer.Write(null!, new Exception("x"), ColorMode.None));
                 Assert.ThrowsExactly<ArgumentNullException>(() => ExceptionRenderer.Write(new FakeTerminalWriter(), null!, ColorMode.None));
-            })
-            .Run();
+            });
     }
 
     private static Exception Throw(string message)

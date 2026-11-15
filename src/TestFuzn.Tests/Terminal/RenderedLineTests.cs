@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class RenderedLineTests : Test
 {
     [Test]
@@ -22,8 +23,7 @@ public class RenderedLineTests : Test
 
                 Assert.AreEqual(string.Empty, line.Text);
                 Assert.AreEqual(0, line.Width);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -43,7 +43,6 @@ public class RenderedLineTests : Test
             .Step("A negative width is rejected", context =>
             {
                 Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new RenderedLine("a", -1));
-            })
-            .Run();
+            });
     }
 }

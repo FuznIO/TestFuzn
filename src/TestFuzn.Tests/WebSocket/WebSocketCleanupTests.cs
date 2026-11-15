@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
+[Tags("integration")]
 public class WebSocketCleanupTests : Test
 {
     private const string WebSocketServerUrl = "wss://localhost:7058/ws";
@@ -19,8 +20,7 @@ public class WebSocketCleanupTests : Test
                 connection = await context.CreateWebSocketConnection(WebSocketServerUrl);
 
                 Assert.IsTrue(connection.IsConnected, "Connection should be open");
-            })
-            .Run();
+            });
 
         Assert.IsNotNull(connection, "Connection should have been created");
         Assert.IsFalse(connection.IsConnected, "Connection should have been auto-closed by cleanup");
@@ -40,8 +40,7 @@ public class WebSocketCleanupTests : Test
                     Assert.IsTrue(connection.IsConnected);
                     connections.Add(connection);
                 }
-            })
-            .Run();
+            });
 
         foreach (var connection in connections)
         {
@@ -61,11 +60,11 @@ public class WebSocketCleanupTests : Test
 
                 Assert.IsFalse(connection.IsConnected);
                 // Cleanup should handle this gracefully without throwing
-            })
-            .Run();
+            });
     }
 
     [Test]
+    [Tags("load")]
     public async Task Load_Test_Connections_Are_Cleaned_Up_Per_Iteration()
     {
         var connectionsFromIterations = new System.Collections.Concurrent.ConcurrentBag<FluentWebSocketConnection>();
@@ -83,8 +82,7 @@ public class WebSocketCleanupTests : Test
                 // Not closing - each iteration's cleanup should handle it
             })
             .Load()
-            .Simulations((context, simulations) => simulations.OneTimeLoad(10))
-            .Run();
+            .Simulations((context, simulations) => simulations.OneTimeLoad(10));
 
         Assert.IsNotEmpty(connectionsFromIterations, "Should have tracked connections from iterations");
         foreach (var connection in connectionsFromIterations)

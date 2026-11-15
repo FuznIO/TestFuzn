@@ -5,6 +5,7 @@ using CellAlignment = Fuzn.TestFuzn.ConsoleOutput.TextAlignment;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class AdvancedTableLayoutTests : Test
 {
     private static AdvancedTable ThreeColumnTable()
@@ -40,8 +41,7 @@ public class AdvancedTableLayoutTests : Test
 
                 foreach (var line in lines)
                     Assert.DoesNotContain(AnsiCodes.Escape, line.Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -74,8 +74,7 @@ public class AdvancedTableLayoutTests : Test
                     Assert.AreEqual(13, line.Width);
 
                 Assert.AreEqual("│ a │ Ok 1… │", lines[3].Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -119,8 +118,7 @@ public class AdvancedTableLayoutTests : Test
 
                 Assert.ThrowsExactly<ArgumentException>(() => AdvancedTableLayout.Render(new AdvancedTable { ColumnCount = 0 }, 40, ColorMode.None));
                 Assert.ThrowsExactly<ArgumentNullException>(() => AdvancedTableLayout.Render(null!, 40, ColorMode.None));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -135,8 +133,7 @@ public class AdvancedTableLayoutTests : Test
                 var lines = AdvancedTableLayout.Render(table, 40, ColorMode.TrueColor);
 
                 AssertLines(new[] { "╭──────╮", "│ \u001b[38;5;2mOk\u001b[0m   │", "╰──────╯" }, lines, 8);
-            })
-            .Run();
+            });
     }
 
     private static void AssertLines(IReadOnlyList<string> expectedLines, IReadOnlyList<RenderedLine> actualLines, int expectedWidth)

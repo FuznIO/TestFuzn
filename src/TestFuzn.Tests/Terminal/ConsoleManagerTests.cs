@@ -15,6 +15,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class ConsoleManagerTests : Test
 {
     private const string ScenarioName = "Checkout flow";
@@ -76,22 +77,21 @@ public class ConsoleManagerTests : Test
 
                 var baseline = harness.ConsoleManager.LiveSnapshots[0];
                 Assert.AreEqual(LoadTestPhase.Measurement, baseline.Phase);
-                Assert.AreEqual(3, baseline.RequestCountOk);
+                Assert.AreEqual(3, baseline.OkCount);
                 Assert.IsEmpty(baseline.Samples);
 
                 harness.RecordIterations(5);
                 await harness.Host.RunTick(At(3));
 
                 var firstInterval = harness.ConsoleManager.LiveSnapshots[0];
-                Assert.AreEqual(8, firstInterval.RequestCountOk);
+                Assert.AreEqual(8, firstInterval.OkCount);
                 var sample = Assert.ContainsSingle(firstInterval.Samples);
                 Assert.AreEqual(5, sample.OkDelta);
                 Assert.AreEqual(0, sample.FailedDelta);
-                Assert.AreEqual(5.0, sample.RequestsPerSecond, 1e-9);
+                Assert.AreEqual(5.0, sample.PerSecond, 1e-9);
 
                 await harness.ConsoleManager.StopRealtimeConsoleOutput();
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -116,7 +116,7 @@ public class ConsoleManagerTests : Test
 
                 var final = harness.ConsoleManager.LiveSnapshots[0];
                 Assert.AreEqual(LoadTestPhase.Cleanup, final.Phase);
-                Assert.AreEqual(3, final.RequestCountOk);
+                Assert.AreEqual(3, final.OkCount);
                 Assert.AreEqual(TestPhasesLayout.TotalPhase, LiveDashboardLayout.PhaseName(final));
                 Assert.IsTrue(final.IsCompleted);
                 Assert.AreEqual(TimeSpan.FromSeconds(12), final.Duration);
@@ -148,8 +148,7 @@ public class ConsoleManagerTests : Test
                 await harness.ConsoleManager.Complete();
                 Assert.AreSame(final, harness.ConsoleManager.LiveSnapshots[0]);
                 Assert.AreEqual(TimeSpan.FromSeconds(12), harness.ConsoleManager.LiveSnapshots[0].Duration);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -199,8 +198,7 @@ public class ConsoleManagerTests : Test
 
                 harness.AssertEnteredAndRestoredOnce();
                 harness.AssertSummaryFollowsRestore();
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -276,8 +274,7 @@ public class ConsoleManagerTests : Test
                 harness.AssertEnteredAndRestoredOnce();
                 harness.AssertSummaryFollowsRestore();
                 Assert.ContainsSingle(harness.MarkupEvents());
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -303,8 +300,7 @@ public class ConsoleManagerTests : Test
                 Assert.AreEqual(0, harness.Host.Reader.TryReadKeyCallCount);
                 Assert.AreEqual(1, harness.Host.Reader.PendingKeyCount);
                 Assert.AreEqual(ExecutionStatus.Running, harness.State.ExecutionStatus);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -321,12 +317,12 @@ public class ConsoleManagerTests : Test
                 CollectionAssert.AreEqual(new[]
                 {
                     "[Checkout flow] phase: Init",
-                    "[Checkout flow] elapsed 00:00:00  requests 0  successful 0  failed 0  requests/sec N/A  p95 N/A"
+                    "[Checkout flow] elapsed 00:00:00  iterations 0  successful 0  failed 0  iterations/s N/A  p95 N/A"
                 }, harness.PlainLines());
 
                 harness.Collector.MarkPhaseAsStarted(LoadTestPhase.Init, At(0));
                 await harness.Host.RunTick(At(1));
-                Assert.AreEqual("[Checkout flow] elapsed 00:00:01  requests 0  successful 0  failed 0  requests/sec N/A  p95 N/A", harness.PlainLines()[2]);
+                Assert.AreEqual("[Checkout flow] elapsed 00:00:01  iterations 0  successful 0  failed 0  iterations/s N/A  p95 N/A", harness.PlainLines()[2]);
                 Assert.HasCount(3, harness.Writer.Writes);
 
                 await harness.Host.RunTick(At(1.25));
@@ -343,10 +339,10 @@ public class ConsoleManagerTests : Test
                 CollectionAssert.AreEqual(new[]
                 {
                     "[Checkout flow] phase: Execution",
-                    "[Checkout flow] elapsed 00:00:02  requests 3  successful 3  failed 0  requests/sec N/A  p95 10 ms",
-                    "[Checkout flow] elapsed 00:00:03  requests 8  successful 8  failed 0  requests/sec 5.0  p95 10 ms",
+                    "[Checkout flow] elapsed 00:00:02  iterations 3  successful 3  failed 0  iterations/s N/A  p95 10 ms",
+                    "[Checkout flow] elapsed 00:00:03  iterations 8  successful 8  failed 0  iterations/s 5.0  p95 10 ms",
                     "[Checkout flow] phase: Total Test Run",
-                    "[Checkout flow] elapsed 00:00:11  requests 8  successful 8  failed 0  requests/sec 0.0  p95 10 ms"
+                    "[Checkout flow] elapsed 00:00:11  iterations 8  successful 8  failed 0  iterations/s 0.0  p95 10 ms"
                 }, harness.PlainLines().Skip(3).ToList());
 
                 harness.CompleteCleanup(At(12));
@@ -355,7 +351,7 @@ public class ConsoleManagerTests : Test
 
                 var lines = harness.PlainLines();
                 Assert.HasCount(9, lines);
-                Assert.AreEqual("[Checkout flow] completed  elapsed 00:00:12  requests 8  successful 8  failed 0  p95 10 ms", lines[8]);
+                Assert.AreEqual("[Checkout flow] completed  elapsed 00:00:12  iterations 8  successful 8  failed 0  p95 10 ms", lines[8]);
                 Assert.AreEqual(TestPhasesLayout.TotalPhase, LiveDashboardLayout.PhaseName(harness.ConsoleManager.LiveSnapshots[0]));
                 harness.AssertSummaryFollowsLastTerminalWrite();
                 Assert.IsEmpty(harness.MarkupEvents());
@@ -378,7 +374,7 @@ public class ConsoleManagerTests : Test
                 CollectionAssert.AreEqual(new[]
                 {
                     "[Checkout flow] phase: Init",
-                    "[Checkout flow] elapsed 00:00:00  requests 0  successful 0  failed 0  requests/sec N/A  p95 N/A"
+                    "[Checkout flow] elapsed 00:00:00  iterations 0  successful 0  failed 0  iterations/s N/A  p95 N/A"
                 }, harness.PlainLines());
                 Assert.AreEqual(0, harness.Host.CreateTerminalReaderCallCount);
                 Assert.AreEqual(0, harness.Writer.WindowWidthReadCount);
@@ -397,7 +393,7 @@ public class ConsoleManagerTests : Test
                 harness.AssertStoppedLikeCtrlC();
 
                 await harness.Host.RunTick(At(1));
-                Assert.AreEqual("[Checkout flow] elapsed 00:00:01  requests 0  successful 0  failed 0  requests/sec N/A  p95 N/A", harness.PlainLines()[2]);
+                Assert.AreEqual("[Checkout flow] elapsed 00:00:01  iterations 0  successful 0  failed 0  iterations/s N/A  p95 N/A", harness.PlainLines()[2]);
 
                 harness.CompleteInitAndStartMeasurement(At(1.5));
                 harness.CompleteMeasurementAndCleanup(At(2), At(3));
@@ -406,7 +402,7 @@ public class ConsoleManagerTests : Test
 
                 var lines = harness.PlainLines();
                 Assert.HasCount(4, lines);
-                Assert.AreEqual("[Checkout flow] stopped  elapsed 00:00:03  requests 0  successful 0  failed 0  p95 N/A", lines[3]);
+                Assert.AreEqual("[Checkout flow] stopped  elapsed 00:00:03  iterations 0  successful 0  failed 0  p95 N/A", lines[3]);
                 harness.AssertSummaryFollowsLastTerminalWrite();
                 Assert.IsEmpty(harness.MarkupEvents());
             })
@@ -428,10 +424,10 @@ public class ConsoleManagerTests : Test
                 CollectionAssert.AreEqual(new[]
                 {
                     "[Checkout flow] phase: Execution",
-                    "[Checkout flow] elapsed 00:00:02  requests 2  successful 2  failed 0  requests/sec N/A  p95 10 ms",
+                    "[Checkout flow] elapsed 00:00:02  iterations 2  successful 2  failed 0  iterations/s N/A  p95 10 ms",
                     "[Checkout flow] failed: Assert while running failed: p95 above 5 ms",
-                    "[Checkout flow] elapsed 00:00:03  requests 2  successful 2  failed 0  requests/sec 0.0  p95 10 ms",
-                    "[Checkout flow] elapsed 00:00:04  requests 2  successful 2  failed 0  requests/sec 0.0  p95 10 ms"
+                    "[Checkout flow] elapsed 00:00:03  iterations 2  successful 2  failed 0  iterations/s 0.0  p95 10 ms",
+                    "[Checkout flow] elapsed 00:00:04  iterations 2  successful 2  failed 0  iterations/s 0.0  p95 10 ms"
                 }, harness.PlainLines().Skip(2).ToList());
 
                 harness.CompleteMeasurementAndCleanup(At(5), At(6));
@@ -440,12 +436,11 @@ public class ConsoleManagerTests : Test
 
                 var lines = harness.PlainLines();
                 Assert.HasCount(8, lines);
-                Assert.AreEqual("[Checkout flow] failed  elapsed 00:00:06  requests 2  successful 2  failed 0  p95 10 ms  reason: Assert while running failed: p95 above 5 ms", lines[7]);
+                Assert.AreEqual("[Checkout flow] failed  elapsed 00:00:06  iterations 2  successful 2  failed 0  p95 10 ms  reason: Assert while running failed: p95 above 5 ms", lines[7]);
                 Assert.AreEqual(ExecutionStatus.Stopped, harness.State.ExecutionStatus);
                 harness.AssertSummaryFollowsLastTerminalWrite();
                 Assert.IsEmpty(harness.MarkupEvents());
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -461,9 +456,9 @@ public class ConsoleManagerTests : Test
                 CollectionAssert.AreEqual(new[]
                 {
                     "[Checkout flow] phase: Init",
-                    "[Checkout flow] elapsed 00:00:00  requests 0  successful 0  failed 0  requests/sec N/A  p95 N/A",
+                    "[Checkout flow] elapsed 00:00:00  iterations 0  successful 0  failed 0  iterations/s N/A  p95 N/A",
                     "[Search flow] phase: Init",
-                    "[Search flow] elapsed 00:00:00  requests 0  successful 0  failed 0  requests/sec N/A  p95 N/A"
+                    "[Search flow] elapsed 00:00:00  iterations 0  successful 0  failed 0  iterations/s N/A  p95 N/A"
                 }, harness.PlainLines());
 
                 foreach (var collector in harness.Collectors)
@@ -479,11 +474,11 @@ public class ConsoleManagerTests : Test
                 CollectionAssert.AreEqual(new[]
                 {
                     "[Checkout flow] phase: Execution",
-                    "[Checkout flow] elapsed 00:00:02  requests 3  successful 3  failed 0  requests/sec N/A  p95 10 ms",
+                    "[Checkout flow] elapsed 00:00:02  iterations 3  successful 3  failed 0  iterations/s N/A  p95 10 ms",
                     "[Search flow] phase: Execution",
-                    "[Search flow] elapsed 00:00:02  requests 1  successful 1  failed 0  requests/sec N/A  p95 10 ms",
-                    "[Checkout flow] elapsed 00:00:03  requests 3  successful 3  failed 0  requests/sec 0.0  p95 10 ms",
-                    "[Search flow] elapsed 00:00:03  requests 3  successful 3  failed 0  requests/sec 2.0  p95 10 ms"
+                    "[Search flow] elapsed 00:00:02  iterations 1  successful 1  failed 0  iterations/s N/A  p95 10 ms",
+                    "[Checkout flow] elapsed 00:00:03  iterations 3  successful 3  failed 0  iterations/s 0.0  p95 10 ms",
+                    "[Search flow] elapsed 00:00:03  iterations 3  successful 3  failed 0  iterations/s 2.0  p95 10 ms"
                 }, harness.PlainLines().Skip(4).ToList());
 
                 harness.CompleteMeasurementAndCleanup(At(10), At(12));
@@ -492,14 +487,13 @@ public class ConsoleManagerTests : Test
 
                 var lines = harness.PlainLines();
                 Assert.HasCount(12, lines);
-                Assert.AreEqual("[Checkout flow] completed  elapsed 00:00:12  requests 3  successful 3  failed 0  p95 10 ms", lines[10]);
-                Assert.AreEqual("[Search flow] completed  elapsed 00:00:12  requests 3  successful 3  failed 0  p95 10 ms", lines[11]);
+                Assert.AreEqual("[Checkout flow] completed  elapsed 00:00:12  iterations 3  successful 3  failed 0  p95 10 ms", lines[10]);
+                Assert.AreEqual("[Search flow] completed  elapsed 00:00:12  iterations 3  successful 3  failed 0  p95 10 ms", lines[11]);
                 harness.AssertSummaryFollowsLastTerminalWrite();
                 Assert.AreEqual(0, harness.Host.CreateTerminalReaderCallCount);
                 Assert.AreEqual(0, harness.Writer.WindowWidthReadCount);
                 Assert.AreEqual(0, harness.Writer.WindowHeightReadCount);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -537,8 +531,7 @@ public class ConsoleManagerTests : Test
                 var failureLine = Assert.ContainsSingle(harness.MarkupEvents());
                 Assert.AreEqual("[red]Live view failed: IOException: Broken pipe[/]", failureLine);
                 Assert.IsGreaterThan(harness.Events.IndexOf(SummaryEvent), harness.Events.IndexOf(MarkupEventPrefix + failureLine));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -598,8 +591,7 @@ public class ConsoleManagerTests : Test
                 await harness.ConsoleManager.Complete();
                 harness.AssertEnteredAndRestoredOnce();
                 harness.AssertSummaryFollowsRestore();
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -691,8 +683,7 @@ public class ConsoleManagerTests : Test
                 harness.AssertSummaryFollowsRestore();
                 var failureLine = Assert.ContainsSingle(harness.MarkupEvents());
                 Assert.AreEqual("[red]Live view failed: InvalidOperationException: Cannot read keys when input is redirected.[/]", failureLine);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -748,8 +739,7 @@ public class ConsoleManagerTests : Test
 
                 Assert.IsEmpty(harness.Writer.Writes);
                 Assert.AreEqual(1, harness.Events.Count(eventName => eventName == SummaryEvent));
-            })
-            .Run();
+            });
     }
 
     private sealed class Harness

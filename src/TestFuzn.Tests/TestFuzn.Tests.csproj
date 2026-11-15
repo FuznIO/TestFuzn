@@ -1,11 +1,10 @@
 ﻿<Project Sdk="MSTest.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <EnableMSTestRunner>true</EnableMSTestRunner>
-    <GenerateTestingPlatformEntryPoint>false</GenerateTestingPlatformEntryPoint>
+    <!-- Its own Main checks the suite hooks after the run. -->
+    <TestFuznGenerateEntryPoint>false</TestFuznGenerateEntryPoint>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
     <RunSettingsFilePath>$(MSBuildProjectDirectory)\.runsettings</RunSettingsFilePath>
@@ -37,7 +36,6 @@
     <ProjectReference Include="..\TestFuzn.Plugins.Http\TestFuzn.Plugins.Http.csproj" />
     <ProjectReference Include="..\TestFuzn.Plugins.Playwright\TestFuzn.Plugins.Playwright.csproj" />
     <ProjectReference Include="..\TestFuzn.Plugins.WebSocket\TestFuzn.Plugins.WebSocket.csproj" />
-    <ProjectReference Include="..\TestFuzn.Sinks.InfluxDB\TestFuzn.Sinks.InfluxDB.csproj" />
     <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
   </ItemGroup>
 
@@ -61,5 +59,22 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Update="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Update="Microsoft.Testing.Extensions.TrxReport" Version="2.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Update="MSTest.TestAdapter" Version="4.5.1" />
+  </ItemGroup>
+
+  <!-- A ProjectReference does not load a package's build files. Load the adapter's and the Playwright plugin's here, as a NuGet install does. -->
+  <Import Project="..\TestFuzn.Adapters.MSTest\buildTransitive\Fuzn.TestFuzn.Adapters.MSTest.props" />
+  <Import Project="..\TestFuzn.Adapters.MSTest\buildTransitive\Fuzn.TestFuzn.Adapters.MSTest.targets" />
+  <Import Project="..\TestFuzn.Plugins.Playwright\buildTransitive\Fuzn.TestFuzn.Plugins.Playwright.props" />
 
 </Project>

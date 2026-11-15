@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
+[Tags("integration")]
 public class AttachmentTests : Test
 {
     [Test]
@@ -17,7 +18,6 @@ public class AttachmentTests : Test
             {
                 await context.Attach($"TestAttachment2_{context.InputData<string>()}.txt", "This is a test attachment 2 content.");
                 await context.Attach($"TestAttachment3_{context.InputData<string>()}.txt", "This is a test attachment 3 content.");
-            })
-            .Run();
+            });
     }
 }

@@ -2,10 +2,12 @@
 using Fuzn.TestFuzn.Contracts.Results.Standard;
 using Fuzn.TestFuzn.Contracts.Results.Load;
 using Fuzn.TestFuzn.Contracts.Sinks;
+using Fuzn.TestFuzn.Internals.Cluster;
 using Fuzn.TestFuzn.Internals.Logging;
 using Fuzn.TestFuzn.Internals.State;
 using Fuzn.TestFuzn.Internals.InputData;
 using Microsoft.Extensions.DependencyInjection;
+using System.Runtime.ExceptionServices;
 
 namespace Fuzn.TestFuzn.Internals.Execution;
 
@@ -33,6 +35,7 @@ internal class ExecuteScenarioMessageHandler
         ExecuteScenarioMessage message)
     {
         var scenario = message.Scenario;
+        _testExecutionState.RecordIterationStartLag(System.Diagnostics.Stopwatch.GetElapsedTime(message.EnqueuedTimestamp));
 
         // Create a new scope for the iteration execution.
         await using var iterationScope = _serviceProvider.CreateAsyncScope();
@@ -50,6 +53,7 @@ internal class ExecuteScenarioMessageHandler
         var isStandardTest = _testExecutionState.TestResult.TestType == TestType.Standard;
 
         var executeStepHandler = new ExecuteStepHandler(_testExecutionState, iterationState, null);
+        HookFailure? hookFailure = null;
 
         try
         {
@@ -58,8 +62,15 @@ internal class ExecuteScenarioMessageHandler
 
             if (scenario.BeforeIterationAction != null)
             {
-                var stepContext = ContextFactory.CreateIterationContext(iterationState, "BeforeIteration", null, null);
-                await scenario.BeforeIterationAction(stepContext);
+                try
+                {
+                    var stepContext = ContextFactory.CreateIterationContext(iterationState, "BeforeIteration", null, null);
+                    await scenario.BeforeIterationAction(stepContext);
+                }
+                catch (Exception ex) when (!IsStop(ex))
+                {
+                    hookFailure = new HookFailure("BeforeIteration", ExceptionDispatchInfo.Capture(ex));
+                }
             }
 
             if (isStandardTest)
@@ -67,12 +78,15 @@ internal class ExecuteScenarioMessageHandler
 
             iterationResult.ExecuteStartTime = DateTime.UtcNow;
 
-            foreach (var (step, index) in scenario.Steps.Select((s,i)=> (s,i)))
+            if (hookFailure == null)
             {
-                using var loggingScope = _testExecutionState.TestSession.Logger.BeginScope(new LoggingScopeState(scenario.Name, index + 1));
+                foreach (var (step, index) in scenario.Steps.Select((s,i)=> (s,i)))
+                {
+                    using var loggingScope = _testExecutionState.TestSession.Logger.BeginScope(new LoggingScopeState(scenario.Name, index + 1));
 
-                await executeStepHandler.ExecuteStep(step);
-                iterationResult.StepResults.Add(executeStepHandler.RootStepResult!.Name, executeStepHandler.RootStepResult);
+                    await executeStepHandler.ExecuteStep(step);
+                    iterationResult.StepResults.Add(executeStepHandler.RootStepResult!.Name, executeStepHandler.RootStepResult);
+                }
             }
         }
         finally
@@ -86,17 +100,41 @@ internal class ExecuteScenarioMessageHandler
             {
                 for (int i = iterationState.CleanupActions.Count - 1; i >= 0; i--)
                 {
-                    await iterationState.CleanupActions[i]();
+                    try
+                    {
+                        await iterationState.CleanupActions[i]();
+                    }
+                    catch (Exception ex) when (!IsStop(ex))
+                    {
+                        if (hookFailure == null)
+                            hookFailure = new HookFailure("Iteration cleanup", ExceptionDispatchInfo.Capture(ex));
+                    }
                 }
             }
 
             if (scenario.AfterIterationAction != null)
             {
-                var stepContext = ContextFactory.CreateIterationContext(iterationState, "AfterIteration", null, null);
-                await scenario.AfterIterationAction(stepContext);
+                try
+                {
+                    var stepContext = ContextFactory.CreateIterationContext(iterationState, "AfterIteration", null, null);
+                    await scenario.AfterIterationAction(stepContext);
+                }
+                catch (Exception ex) when (!IsStop(ex))
+                {
+                    if (hookFailure == null)
+                        hookFailure = new HookFailure("AfterIteration", ExceptionDispatchInfo.Capture(ex));
+                }
             }
 
-            await CleanupIteration(iterationState);
+            try
+            {
+                await CleanupIteration(iterationState);
+            }
+            catch (Exception ex) when (!IsStop(ex))
+            {
+                if (hookFailure == null)
+                    hookFailure = new HookFailure("Iteration cleanup", ExceptionDispatchInfo.Capture(ex));
+            }
 
             if (isStandardTest)
                 iterationResult.CleanupEndTime = DateTime.UtcNow;
@@ -104,6 +142,9 @@ internal class ExecuteScenarioMessageHandler
 
         if (_testExecutionState.TestResult.TestType == TestType.Standard)
         {
+            if (hookFailure != null)
+                ThrowHookFailure(hookFailure);
+
             if (currentInputData != null)
                 iterationResult.InputData = currentInputData;
 
@@ -113,17 +154,27 @@ internal class ExecuteScenarioMessageHandler
         {
             var scenarioLoadCollector = _testExecutionState.LoadCollectors[scenario.Name];
 
+            // A load child only records; the controller runs asserts and sinks on the merged stats.
+            var isLoadChild = _testExecutionState.TestSession.Cluster.Role == ClusterRole.LoadChild;
+
+            var status = executeStepHandler.CurrentScenarioStatus ?? TestStatus.Failed;
+            if (hookFailure != null)
+                status = TestStatus.Failed;
+
             if (message.IsWarmup)
             {
-                scenarioLoadCollector.RecordWarmup(executeStepHandler.CurrentScenarioStatus ?? TestStatus.Failed);
+                scenarioLoadCollector.RecordWarmup(status);
+                if (hookFailure != null)
+                    ThrowHookFailure(hookFailure);
 
                 if (scenario.AssertWhileWarmingUpAction != null
+                    && !isLoadChild
                     && _testExecutionState.ExecutionStatus == ExecutionStatus.Running)
                 {
                     try
                     {
                         var warmupStats = scenarioLoadCollector.GetWarmupStats();
-                        var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, iterationServiceProvider, _testExecutionState.TestFramework, "AssertWhileWarmingUp", _testExecutionState.CancellationToken);
+                        var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, iterationServiceProvider, _testExecutionState.TestFramework, "AssertWhileWarmingUp", _testExecutionState.CancellationToken, scenario);
                         scenario.AssertWhileWarmingUpAction(context, warmupStats);
                     }
                     catch (Exception ex)
@@ -140,9 +191,17 @@ internal class ExecuteScenarioMessageHandler
                 return;
             }
 
-            scenarioLoadCollector.RecordMeasurement(executeStepHandler.CurrentScenarioStatus ?? TestStatus.Failed, iterationResult);
+            scenarioLoadCollector.RecordMeasurement(status, iterationResult);
+            if (hookFailure != null)
+            {
+                scenarioLoadCollector.RecordHookFailure(hookFailure.Hook, hookFailure.Error.SourceException);
+                ThrowHookFailure(hookFailure);
+            }
 
             ScenarioLoadResult scenarioLoadResult = null;
+
+            if (isLoadChild)
+                return;
 
             if (scenario.AssertWhileRunningAction != null
                 && _testExecutionState.ExecutionStatus == ExecutionStatus.Running)
@@ -150,7 +209,7 @@ internal class ExecuteScenarioMessageHandler
                 try
                 {
                     scenarioLoadResult = scenarioLoadCollector.GetCurrentResult();
-                    var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, iterationServiceProvider, _testExecutionState.TestFramework, "AssertWhileRunning", _testExecutionState.CancellationToken);
+                    var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, iterationServiceProvider, _testExecutionState.TestFramework, "AssertWhileRunning", _testExecutionState.CancellationToken, scenario);
                     scenario.AssertWhileRunningAction(context, new AssertScenarioStats(scenarioLoadResult));
                 }
                 catch (Exception ex)
@@ -166,6 +225,40 @@ internal class ExecuteScenarioMessageHandler
 
             await WriteToSinksAndSnapshotCollector(_testExecutionState, scenario, () => scenarioLoadResult ?? scenarioLoadCollector.GetCurrentResult(), false);
         }
+    }
+
+    private bool IsStop(Exception exception) =>
+        exception is OperationCanceledException && _testExecutionState.CancellationToken.IsCancellationRequested;
+
+    private sealed record HookFailure(string Hook, ExceptionDispatchInfo Error);
+
+    private void ThrowHookFailure(HookFailure hookFailure)
+    {
+        if (_testExecutionState.FailedIn == null)
+            _testExecutionState.FailedIn = hookFailure.Hook;
+        hookFailure.Error.Throw();
+    }
+
+    private static SinkStats BuildSinkStats(TestExecutionState testExecutionState, Scenario scenario, ScenarioLoadResult scenarioLoadResult)
+    {
+        var current = testExecutionState.LoadCollectors[scenario.Name].GetState();
+        testExecutionState.PreviousSinkStates.TryGetValue(scenario.Name, out var previous);
+        testExecutionState.PreviousSinkStates[scenario.Name] = current;
+
+        var timeMs = 0L;
+        if (scenarioLoadResult.MeasurementStartTime != default)
+            timeMs = (long) (DateTime.UtcNow - scenarioLoadResult.MeasurementStartTime).TotalMilliseconds;
+
+        var testInfo = testExecutionState.TestClassInstance.TestInfo;
+        return new SinkStats
+        {
+            TestRunId = testExecutionState.TestSession.TestRunId,
+            GroupName = testInfo.Group.Name,
+            TestName = testInfo.Name,
+            Scenario = scenarioLoadResult,
+            Points = IntervalStats.Points(current, previous, timeMs),
+            Generators = testExecutionState.Workers
+        };
     }
 
     private async Task CleanupIteration(IterationState iterationContext)
@@ -204,12 +297,17 @@ internal class ExecuteScenarioMessageHandler
                     || (now - lastWrite).TotalSeconds >= _testExecutionState.TestSession.SinkWriteFrequency.TotalSeconds)
                 {
                     var scenarioLoadResult = getScenarioLoadResult();
+                    if (testExecutionState.TestSession.Cluster.Role == ClusterRole.None)
+                        testExecutionState.Workers = testExecutionState.LocalWorker.Sample(testExecutionState, scenarioLoadResult);
 
-                    await testExecutionState.LoadSnapshotCollector.WriteStats(scenarioLoadResult);
+                    var okState = testExecutionState.LoadCollectors[scenario.Name].GetOkState();
+                    await testExecutionState.LoadSnapshotCollector.WriteStats(scenarioLoadResult, okState);
 
-                    foreach (var sinkPlugin in _sinkPlugins)
+                    if (_sinkPlugins.Any())
                     {
-                        await sinkPlugin.WriteStats(_testExecutionState.TestSession.TestRunId, testExecutionState.TestClassInstance.TestInfo.Group.Name, testExecutionState.TestClassInstance.TestInfo.Name, scenarioLoadResult);
+                        var sinkStats = BuildSinkStats(testExecutionState, scenario, scenarioLoadResult);
+                        foreach (var sinkPlugin in _sinkPlugins)
+                            await sinkPlugin.WriteStats(sinkStats);
                     }
                     testExecutionState.LastSinkWrite[scenario.Name] = now;
                 }

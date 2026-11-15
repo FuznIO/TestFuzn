@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class MarkupTextTests : Test
 {
     [Test]
@@ -29,8 +30,7 @@ public class MarkupTextTests : Test
                 Assert.AreEqual(4, MarkupText.Measure("a\n\nb"));
                 Assert.AreEqual(3, MarkupText.Measure("a\tb"));
                 Assert.AreEqual(3, MarkupText.Measure("a\u001bb"));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -60,8 +60,7 @@ public class MarkupTextTests : Test
                 Assert.AreEqual(string.Empty, MarkupText.RenderFitted("abc", 0, ColorMode.None).Text);
                 Assert.AreEqual(string.Empty, MarkupText.RenderFitted("abc", -1, ColorMode.None).Text);
                 Assert.AreEqual(0, MarkupText.RenderFitted("abc", 0, ColorMode.None).Width);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -88,8 +87,7 @@ public class MarkupTextTests : Test
             {
                 Assert.AreEqual(string.Empty, MarkupText.RenderTruncated("abcdef", 0, ColorMode.None).Text);
                 Assert.AreEqual(0, MarkupText.RenderTruncated("abcdef", 0, ColorMode.None).Width);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -111,8 +109,7 @@ public class MarkupTextTests : Test
 
                 Assert.AreEqual("abc…", line.Text);
                 Assert.DoesNotContain("\u001b", line.Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -136,8 +133,7 @@ public class MarkupTextTests : Test
             .Step("A cut between two pairs needs no back-off", context =>
             {
                 Assert.AreEqual("😀😀…", MarkupText.RenderTruncated("😀😀😀", 5, ColorMode.None).Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -175,7 +171,6 @@ public class MarkupTextTests : Test
 
                 Assert.AreEqual("esc […", line.Text);
                 Assert.DoesNotContain("\u001b", line.Text);
-            })
-            .Run();
+            });
     }
 }

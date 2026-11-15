@@ -4,7 +4,7 @@ internal static class FailureDetailsLayout
 {
     internal const string Header = "Failure Details";
     internal const string InnerExceptionLabel = "Inner Exception:";
-    internal const string NoAssertionFailureText = "No assertion failed. The scenario is marked failed by its requests or steps; see Step Performance and Step Errors.";
+    internal const string NoAssertionFailureText = "No assertion failed. The scenario is marked failed by its iterations or steps; see Step Performance and Step Errors.";
 
     private const string Indent = "  ";
 

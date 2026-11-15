@@ -25,4 +25,13 @@
     <None Include="../../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
+  <!-- Build files for the test project. The entry point source compiles there, not here. -->
+  <ItemGroup>
+    <Compile Remove="buildTransitive\**" />
+    <None Include="buildTransitive\Fuzn.TestFuzn.Adapters.MSTest.props" Pack="true" PackagePath="buildTransitive\" />
+    <None Include="buildTransitive\Fuzn.TestFuzn.Adapters.MSTest.targets" Pack="true" PackagePath="buildTransitive\" />
+    <None Include="buildTransitive\TestFuznEntryPoint.cs" Pack="true" PackagePath="buildTransitive\" />    <None Include="build\Fuzn.TestFuzn.Adapters.MSTest.props" Pack="true" PackagePath="build\" />
+    <None Include="build\Fuzn.TestFuzn.Adapters.MSTest.targets" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+
 </Project>

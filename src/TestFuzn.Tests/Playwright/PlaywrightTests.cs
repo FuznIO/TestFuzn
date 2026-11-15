@@ -4,9 +4,11 @@ using Microsoft.Playwright;
 namespace Fuzn.TestFuzn.Tests.Playwright;
 
 [TestClass]
+[Tags("integration")]
 public class PlaywrightTests : Test
 {
     [Test]
+    [Tags("load")]
     public async Task Verify_that_playwright_works()
     {
         await Scenario("Test UI using BrowserPage that wraps Playwright")
@@ -23,9 +25,8 @@ public class PlaywrightTests : Test
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(10))
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(10, stats.Ok.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(10, stats.Ok.Count);
+            });
     }
 
     [Test]
@@ -39,8 +40,7 @@ public class PlaywrightTests : Test
 
                 var title = await page.TitleAsync();
                 Assert.AreEqual("Login - TestWebApp", title);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -58,8 +58,7 @@ public class PlaywrightTests : Test
 
                 var title = await page.TitleAsync();
                 Assert.AreEqual("Login - TestWebApp", title);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -83,11 +82,11 @@ public class PlaywrightTests : Test
 
                 var title = await page.TitleAsync();
                 Assert.AreEqual("Login - TestWebApp", title);
-            })
-            .Run();
+            });
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_load_test_with_different_devices()
     {
         var devices = new[] { "iPhone 13", "Pixel 5", "iPad Pro 11" };
@@ -105,8 +104,7 @@ public class PlaywrightTests : Test
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(9))
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(9, stats.Ok.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(9, stats.Ok.Count);
+            });
     }
 }

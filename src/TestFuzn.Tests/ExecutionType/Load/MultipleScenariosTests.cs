@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load;
 
 [TestClass]
+[Tags("integration", "load")]
 public class MultipleScenariosTests : Test
 {
     [Test]
@@ -30,8 +31,7 @@ public class MultipleScenariosTests : Test
                 scenario1Executed = true;
             })
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(20))
-            .Load().IncludeScenario(scenario2)
-            .Run();
+            .Load().IncludeScenario(scenario2);
 
         Assert.IsTrue(scenario1Executed);
         Assert.IsTrue(scenario2Executed);

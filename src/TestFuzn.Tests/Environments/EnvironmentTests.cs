@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.TargetEnvironment;
 
 [TestClass]
+[Tags("integration")]
 public class EnvironmentTests : Test
 {
     [Test]
@@ -10,7 +11,6 @@ public class EnvironmentTests : Test
         await Scenario()
             .Step("Step 1", context => 
             {
-            })
-            .Run();
+            });
     }
 }

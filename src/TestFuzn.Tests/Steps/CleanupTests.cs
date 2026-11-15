@@ -1,6 +1,7 @@
 namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
+[Tags("integration")]
 public class CleanupTests : Test
 {
     [Test]
@@ -18,8 +19,7 @@ public class CleanupTests : Test
                     cleanupExecuted = true;
                 });
                 stepCompleted = true;
-            })
-            .Run();
+            });
 
         Assert.IsTrue(cleanupExecuted);
     }
@@ -38,8 +38,7 @@ public class CleanupTests : Test
             .Step("Step 2", (context) =>
             {
                 context.Cleanup(() => order.Add(3));
-            })
-            .Run();
+            });
 
         Assert.HasCount(3, order);
         Assert.AreEqual(3, order[0]);
@@ -56,8 +55,7 @@ public class CleanupTests : Test
                 .Step("Step 1", (context) =>
                 {
                     context.Cleanup(() => throw new InvalidOperationException("Cleanup failure"));
-                })
-                .Run();
+                });
         });
     }
 
@@ -73,8 +71,7 @@ public class CleanupTests : Test
                 {
                     subContext.Cleanup(() => cleanupExecuted = true);
                 });
-            })
-            .Run();
+            });
 
         Assert.IsTrue(cleanupExecuted);
     }
@@ -92,8 +89,7 @@ public class CleanupTests : Test
                     await Task.Delay(1);
                     cleanupExecuted = true;
                 });
-            })
-            .Run();
+            });
 
         Assert.IsTrue(cleanupExecuted);
     }
@@ -113,8 +109,7 @@ public class CleanupTests : Test
                 .Step("Step 2 - Fails", (context) =>
                 {
                     throw new InvalidOperationException("Step failure");
-                })
-                .Run();
+                });
         }
         catch
         {
@@ -133,8 +128,7 @@ public class CleanupTests : Test
             .Step("Step 1", (context) =>
             {
                 stepExecuted = true;
-            })
-            .Run();
+            });
 
         Assert.IsTrue(stepExecuted);
     }
@@ -152,8 +146,7 @@ public class CleanupTests : Test
             .AfterIteration((context) =>
             {
                 order.Add("afterIteration");
-            })
-            .Run();
+            });
 
         Assert.HasCount(2, order);
         Assert.AreEqual("cleanup", order[0]);

@@ -42,7 +42,8 @@ internal class ContextFactory
         IServiceProvider serviceProvider,
         ITestFrameworkAdapter testFramework,
         string stepName,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Scenario? scenario = null)
     {
         var context = new ScenarioContext();
 
@@ -50,6 +51,7 @@ internal class ContextFactory
         {
             context.IterationState = new();
             PopulateIterationStateProperties(context.IterationState, testSession, serviceProvider, testFramework, Guid.NewGuid(), cancellationToken);
+            context.IterationState.Scenario = scenario;
             context.StepInfo = new StepInfo(null, stepName, null, null);
         }
 

@@ -16,11 +16,12 @@ internal static class StepPerformanceLayout
     {
         new TableColumn(MetricsTableLayout.HeaderColumn("Step").Header) { MaxWidth = StepColumnMaxWidth },
         MetricsTableLayout.HeaderColumn("Type"),
-        MetricsTableLayout.NumberColumn("Requests"),
-        MetricsTableLayout.NumberColumn("RPS"),
+        MetricsTableLayout.NumberColumn("Count"),
+        MetricsTableLayout.NumberColumn("Per Second"),
         MetricsTableLayout.NumberColumn("Mean"),
         MetricsTableLayout.NumberColumn("Median"),
         MetricsTableLayout.NumberColumn("P75"),
+        MetricsTableLayout.NumberColumn("P90"),
         MetricsTableLayout.NumberColumn("P95"),
         MetricsTableLayout.NumberColumn("P99"),
         MetricsTableLayout.NumberColumn("Min"),
@@ -30,12 +31,12 @@ internal static class StepPerformanceLayout
 
     private static readonly int[][] ColumnTiers =
     {
+        new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 },
         new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
-        new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
-        new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 },
-        new[] { 0, 1, 2, 3, 4, 5, 7, 8 },
-        new[] { 0, 1, 2, 3, 4, 7 },
-        new[] { 0, 1, 2, 7 }
+        new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+        new[] { 0, 1, 2, 3, 4, 5, 8, 9 },
+        new[] { 0, 1, 2, 3, 4, 8 },
+        new[] { 0, 1, 2, 8 }
     };
 
     public static IReadOnlyList<RenderedLine> Render(IReadOnlyList<IReadOnlyList<string?>> rows, int innerWidth, ColorMode colorMode)
@@ -66,24 +67,25 @@ internal static class StepPerformanceLayout
         return TableWidget.MeasureNaturalWidth(SelectColumns(narrowestTier), SelectCells(rows, narrowestTier));
     }
 
-    public static string?[] Row(string name, bool isOk, int requestCount, int requestsPerSecond, TimeSpan mean, TimeSpan median,
-        TimeSpan percentile75, TimeSpan percentile95, TimeSpan percentile99, TimeSpan min, TimeSpan max, TimeSpan standardDeviation)
+    public static string?[] Row(string name, bool isOk, int count, int perSecond, TimeSpan mean, TimeSpan median,
+        TimeSpan percentile75, TimeSpan percentile90, TimeSpan percentile95, TimeSpan percentile99, TimeSpan min, TimeSpan max, TimeSpan standardDeviation)
     {
         var typeStyle = isOk ? LiveDashboardLayout.OkStyle : LiveDashboardLayout.FailedStyle;
         return new[]
         {
             MarkupParser.Escape(name),
             MetricsTableLayout.Styled(typeStyle, isOk ? OkType : FailedType),
-            LiveDashboardLayout.FormatCount(requestCount),
-            LiveDashboardLayout.FormatCount(requestsPerSecond),
-            mean.ToTestFuznResponseTime(),
-            median.ToTestFuznResponseTime(),
-            percentile75.ToTestFuznResponseTime(),
-            percentile95.ToTestFuznResponseTime(),
-            percentile99.ToTestFuznResponseTime(),
-            min.ToTestFuznResponseTime(),
-            max.ToTestFuznResponseTime(),
-            standardDeviation.ToTestFuznResponseTime()
+            LiveDashboardLayout.FormatCount(count),
+            LiveDashboardLayout.FormatCount(perSecond),
+            mean.ToTestFuznDuration(),
+            median.ToTestFuznDuration(),
+            percentile75.ToTestFuznDuration(),
+            percentile90.ToTestFuznDuration(),
+            percentile95.ToTestFuznDuration(),
+            percentile99.ToTestFuznDuration(),
+            min.ToTestFuznDuration(),
+            max.ToTestFuznDuration(),
+            standardDeviation.ToTestFuznDuration()
         };
     }
 

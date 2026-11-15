@@ -6,6 +6,7 @@ using Fuzn.TestFuzn.Tests.Terminal;
 namespace Fuzn.TestFuzn.Tests.Runner;
 
 [TestClass]
+[Tags("integration")]
 public class TestFuznTestRunnerTests : Test
 {
     private const string TestName = "Fuzn.Shop.Tests.CheckoutTests.Verify_checkout";
@@ -99,8 +100,7 @@ public class TestFuznTestRunnerTests : Test
 
                 CollectionAssert.AreEqual(ExpectedBannerWrites(ColorMode.Colors16), host.Writer.Writes.ToList());
                 Assert.StartsWith(AnsiCodes.Csi + "1;93m" + TestFuznTestRunner.RunningTestLabel, host.Writer.Writes[0]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -127,7 +127,6 @@ public class TestFuznTestRunnerTests : Test
                 await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await runner.RunTest<FakeStartup>(Array.Empty<string>(), null!, FakeDiscoverTests.Test(TestName)));
                 await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => await runner.RunTest<FakeStartup>(Array.Empty<string>(), new FakeTestFrameworkAdapter(new List<string>()), null!));
                 await Assert.ThrowsExactlyAsync<ArgumentException>(async () => await runner.RunTest<FakeStartup>(Array.Empty<string>(), new FakeTestFrameworkAdapter(new List<string>()), new DiscoveredTest { Name = TestName }));
-            })
-            .Run();
+            });
     }
 }

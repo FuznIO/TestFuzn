@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
+[Tags("integration", "load")]
 public class WebSocketLoadTests : Test
 {
     private const string WebSocketServerUrl = "wss://localhost:7058/ws";
@@ -25,8 +26,7 @@ public class WebSocketLoadTests : Test
                 await connection.Close();
             })
             .Load()
-            .Simulations((context, simulations) => simulations.OneTimeLoad(10))
-            .Run();
+            .Simulations((context, simulations) => simulations.OneTimeLoad(10));
     }
 
     [Test]
@@ -49,8 +49,7 @@ public class WebSocketLoadTests : Test
                 await connection.Close();
             })
             .Load()
-            .Simulations((context, simulations) => simulations.FixedLoad(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10)))
-            .Run();
+            .Simulations((context, simulations) => simulations.FixedLoad(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10)));
     }
 
     [Test]
@@ -78,7 +77,6 @@ public class WebSocketLoadTests : Test
                 await connection.Close();
             })
             .Load()
-            .Simulations((context, simulations) => simulations.OneTimeLoad(10))
-            .Run();
+            .Simulations((context, simulations) => simulations.OneTimeLoad(10));
     }
 }

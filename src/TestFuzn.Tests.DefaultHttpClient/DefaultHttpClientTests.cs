@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Plugins.Http;
 namespace Fuzn.TestFuzn.Tests.DefaultHttpClient;
 
 [TestClass]
+[Tags("integration")]
 public class DefaultHttpClientTests : Test
 {
     [Test]
@@ -15,7 +16,6 @@ public class DefaultHttpClientTests : Test
 
                 Assert.IsTrue(response.IsSuccessful);
                 Assert.AreEqual("Pong", response.Data);
-            })
-            .Run();
+            });
     }
 }

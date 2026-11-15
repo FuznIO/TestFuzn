@@ -6,6 +6,7 @@ using SampleApp.WebApp.Models;
 namespace SampleApp.Tests;
 
 [TestClass]
+[Tags("api")]
 public class ProductHttpTests : Test
 {
     [Test]
@@ -89,8 +90,7 @@ public class ProductHttpTests : Test
 
                 Assert.IsFalse(response.IsSuccessful);
                 Assert.AreEqual(System.Net.HttpStatusCode.NotFound, response.StatusCode);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -104,7 +104,6 @@ public class ProductHttpTests : Test
 
                 Assert.IsFalse(response.IsSuccessful);
                 Assert.AreEqual(System.Net.HttpStatusCode.Unauthorized, response.StatusCode);
-            })
-            .Run();
+            });
     }
 }

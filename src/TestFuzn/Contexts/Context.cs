@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals.Cluster;
 using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
 
@@ -48,5 +49,22 @@ public class Context
     /// Gets the configuration manager for accessing values from appsettings.json and environment-specific configuration files.
     /// </summary>
     public AppConfigurationManager AppConfiguration => IterationState.ServiceProvider.GetRequiredService<AppConfigurationManager>();
+
+    /// <summary>
+    /// Gets the data the scenario's <c>.Load().BeforeScenarioOnce(...)</c> returned. In a cluster run the data
+    /// was created once on the controller and sent to every load worker as JSON.
+    /// </summary>
+    /// <typeparam name="T">The type to read the data as.</typeparam>
+    /// <returns>The data, deserialized from JSON.</returns>
+    public T OnceData<T>()
+    {
+        var scenario = IterationState.Scenario;
+        if (scenario == null)
+            throw new InvalidOperationException("OnceData is only available in scenario hooks, input data, simulations and steps.");
+        if (scenario.OnceDataJson == null)
+            throw new InvalidOperationException($"Scenario '{scenario.Name}' has no once data. Return the data from .Load().BeforeScenarioOnce(...).");
+
+        return System.Text.Json.JsonSerializer.Deserialize<T>(scenario.OnceDataJson, ClusterJson.Options)!;
+    }
 
 }

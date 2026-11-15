@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class AnsiCodesTests : Test
 {
     [Test]
@@ -25,8 +26,7 @@ public class AnsiCodesTests : Test
             .Step("Styling constants emit the expected SGR sequences", context =>
             {
                 AssertSequences(expectedStylingSequences);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -83,8 +83,7 @@ public class AnsiCodesTests : Test
             .Step("Erase operations emit the expected sequences", context =>
             {
                 AssertSequences(expectedEraseSequences);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -107,8 +106,7 @@ public class AnsiCodesTests : Test
                 Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => AnsiCodes.MoveCursor(0, 1));
                 Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => AnsiCodes.MoveCursor(1, 0));
                 Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => AnsiCodes.MoveCursor(-1, -1));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -124,8 +122,7 @@ public class AnsiCodesTests : Test
             {
                 Assert.AreEqual("\u001b[48;2;30;30;46m", AnsiCodes.BackgroundTrueColor(30, 30, 46));
                 Assert.AreEqual("\u001b[48;2;255;255;255m", AnsiCodes.BackgroundTrueColor(255, 255, 255));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -166,8 +163,7 @@ public class AnsiCodesTests : Test
             {
                 Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => AnsiCodes.Foreground((ConsoleColor)999));
                 Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => AnsiCodes.Background((ConsoleColor)999));
-            })
-            .Run();
+            });
     }
 
     private static void AssertSequences(Dictionary<string, (string Expected, string Actual)> expectedSequences)

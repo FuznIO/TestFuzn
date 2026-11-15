@@ -144,6 +144,12 @@ internal class StandardXmlReportWriter : IStandardReport
 
         writer.WriteElementString("Status", testResult.Status.ToString());
         writer.WriteElementString("TestType", testResult.TestType.ToString());
+        if (testResult.Failure != null)
+        {
+            WriteFailure(writer, testResult.Failure);
+            if (testResult.FailedIn != null)
+                writer.WriteElementString("FailedIn", testResult.FailedIn);
+        }
 
         writer.WriteElementString("StartTime", testResult.StartTime().ToString("o"));
         writer.WriteElementString("EndTime", testResult.EndTime().ToString("o"));

@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class TerminalCapabilitiesTests : Test
 {
     [Test]
@@ -57,8 +58,7 @@ public class TerminalCapabilitiesTests : Test
                     noColor: null);
 
                 Assert.IsFalse(capabilities.IsInteractive);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -148,8 +148,7 @@ public class TerminalCapabilitiesTests : Test
                     noColor: null);
 
                 Assert.IsFalse(capabilities.SupportsAnsi);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -205,8 +204,7 @@ public class TerminalCapabilitiesTests : Test
 
                 Assert.IsTrue(capabilities.SupportsAnsi);
                 Assert.IsFalse(capabilities.SupportsLiveView);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -308,8 +306,7 @@ public class TerminalCapabilitiesTests : Test
                     noColor: null);
 
                 Assert.AreEqual(ColorMode.None, capabilities.ColorMode);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -376,8 +373,7 @@ public class TerminalCapabilitiesTests : Test
 
                 Assert.IsFalse(capabilities.SupportsAnsi);
                 Assert.AreEqual(ColorMode.None, capabilities.ColorMode);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -395,7 +391,6 @@ public class TerminalCapabilitiesTests : Test
             .Step("Detect requires an environment", context =>
             {
                 Assert.ThrowsExactly<ArgumentNullException>(() => TerminalCapabilities.Detect(null!));
-            })
-            .Run();
+            });
     }
 }

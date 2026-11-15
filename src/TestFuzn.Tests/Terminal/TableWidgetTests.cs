@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class TableWidgetTests : Test
 {
     [Test]
@@ -48,8 +49,7 @@ public class TableWidgetTests : Test
 
                 foreach (var line in lines)
                     Assert.DoesNotContain("\u001b", line.Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -79,8 +79,7 @@ public class TableWidgetTests : Test
 
                 var header = Assert.ContainsSingle(lines);
                 Assert.AreEqual("ab…" + "  " + "vwx…", header.Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -105,8 +104,7 @@ public class TableWidgetTests : Test
                         "abc…" + "  " + "\u001b[38;5;2mok\u001b[0m"
                     },
                     lines);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -141,8 +139,7 @@ public class TableWidgetTests : Test
                 Assert.ThrowsExactly<ArgumentNullException>(() => TableWidget.Render(null!, Array.Empty<IReadOnlyList<string>>(), 10, ColorMode.None));
                 Assert.ThrowsExactly<ArgumentNullException>(() => TableWidget.Render(new[] { new TableColumn("A") }, null!, 10, ColorMode.None));
                 Assert.ThrowsExactly<ArgumentNullException>(() => TableWidget.Render(new[] { new TableColumn("A") }, new IReadOnlyList<string>[] { null! }, 10, ColorMode.None));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -174,8 +171,7 @@ public class TableWidgetTests : Test
                 Assert.ThrowsExactly<ArgumentNullException>(() => TableWidget.MeasureNaturalWidth(null!, Array.Empty<IReadOnlyList<string>>()));
                 Assert.ThrowsExactly<ArgumentNullException>(() => TableWidget.MeasureNaturalWidth(new[] { new TableColumn("A") }, null!));
                 Assert.ThrowsExactly<ArgumentNullException>(() => TableWidget.MeasureNaturalWidth(new[] { new TableColumn("A") }, new IReadOnlyList<string>[] { null! }));
-            })
-            .Run();
+            });
     }
 
     private static void AssertLines(IReadOnlyList<string> expectedLines, IReadOnlyList<RenderedLine> actualLines)

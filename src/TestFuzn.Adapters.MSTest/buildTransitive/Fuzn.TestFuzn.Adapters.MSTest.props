@@ -1,0 +1,6 @@
+<Project>
+  <!-- TestFuzn adds its own entry point (see the .targets file), so the Testing Platform must not generate one. -->
+  <PropertyGroup>
+    <GenerateTestingPlatformEntryPoint Condition="'$(GenerateTestingPlatformEntryPoint)' == ''">false</GenerateTestingPlatformEntryPoint>
+  </PropertyGroup>
+</Project>

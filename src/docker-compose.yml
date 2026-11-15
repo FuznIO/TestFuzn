@@ -11,37 +11,20 @@ services:
       context: .
       dockerfile: SampleApp.WebApp/Dockerfile
 
-  influxdb:
-    image: influxdb:2.7
-    ports:
-      - "8086:8086"
-    volumes:
-      - influxdb2_data:/var/lib/influxdb2
-      - influxdb2_config:/etc/influxdb2
+  # Three workers in pool "docker". They reach the cluster through Cockpit, which runs from the Cockpit
+  # repository (start-service.ps1) on http://localhost:5170. In a container, localhost is the container
+  # itself: Cockpit and the systems under test are at host.docker.internal. The worker key is the one
+  # Cockpit's own docker-compose.yml sets for local use.
+  worker:
+    image: testfuzn-worker
+    build:
+      context: .
+      dockerfile: TestFuzn.Worker/Dockerfile
     environment:
-      DOCKER_INFLUXDB_INIT_MODE: setup
-      DOCKER_INFLUXDB_INIT_USERNAME: admin
-      DOCKER_INFLUXDB_INIT_PASSWORD: admin123
-      DOCKER_INFLUXDB_INIT_ORG: DefaultOrg
-      DOCKER_INFLUXDB_INIT_BUCKET: TestFuzn
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: default_admin_token
-
-  grafana:
-    image: grafana/grafana:latest
-    profiles:
-      - monitoring
-    ports:
-      - "3000:3000"
-    volumes:
-      - ../examples/influxdb-grafana/provisioning/dashboards.yml:/etc/grafana/provisioning/dashboards/main.yaml
-      - ../examples/influxdb-grafana/provisioning/dashboards:/var/lib/grafana/dashboards
-      - ../examples/influxdb-grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    depends_on:
-      - influxdb
-
-volumes:
-  influxdb2_data:
-  influxdb2_config:
+      - TESTFUZN_COCKPIT_URL=http://host.docker.internal:5170
+      - TESTFUZN_WORKER_KEY=testfuzn-local-worker-key
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: on-failure
+    deploy:
+      replicas: 3

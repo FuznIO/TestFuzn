@@ -1,6 +1,7 @@
 namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Warmup;
 
 [TestClass]
+[Tags("integration", "load")]
 public class AssertWhileWarmingUpTests : Test
 {
     [Test]
@@ -25,7 +26,7 @@ public class AssertWhileWarmingUpTests : Test
                 {
                     Interlocked.Increment(ref warmupExecutionCount);
 
-                    if (warmup.TotalCount >= 5 && warmup.FailedRate > 0.5)
+                    if (warmup.Count >= 5 && warmup.FailedRate > 0.5)
                         throw new Exception("Too many warmup failures");
                 })
                 .Load().Simulations((context, simulations) =>
@@ -35,8 +36,7 @@ public class AssertWhileWarmingUpTests : Test
                 .Load().AssertWhenDone((context, stats) =>
                 {
                     Interlocked.Increment(ref measurementExecutionCount);
-                })
-                .Run();
+                });
         }
         catch
         {
@@ -64,7 +64,7 @@ public class AssertWhileWarmingUpTests : Test
             })
             .Load().AssertWhileWarmingUp((context, warmup) =>
             {
-                if (warmup.TotalCount >= 5 && warmup.FailedRate > 0.5)
+                if (warmup.Count >= 5 && warmup.FailedRate > 0.5)
                     throw new Exception("Too many warmup failures");
             })
             .Load().Simulations((context, simulations) =>
@@ -74,9 +74,8 @@ public class AssertWhileWarmingUpTests : Test
             .Load().AssertWhenDone((context, stats) =>
             {
                 Assert.AreEqual(30, executionCount);
-                Assert.AreEqual(20, stats.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(20, stats.Count);
+            });
     }
 
     [Test]
@@ -103,18 +102,17 @@ public class AssertWhileWarmingUpTests : Test
             .Load().Simulations((context, simulations) =>
             {
                 simulations.OneTimeLoad(1);
-            })
-            .Run();
+            });
 
         Assert.IsNotEmpty(capturedStats);
 
-        var lastStats = capturedStats.OrderByDescending(s => s.TotalCount).First();
-        Assert.AreEqual(5, lastStats.TotalCount);
-        Assert.AreEqual(5, lastStats.OkCount);
-        Assert.AreEqual(0, lastStats.FailedCount);
+        var lastStats = capturedStats.OrderByDescending(s => s.Count).First();
+        Assert.AreEqual(5, lastStats.Count);
+        Assert.AreEqual(5, lastStats.Ok.Count);
+        Assert.AreEqual(0, lastStats.Failed.Count);
         Assert.AreEqual(1.0, lastStats.OkRate);
         Assert.AreEqual(0.0, lastStats.FailedRate);
-        Assert.IsGreaterThan(TimeSpan.Zero, lastStats.Duration);
+        Assert.IsGreaterThan(TimeSpan.Zero, lastStats.Elapsed);
     }
 
     [Test]
@@ -138,8 +136,7 @@ public class AssertWhileWarmingUpTests : Test
             .Load().AssertWhenDone((context, stats) =>
             {
                 Assert.AreEqual(30, executionCount);
-                Assert.AreEqual(20, stats.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(20, stats.Count);
+            });
     }
 }

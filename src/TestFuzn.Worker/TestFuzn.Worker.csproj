@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Fuzn.TestFuzn.Worker</AssemblyName>
+    <RootNamespace>Fuzn.TestFuzn.Worker</RootNamespace>
+    <PackageId>Fuzn.TestFuzn.Worker</PackageId>
+    <Title>Fuzn.TestFuzn.Worker</Title>
+    <Description>Worker app for TestFuzn remote and cluster runs. Joins a pool through Cockpit and runs the uploaded tests.</Description>
+    <PackageTags>testing;load-testing;dotnet;TestFuzn;cluster;distributed;cockpit;worker</PackageTags>
+    <Authors>Fuzn</Authors>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>testfuzn-worker</ToolCommandName>
+    <!-- One worker serves test projects of any .NET version; the children run on their own runtime. -->
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The cluster protocol, compiled in: the worker app does not reference TestFuzn itself. These files must use nothing else from TestFuzn. -->
+    <Compile Include="..\TestFuzn\Internals\Cluster\Protocol\*.cs" Link="Protocol\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

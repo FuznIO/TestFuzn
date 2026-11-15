@@ -1,6 +1,7 @@
 namespace Fuzn.TestFuzn.Tests.Lifecycle;
 
 [TestClass]
+[Tags("integration")]
 public class ClassLifecycleTests : Test, IBeforeClass, IAfterClass, IBeforeTest
 {
     internal static int BeforeClassCallCount = 0;
@@ -39,8 +40,7 @@ public class ClassLifecycleTests : Test, IBeforeClass, IAfterClass, IBeforeTest
             .Step("Verify BeforeClass was called", (context) =>
             {
                 Assert.IsGreaterThan(0, BeforeClassCallCount);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -51,7 +51,6 @@ public class ClassLifecycleTests : Test, IBeforeClass, IAfterClass, IBeforeTest
             {
                 Assert.IsTrue(BeforeClassCalledBeforeBeforeTest);
                 Assert.IsTrue(_beforeTestCalled);
-            })
-            .Run();
+            });
     }
 }

@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Attributes.GlobalStates;
 
 [TestClass]
+[Tags("integration")]
 public class GlobalStateTests
 {
     [TestMethod]

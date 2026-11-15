@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class KeyHintBarWidgetTests : Test
 {
     [Test]
@@ -39,8 +40,7 @@ public class KeyHintBarWidgetTests : Test
                     new[] { new KeyHint("q", "quit"), new KeyHint("f", "filter"), new KeyHint("s", "stop") }, 30, ColorMode.TrueColor));
 
                 Assert.AreEqual("\u001b[1mq\u001b[0m quit\u001b[2m · \u001b[0m\u001b[1mf\u001b[0m filter\u001b[2m · \u001b[0m\u001b[1ms\u001b[0m stop", line.Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -75,8 +75,7 @@ public class KeyHintBarWidgetTests : Test
                 Assert.AreEqual(string.Empty, Assert.ContainsSingle(KeyHintBarWidget.Render(Array.Empty<KeyHint>(), 10, ColorMode.None)).Text);
                 Assert.IsEmpty(KeyHintBarWidget.Render(Array.Empty<KeyHint>(), 0, ColorMode.None));
                 Assert.ThrowsExactly<ArgumentNullException>(() => KeyHintBarWidget.Render(null!, 10, ColorMode.None));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -105,7 +104,6 @@ public class KeyHintBarWidgetTests : Test
                     new[] { new KeyHint("q", "qu\nit") }, 20, ColorMode.TrueColor));
 
                 Assert.AreEqual("\u001b[1mq\u001b[0m qu it", line.Text);
-            })
-            .Run();
+            });
     }
 }

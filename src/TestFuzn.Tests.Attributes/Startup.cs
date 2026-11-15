@@ -1,23 +1,17 @@
 namespace Fuzn.TestFuzn.Tests.Attributes;
 
-[TestClass]
-public class Startup : IStartup
+public class Startup : IStartup, IBeforeSuite
 {
-    [AssemblyInitialize]
-    public static async Task Initialize(TestContext testContext)
-    {
-        await TestFuznIntegration.Init<Startup>(testContext);
-    }
-
-    [AssemblyCleanup]
-    public static async Task Cleanup(TestContext testContext)
-    {
-        await TestFuznIntegration.Cleanup(testContext);
-        Assert.IsTrue(AssertStandardReport.IsExecuted, "Standard report was not executed.");
-    }
+    public static bool SuiteStarted { get; private set; }
 
     public void Configure(TestFuznConfiguration configuration)
     {
         configuration.AddStandardReport(new AssertStandardReport());
+    }
+
+    public Task BeforeSuite(Context context)
+    {
+        SuiteStarted = true;
+        return Task.CompletedTask;
     }
 }

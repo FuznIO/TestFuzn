@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace Fuzn.TestFuzn.Tests;
 
 [TestClass]
+[Tags("integration")]
 [Group("TestFuzn Group Example")]
 public class SyntaxTests : Test, IBeforeTest, IAfterTest
 {
@@ -23,7 +24,7 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
         Id = "Test-Id-1234")]
     [Metadata("Key1", "Value1")]
     [Metadata("Key2", "Value2")]
-    [Tags("UT", "IT")]
+    [Tags("load")]
     [TargetEnvironments("Dev", "Test")]
     public async Task DefaultContext()
     {
@@ -135,7 +136,7 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
             // Assert during warmup. If the assertion throws, the test is stopped and marked as failed.
             .Load().AssertWhileWarmingUp((context, warmup) =>
             {
-                if (warmup.TotalCount >= 10 && warmup.FailedRate > 0.8)
+                if (warmup.Count >= 10 && warmup.FailedRate > 0.8)
                     throw new Exception("Too many failures during warmup");
             })
             // Supports both sync and async.
@@ -160,24 +161,24 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
             })
             .Load().AssertWhileRunning((context, stats) =>
             {
-                Assert.IsLessThan(1000, stats.RequestCount);
-                Assert.AreEqual(0, stats.Ok.RequestCount);
-                Assert.AreEqual(0, stats.Failed.RequestCount);
-                Assert.IsLessThan(TimeSpan.FromSeconds(0.1), stats.Ok.ResponseTimeMean);
-                Assert.IsLessThan(TimeSpan.FromSeconds(0.1), stats.Failed.ResponseTimeMean);
-                Assert.IsLessThan(TimeSpan.FromSeconds(0.8), stats.Ok.ResponseTimeMean);
-                Assert.IsLessThan(TimeSpan.FromSeconds(0.8), stats.Failed.ResponseTimeMean);
+                Assert.IsLessThan(1000, stats.Count);
+                Assert.AreEqual(0, stats.Ok.Count);
+                Assert.AreEqual(0, stats.Failed.Count);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.1), stats.Ok.DurationMean);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.1), stats.Failed.DurationMean);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.8), stats.Ok.DurationMean);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.8), stats.Failed.DurationMean);
             })
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(100, stats.RequestCount);
-                Assert.AreEqual(100, stats.Ok.RequestCount);
-                Assert.AreEqual(0, stats.Failed.RequestCount);
-                Assert.IsLessThan(TimeSpan.FromSeconds(0.5), stats.Ok.ResponseTimeStandardDeviation);
-                Assert.IsLessThan(TimeSpan.FromSeconds(0.5), stats.Ok.ResponseTimeMean);
-                Assert.IsLessThan(TimeSpan.FromSeconds(0.8), stats.Ok.ResponseTimeMean);
+                Assert.AreEqual(100, stats.Count);
+                Assert.AreEqual(100, stats.Ok.Count);
+                Assert.AreEqual(0, stats.Failed.Count);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.5), stats.Ok.DurationStandardDeviation);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.5), stats.Ok.DurationMean);
+                Assert.IsLessThan(TimeSpan.FromSeconds(0.8), stats.Ok.DurationMean);
 
-                Assert.AreEqual(3, stats.GetStep("Sub step 1.1").Ok.RequestCount);
+                Assert.AreEqual(3, stats.GetStep("Sub step 1.1").Ok.Count);
             })
             .Load().IncludeScenario(scenario2)
             .AfterIteration((context) =>
@@ -191,8 +192,7 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
             })
             .AfterScenario(async (context) =>
             {
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -206,8 +206,7 @@ public class SyntaxTests : Test, IBeforeTest, IAfterTest
             .Step("Step 2 - Read property from context", context =>
             {
                 Assert.AreEqual("value1", context.Model.CustomProperty);
-            })
-            .Run();
+            });
     }
 
     public async Task SharedStepAction(IterationContext<EmptyModel> context)

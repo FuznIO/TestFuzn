@@ -18,9 +18,9 @@ public class SimulationsBuilder
     }
 
     /// <summary>
-    /// Configures a one-time load that executes a fixed number of iterations.
+    /// Starts a number of iterations all at once.
     /// </summary>
-    /// <param name="count">The total number of iterations to execute.</param>
+    /// <param name="count">The number of iterations to start. Must be 0 or more.</param>
     /// <returns>The current <see cref="SimulationsBuilder"/> instance for method chaining.</returns>
     public SimulationsBuilder OneTimeLoad(int count)
     {
@@ -29,11 +29,12 @@ public class SimulationsBuilder
     }
 
     /// <summary>
-    /// Configures a gradual load increase from a starting rate to an ending rate over a duration.
+    /// Changes the number of iterations started per second evenly from a start rate to an end rate over a duration.
+    /// An end rate below the start rate ramps the load down.
     /// </summary>
-    /// <param name="startRate">The starting number of requests per second.</param>
-    /// <param name="endRate">The ending number of requests per second.</param>
-    /// <param name="duration">The duration over which to increase the load.</param>
+    /// <param name="startRate">Iterations started per second at the start. Must be 0 or more.</param>
+    /// <param name="endRate">Iterations started per second at the end. Must be 0 or more.</param>
+    /// <param name="duration">How long the change takes. Must be more than 0.</param>
     /// <returns>The current <see cref="SimulationsBuilder"/> instance for method chaining.</returns>
     public SimulationsBuilder GradualLoadIncrease(int startRate, int endRate, TimeSpan duration)
     {
@@ -42,22 +43,23 @@ public class SimulationsBuilder
     }
 
     /// <summary>
-    /// Configures a fixed load that maintains a constant rate for a duration.
+    /// Starts a fixed number of iterations per second, spread evenly, for a duration.
     /// </summary>
-    /// <param name="rate">The number of requests per second to maintain.</param>
-    /// <param name="duration">The duration to maintain the load.</param>
+    /// <param name="rate">Iterations started per second. Must be 0 or more; 0 is a pause.</param>
+    /// <param name="duration">How long the load runs. Must be more than 0.</param>
     /// <returns>The current <see cref="SimulationsBuilder"/> instance for method chaining.</returns>
     public SimulationsBuilder FixedLoad(int rate, TimeSpan duration)
     {
-        return FixedLoad(rate, duration, duration);
+        return FixedLoad(rate, TimeSpan.FromSeconds(1), duration);
     }
 
     /// <summary>
-    /// Configures a fixed load that maintains a constant rate with a custom interval.
+    /// Starts a fixed number of iterations per interval, spread evenly, for a duration.
+    /// The load stops when the duration ends, also partway through an interval.
     /// </summary>
-    /// <param name="rate">The number of requests per interval to maintain.</param>
-    /// <param name="interval">The interval at which to inject requests.</param>
-    /// <param name="duration">The total duration to maintain the load.</param>
+    /// <param name="rate">Iterations started per interval. Must be 0 or more; 0 is a pause.</param>
+    /// <param name="interval">The length of each interval. Must be more than 0.</param>
+    /// <param name="duration">How long the load runs. Must be more than 0.</param>
     /// <returns>The current <see cref="SimulationsBuilder"/> instance for method chaining.</returns>
     public SimulationsBuilder FixedLoad(int rate, TimeSpan interval, TimeSpan duration)
     {
@@ -66,10 +68,11 @@ public class SimulationsBuilder
     }
 
     /// <summary>
-    /// Configures a fixed concurrent load that maintains a constant number of concurrent users.
+    /// Keeps a fixed number of iterations running at the same time (virtual users) for a duration.
+    /// A new iteration starts as soon as one finishes.
     /// </summary>
-    /// <param name="count">The number of concurrent users to maintain.</param>
-    /// <param name="duration">The duration to maintain the concurrent load.</param>
+    /// <param name="count">The number of iterations running at the same time. Must be 0 or more.</param>
+    /// <param name="duration">How long the load runs. Must be more than 0.</param>
     /// <returns>The current <see cref="SimulationsBuilder"/> instance for method chaining.</returns>
     public SimulationsBuilder FixedConcurrentLoad(int count, TimeSpan duration)
     {
@@ -78,11 +81,11 @@ public class SimulationsBuilder
     }
 
     /// <summary>
-    /// Configures a random load that varies the request rate between minimum and maximum values.
+    /// Starts a random number of iterations each second, between a minimum and a maximum, spread evenly over the second.
     /// </summary>
-    /// <param name="minRate">The minimum number of requests per second.</param>
-    /// <param name="maxRate">The maximum number of requests per second.</param>
-    /// <param name="duration">The duration to run the random load.</param>
+    /// <param name="minRate">The fewest iterations started in a second. Must be 0 or more and not more than <paramref name="maxRate"/>.</param>
+    /// <param name="maxRate">The most iterations started in a second. Must be 0 or more.</param>
+    /// <param name="duration">How long the load runs. Must be more than 0.</param>
     /// <returns>The current <see cref="SimulationsBuilder"/> instance for method chaining.</returns>
     public SimulationsBuilder RandomLoadPerSecond(int minRate, int maxRate, TimeSpan duration)
     {
@@ -91,9 +94,9 @@ public class SimulationsBuilder
     }
 
     /// <summary>
-    /// Configures a pause in the load test for a specified duration.
+    /// Starts no iterations for a duration.
     /// </summary>
-    /// <param name="duration">The duration to pause.</param>
+    /// <param name="duration">How long the pause lasts. Must be 0 or more.</param>
     /// <returns>The current <see cref="SimulationsBuilder"/> instance for method chaining.</returns>
     public SimulationsBuilder Pause(TimeSpan duration)
     {

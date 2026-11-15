@@ -182,8 +182,7 @@ public async Task Get_products_from_api()
             Assert.IsTrue(response.IsSuccessful);
             Assert.IsNotNull(response.Data);
             Assert.IsNotEmpty(response.Data);
-        })
-        .Run();
+        });
 }
 ```
 
@@ -208,8 +207,7 @@ public async Task Create_product()
                 .Post();
             
             Assert.IsTrue(response.IsSuccessful);
-        })
-        .Run();
+        });
 }
 ```
 
@@ -234,8 +232,7 @@ public async Task Update_product()
                 .Put();
             
             Assert.IsTrue(response.IsSuccessful);
-        })
-        .Run();
+        });
 }
 ```
 
@@ -252,8 +249,7 @@ public async Task Delete_product()
                 .Delete();
             
             Assert.IsTrue(response.IsSuccessful);
-        })
-        .Run();
+        });
 }
 ```
 
@@ -286,8 +282,7 @@ public async Task Call_authenticated_endpoint()
                 .Get<List<Product>>();
             
             Assert.IsTrue(response.IsSuccessful);
-        })
-        .Run();
+        });
 }
 ```
 
@@ -305,8 +300,7 @@ public async Task Call_with_basic_auth()
                 .Get<List<Product>>();
             
             Assert.IsTrue(response.IsSuccessful);
-        })
-        .Run();
+        });
 }
 ```
 
@@ -446,12 +440,13 @@ public async Task Product_api_load_test()
         })
         .Load().AssertWhenDone((context, stats) =>
         {
-            Assert.IsTrue(stats.Ok.ResponseTimeMean < TimeSpan.FromSeconds(1));
-            Assert.AreEqual(0, stats.Failed.RequestCount);
-        })
-        .Run();
+            Assert.IsTrue(stats.Ok.DurationMean < TimeSpan.FromSeconds(1));
+            Assert.AreEqual(0, stats.Failed.Count);
+        });
 }
 ```
+
+Every response sent with TestFuzn's HTTP client is counted by status code for its step. The load report shows them in a **Status codes** table, for example `200 × 2,980 · 503 × 20`, and so do Cockpit's load pages, while the test runs and after. A 4xx or 5xx shows in red even when the test does not check the status, so a load test that quietly gets `429 Too Many Requests` stands out.
 
 See the [Load Testing](load-testing.md) documentation for more details on load test configuration and assertions.
 

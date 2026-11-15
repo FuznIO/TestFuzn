@@ -73,8 +73,7 @@ public async Task Connect_to_websocket_server()
             Assert.IsTrue(connection.IsConnected);
 
             await connection.Close();
-        })
-        .Run();
+        });
 }
 ```
 
@@ -206,8 +205,7 @@ await Scenario()
         var response = await connection.Receive(TimeSpan.FromSeconds(5));
 
         // No need to close - framework handles cleanup automatically
-    })
-    .Run();
+    });
 ```
 
 ---
@@ -236,8 +234,7 @@ public async Task Websocket_load_test()
         .Load().Simulations((context, simulations) =>
         {
             simulations.FixedLoad(50, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1));
-        })
-        .Run();
+        });
 }
 ```
 

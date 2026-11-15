@@ -16,7 +16,13 @@ internal class ScenarioLoadResult
     public DateTime CleanupEndTime { get; internal set; }
     internal bool IsCompleted { get; set; }
     public DateTime Created { get; internal set; }
-    public int RequestCount { get; internal set; }
+    public int Count
+    {
+        get
+        {
+            return Ok.Count + Failed.Count;
+        }
+    }
     public TimeSpan TotalExecutionDuration
     { 
         get
@@ -24,13 +30,14 @@ internal class ScenarioLoadResult
             return Ok.TotalExecutionDuration + Failed.TotalExecutionDuration;
         }
     }
-    public int RequestsPerSecond { get; internal set; }
+    public int PerSecond { get; internal set; }
     public TestStatus Status { get; internal set; }
     public Stats Ok { get; internal set; }
     public Stats Failed { get; internal set; }
-    public int WarmupRequestCountOk { get; internal set; }
-    public int WarmupRequestCountFailed { get; internal set; }
+    public int WarmupOkCount { get; internal set; }
+    public int WarmupFailedCount { get; internal set; }
     public Dictionary<string, StepLoadResult> Steps { get; internal set; } = new();
+    public List<StepLoadResult> Hooks { get; internal set; } = new();
     public Exception? AssertWhileWarmingUpException { get; internal set; }
     public Exception? AssertWhileRunningException { get; internal set; }
     public Exception? AssertWhenDoneException { get; internal set; }
@@ -39,13 +46,13 @@ internal class ScenarioLoadResult
     {
         get
         {
-            return 100.0 * Ok.RequestCount / Math.Max(1, RequestCount);
+            return 100.0 * Ok.Count / Math.Max(1, Count);
         }
     }
 
     internal bool HasWarmupStep()
     {
-        if (WarmupRequestCountOk > 0 || WarmupRequestCountFailed > 0)
+        if (WarmupOkCount > 0 || WarmupFailedCount > 0)
             return true;
 
         return false;

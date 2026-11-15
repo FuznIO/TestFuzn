@@ -16,14 +16,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Internals\Reports\EmbeddedResources\Scripts\chart.js">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </EmbeddedResource>
+    <EmbeddedResource Include="Internals\Reports\EmbeddedResources\Scripts\testfuzn-charts.js" />
     <EmbeddedResource Include="Internals\Reports\EmbeddedResources\Styles\testfuzn.css" />
+    <EmbeddedResource Include="Internals\Reports\EmbeddedResources\Images\testfuzn-logo.png" />
+    <EmbeddedResource Include="Internals\Reports\EmbeddedResources\Images\testfuzn-logo-dark.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="HdrHistogram" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />

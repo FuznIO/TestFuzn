@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class FrameRendererTests : Test
 {
     [Test]
@@ -38,8 +39,7 @@ public class FrameRendererTests : Test
                 Assert.AreEqual(
                     SynchronizedFlush(AnsiCodes.DisableAutoWrap, AnsiCodes.Reset, AnsiCodes.EraseScreen),
                     flush);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -68,8 +68,7 @@ public class FrameRendererTests : Test
                 renderer.Render(CreateFrame("Scenario: checkout", "Requests: 128"), 80, 24);
 
                 Assert.IsEmpty(writer.Writes);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -106,8 +105,7 @@ public class FrameRendererTests : Test
                 Assert.AreEqual(
                     SynchronizedFlush(AnsiCodes.MoveCursor(2, 1), AnsiCodes.Reset, AnsiCodes.EraseLine, "Requests: 256"),
                     flush);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -159,8 +157,7 @@ public class FrameRendererTests : Test
                         AnsiCodes.MoveCursor(1, 1), AnsiCodes.Reset, AnsiCodes.EraseLine,
                         AnsiCodes.MoveCursor(2, 1), AnsiCodes.Reset, AnsiCodes.EraseLine),
                     flush);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -180,8 +177,7 @@ public class FrameRendererTests : Test
                 Assert.AreEqual(
                     SynchronizedFlush(AnsiCodes.MoveCursor(3, 1), AnsiCodes.Reset, AnsiCodes.EraseLine, "Errors: 0"),
                     flush);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -237,8 +233,7 @@ public class FrameRendererTests : Test
                 renderer.Render(CreateFrame("Scenario: checkout"), 120, 24);
 
                 Assert.IsEmpty(writer.Writes);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -272,8 +267,7 @@ public class FrameRendererTests : Test
                 renderer.Render(CreateFrame("Summary", AnsiCodes.Bold + "Total: 42" + AnsiCodes.Reset), 80, 24);
 
                 Assert.IsEmpty(writer.Writes);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -326,8 +320,7 @@ public class FrameRendererTests : Test
                 Assert.AreEqual(
                     SynchronizedFlush(AnsiCodes.MoveCursor(5, 1), AnsiCodes.Reset, AnsiCodes.EraseLine, "\u001b[91m  <8>\u001b[0m"),
                     flush);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -381,8 +374,7 @@ public class FrameRendererTests : Test
                         AnsiCodes.MoveCursor(2, 1), "Row 2",
                         AnsiCodes.MoveCursor(3, 1), "Row 3"),
                     flush);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -412,8 +404,7 @@ public class FrameRendererTests : Test
                 Assert.AreEqual(
                     SynchronizedFlush(AnsiCodes.DisableAutoWrap, AnsiCodes.Reset, AnsiCodes.EraseScreen),
                     flush);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -439,8 +430,7 @@ public class FrameRendererTests : Test
                         AnsiCodes.MoveCursor(1, 1), "Scenario: checkout",
                         AnsiCodes.MoveCursor(2, 1), "Requests: 128"),
                     flush);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -456,8 +446,7 @@ public class FrameRendererTests : Test
                 var renderer = new FrameRenderer(new FakeTerminalWriter());
 
                 Assert.ThrowsExactly<ArgumentNullException>(() => renderer.Render(null!, 80, 24));
-            })
-            .Run();
+            });
     }
 
     private static FrameBuffer CreateFrame(params string[] lines)

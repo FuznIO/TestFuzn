@@ -1,9 +1,11 @@
 ﻿namespace Fuzn.TestFuzn.Tests.InputData;
 
 [TestClass]
+[Tags("integration")]
 public class InputDataTests : Test
 {
     [Test]
+    [Tags("load")]
     public async Task Verify_Params_based_InputData()
     {
         var userExecuted = new Dictionary<string, bool>();
@@ -23,8 +25,7 @@ public class InputDataTests : Test
                 var user = context.InputData<User>();
                 userExecuted[user.Name] = true;
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(6))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(6));
 
         foreach (var user in userExecuted)
         {
@@ -33,6 +34,7 @@ public class InputDataTests : Test
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_List_based_InputData()
     {
         var userExecuted = new Dictionary<string, bool>();
@@ -56,8 +58,7 @@ public class InputDataTests : Test
                 var user = context.InputData<User>();
                 userExecuted[user.Name] = true;
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(6))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(6));
 
         foreach (var user in userExecuted)
         {
@@ -66,6 +67,7 @@ public class InputDataTests : Test
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_List_based_InputData_Async()
     {
         var userExecuted = new Dictionary<string, bool>();
@@ -88,8 +90,7 @@ public class InputDataTests : Test
                 var user = context.InputData<User>();
                 userExecuted[user.Name] = true;
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(6))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(6));
 
         foreach (var user in userExecuted)
         {
@@ -116,8 +117,7 @@ public class InputDataTests : Test
             {
                 var user = context.InputData<User>();
                 userExecuted[user.Name] = true;
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -134,8 +134,7 @@ public class InputDataTests : Test
             {
                 var user = context.InputData<User>();
                 Interlocked.Increment(ref count);
-            })
-            .Run();
+            });
 
         Assert.AreEqual(2, count);
     }

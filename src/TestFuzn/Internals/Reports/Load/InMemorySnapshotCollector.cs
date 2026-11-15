@@ -1,43 +1,39 @@
 ﻿using Fuzn.TestFuzn.Internals.Results.Load;
 using Fuzn.TestFuzn.Contracts.Results.Load;
+using Fuzn.TestFuzn.Internals.Cluster;
 
 namespace Fuzn.TestFuzn.Internals.Reports.Load;
 
 internal class InMemorySnapshotCollector
 {
+    private const int MaxSnapshots = 100;
+
     private readonly object _lock = new object();
     private readonly Dictionary<string, EvenlySpreadSnapshots> _snapshotsPerScenario = new();
 
-    public Task WriteStats(ScenarioLoadResult scenarioResult)
+    public Task WriteStats(ScenarioLoadResult scenarioResult, StatsState ok)
     {
-        var key = GetKey(scenarioResult.ScenarioName);
-
         lock (_lock)
         {
-            if ( !_snapshotsPerScenario.TryGetValue(key, out var snapshots))
+            if (!_snapshotsPerScenario.TryGetValue(scenarioResult.ScenarioName, out var snapshots))
             {
-                snapshots = new EvenlySpreadSnapshots(100);
-                _snapshotsPerScenario[key] = snapshots;
+                snapshots = new EvenlySpreadSnapshots(MaxSnapshots);
+                _snapshotsPerScenario[scenarioResult.ScenarioName] = snapshots;
             }
 
-            snapshots.AddSnapshot(scenarioResult);
+            snapshots.AddSnapshot(new LoadSnapshot(DateTime.UtcNow, scenarioResult, ok));
             return Task.CompletedTask;
         }
     }
 
-    public IReadOnlyList<ScenarioLoadResult> GetSnapshots(string scenarioName)
+    public IReadOnlyList<LoadSnapshot> GetSnapshots(string scenarioName)
     {
         lock (_lock)
         {
-            if (_snapshotsPerScenario.TryGetValue(GetKey(scenarioName), out var snapshots))
+            if (_snapshotsPerScenario.TryGetValue(scenarioName, out var snapshots))
                 return snapshots.GetSnapshots();
 
-            return new List<ScenarioLoadResult>();
+            return new List<LoadSnapshot>();
         }
-    }
-
-    private static string GetKey(string scenarioName)
-    {
-        return $"{scenarioName}";
     }
 }

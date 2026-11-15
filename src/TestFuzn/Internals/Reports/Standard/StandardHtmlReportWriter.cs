@@ -56,22 +56,24 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine("<title>TestFuzn - Test Report</title>");
         b.AppendLine(BrandHtml.GoogleFontsLinks);
         b.AppendLine("<link rel='stylesheet' href='Data/Assets/styles/testfuzn.css'>");
-        b.AppendLine("<script src='Data/Assets/scripts/chart.js'></script>");
         b.AppendLine("</head>");
         b.AppendLine("<body>");
         b.AppendLine(@"<div class=""page-container"">");
 
-        BrandHtml.WriteMasthead(b, @"<a class=""masthead-link"" href=""TestFuzn_Log.log"" target=""_blank"">View Log ↗</a>");
+        BrandHtml.WriteMasthead(b, "Data/Assets/", @"<a class=""masthead-link"" href=""TestFuzn_Log.log"" target=""_blank"">View log ↗</a>");
 
-        b.AppendLine($"<h1>{E(reportData.Suite.Name)} - Test Report</h1>");
+        BrandHtml.WritePageTitle(b, "tests", reportData.Suite.Name, "Test report");
 
         WriteDashboard(b, testsTotal, testsPassed, testsFailed, testsSkipped, passRate);
 
+        b.AppendLine(@"<div class=""overview"">");
+        WriteResultDonut(b, testsPassed, testsFailed, testsSkipped);
         WriteRunInfo(reportData, b);
+        b.AppendLine("</div>");
 
         WriteGroupResults(reportData, b);
 
-        WriteChartScript(b, testsPassed, testsFailed, testsSkipped);
+        WriteFilterScript(b);
 
         BrandHtml.WriteProductSignature(b);
 
@@ -90,7 +92,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             b.AppendLine(@"<div class=""overall-status no-tests"">");
             b.AppendLine($@"<div class=""icon"">{BrandHtml.InfoIconLarge()}</div>");
             b.AppendLine(@"<div class=""message"">");
-            b.AppendLine(@"<div class=""title"">No Tests Executed</div>");
+            b.AppendLine(@"<div class=""title"">No tests executed</div>");
             b.AppendLine("</div></div>");
             return;
         }
@@ -100,7 +102,7 @@ internal class StandardHtmlReportWriter : IStandardReport
             b.AppendLine(@"<div class=""overall-status passed"">");
             b.AppendLine($@"<div class=""icon"">{BrandHtml.TestStatusIconLarge(TestStatus.Passed)}</div>");
             b.AppendLine(@"<div class=""message"">");
-            b.AppendLine(@"<div class=""title"">All Tests Passed</div>");
+            b.AppendLine(@"<div class=""title"">All tests passed</div>");
             b.AppendLine("</div></div>");
         }
         else
@@ -108,68 +110,80 @@ internal class StandardHtmlReportWriter : IStandardReport
             b.AppendLine(@"<div class=""overall-status failed"">");
             b.AppendLine($@"<div class=""icon"">{BrandHtml.TestStatusIconLarge(TestStatus.Failed)}</div>");
             b.AppendLine(@"<div class=""message"">");
-            b.AppendLine($@"<div class=""title"">{testsFailed} Test{(testsFailed > 1 ? "s" : "")} Failed</div>");
+            b.AppendLine($@"<div class=""title"">{testsFailed} test{(testsFailed > 1 ? "s" : "")} failed</div>");
             b.AppendLine("</div></div>");
         }
 
-        b.AppendLine(@"<div class=""dashboard"">");
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        string Share(int n) => $"{(testsTotal > 0 ? Math.Round((double)n / testsTotal * 100, 1) : 0).ToString(inv)}%";
 
-        // Donut chart
-        b.AppendLine(@"<div class=""chart-container"">");
-        b.AppendLine(@"<div class=""chart-title"">Results Distribution</div>");
-        b.AppendLine(@"<div class=""chart-wrapper"">");
-        b.AppendLine(@"<canvas id=""statusChart""></canvas>");
-        b.AppendLine(@"<div class=""chart-center-text"">");
-        b.AppendLine($@"<div class=""rate"">{passRate}%</div>");
-        b.AppendLine(@"<div class=""label"">Pass Rate</div>");
+        b.AppendLine(@"<div class=""tiles"">");
+        BrandHtml.Tile(b, "info", "doc", "Total tests", testsTotal.ToString("N0", inv));
+        BrandHtml.Tile(b, "ok", "check", "Passed", testsPassed.ToString("N0", inv), Share(testsPassed));
+        BrandHtml.Tile(b, "bad", "x", "Failed", testsFailed.ToString("N0", inv), Share(testsFailed));
+        BrandHtml.Tile(b, "neu", "circle", "Skipped", testsSkipped.ToString("N0", inv), Share(testsSkipped));
+        BrandHtml.Tile(b, "info", "percent", "Pass rate", $"{passRate.ToString(inv)}%");
         b.AppendLine("</div>");
-        b.AppendLine("</div>");
-        b.AppendLine(@"<div class=""legend-container"">");
-        b.AppendLine(@"<div class=""legend-item""><div class=""legend-color passed""></div>Passed</div>");
-        b.AppendLine(@"<div class=""legend-item""><div class=""legend-color failed""></div>Failed</div>");
-        b.AppendLine(@"<div class=""legend-item""><div class=""legend-color skipped""></div>Skipped</div>");
-        b.AppendLine("</div>");
-        b.AppendLine("</div>");
-
-        // Stats cards
-        b.AppendLine(@"<div class=""stats-grid"">");
-
-        b.AppendLine(@"<div class=""stat-card total"">");
-        b.AppendLine($@"<div class=""value"">{testsTotal}</div>");
-        b.AppendLine(@"<div class=""label"">Total Tests</div>");
-        b.AppendLine("</div>");
-
-        b.AppendLine(@"<div class=""stat-card passed"">");
-        b.AppendLine($@"<div class=""value"">{testsPassed}</div>");
-        b.AppendLine(@"<div class=""label"">Passed</div>");
-        var passedPct = testsTotal > 0 ? Math.Round((double)testsPassed / testsTotal * 100, 1) : 0;
-        b.AppendLine($@"<div class=""percentage"">{passedPct}%</div>");
-        b.AppendLine("</div>");
-
-        b.AppendLine(@"<div class=""stat-card failed"">");
-        b.AppendLine($@"<div class=""value"">{testsFailed}</div>");
-        b.AppendLine(@"<div class=""label"">Failed</div>");
-        var failedPct = testsTotal > 0 ? Math.Round((double)testsFailed / testsTotal * 100, 1) : 0;
-        b.AppendLine($@"<div class=""percentage"">{failedPct}%</div>");
-        b.AppendLine("</div>");
-
-        b.AppendLine(@"<div class=""stat-card skipped"">");
-        b.AppendLine($@"<div class=""value"">{testsSkipped}</div>");
-        b.AppendLine(@"<div class=""label"">Skipped</div>");
-        var skippedPct = testsTotal > 0 ? Math.Round((double)testsSkipped / testsTotal * 100, 1) : 0;
-        b.AppendLine($@"<div class=""percentage"">{skippedPct}%</div>");
-        b.AppendLine("</div>");
-
-        b.AppendLine("</div>"); // stats-grid
-        b.AppendLine("</div>"); // dashboard
     }
 
-    private static void WriteChartScript(StringBuilder b, int testsPassed, int testsFailed, int testsSkipped)
+    private static void WriteResultDonut(StringBuilder b, int passed, int failed, int skipped)
+    {
+        var total = passed + failed + skipped;
+        if (total == 0)
+            return;
+
+        const double size = 132;
+        const double stroke = 18;
+        const double radius = (size - stroke) / 2;
+        var circumference = 2 * Math.PI * radius;
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+
+        var slices = new (string Label, int Count, string Tone)[]
+        {
+            ("Passed", passed, "ok"),
+            ("Failed", failed, "bad"),
+            ("Skipped", skipped, "neu")
+        };
+        var shown = slices.Where(slice => slice.Count > 0).ToList();
+        var gap = shown.Count > 1 ? 2.0 : 0.0;
+
+        string Pct(int n)
+        {
+            var p = 100.0 * n / total;
+            if (p > 0 && p < 1) return "&lt;1%";
+            if (p > 99 && p < 100) return "&gt;99%";
+            return $"{Math.Round(p).ToString(inv)}%";
+        }
+
+        BrandHtml.CardStart(b, "check", "Test results", "The result of every test in this run.");
+        b.AppendLine(@"<div class=""donut"">");
+        b.AppendLine(@"<div class=""ring"">");
+        b.AppendLine($@"<svg width=""{size}"" height=""{size}"" viewBox=""0 0 {size} {size}"" role=""img"" aria-label=""{passed} passed, {failed} failed, {skipped} skipped"">");
+        b.AppendLine($@"<g transform=""rotate(-90 {size / 2} {size / 2})"">");
+        var offset = 0.0;
+        foreach (var slice in shown)
+        {
+            var length = slice.Count / (double)total * circumference;
+            var dash = Math.Max(0.5, length - gap);
+            b.AppendLine($@"<circle class=""seg {slice.Tone}"" cx=""{size / 2}"" cy=""{size / 2}"" r=""{radius.ToString("0.###", inv)}"" stroke-width=""{stroke}"" stroke-dasharray=""{dash.ToString("0.###", inv)} {circumference.ToString("0.###", inv)}"" stroke-dashoffset=""{(-offset).ToString("0.###", inv)}""><title>{slice.Label}: {slice.Count} ({Pct(slice.Count)})</title></circle>");
+            offset += length;
+        }
+        b.AppendLine("</g>");
+        b.AppendLine("</svg>");
+        b.AppendLine($@"<span class=""donut-center""><b>{total.ToString("N0", inv)}</b><span>tests</span></span>");
+        b.AppendLine("</div>");
+        b.AppendLine(@"<ul class=""legend"">");
+        foreach (var slice in slices)
+            b.AppendLine($@"<li><span class=""mark {slice.Tone}""></span><span class=""legend-label"">{slice.Label}</span><span class=""legend-count"">{slice.Count.ToString("N0", inv)}</span><span class=""legend-pct"">{Pct(slice.Count)}</span></li>");
+        b.AppendLine("</ul>");
+        b.AppendLine("</div>");
+        BrandHtml.CardEnd(b);
+    }
+
+    private static void WriteFilterScript(StringBuilder b)
     {
         b.AppendLine("<script>");
         b.AppendLine("document.addEventListener('DOMContentLoaded', function() {");
-
-        // Results filtering
         b.AppendLine("    var activeStatus = 'all';");
         b.AppendLine("    var nameQuery = '';");
         b.AppendLine("    function applyFilters() {");
@@ -202,75 +216,34 @@ internal class StandardHtmlReportWriter : IStandardReport
         b.AppendLine("            applyFilters();");
         b.AppendLine("        });");
         b.AppendLine("    }");
-
-        // Donut Chart
-        b.AppendLine("    var statusCtx = document.getElementById('statusChart');");
-        b.AppendLine("    if (statusCtx) {");
-        b.AppendLine("        new Chart(statusCtx, {");
-        b.AppendLine("            type: 'doughnut',");
-        b.AppendLine("            data: {");
-        b.AppendLine("                labels: ['Passed', 'Failed', 'Skipped'],");
-        b.AppendLine("                datasets: [{");
-        b.AppendLine($"                    data: [{testsPassed}, {testsFailed}, {testsSkipped}],");
-        b.AppendLine("                    backgroundColor: ['#10B981', '#EF4444', '#F59E0B'],");
-        b.AppendLine("                    borderWidth: 0,");
-        b.AppendLine("                    hoverOffset: 4");
-        b.AppendLine("                }]");
-        b.AppendLine("            },");
-        b.AppendLine("            options: {");
-        b.AppendLine("                responsive: true,");
-        b.AppendLine("                maintainAspectRatio: true,");
-        b.AppendLine("                cutout: '70%',");
-        b.AppendLine("                plugins: {");
-        b.AppendLine("                    legend: { display: false },");
-        b.AppendLine("                    tooltip: {");
-        b.AppendLine("                        callbacks: {");
-        b.AppendLine("                            label: function(context) {");
-        b.AppendLine("                                var total = context.dataset.data.reduce(function(a, b) { return a + b; }, 0);");
-        b.AppendLine("                                var percentage = ((context.raw / total) * 100).toFixed(1);");
-        b.AppendLine("                                return context.label + ': ' + context.raw + ' (' + percentage + '%)';");
-        b.AppendLine("                            }");
-        b.AppendLine("                        }");
-        b.AppendLine("                    }");
-        b.AppendLine("                }");
-        b.AppendLine("            }");
-        b.AppendLine("        });");
-        b.AppendLine("    }");
-
         b.AppendLine("});");
         b.AppendLine("</script>");
     }
 
     private void WriteRunInfo(StandardReportData reportData, StringBuilder b)
     {
-        b.AppendLine(@"<div class=""run-info"">");
-
-        b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Run ID</span><span class=""info-value"">" + E(reportData.TestRunId) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Execution Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.Configuration?.ExecutionEnvironment) ? "-" : E(_testSession.Configuration.ExecutionEnvironment)) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Target Environment</span><span class=""info-value"">" + (string.IsNullOrEmpty(_testSession.Configuration?.TargetEnvironment) ? "-" : E(_testSession.Configuration.TargetEnvironment)) + "</span></div>");
-        b.AppendLine("</div>");
-
-        b.AppendLine(@"<div class=""run-info-row"">");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Duration</span><span class=""info-value"">" + E(reportData.TestRunDuration.ToTestFuznReadableString()) + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Started</span><span class=""info-value"">" + reportData.TestRunStartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
-        b.AppendLine(@"<div class=""info-item""><span class=""info-label"">Ended</span><span class=""info-value"">" + reportData.TestRunEndTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") + "</span></div>");
+        BrandHtml.CardStart(b, "play", "Run", "Where and when the tests ran.");
+        b.AppendLine(@"<div class=""details"">");
+        BrandHtml.DetailItem(b, "hash", "Run id", reportData.TestRunId);
+        BrandHtml.DetailItem(b, "server", "Execution environment", _testSession.Configuration?.ExecutionEnvironment);
+        BrandHtml.DetailItem(b, "server", "Target environment", _testSession.Configuration?.TargetEnvironment);
+        BrandHtml.DetailItem(b, "clock", "Duration", reportData.TestRunDuration.ToTestFuznReadableString());
+        BrandHtml.DetailItem(b, "play", "Started", reportData.TestRunStartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
+        BrandHtml.DetailItem(b, "flag", "Ended", reportData.TestRunEndTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
         b.AppendLine("</div>");
 
         if (reportData.Suite.Metadata != null && reportData.Suite.Metadata.Count > 0)
         {
             b.AppendLine(@"<details class=""run-info-metadata"">");
             b.AppendLine(@"<summary><span class=""t-show"">Show metadata</span><span class=""t-hide"">Hide metadata</span></summary>");
+            b.AppendLine(@"<div class=""details"">");
             foreach (var metadata in reportData.Suite.Metadata)
-            {
-                b.AppendLine(@"<div class=""run-info-row"">");
-                b.AppendLine($@"<div class=""info-item""><span class=""info-label"">{E(metadata.Key)}</span><span class=""info-value"">{E(metadata.Value)}</span></div>");
-                b.AppendLine("</div>");
-            }
+                BrandHtml.DetailItem(b, "tag", metadata.Key, metadata.Value);
+            b.AppendLine("</div>");
             b.AppendLine("</details>");
         }
 
-        b.AppendLine("</div>");
+        BrandHtml.CardEnd(b);
     }
 
     private static void WriteFilterBar(StandardReportData reportData, StringBuilder b)
@@ -281,36 +254,31 @@ internal class StandardHtmlReportWriter : IStandardReport
         var skipped = reportData.GroupResults.Sum(g => g.Value.TestResults.Count(t => t.Value.Status == TestStatus.Skipped));
 
         b.AppendLine(@"<div class=""results-filter"">");
-        b.AppendLine(@"<div class=""results-filter-header"">");
-        b.AppendLine(@"<span class=""results-filter-title"">Results</span>");
-        b.AppendLine("</div>");
-        b.AppendLine(@"<div class=""results-filter-controls"">");
         b.AppendLine(@"<div class=""status-pills"">");
         b.AppendLine($@"<button type=""button"" class=""pill active"" data-status-filter=""all"">All <span class=""count"">{total}</span></button>");
         b.AppendLine($@"<button type=""button"" class=""pill"" data-status-filter=""passed""><span class=""dot passed""></span>Passed <span class=""count"">{passed}</span></button>");
         b.AppendLine($@"<button type=""button"" class=""pill"" data-status-filter=""failed""><span class=""dot failed""></span>Failed <span class=""count"">{failed}</span></button>");
         b.AppendLine($@"<button type=""button"" class=""pill"" data-status-filter=""skipped""><span class=""dot skipped""></span>Skipped <span class=""count"">{skipped}</span></button>");
         b.AppendLine("</div>");
-        b.AppendLine(@"<input type=""search"" id=""test-name-filter"" placeholder=""Filter by name..."" />");
-        b.AppendLine("</div>");
+        b.AppendLine(@"<input type=""search"" id=""test-name-filter"" placeholder=""Filter by name"" />");
         b.AppendLine("</div>");
     }
 
     private void WriteGroupResults(StandardReportData reportData, StringBuilder b)
     {
+        var total = reportData.GroupResults.Sum(g => g.Value.TestResults.Count);
+        BrandHtml.CardStart(b, "tests", "Tests", null, $@"<span class=""card-count"">{total.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)} tests</span>", "results-card");
         WriteFilterBar(reportData, b);
-        b.Append(@"<table class=""group-results"">");
-        b.AppendLine("<tr>");
+        b.Append(@"<div class=""table-scroll""><table class=""group-results"">");
+        b.AppendLine("<thead><tr>");
         b.AppendLine("<th>Test</th>");
         b.AppendLine("<th>Type</th>");
         b.AppendLine("<th>Status</th>");
-        b.AppendLine("<th>Duration</th>");
+        b.AppendLine(@"<th class=""num"">Duration</th>");
         b.AppendLine("<th>Tags</th>");
-        b.AppendLine("</tr>");
+        b.AppendLine("</tr></thead><tbody>");
         foreach (var groupResult in reportData.GroupResults.OrderBy(f => f.Value.Name))
         {
-            var icon = BrandHtml.TestStatusIcon(groupResult.Value.Status);
-
             var groupTotal = groupResult.Value.TestResults.Count;
             var groupPassed = groupResult.Value.TestResults.Count(t => t.Value.Status == TestStatus.Passed);
             var groupFailed = groupResult.Value.TestResults.Count(t => t.Value.Status == TestStatus.Failed);
@@ -318,13 +286,20 @@ internal class StandardHtmlReportWriter : IStandardReport
 
             var groupNameAttr = E(groupResult.Value.Name.ToLowerInvariant());
             b.AppendLine(@$"<tr class=""group"" data-group-row data-group-name=""{groupNameAttr}"">");
-            b.AppendLine($@"<td colspan=""5"">{icon} {E(groupResult.Value.Name)}<span class=""group-summary"">{groupTotal} total: {groupPassed} passed, {groupFailed} failed, {groupSkipped} skipped</span></td>");
+            b.Append($@"<td colspan=""5""><span class=""group-name"">{E(groupResult.Value.Name)}</span>");
+            b.Append($@"<span class=""group-summary"">{groupTotal} test{(groupTotal == 1 ? "" : "s")} · {groupPassed} passed");
+            if (groupFailed > 0)
+                b.Append($@" · <span class=""bad-text"">{groupFailed} failed</span>");
+            else
+                b.Append(" · 0 failed");
+            b.AppendLine($" · {groupSkipped} skipped</span></td>");
             b.AppendLine("</tr>");
 
             WriteTestResults(b, groupResult);
         }
 
-        b.Append("</table>");
+        b.Append("</tbody></table></div>");
+        BrandHtml.CardEnd(b);
     }
 
     private void WriteTestResults(StringBuilder b, KeyValuePair<string, GroupResult> groupResults)
@@ -333,13 +308,6 @@ internal class StandardHtmlReportWriter : IStandardReport
         foreach (var testResult in groupResults.Value.TestResults.OrderBy(t => t.Value.Name))
         {
             var icon = BrandHtml.TestStatusIcon(testResult.Value.Status);
-            var statusText = testResult.Value.Status switch
-            {
-                TestStatus.Passed => "Passed",
-                TestStatus.Failed => "Failed",
-                TestStatus.Skipped => "Skipped",
-                _ => ""
-            };
             var statusAttr = testResult.Value.Status switch
             {
                 TestStatus.Passed => "passed",
@@ -367,15 +335,15 @@ internal class StandardHtmlReportWriter : IStandardReport
 
             b.AppendLine("</td>");
             b.AppendLine($@"<td><span class=""type-pill"">{E(typeText)}</span></td>");
-            b.AppendLine($@"<td><span class=""status-cell"">{icon}<span class=""status-text"">{statusText}</span></span></td>");
-            b.AppendLine($"<td>{DurationCell(testResult.Value)}</td>");
-            b.AppendLine("<td>");
+            b.AppendLine($@"<td>{BrandHtml.StatusPill(testResult.Value.Status)}</td>");
+            b.AppendLine($@"<td class=""num"">{DurationCell(testResult.Value)}</td>");
+            b.AppendLine(@"<td><span class=""tags"">");
             if (testResult.Value.Tags != null && testResult.Value.Tags.Count > 0)
             {
                 foreach (var tag in testResult.Value.Tags)
-                    b.AppendLine($"{E(tag)}<br/>");
+                    b.Append($@"<span class=""tag"">{E(tag)}</span>");
             }
-            b.AppendLine("</td>");
+            b.AppendLine("</span></td>");
             b.AppendLine("</tr>");
         }
     }
@@ -394,7 +362,7 @@ internal class StandardHtmlReportWriter : IStandardReport
 
         var average = TimeSpan.FromTicks((long)sr.IterationResults.Average(i => i.Duration().Ticks));
 
-        return $@"{total}<span class=""duration-detail"">{counts} &middot; {average.ToTestFuznResponseTimeHtml()} avg</span>";
+        return $@"{total}<span class=""duration-detail"">{counts} &middot; {average.ToTestFuznDurationHtml()} avg</span>";
     }
 
     private void WriteTestDetails(StringBuilder b, TestResult sr, string icon, string? reportLink)
@@ -412,22 +380,26 @@ internal class StandardHtmlReportWriter : IStandardReport
         var useToggle = sr.TestType != TestType.Load;
 
         if (!string.IsNullOrEmpty(reportLink))
-            b.AppendLine($@"<div><a href=""{reportLink}"">Load Test Report ↗</a></div>");
+            b.AppendLine($@"<div><a class=""report-link"" href=""{reportLink}"">Open the load test report →</a></div>");
 
         if (!string.IsNullOrEmpty(sr.Description))
             b.AppendLine($"<div>{E(sr.Description)}</div>");
 
+        if (sr.Failure != null && sr.FailedIn != null)
+            b.AppendLine($@"<div class=""hook-failure"">Failed in {E(sr.FailedIn)}: {E(sr.Failure.GetType().Name)}: {E(sr.Failure.Message)}</div>");
+
         if (useToggle)
             b.AppendLine(@"<details class=""link-toggle""><summary><span class=""t-show"">Show details</span><span class=""t-hide"">Hide details</span></summary>");
 
-        var hasInfoRows = !string.IsNullOrEmpty(sr.Id)
+        var showId = !string.IsNullOrEmpty(sr.Id) && !sr.IsIdAutomatic;
+        var hasInfoRows = showId
             || showCorrelationId
             || (sr.Metadata != null && sr.Metadata.Count > 0);
 
         if (hasInfoRows)
         {
-            b.AppendLine("<table>");
-            if (!string.IsNullOrEmpty(sr.Id))
+            b.AppendLine(@"<table class=""inner"">");
+            if (showId)
                 b.AppendLine($@"<tr><th class=""vertical"">Id</th><td>{E(sr.Id)}</td></tr>");
             if (showCorrelationId)
                 b.AppendLine($@"<tr><th class=""vertical"">CorrelationId</th><td>{E(sr.IterationResults[0].CorrelationId)}</td></tr>");
@@ -439,11 +411,11 @@ internal class StandardHtmlReportWriter : IStandardReport
             b.AppendLine("</table>");
         }
 
-        b.AppendLine("<table>");
+        b.AppendLine(@"<table class=""inner"">");
         b.AppendLine("<tr><th>Phase</th><th>Duration</th><th>Started</th><th>Ended</th></tr>");
-        b.AppendLine($"<tr><td>Init</td><td>{sr.InitDuration().ToTestFuznResponseTimeHtml()}</td><td>{sr.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.InitEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
-        b.AppendLine($"<tr><td>Execution</td><td>{sr.ExecuteDuration().ToTestFuznResponseTimeHtml()}</td><td>{sr.ExecuteStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.ExecuteEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
-        b.AppendLine($"<tr><td>Cleanup</td><td>{sr.CleanupDuration().ToTestFuznResponseTimeHtml()}</td><td>{sr.CleanupStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
+        b.AppendLine($"<tr><td>Init</td><td>{sr.InitDuration().ToTestFuznDurationHtml()}</td><td>{sr.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.InitEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
+        b.AppendLine($"<tr><td>Execution</td><td>{sr.ExecuteDuration().ToTestFuznDurationHtml()}</td><td>{sr.ExecuteStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.ExecuteEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
+        b.AppendLine($"<tr><td>Cleanup</td><td>{sr.CleanupDuration().ToTestFuznDurationHtml()}</td><td>{sr.CleanupStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
         b.AppendLine($"<tr><td>Total Test Run</td><td>{sr.TestRunDuration().ToTestFuznReadableString()}</td><td>{sr.StartTime().ToLocalTime():yyyy-MM-dd HH:mm:ss}</td><td>{sr.EndTime().ToLocalTime():yyyy-MM-dd HH:mm:ss}</td></tr>");
         b.AppendLine("</table>");
 
@@ -460,7 +432,7 @@ internal class StandardHtmlReportWriter : IStandardReport
 
     private void WriteStepDetails(StringBuilder b, TestResult sr)
     {
-        b.AppendLine(@"<table class=""iterations"">");
+        b.AppendLine(@"<table class=""inner iterations"">");
         b.AppendLine("<tr>");
         b.AppendLine($"<th>{(sr.HasInputData ? "Iteration / Step" : "Step")}</th>");
         b.AppendLine(@"<th style=""width:130px"">Status</th>");
@@ -481,7 +453,6 @@ internal class StandardHtmlReportWriter : IStandardReport
                 var iteration = sr.IterationResults[i];
                 var itStatus = iteration.Passed ? TestStatus.Passed : TestStatus.Failed;
                 var itIcon = BrandHtml.TestStatusIcon(itStatus);
-                var itStatusText = iteration.Passed ? "Passed" : "Failed";
 
                 b.AppendLine("<tr>");
                 b.Append($@"<td>→ {itIcon} Iteration #{i + 1}");
@@ -491,8 +462,8 @@ internal class StandardHtmlReportWriter : IStandardReport
                 b.Append(" ");
                 WriteIterationDetailsToggle(b, iteration);
                 b.AppendLine("</td>");
-                b.AppendLine($@"<td><span class=""status-cell"">{itIcon}<span class=""status-text"">{itStatusText}</span></span></td>");
-                b.AppendLine($"<td>{iteration.Duration().ToTestFuznResponseTimeHtml()}</td>");
+                b.AppendLine($@"<td>{BrandHtml.StatusPill(itStatus)}</td>");
+                b.AppendLine($"<td>{iteration.Duration().ToTestFuznDurationHtml()}</td>");
                 b.AppendLine("</tr>");
 
                 foreach (var stepResult in iteration.StepResults)
@@ -507,15 +478,15 @@ internal class StandardHtmlReportWriter : IStandardReport
     private static void WriteIterationDetailsToggle(StringBuilder b, IterationResult iteration)
     {
         b.Append(@"<details class=""link-toggle"" style=""display:inline""><summary><span class=""t-show"">Show details</span><span class=""t-hide"">Hide details</span></summary>");
-        b.Append("<table>");
+        b.Append(@"<table class=""inner"">");
         b.Append($@"<tr><th class=""vertical"">CorrelationId</th><td>{E(iteration.CorrelationId)}</td></tr>");
         b.AppendLine("</table>");
-        b.AppendLine("<table>");
+        b.AppendLine(@"<table class=""inner"">");
         b.AppendLine("<tr><th>Phase</th><th>Duration</th><th>Started</th><th>Ended</th></tr>");
-        b.AppendLine($"<tr><td>Init</td><td>{iteration.InitDuration().ToTestFuznResponseTimeHtml()}</td><td>{iteration.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.InitEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
-        b.AppendLine($"<tr><td>Execution</td><td>{iteration.ExecuteDuration().ToTestFuznResponseTimeHtml()}</td><td>{iteration.ExecuteStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.ExecuteEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
-        b.AppendLine($"<tr><td>Cleanup</td><td>{iteration.CleanupDuration().ToTestFuznResponseTimeHtml()}</td><td>{iteration.CleanupStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
-        b.AppendLine($"<tr><td>Total Iteration Run</td><td>{iteration.Duration().ToTestFuznResponseTimeHtml()}</td><td>{iteration.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine($"<tr><td>Init</td><td>{iteration.InitDuration().ToTestFuznDurationHtml()}</td><td>{iteration.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.InitEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine($"<tr><td>Execution</td><td>{iteration.ExecuteDuration().ToTestFuznDurationHtml()}</td><td>{iteration.ExecuteStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.ExecuteEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine($"<tr><td>Cleanup</td><td>{iteration.CleanupDuration().ToTestFuznDurationHtml()}</td><td>{iteration.CleanupStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
+        b.AppendLine($"<tr><td>Total Iteration Run</td><td>{iteration.Duration().ToTestFuznDurationHtml()}</td><td>{iteration.InitStartTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td><td>{iteration.CleanupEndTime.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}</td></tr>");
         b.AppendLine("</table></details>");
     }
 
@@ -526,18 +497,11 @@ internal class StandardHtmlReportWriter : IStandardReport
         var icon = BrandHtml.StepStatusIcon(stepResult.Status);
         var prefix = $"→ {icon}";
         var hiddenPrefix = $@"<span style=""visibility:hidden"">→ {icon}</span>";
-        var statusText = stepResult.Status switch
-        {
-            StepStatus.Passed => "Passed",
-            StepStatus.Failed => "Failed",
-            StepStatus.Skipped => "Skipped",
-            _ => ""
-        };
 
         b.AppendLine("<tr>");
         b.AppendLine($"<td style=\"padding-left:{leftPadding}px\">{prefix} Step: {E(stepResult.Name)}");
 
-        if (!string.IsNullOrEmpty(stepResult.Id))
+        if (!string.IsNullOrEmpty(stepResult.Id) && !stepResult.IsIdAutomatic)
         {
             b.AppendLine($@"<br/>{hiddenPrefix} <span class=""step-meta"">Id: {E(stepResult.Id)}</span>");
         }
@@ -565,8 +529,8 @@ internal class StandardHtmlReportWriter : IStandardReport
         }
 
         b.AppendLine("</td>");
-        b.AppendLine($@"<td><span class=""status-cell"">{icon}<span class=""status-text"">{statusText}</span></span></td>");
-        b.AppendLine($"<td>{stepResult.Duration.ToTestFuznResponseTimeHtml()}</td>");
+        b.AppendLine($@"<td>{BrandHtml.StepStatusPill(stepResult.Status)}</td>");
+        b.AppendLine($"<td>{stepResult.Duration.ToTestFuznDurationHtml()}</td>");
         b.AppendLine("</tr>");
 
         if (stepResult.StepResults != null && stepResult.StepResults.Count > 0)

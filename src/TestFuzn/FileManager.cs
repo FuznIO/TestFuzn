@@ -26,6 +26,7 @@ public class FileManager
     public async Task<List<object>> LoadFromCsv<T>(string path)
     {
         var result = new List<object>();
+        path = NormalizePath(path);
         if (!_fileSystem.FileExists(path))
             throw new FileNotFoundException($"CSV file not found: {path}");
 
@@ -125,10 +126,14 @@ public class FileManager
     /// <exception cref="FileNotFoundException">Thrown when the specified JSON file does not exist.</exception>
     public async Task<List<object>> LoadFromJson<T>(string path)
     {
+        path = NormalizePath(path);
         if (!_fileSystem.FileExists(path))
             throw new FileNotFoundException($"JSON file not found: {path}");
         var json = await _fileSystem.ReadAllTextAsync(path);
         var items = JsonSerializer.Deserialize<List<T>>(json, _jsonSerializerOptions);
         return items?.Cast<object>().ToList() ?? [];
     }
+
+    // Tests written on Windows often use backslashes; '/' works on every OS a worker can run on.
+    internal static string NormalizePath(string path) => path.Replace('\\', '/');
 }

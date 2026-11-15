@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class LoadSummaryLayoutTests : Test
 {
     private const string ReportPath = "C:/results/TestReport.html";
@@ -42,16 +43,16 @@ public class LoadSummaryLayoutTests : Test
                     "  Cleanup         7s        14:09:26  14:09:33",
                     "  Total Test Run  5m 12s    14:04:21  14:09:33",
                     "",
-                    "  Requests ─────────────────────────────────────────────────────────────────────────────────────────────────────────────",
-                    "  Total Requests 24000    Successful 16001 (66.7%)    Failed 7999 (33.3%)    Requests/sec 265    Warmup 1203",
+                    "  Iterations ───────────────────────────────────────────────────────────────────────────────────────────────────────────",
+                    "  Total Iterations 24000    Successful 16001 (66.7%)    Failed 7999 (33.3%)    Iterations/s 265    Warmup 1203",
                     "",
                     "  Step Performance ─────────────────────────────────────────────────────────────────────────────────────────────────────",
-                    "  Step                 Type    Requests  RPS    Mean  Median     P75     P95     P99    Min     Max  StdDev",
-                    "  All Steps (Summary)  Ok         16001  265   38 ms   35 ms   48 ms   72 ms   94 ms  12 ms  312 ms   15 ms",
-                    "                       Failed      7999  132  102 ms   99 ms  110 ms  140 ms  160 ms  88 ms  201 ms   20 ms",
-                    "  Add to cart          Ok         24000  397   18 ms   16 ms   22 ms   40 ms   55 ms   8 ms  120 ms    6 ms",
-                    "  Checkout             Ok         16001  265   58 ms   52 ms   70 ms   90 ms  130 ms  20 ms  410 ms   19 ms",
-                    "                       Failed      7999  132  102 ms   99 ms  110 ms  140 ms  160 ms  95 ms  980 ms   21 ms",
+                    "  Step                 Type    Count  Per Second    Mean  Median     P75     P90     P95     P99    Min     Max  StdDev",
+                    "  All Steps (Summary)  Ok      16001         265   38 ms   35 ms   48 ms   60 ms   72 ms   94 ms  12 ms  312 ms   15 ms",
+                    "                       Failed   7999         132  102 ms   99 ms  110 ms  125 ms  140 ms  160 ms  88 ms  201 ms   20 ms",
+                    "  Add to cart          Ok      24000         397   18 ms   16 ms   22 ms   31 ms   40 ms   55 ms   8 ms  120 ms    6 ms",
+                    "  Checkout             Ok      16001         265   58 ms   52 ms   70 ms   80 ms   90 ms  130 ms  20 ms  410 ms   19 ms",
+                    "                       Failed   7999         132  102 ms   99 ms  110 ms  125 ms  140 ms  160 ms  95 ms  980 ms   21 ms",
                     "",
                     "  Failure Details ──────────────────────────────────────────────────────────────────────────────────────────────────────",
                     "  AssertWhileRunning Failed",
@@ -66,8 +67,7 @@ public class LoadSummaryLayoutTests : Test
                     "════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════",
                     ""
                 }, 120, lines);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -98,17 +98,17 @@ public class LoadSummaryLayoutTests : Test
                     "  Cleanup         7s        14:09:26  14:09:33",
                     "  Total Test Run  5m 12s    14:04:21  14:09:33",
                     "",
-                    "  Requests ─────────────────────────────────────────────────",
-                    "  Total Requests 24000    Successful 16001 (66.7%)",
-                    "  Failed 7999 (33.3%)    Requests/sec 265    Warmup 1203",
+                    "  Iterations ───────────────────────────────────────────────",
+                    "  Total Iterations 24000    Successful 16001 (66.7%)",
+                    "  Failed 7999 (33.3%)    Iterations/s 265    Warmup 1203",
                     "",
                     "  Step Performance ─────────────────────────────────────────",
-                    "  Step                 Type    Requests  RPS    Mean     P95",
-                    "  All Steps (Summary)  Ok         16001  265   38 ms   72 ms",
-                    "                       Failed      7999  132  102 ms  140 ms",
-                    "  Add to cart          Ok         24000  397   18 ms   40 ms",
-                    "  Checkout             Ok         16001  265   58 ms   90 ms",
-                    "                       Failed      7999  132  102 ms  140 ms",
+                    "  Step                 Type    Count     P95",
+                    "  All Steps (Summary)  Ok      16001   72 ms",
+                    "                       Failed   7999  140 ms",
+                    "  Add to cart          Ok      24000   40 ms",
+                    "  Checkout             Ok      16001   90 ms",
+                    "                       Failed   7999  140 ms",
                     "",
                     "  Failure Details ──────────────────────────────────────────",
                     "  AssertWhileRunning Failed",
@@ -133,8 +133,7 @@ public class LoadSummaryLayoutTests : Test
 
                 Assert.IsGreaterThan(10, minimumWidth);
                 AssertMaximumWidth(minimumWidth + LiveDashboardLayout.Gutter.Length, lines);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -151,8 +150,7 @@ public class LoadSummaryLayoutTests : Test
 
                 Assert.Contains("Scenario 1 - Checkout flow", LineContaining(lines, "Scenario 1 - "));
                 Assert.Contains("Scenario 2 - Browse catalog", LineContaining(lines, "Scenario 2 - "));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -180,15 +178,14 @@ public class LoadSummaryLayoutTests : Test
             {
                 Assert.ThrowsExactly<ArgumentNullException>(() => LoadSummaryLayout.Render(null!, 120, ColorMode.None));
                 Assert.ThrowsExactly<ArgumentNullException>(() => LoadSummaryLayout.MeasureMinimumWidth(null!));
-            })
-            .Run();
+            });
     }
 
     [Test]
     public async Task Verify_a_failed_scenario_without_an_assertion_still_gets_a_failure_section()
     {
         await Scenario()
-            .Step("A scenario failed by its requests shows Failure Details with what is known", context =>
+            .Step("A scenario failed by its iterations shows Failure Details with what is known", context =>
             {
                 var results = LoadViewSamples.SummaryResults();
                 foreach (var pair in results)
@@ -201,8 +198,7 @@ public class LoadSummaryLayoutTests : Test
                 Assert.IsGreaterThanOrEqualTo(0, headerIndex);
                 Assert.Contains(LiveDashboardLayout.ScenarioFailedText, lines[headerIndex + 1]);
                 Assert.Contains("No assertion failed.", string.Join(" ", lines));
-            })
-            .Run();
+            });
     }
 
     private static string LineContaining(IReadOnlyList<RenderedLine> lines, string text)

@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class StartupBannerTests : Test
 {
     private const string Label = "Running test:";
@@ -45,8 +46,7 @@ public class StartupBannerTests : Test
                 Assert.AreEqual("Running test: Fuzn.Shop.Tests.CheckoutTests.Verify_checkout", lines[0].Text);
                 Assert.DoesNotContain(AnsiCodes.Escape, lines[0].Text);
                 Assert.AreEqual(lines[0].Text.Length, lines[0].Width);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -91,8 +91,7 @@ public class StartupBannerTests : Test
                 var lines = StartupBanner.Render(Label, string.Empty, ColorMode.None);
 
                 Assert.AreEqual("Running test: ", lines[0].Text);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -127,7 +126,6 @@ public class StartupBannerTests : Test
                 Assert.ThrowsExactly<ArgumentNullException>(() => StartupBanner.Render(null!, Subject, ColorMode.None));
                 Assert.ThrowsExactly<ArgumentNullException>(() => StartupBanner.Render(Label, null!, ColorMode.None));
                 Assert.ThrowsExactly<ArgumentNullException>(() => StartupBanner.Write(null!, Label, Subject, ColorMode.None));
-            })
-            .Run();
+            });
     }
 }

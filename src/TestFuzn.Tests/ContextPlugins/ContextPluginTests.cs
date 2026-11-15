@@ -4,9 +4,11 @@ using Fuzn.TestFuzn.Tests.Cancellation;
 namespace Fuzn.TestFuzn.Tests.ContextPlugins;
 
 [TestClass]
+[Tags("integration")]
 public class ContextPluginTests : Test
 {
     [Test]
+    [Tags("load")]
     public async Task InitIteration_is_called_per_iteration()
     {
         var capturedStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
@@ -17,13 +19,13 @@ public class ContextPluginTests : Test
                 var state = context.Internals.Plugins.GetState<TrackingContextPlugin.TrackingState>(typeof(TrackingContextPlugin));
                 capturedStates.Add(state);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3));
 
         Assert.HasCount(3, capturedStates);
     }
 
     [Test]
+    [Tags("load")]
     public async Task Each_iteration_gets_its_own_state()
     {
         var capturedStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
@@ -34,14 +36,14 @@ public class ContextPluginTests : Test
                 var state = context.Internals.Plugins.GetState<TrackingContextPlugin.TrackingState>(typeof(TrackingContextPlugin));
                 capturedStates.Add(state);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5));
 
         var distinctCount = capturedStates.Distinct().Count();
         Assert.AreEqual(5, distinctCount, "Each iteration should receive a unique state instance");
     }
 
     [Test]
+    [Tags("load")]
     public async Task CleanupIteration_is_called_after_each_iteration()
     {
         var capturedStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
@@ -52,8 +54,7 @@ public class ContextPluginTests : Test
                 var state = context.Internals.Plugins.GetState<TrackingContextPlugin.TrackingState>(typeof(TrackingContextPlugin));
                 capturedStates.Add(state);
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5));
 
         Assert.IsTrue(capturedStates.All(s => s.CleanedUp),
             "CleanupIteration should be called for every iteration");
@@ -72,8 +73,7 @@ public class ContextPluginTests : Test
                     var state = context.Internals.Plugins.GetState<TrackingContextPlugin.TrackingState>(typeof(TrackingContextPlugin));
                     capturedStates.Add(state);
                     throw new InvalidOperationException("Step failure");
-                })
-                .Run();
+                });
         }
         catch (InvalidOperationException)
         {
@@ -98,8 +98,7 @@ public class ContextPluginTests : Test
             .Step("Step 2", (context) =>
             {
                 stateFromStep2 = context.Internals.Plugins.GetState<TrackingContextPlugin.TrackingState>(typeof(TrackingContextPlugin));
-            })
-            .Run();
+            });
 
         Assert.IsNotNull(stateFromStep1);
         Assert.AreSame(stateFromStep1, stateFromStep2,
@@ -116,14 +115,14 @@ public class ContextPluginTests : Test
             {
                 var state = context.Internals.Plugins.GetState<TrackingContextPlugin.TrackingState>(typeof(TrackingContextPlugin));
                 capturedStates.Add(state);
-            })
-            .Run();
+            });
 
         Assert.HasCount(1, capturedStates);
         Assert.IsTrue(capturedStates.First().CleanedUp);
     }
 
     [Test]
+    [Tags("load")]
     public async Task CleanupIteration_runs_for_warmup_iterations()
     {
         var warmupStates = new ConcurrentBag<TrackingContextPlugin.TrackingState>();
@@ -136,8 +135,7 @@ public class ContextPluginTests : Test
                 measurementStates.Add(state);
             })
             .Load().Warmup((context, simulations) => simulations.OneTimeLoad(2))
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3));
 
         // All states (warmup + measurement) should be cleaned up
         var allStates = measurementStates.ToList();

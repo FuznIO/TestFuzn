@@ -10,7 +10,7 @@ The **target environment** represents the system under test (e.g., dev, staging,
 
 Set via:
 - Environment variable: `TESTFUZN_TARGET_ENVIRONMENT`
-- Command line: `--target-environment <value>`
+- Command line: `--target-environment=<value>`
 
 Example files:
 - `appsettings.target-dev.json` - Settings for testing against dev
@@ -49,7 +49,7 @@ The **execution environment** represents where the tests are running (e.g., loca
 
 Set via:
 - Environment variable: `TESTFUZN_EXECUTION_ENVIRONMENT`
-- Command line: `--execution-environment <value>`
+- Command line: `--execution-environment=<value>`
 
 Example files:
 - `appsettings.exec-local.json` - Settings for local development

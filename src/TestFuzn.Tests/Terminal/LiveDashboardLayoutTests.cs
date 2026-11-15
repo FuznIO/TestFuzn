@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class LiveDashboardLayoutTests : Test
 {
     private const string SpinnerGlyph = "⠙";
@@ -40,18 +41,18 @@ public class LiveDashboardLayoutTests : Test
                     "  Cleanup         —         —         —       ",
                     "  Total Test Run  2m 15s    14:04:21  —       ",
                     "",
-                    "  Requests ─────────────────────────────────────────────────────────────────────────────────────────────────────────────",
-                    "  Total Requests 12512    Successful 12480 (99.7%)    Failed 32 (0.3%)    Requests/sec 142    Warmup 1203",
+                    "  Iterations ───────────────────────────────────────────────────────────────────────────────────────────────────────────",
+                    "  Total Iterations 12512    Successful 12480 (99.7%)    Failed 32 (0.3%)    Iterations/s 142    Warmup 1203",
                     "",
                     "  Step Performance ─────────────────────────────────────────────────────────────────────────────────────────────────────",
-                    "  Step                 Type    Requests  RPS    Mean  Median     P75     P95     P99    Min     Max  StdDev",
-                    "  All Steps (Summary)  Ok         12480  142   38 ms   35 ms   48 ms   72 ms   94 ms  12 ms  312 ms   15 ms",
-                    "                       Failed        32    1  102 ms   99 ms  110 ms  140 ms  160 ms  88 ms  201 ms   20 ms",
-                    "  Add to cart          Ok          6250   71   18 ms   16 ms   22 ms   40 ms   55 ms   8 ms  120 ms    6 ms",
-                    "                       Failed         2    1  102 ms   99 ms  110 ms  140 ms  160 ms  95 ms  980 ms   21 ms",
-                    "  Checkout             Ok          6230   69   58 ms   52 ms   70 ms   90 ms  130 ms  20 ms  410 ms   19 ms",
-                    "                       Failed        30    1  102 ms   99 ms  110 ms  140 ms  160 ms  95 ms  980 ms   21 ms",
-                    "    → Pay              Ok          6230   69   22 ms   20 ms   26 ms   44 ms   61 ms  10 ms  150 ms    7 ms",
+                    "  Step                 Type    Count  Per Second    Mean  Median     P75     P90     P95     P99    Min     Max  StdDev",
+                    "  All Steps (Summary)  Ok      12480         142   38 ms   35 ms   48 ms   60 ms   72 ms   94 ms  12 ms  312 ms   15 ms",
+                    "                       Failed     32           1  102 ms   99 ms  110 ms  125 ms  140 ms  160 ms  88 ms  201 ms   20 ms",
+                    "  Add to cart          Ok       6250          71   18 ms   16 ms   22 ms   31 ms   40 ms   55 ms   8 ms  120 ms    6 ms",
+                    "                       Failed      2           1  102 ms   99 ms  110 ms  125 ms  140 ms  160 ms  95 ms  980 ms   21 ms",
+                    "  Checkout             Ok       6230          69   58 ms   52 ms   70 ms   80 ms   90 ms  130 ms  20 ms  410 ms   19 ms",
+                    "                       Failed     30           1  102 ms   99 ms  110 ms  125 ms  140 ms  160 ms  95 ms  980 ms   21 ms",
+                    "    → Pay              Ok       6230          69   22 ms   20 ms   26 ms   35 ms   44 ms   61 ms  10 ms  150 ms    7 ms",
                     "",
                     "  Step Errors ──────────────────────────────────────────────────────────────────────────────────────────────────────────",
                     "  Checkout:",
@@ -68,8 +69,7 @@ public class LiveDashboardLayoutTests : Test
                 AssertLine(string.Empty, 0, lines[38]);
                 AssertLine(FooterLine, FooterLine.Length, lines[39]);
                 AssertMaximumWidth(120, lines);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -95,19 +95,19 @@ public class LiveDashboardLayoutTests : Test
                     "  Cleanup         —         —         —       ",
                     "  Total Test Run  2m 15s    14:04:21  —       ",
                     "",
-                    "  Requests ─────────────────────────────────────────────────────────────────────",
-                    "  Total Requests 12512    Successful 12480 (99.7%)    Failed 32 (0.3%)",
-                    "  Requests/sec 142    Warmup 1203",
+                    "  Iterations ───────────────────────────────────────────────────────────────────",
+                    "  Total Iterations 12512    Successful 12480 (99.7%)    Failed 32 (0.3%)",
+                    "  Iterations/s 142    Warmup 1203",
                     "",
                     "  Step Performance ─────────────────────────────────────────────────────────────",
-                    "  Step                 Type    Requests  RPS    Mean  Median     P95     P99",
-                    "  All Steps (Summary)  Ok         12480  142   38 ms   35 ms   72 ms   94 ms",
-                    "                       Failed        32    1  102 ms   99 ms  140 ms  160 ms",
-                    "  Add to cart          Ok          6250   71   18 ms   16 ms   40 ms   55 ms",
-                    "                       Failed         2    1  102 ms   99 ms  140 ms  160 ms",
-                    "  Checkout             Ok          6230   69   58 ms   52 ms   90 ms  130 ms",
-                    "                       Failed        30    1  102 ms   99 ms  140 ms  160 ms",
-                    "    → Pay              Ok          6230   69   22 ms   20 ms   44 ms   61 ms",
+                    "  Step                 Type    Count  Per Second    Mean  Median     P95     P99",
+                    "  All Steps (Summary)  Ok      12480         142   38 ms   35 ms   72 ms   94 ms",
+                    "                       Failed     32           1  102 ms   99 ms  140 ms  160 ms",
+                    "  Add to cart          Ok       6250          71   18 ms   16 ms   40 ms   55 ms",
+                    "                       Failed      2           1  102 ms   99 ms  140 ms  160 ms",
+                    "  Checkout             Ok       6230          69   58 ms   52 ms   90 ms  130 ms",
+                    "                       Failed     30           1  102 ms   99 ms  140 ms  160 ms",
+                    "    → Pay              Ok       6230          69   22 ms   20 ms   44 ms   61 ms",
                     "",
                     "  Step Errors ──────────────────────────────────────────────────────────────────",
                     "  Checkout:",
@@ -127,8 +127,7 @@ public class LiveDashboardLayoutTests : Test
                     AssertMaximumWidth(width, LiveDashboardLayout.Render(snapshots, width, 0, ColorMode.TrueColor, SpinnerGlyph, header));
                     AssertMaximumWidth(width, LiveDashboardLayout.Render(new[] { snapshots[0] }, width, 0, ColorMode.TrueColor, SpinnerGlyph, header));
                 }
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -145,9 +144,9 @@ public class LiveDashboardLayoutTests : Test
                     "  Scenarios 2                                                                                         ⠙ Running   2m 15s",
                     "",
                     "  Scenario Performance ─────────────────────────────────────────────────────────────────────────────────────────────────",
-                    "  #  Scenario        Phase      Status     Requests  RPS   Mean  Median    P95  Failed",
-                    "  1  Checkout flow   Execution  ⠙ Running     12512  142  38 ms   35 ms  72 ms      32",
-                    "  2  Browse catalog  Warmup     ⠙ Running      2000   48  12 ms   11 ms  22 ms       0",
+                    "  #  Scenario        Phase      Status     Iterations  Iterations/s   Mean  Median    P95  Failed",
+                    "  1  Checkout flow   Execution  ⠙ Running       12512           142  38 ms   35 ms  72 ms      32",
+                    "  2  Browse catalog  Warmup     ⠙ Running        2000            48  12 ms   11 ms  22 ms       0",
                     "",
                     "  Step Errors ──────────────────────────────────────────────────────────────────────────────────────────────────────────",
                     "  Checkout flow · Checkout:",
@@ -169,8 +168,7 @@ public class LiveDashboardLayoutTests : Test
 
                 Assert.HasCount(1, lines);
                 AssertLine(FooterLine, FooterLine.Length, lines[0]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -204,8 +202,7 @@ public class LiveDashboardLayoutTests : Test
 
                 var header = lines.Select(line => line.Text).First(text => text.Contains(TestPhasesLayout.Header));
                 Assert.Contains("\u001b[1;38;2;255;157;61m" + TestPhasesLayout.Header + "\u001b[0m", header);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -235,8 +232,7 @@ public class LiveDashboardLayoutTests : Test
 
                 Assert.HasCount(5, lines);
                 AssertLine(FooterLine, FooterLine.Length, lines[4]);
-            })
-            .Run();
+            });
     }
 
     private static LiveMetricsSnapshot CompletedSnapshot(TestStatus status)

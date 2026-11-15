@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Simulations;
 
 [TestClass]
+[Tags("integration", "load")]
 public class PauseLoadTests : Test
 {
     [Test]
@@ -15,8 +16,7 @@ public class PauseLoadTests : Test
 
                 return Task.CompletedTask;
             })
-            .Load().Simulations((context, simulations) => simulations.Pause(TimeSpan.FromSeconds(2)))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.Pause(TimeSpan.FromSeconds(2)));
 
         Assert.AreEqual(0, stepExecutionCount);
     }

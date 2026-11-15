@@ -20,32 +20,34 @@ internal class GradualLoadIncreaseHandler : ILoadHandler
 
     public async Task Execute()
     {
-        var startRate = _configuration.StartRate;
-        var endRate = _configuration.EndRate;
-        var duration = _configuration.Duration;
-        var rateSteps = endRate - startRate;
-        var sleepBetweenQueueAdding = rateSteps > 0
-            ? duration.Ticks / rateSteps
-            : duration.Ticks;
-        var currentRate = startRate;
+        await TimedStarts.Run(
+            StartTimes(_configuration.StartRate, _configuration.EndRate, _configuration.Duration),
+            _configuration.Duration,
+            _scenario,
+            _configuration.IsWarmup,
+            _testExecutionState);
+    }
 
-        while (currentRate <= endRate
-            && _testExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
+    internal static IEnumerable<TimeSpan> StartTimes(int startRate, int endRate, TimeSpan duration)
+    {
+        var seconds = duration.TotalSeconds;
+        if (seconds <= 0 || startRate + endRate <= 0)
+            yield break;
+
+        var total = (startRate + endRate) / 2.0 * seconds;
+        var halfSlope = (endRate - startRate) / (2 * seconds);
+        double rate = startRate;
+
+        yield return TimeSpan.Zero;
+
+        for (long index = 1; index < total - 1e-9; index++)
         {
-            for (int i = 0; i < currentRate; i++)
-            {
-                if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
-                    return;
+            var discriminant = rate * rate + 4 * halfSlope * index;
+            if (discriminant < 0)
+                yield break;
 
-                var message = new ExecuteScenarioMessage(_scenario, _configuration.IsWarmup);
-
-                _testExecutionState.EnqueueScenarioExecution(message);
-            }
-
-            if (sleepBetweenQueueAdding > 0)
-                await Task.Delay(TimeSpan.FromTicks(sleepBetweenQueueAdding), _testExecutionState.CancellationToken);
-
-            currentRate++;
+            var at = 2 * index / (rate + Math.Sqrt(discriminant));
+            yield return TimeSpan.FromTicks((long) (at * TimeSpan.TicksPerSecond));
         }
     }
 }

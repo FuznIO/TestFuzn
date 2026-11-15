@@ -1,0 +1,47 @@
+<Project Sdk="MSTest.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
+    <RootNamespace>Fuzn.TestFuzn.Tests.Cluster</RootNamespace>
+    <AssemblyName>Fuzn.TestFuzn.Tests.Cluster</AssemblyName>
+    <Authors>Fuzn</Authors>
+    <NoWarn>1591</NoWarn>
+    <!-- Visual Studio runs this project's tests on the cluster. dotnet test ignores it: pass the settings option. -->
+    <RunSettingsFilePath>$(MSBuildProjectDirectory)\cluster.runsettings</RunSettingsFilePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestFuzn.Adapters.MSTest\TestFuzn.Adapters.MSTest.csproj" />
+    <ProjectReference Include="..\TestFuzn\TestFuzn.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Update="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Update="Microsoft.Testing.Extensions.TrxReport" Version="2.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Update="MSTest.TestAdapter" Version="4.5.1" />
+  </ItemGroup>
+
+  <!-- A ProjectReference does not load a package's build files. Load the adapter's here, as a NuGet install does. -->
+  <Import Project="..\TestFuzn.Adapters.MSTest\buildTransitive\Fuzn.TestFuzn.Adapters.MSTest.props" />
+  <Import Project="..\TestFuzn.Adapters.MSTest\buildTransitive\Fuzn.TestFuzn.Adapters.MSTest.targets" />
+
+</Project>

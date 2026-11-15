@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class MarkupParserTests : Test
 {
     [Test]
@@ -42,8 +43,7 @@ public class MarkupParserTests : Test
             {
                 Assert.IsEmpty(MarkupParser.Parse(null));
                 Assert.IsEmpty(MarkupParser.Parse(string.Empty));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -90,8 +90,7 @@ public class MarkupParserTests : Test
 
                 Assert.ContainsSingle(spans);
                 AssertForegroundPalette(spans[0], 2);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -125,8 +124,7 @@ public class MarkupParserTests : Test
                 Assert.AreEqual("x", spans[0].Text);
                 Assert.IsTrue(spans[0].Style.Bold);
                 AssertForegroundPalette(spans[0], 9);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -148,8 +146,7 @@ public class MarkupParserTests : Test
                 Assert.ContainsSingle(spans);
                 Assert.AreEqual("a[b]", spans[0].Text);
                 AssertForegroundPalette(spans[0], 8);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -238,8 +235,7 @@ public class MarkupParserTests : Test
                 Assert.HasCount(2, spans);
                 AssertForegroundPalette(spans[0], 9);
                 AssertForegroundPalette(spans[1], 2);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -278,8 +274,7 @@ public class MarkupParserTests : Test
                         Assert.IsNotNull(rendered, $"Render returned null for {input} in {colorMode}");
                     }
                 }
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -309,8 +304,7 @@ public class MarkupParserTests : Test
             {
                 Assert.AreEqual(string.Empty, MarkupParser.StripMarkup(null));
                 Assert.AreEqual(string.Empty, MarkupParser.StripMarkup(string.Empty));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -327,8 +321,7 @@ public class MarkupParserTests : Test
             {
                 Assert.AreSame("plain text", MarkupParser.Escape("plain text"));
                 Assert.ThrowsExactly<ArgumentNullException>(() => MarkupParser.Escape(null!));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -362,8 +355,7 @@ public class MarkupParserTests : Test
 
                 foreach (var markup in repoMarkupStrings)
                     Assert.AreEqual(MarkupHelper.StripMarkup(markup), MarkupParser.StripMarkup(markup), $"Strip mismatch for {markup}");
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -398,8 +390,7 @@ public class MarkupParserTests : Test
 
                 Assert.AreEqual("Step [0] Fetch:", MarkupParser.StripMarkup(markup));
                 Assert.AreEqual("Step  Fetch:", MarkupHelper.StripMarkup(markup));
-            })
-            .Run();
+            });
     }
 
     private static void AssertForegroundPalette(StyledSpan span, byte expectedPaletteIndex)

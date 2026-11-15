@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Attributes.Environments;
 
 [TestClass]
+[Tags("integration")]
 public class EnvironmentAttributeOnClassTests : Test
 {
     [Test]
@@ -11,7 +12,6 @@ public class EnvironmentAttributeOnClassTests : Test
         await Scenario()
             .Step("Step 1", context => 
             {
-            })
-            .Run();
+            });
     }
 }

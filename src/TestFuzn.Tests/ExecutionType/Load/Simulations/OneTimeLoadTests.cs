@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Load.Simulations;
 
 [TestClass]
+[Tags("integration", "load")]
 public class OneTimeLoadTests : Test
 {
     [Test]
@@ -16,9 +17,8 @@ public class OneTimeLoadTests : Test
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(50, stats.Ok.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(50, stats.Ok.Count);
+            });
 
         Assert.AreEqual(50, stepExecutionCount);
     }
@@ -39,10 +39,9 @@ public class OneTimeLoadTests : Test
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(50))
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(45, stats.Ok.RequestCount);
-                Assert.AreEqual(5, stats.Failed.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(45, stats.Ok.Count);
+                Assert.AreEqual(5, stats.Failed.Count);
+            });
 
         Assert.AreEqual(50, stepExecutionCount);
     }

@@ -1,4 +1,7 @@
+using System.Runtime.CompilerServices;
+using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Adapters;
+using Fuzn.TestFuzn.Internals;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn;
@@ -19,7 +22,7 @@ public class ScenarioBuilder<TModel>
 
     internal ScenarioBuilder(object testFramework,
         ITest test,
-        string name)
+        string? name)
     {
         if (testFramework is not ITestFrameworkAdapter adapter)
             throw new ArgumentException("Invalid test framework adapter, must implement ITestFrameworkAdapter.", nameof(testFramework));
@@ -34,6 +37,15 @@ public class ScenarioBuilder<TModel>
         _test = test;
         Scenario = new Scenario(name);
         Scenario.ContextType = typeof(IterationContext<TModel>);
+
+        ScenarioRunGuard.Track(test.TestInfo, Scenario);
+    }
+
+    // A builder that throws while it is built can never run, so the run guard must not report it.
+    internal Exception BuildFailed(Exception exception)
+    {
+        Scenario.HasBuildError = true;
+        return exception;
     }
 
     /// <summary>
@@ -68,7 +80,7 @@ public class ScenarioBuilder<TModel>
     public ScenarioBuilder<TModel> BeforeScenario(Action<Context> action)
     {
         if (action == null)
-            throw new ArgumentNullException(nameof(action), "Action cannot be null.");
+            throw BuildFailed(new ArgumentNullException(nameof(action), "Action cannot be null."));
 
         Scenario.BeforeScenario = (context) => {
             action(context);
@@ -85,7 +97,7 @@ public class ScenarioBuilder<TModel>
     public ScenarioBuilder<TModel> BeforeScenario(Func<Context, Task> action)
     {
         if (action == null)
-            throw new ArgumentNullException(nameof(action), "Action cannot be null.");
+            throw BuildFailed(new ArgumentNullException(nameof(action), "Action cannot be null."));
 
         Scenario.BeforeScenario = (context) => {
             return action(context);
@@ -154,7 +166,7 @@ public class ScenarioBuilder<TModel>
     public ScenarioBuilder<TModel> BeforeIteration(Func<IterationContext<TModel>, Task> action)
     {
         if (action == null)
-            throw new ArgumentNullException(nameof(action), "Action cannot be null.");
+            throw BuildFailed(new ArgumentNullException(nameof(action), "Action cannot be null."));
         Scenario.BeforeIterationAction = (context) => {
             return action((IterationContext<TModel>) context);
         };
@@ -169,7 +181,7 @@ public class ScenarioBuilder<TModel>
     public ScenarioBuilder<TModel> BeforeIteration(Action<IterationContext<TModel>> action)
     {
         if (action == null)
-            throw new ArgumentNullException(nameof(action), "Action cannot be null.");
+            throw BuildFailed(new ArgumentNullException(nameof(action), "Action cannot be null."));
         Scenario.BeforeIterationAction = (context) => {
             action((IterationContext<TModel>) context);
             return Task.CompletedTask;
@@ -189,7 +201,7 @@ public class ScenarioBuilder<TModel>
         EnsureStepNameIsUnique(name);
 
         if (action == null)
-            throw new ArgumentNullException(nameof(action), "Action cannot be null.");
+            throw BuildFailed(new ArgumentNullException(nameof(action), "Action cannot be null."));
 
         var step = new Step();
         step.ContextType = typeof(TModel);
@@ -271,10 +283,10 @@ public class ScenarioBuilder<TModel>
     private void EnsureStepNameIsUnique(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException($"Step name cannot be null or empty.");
+            throw BuildFailed(new ArgumentException($"Step name cannot be null or empty."));
 
         if (Scenario.Steps.Any(s => s.Name == name))
-            throw new InvalidOperationException($"A step with the name '{name}' already exists in the scenario.");
+            throw BuildFailed(new InvalidOperationException($"A step with the name '{name}' already exists in the scenario."));
     }
 
     /// <summary>
@@ -348,12 +360,18 @@ public class ScenarioBuilder<TModel>
     }
 
     /// <summary>
-    /// Executes the configured scenario.
+    /// Runs the configured scenario when it is awaited: <c>await Scenario().Step(...)</c>.
     /// For load tests, use Load().IncludeScenario() to execute multiple scenarios in a single test, in parallel.
     /// </summary>
-    /// <returns>A task representing the asynchronous scenario execution.</returns>
-    public async Task Run()
+    public TaskAwaiter GetAwaiter()
     {
+        return Run().GetAwaiter();
+    }
+
+    private async Task Run()
+    {
+        Scenario.IsUsed = true;
+
         var scenarios = new List<Scenario>();
         scenarios.Add(Scenario);
         if (IncludeScenarios != null)
@@ -372,6 +390,17 @@ public class ScenarioBuilder<TModel>
     private void InheritValuesFromTest(List<Scenario> scenarios)
     {
         var firstScenario = scenarios.First();
+        var testInfo = _test.TestInfo;
+
+        // The attribute wins: only it is known before the test runs, for example when skipped.
+        if (firstScenario.TestType == TestType.Standard)
+        {
+            if (!testInfo.HasAttributeName && !string.IsNullOrEmpty(firstScenario.Name))
+                testInfo.Name = firstScenario.Name;
+            if (string.IsNullOrEmpty(testInfo.Description) && !string.IsNullOrEmpty(firstScenario.Description))
+                testInfo.Description = firstScenario.Description;
+        }
+
         if (string.IsNullOrEmpty(firstScenario.Id))
             firstScenario.Id = _test.TestInfo.Id;
         if (string.IsNullOrEmpty(firstScenario.Name))
@@ -382,7 +411,56 @@ public class ScenarioBuilder<TModel>
         foreach (var scenario in scenarios)
         {
             if (string.IsNullOrEmpty(scenario.Name))
-                throw new Exception("Scenario name cannot be null or empty.");
+                throw new InvalidOperationException("A scenario added with Load().IncludeScenario() must have a name. Use Scenario(\"name\").");
+        }
+
+        AssignIds(testInfo, scenarios);
+    }
+
+    private static void AssignIds(TestInfo testInfo, List<Scenario> scenarios)
+    {
+        if (string.IsNullOrWhiteSpace(testInfo.Id))
+        {
+            var source = testInfo.FullName;
+            if (string.IsNullOrEmpty(source))
+                source = testInfo.Name;
+            testInfo.Id = StableId.Of(source);
+            testInfo.IsIdAutomatic = true;
+        }
+
+        var owner = TestSession.Current.TestIds.GetOrAdd(testInfo.Id, testInfo.FullName);
+        if (owner != testInfo.FullName)
+            throw new InvalidOperationException($"The tests '{owner}' and '{testInfo.FullName}' have the same id '{testInfo.Id}'. Every test in a suite needs its own id.");
+
+        var scenarioNames = new Dictionary<string, string>();
+        foreach (var scenario in scenarios)
+        {
+            if (string.IsNullOrEmpty(scenario.Id))
+                scenario.Id = StableId.Of(testInfo.Id, scenario.Name);
+
+            if (scenarioNames.TryGetValue(scenario.Id, out var otherScenario))
+                throw new InvalidOperationException($"The scenarios '{otherScenario}' and '{scenario.Name}' have the same id '{scenario.Id}'. Every scenario in a test needs its own id.");
+            scenarioNames.Add(scenario.Id, scenario.Name);
+
+            AssignStepIds(scenario, scenario.Id, scenario.Steps);
+        }
+    }
+
+    private static void AssignStepIds(Scenario scenario, string parentId, List<Step> steps)
+    {
+        foreach (var step in steps)
+        {
+            step.ParentId = parentId;
+            if (string.IsNullOrWhiteSpace(step.Id))
+            {
+                step.Id = StableId.Of(parentId, step.Name);
+                step.IsIdAutomatic = true;
+            }
+
+            scenario.EnsureStepIdIsUnique(step);
+
+            if (step.Steps != null)
+                AssignStepIds(scenario, step.Id, step.Steps);
         }
     }
 }

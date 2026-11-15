@@ -2,7 +2,7 @@
 
 [TestClass]
 [Skip]
-[Tags("TagInclude1")]
+[Tags("TagInclude1", "integration")]
 [TargetEnvironments("test1")]
 public class SkipAttributeOnClassTests : Test
 {

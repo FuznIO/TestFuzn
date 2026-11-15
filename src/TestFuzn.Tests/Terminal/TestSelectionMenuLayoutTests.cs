@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class TestSelectionMenuLayoutTests : Test
 {
     private const string BannerFirstRow = "████████╗███████╗███████╗████████╗███████╗██╗   ██╗███████╗███╗   ██╗";
@@ -102,8 +103,7 @@ public class TestSelectionMenuLayoutTests : Test
                     Assert.IsLessThanOrEqualTo(120, line.Width);
                     Assert.IsLessThanOrEqualTo(line.Width, line.Text.Length);
                 }
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -136,8 +136,7 @@ public class TestSelectionMenuLayoutTests : Test
 
                 Assert.AreEqual(80, titleLine.Width);
                 Assert.AreEqual(79, titleLine.Text.Length);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -175,8 +174,7 @@ public class TestSelectionMenuLayoutTests : Test
                 Assert.AreEqual(60, lines[11].Length);
                 Assert.AreEqual(string.Empty, lines[12]);
                 Assert.AreEqual(StatusForTwelveTests, lines[13]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -246,8 +244,7 @@ public class TestSelectionMenuLayoutTests : Test
                 lines = RenderText(single, 80, 24);
                 Assert.AreEqual("▸ 1  Fuzn.Shop.Tests.CartTests.Verify_add_to_cart", lines[2]);
                 Assert.AreEqual("Filter: ▏  1 test", lines[22]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -302,8 +299,7 @@ public class TestSelectionMenuLayoutTests : Test
                 Assert.AreEqual(
                     "[1m▸  2  Fuzn.Shop.Tests.[0m[1;4mCat[0m[1malogTests.Verify_browse_products[0m",
                     lines[2]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -358,8 +354,7 @@ public class TestSelectionMenuLayoutTests : Test
                 state.AppendToFilter('\uDE80');
                 lines = RenderText(state, 80, 24, ColorMode.TrueColor);
                 Assert.AreEqual("[1;38;2;255;157;61m▸ 1  Tests.Rocket[0m[1;4;38;2;255;157;61m🚀[0m[1;38;2;255;157;61mLaunch[0m", lines[2]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -396,8 +391,7 @@ public class TestSelectionMenuLayoutTests : Test
                 Assert.AreEqual(Title, lines[7]);
                 Assert.AreEqual(UnfilteredRows[0], lines[9]);
                 Assert.AreEqual(StatusForTwelveTests, lines[25]);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -455,7 +449,6 @@ public class TestSelectionMenuLayoutTests : Test
             .Step("A null state is rejected", context =>
             {
                 Assert.ThrowsExactly<ArgumentNullException>(() => TestSelectionMenuLayout.Render(null!, 80, 24, ColorMode.None));
-            })
-            .Run();
+            });
     }
 }

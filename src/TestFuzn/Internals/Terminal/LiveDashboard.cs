@@ -12,6 +12,8 @@ internal sealed class LiveDashboard : IDisposable
     private readonly Func<IReadOnlyList<LiveMetricsSnapshot>> _snapshotsProvider;
     private readonly SpinnerGlyphSet _spinnerGlyphSet;
     private readonly LoadViewHeader? _header;
+    private readonly Func<IReadOnlyList<Cluster.WorkerSummary>>? _workersProvider;
+    private readonly Func<IReadOnlyList<string>>? _warningsProvider;
     private readonly string[] _spinnerFrames;
     private readonly FrameRenderer _renderer;
     private readonly FrameBuffer _frame = new();
@@ -19,7 +21,7 @@ internal sealed class LiveDashboard : IDisposable
     private bool _isStarted;
     private bool _isDisposed;
 
-    public LiveDashboard(ITerminalWriter writer, TerminalCapabilities capabilities, Func<IReadOnlyList<LiveMetricsSnapshot>> snapshotsProvider, SpinnerGlyphSet spinnerGlyphSet = SpinnerGlyphSet.Braille, LoadViewHeader? header = null)
+    public LiveDashboard(ITerminalWriter writer, TerminalCapabilities capabilities, Func<IReadOnlyList<LiveMetricsSnapshot>> snapshotsProvider, SpinnerGlyphSet spinnerGlyphSet = SpinnerGlyphSet.Braille, LoadViewHeader? header = null, Func<IReadOnlyList<Cluster.WorkerSummary>>? workersProvider = null, Func<IReadOnlyList<string>>? warningsProvider = null)
     {
         if (writer == null)
             throw new ArgumentNullException(nameof(writer), "Writer cannot be null.");
@@ -35,6 +37,8 @@ internal sealed class LiveDashboard : IDisposable
         _snapshotsProvider = snapshotsProvider;
         _spinnerGlyphSet = spinnerGlyphSet;
         _header = header;
+        _workersProvider = workersProvider;
+        _warningsProvider = warningsProvider;
         _spinnerFrames = spinnerGlyphSet == SpinnerGlyphSet.Braille ? BrailleSpinnerFrames : AsciiSpinnerFrames;
         _renderer = new FrameRenderer(writer);
     }
@@ -66,7 +70,13 @@ internal sealed class LiveDashboard : IDisposable
         _spinnerFrameIndex = (_spinnerFrameIndex + 1) % _spinnerFrames.Length;
 
         _frame.Clear();
-        _frame.AddLines(LiveDashboardLayout.Render(snapshots, width, height, _capabilities.ColorMode, spinnerGlyph, _header));
+        IReadOnlyList<Cluster.WorkerSummary>? workers = null;
+        if (_workersProvider != null)
+            workers = _workersProvider();
+        IReadOnlyList<string>? warnings = null;
+        if (_warningsProvider != null)
+            warnings = _warningsProvider();
+        _frame.AddLines(LiveDashboardLayout.Render(snapshots, width, height, _capabilities.ColorMode, spinnerGlyph, _header, workers, warnings));
         _renderer.Render(_frame, width, height);
     }
 

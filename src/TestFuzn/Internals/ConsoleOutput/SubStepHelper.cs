@@ -22,7 +22,8 @@ internal class SubStepHelper
                 Exception = child.Exception,
                 Comments = child.Comments,
                 Attachments = child.Attachments,
-                Id = child.Id
+                Id = child.Id,
+                IsIdAutomatic = child.IsIdAutomatic
             };
 
             node.StepResults.AddRange(GetSubStepResults(child, [.. parentStepNumber, index + 1], node.Level));

@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Configuration;
 
 [TestClass]
+[Tags("integration")]
 public class AppConfigurationManagerTests : Test
 {
     [Test]
@@ -26,7 +27,6 @@ public class AppConfigurationManagerTests : Test
             {
                 Assert.IsTrue(context.AppConfiguration.HasValue("KeyThatExists"));
                 Assert.IsFalse(context.AppConfiguration.HasValue("KeyThatDoesNotExist"));
-            })
-            .Run();
+            });
     }
 }

@@ -8,6 +8,9 @@ internal class TestResult
     public string Name { get; set; }
     public string FullName { get; set; }
     public string Id { get; set; }
+    internal bool IsIdAutomatic { get; set; }
+    internal Exception? Failure { get; set; }
+    internal string? FailedIn { get; set; }
     public KeyValueList Metadata { get; set; }
     public List<string> Tags { get; set; }
     public string Description { get; set; }
@@ -48,6 +51,7 @@ internal class TestResult
         Name = testInfo.Name;
         FullName = testInfo.FullName;
         Id = testInfo.Id;
+        IsIdAutomatic = testInfo.IsIdAutomatic;
         Description = testInfo.Description;
         Metadata = testInfo.Metadata;
         Tags = testInfo.Tags;

@@ -113,15 +113,19 @@ internal abstract class BaseTestFuznRunnerAdapter : ITestFrameworkAdapter, IDisp
         WriteLines(LoadSummaryLayout.Render(scenarioLoadResults, width, ColorMode, reportPath, header));
     }
 
-    public string TestResultsDirectory
+    public string TestResultsDirectory => DefaultTestResultsDirectory;
+
+    /// <summary>
+    /// The test exe's folder. Both runners write the TestFuznResults folder here.
+    /// </summary>
+    internal static string DefaultTestResultsDirectory
     {
         get
         {
-            // Returns the entry assembly's directory so TestFuzn writes its
-            // TestFuznResults folder there, matching the MSTest adapter which
-            // places TestFuznResults as a sibling of MSTest's TestResults folder.
-            var assemblyLocation = System.Reflection.Assembly.GetEntryAssembly().Location;
-            return Path.GetDirectoryName(assemblyLocation)!;
+            var assemblyLocation = Assembly.GetEntryAssembly()?.Location;
+            return string.IsNullOrEmpty(assemblyLocation)
+                ? AppContext.BaseDirectory
+                : Path.GetDirectoryName(assemblyLocation)!;
         }
     }
 

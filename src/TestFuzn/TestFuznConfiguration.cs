@@ -1,6 +1,7 @@
 ﻿using Fuzn.TestFuzn.Contracts.Plugins;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Sinks;
+using Fuzn.TestFuzn.Internals.Cluster;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn;
@@ -55,6 +56,9 @@ public class TestFuznConfiguration
     public IServiceCollection Services { get; }
 
     internal List<IContextPlugin> ContextPlugins { get; set; } = new();
+
+    // Cluster runs and the controller, through Cockpit.
+    internal Internals.Cluster.Remote.ClusterRuntime ClusterRuntime { get; } = new();
 
     /// <summary>
     /// Gets the configuration manager that provides access to application configuration settings.

@@ -2,6 +2,7 @@
 
 
 [TestClass]
+[Tags("integration")]
 [TargetEnvironments("doesntexist")]
 public class EnvironmentAttributeOnClassAndMethodTests : Test
 {
@@ -14,8 +15,7 @@ public class EnvironmentAttributeOnClassAndMethodTests : Test
             .Step("Step 1", context => 
             {
                 Assert.AreEqual("test", context.Info.TargetEnvironment);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -25,7 +25,6 @@ public class EnvironmentAttributeOnClassAndMethodTests : Test
         await Scenario()
             .Step("Step 1", context => 
             {
-            })
-            .Run();
+            });
     }
 }

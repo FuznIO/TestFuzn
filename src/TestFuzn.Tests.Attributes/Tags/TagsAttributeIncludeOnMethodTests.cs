@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Attributes.Tags;
 
 [TestClass]
-[Tags("Tag3")]
+[Tags("Tag3", "integration")]
 public class TagsAttributeIncludeOnMethodTests : Test
 {
     [Test]
@@ -20,8 +20,7 @@ public class TagsAttributeIncludeOnMethodTests : Test
                 Assert.Contains("Tag2", state.TestExecutionState.TestClassInstance.TestInfo.Tags);
                 Assert.Contains("Tag3", state.TestExecutionState.TestClassInstance.TestInfo.Tags);
                 
-            })
-            .Run();
+            });
     }
 
     [Test]

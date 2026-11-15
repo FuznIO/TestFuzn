@@ -2,6 +2,8 @@
 
 TestFuzn automatically generates HTML and XML reports for both standard tests and load tests.
 
+The HTML reports look like [Cockpit](cockpit.md), so a run reads the same in both places. They follow the light or dark mode of your browser.
+
 ---
 
 ## Standard Test Reports
@@ -24,15 +26,19 @@ Each load test generates its own dedicated report files:
 
 The load test reports include:
 - Phase timings (Init, Warmup, Execution, Cleanup)
-- Performance metrics (RPS, response times, percentiles)
+- Performance metrics for ok and failed iterations: count, iterations per second, mean, median, P75, P90, P95, P99, min, max and standard deviation
+- Charts over the run: iterations per second, duration (P95, mean, P50, P90, P99) and virtual users
+- Response time against load: P95 next to iterations per second, when the load changed enough during the run
+- Duration distribution: how many ok and failed iterations fell in each time range
 - Per-step breakdown and error summary
-- Snapshot timeline showing metrics over time
+- Snapshot details with the totals at each snapshot
+- Load machines: CPU, memory and iteration start lag of each machine that made the load. A run without a cluster shows one row, named after the machine; above 80 % CPU the row is marked, because a busy load machine makes durations look slow.
 
 ---
 
 ## Report Location
 
-By default, reports are saved under a `TestFuznResults` directory next to the test framework's own results folder:
+By default, reports are saved under a `TestFuznResults` directory in the test exe's folder, for example `bin/Debug/net10.0`. Both runners use this folder:
 
 ```
 {base}/TestFuznResults/{assembly-name}/{run-id}/
@@ -42,8 +48,6 @@ By default, reports are saved under a `TestFuznResults` directory next to the te
 ├──  LoadTestReport-*.xml
 ├──  Attachments/
 ```
-
-`{base}` is the parent of the test framework's results folder — for MSTest that means `TestFuznResults` is created as a sibling of MSTest's `TestResults`, not inside it.
 
 You can override the location with:
 - Environment variable: `TESTFUZN_RESULTS_DIRECTORY`

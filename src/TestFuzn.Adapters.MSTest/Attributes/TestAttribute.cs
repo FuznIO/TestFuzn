@@ -78,10 +78,22 @@ public class TestAttribute : TestMethodAttribute
     internal TestInfo GetTestInfo(MethodInfo methodInfo)
     {
         var testInfo = new TestInfo();
-        testInfo.Name = methodInfo.Name.Replace("_", " ");
+        if (string.IsNullOrWhiteSpace(Name))
+            testInfo.Name = methodInfo.Name.Replace("_", " ");
+        else
+        {
+            testInfo.Name = Name;
+            testInfo.HasAttributeName = true;
+        }
         testInfo.FullName = methodInfo.DeclaringType.FullName + "." + methodInfo.Name;
         testInfo.Description = Description;
-        testInfo.Id = Id;
+        if (string.IsNullOrWhiteSpace(Id))
+        {
+            testInfo.Id = StableId.Of(testInfo.FullName);
+            testInfo.IsIdAutomatic = true;
+        }
+        else
+            testInfo.Id = Id.Trim();
         testInfo.Group = GetGroupInfo(methodInfo);
         testInfo.Tags = GetTags(methodInfo);
         testInfo.Metadata = GetMetadata(methodInfo);

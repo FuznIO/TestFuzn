@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.ExecutionType.Standard.InputData;
 
 [TestClass]
+[Tags("integration")]
 public class InputDataTests :  Test
 {
     [Test]
@@ -24,8 +25,7 @@ public class InputDataTests :  Test
             .Step("Verify", context =>
             {
                 userExecuted[context.InputData<User>().Name] = true;
-            })
-            .Run();
+            });
 
         foreach (var user in userExecuted)
         {
@@ -55,8 +55,7 @@ public class InputDataTests :  Test
             .Step("Verify", context =>
             {
                 userExecuted[context.InputData<User>().Name] = true;
-            })
-            .Run();
+            });
 
         foreach (var user in userExecuted)
         {
@@ -77,8 +76,7 @@ public class InputDataTests :  Test
             .Step("Verify", context =>
             {
                 userExecuted[context.InputData<User>().Name] = true;
-            })
-            .Run();
+            });
 
         foreach (var user in userExecuted)
         {
@@ -99,8 +97,7 @@ public class InputDataTests :  Test
             .Step("Verify", context =>
             {
                 executed[context.InputData<string>()] = true;
-            })
-            .Run();
+            });
 
         foreach (var user in executed)
         {
@@ -121,8 +118,7 @@ public class InputDataTests :  Test
             .Step("Verify", context =>
             {
                 executed[context.InputData<int>().ToString()] = true;
-            })
-            .Run();
+            });
 
         foreach (var user in executed)
         {
@@ -146,8 +142,7 @@ public class InputDataTests :  Test
                  .AssertInternalState((state) =>
                  {
                      Assert.AreEqual(TestStatus.Failed, state.TestExecutionState.TestResult.Status);
-                 })
-                 .Run();
+                 });
         }
         catch (AssertFailedException)
         {

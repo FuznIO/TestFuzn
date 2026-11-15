@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Fuzn.TestFuzn.Internals.State;
+﻿using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 
@@ -21,46 +20,20 @@ internal class FixedLoadHandler : ILoadHandler
 
     public async Task Execute()
     {
-        var rate = _configuration.Rate;
-        var interval = _configuration.Interval;
-        var duration = _configuration.Duration;
+        await TimedStarts.Run(
+            StartTimes(_configuration.Rate, _configuration.Interval),
+            _configuration.Duration,
+            _scenario,
+            _configuration.IsWarmup,
+            _testExecutionState);
+    }
 
-        var totalIntervals = Math.Ceiling((double) duration.TotalSeconds / interval.TotalSeconds);
-        var delayBetweenEnqueue = TimeSpan.FromTicks(interval.Ticks / rate);
+    internal static IEnumerable<TimeSpan> StartTimes(int rate, TimeSpan interval)
+    {
+        if (rate <= 0)
+            yield break;
 
-        var intervalStopwatch = new Stopwatch();
-        var currentIntervalIndex = 0;
-
-        while (currentIntervalIndex < totalIntervals
-            && _testExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
-        {
-            currentIntervalIndex++;
-
-            intervalStopwatch.Reset();
-            intervalStopwatch.Start();
-
-            for (int i = 0; i < rate; i++)
-            {
-                if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
-                    return;
-
-                var message = new ExecuteScenarioMessage(_scenario, _configuration.IsWarmup);
-                _testExecutionState.EnqueueScenarioExecution(message);
-
-                var nextEnqueueTime = delayBetweenEnqueue.Ticks * (i + 1);
-                var delay = TimeSpan.FromTicks(nextEnqueueTime - intervalStopwatch.ElapsedTicks);
-
-                if (delay.TotalMilliseconds > 0)
-                    await Task.Delay(delay, _testExecutionState.CancellationToken);
-            }
-
-            intervalStopwatch.Stop();
-
-            var intervalDelay = interval - intervalStopwatch.Elapsed;
-            if (intervalDelay.TotalMilliseconds > 0)
-            {
-                await Task.Delay(intervalDelay, _testExecutionState.CancellationToken);
-            }
-        }
+        for (long index = 0; ; index++)
+            yield return TimeSpan.FromTicks((long) ((Int128) index * interval.Ticks / rate));
     }
 }

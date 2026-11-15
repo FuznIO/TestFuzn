@@ -6,39 +6,40 @@ namespace Fuzn.TestFuzn;
 public class WarmupStats
 {
     /// <summary>
-    /// Gets the number of successful warmup iterations.
+    /// Gets the number of warmup iterations.
     /// </summary>
-    public int OkCount { get; }
+    public int Count { get; }
 
     /// <summary>
-    /// Gets the number of failed warmup iterations.
+    /// Gets the counts of the ok warmup iterations.
     /// </summary>
-    public int FailedCount { get; }
+    public WarmupOutcomeStats Ok { get; }
 
     /// <summary>
-    /// Gets the total number of warmup iterations (OkCount + FailedCount).
+    /// Gets the counts of the failed warmup iterations.
     /// </summary>
-    public int TotalCount => OkCount + FailedCount;
+    public WarmupOutcomeStats Failed { get; }
 
     /// <summary>
-    /// Gets the rate of successful warmup iterations (0.0 to 1.0).
+    /// Gets the share of ok warmup iterations (0.0 to 1.0).
     /// </summary>
-    public double OkRate => TotalCount == 0 ? 0 : (double) OkCount / TotalCount;
+    public double OkRate => Count == 0 ? 0 : (double) Ok.Count / Count;
 
     /// <summary>
-    /// Gets the rate of failed warmup iterations (0.0 to 1.0).
+    /// Gets the share of failed warmup iterations (0.0 to 1.0).
     /// </summary>
-    public double FailedRate => TotalCount == 0 ? 0 : (double) FailedCount / TotalCount;
+    public double FailedRate => Count == 0 ? 0 : (double) Failed.Count / Count;
 
     /// <summary>
-    /// Gets the elapsed time since the warmup phase started.
+    /// Gets the time since the warmup phase started.
     /// </summary>
-    public TimeSpan Duration { get; }
+    public TimeSpan Elapsed { get; }
 
     internal WarmupStats(int okCount, int failedCount, TimeSpan elapsed)
     {
-        OkCount = okCount;
-        FailedCount = failedCount;
-        Duration = elapsed;
+        Ok = new WarmupOutcomeStats(okCount);
+        Failed = new WarmupOutcomeStats(failedCount);
+        Count = okCount + failedCount;
+        Elapsed = elapsed;
     }
 }

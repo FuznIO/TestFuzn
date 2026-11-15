@@ -3,71 +3,77 @@
 namespace Fuzn.TestFuzn;
 
 /// <summary>
-/// Provides load test statistics for assertions.
+/// Provides the load statistics of a scenario's iterations or of a step's runs, for assertions.
 /// </summary>
 public class AssertStats
 {
     /// <summary>
-    /// Gets the total number of requests.
+    /// Gets the number of iterations, or of step runs.
     /// </summary>
-    public int RequestCount { get; internal set; }
+    public int Count { get; internal set; }
 
     /// <summary>
-    /// Gets the number of requests per second.
+    /// Gets the number of iterations, or of step runs, per second.
     /// </summary>
-    public int RequestsPerSecond { get; internal set; }
+    public int PerSecond { get; internal set; }
 
     /// <summary>
-    /// Gets the minimum response time.
+    /// Gets the shortest duration.
     /// </summary>
-    public TimeSpan ResponseTimeMin { get; internal set; }
+    public TimeSpan DurationMin { get; internal set; }
 
     /// <summary>
-    /// Gets the maximum response time.
+    /// Gets the longest duration.
     /// </summary>
-    public TimeSpan ResponseTimeMax { get; internal set; }
+    public TimeSpan DurationMax { get; internal set; }
 
     /// <summary>
-    /// Gets the mean (average) response time.
+    /// Gets the mean (average) duration.
     /// </summary>
-    public TimeSpan ResponseTimeMean { get; internal set; }
+    public TimeSpan DurationMean { get; internal set; }
 
     /// <summary>
-    /// Gets the standard deviation of response times.
+    /// Gets the standard deviation of the durations.
     /// </summary>
-    public TimeSpan ResponseTimeStandardDeviation { get; internal set; }
+    public TimeSpan DurationStandardDeviation { get; internal set; }
 
     /// <summary>
-    /// Gets the median (50th percentile) response time.
+    /// Gets the median (50th percentile) duration.
     /// </summary>
-    public TimeSpan ResponseTimeMedian { get; internal set; }
+    public TimeSpan DurationMedian { get; internal set; }
 
     /// <summary>
-    /// Gets the 75th percentile response time.
+    /// Gets the 75th percentile duration.
     /// </summary>
-    public TimeSpan ResponseTimePercentile75 { get; internal set; }
+    public TimeSpan DurationPercentile75 { get; internal set; }
 
     /// <summary>
-    /// Gets the 95th percentile response time.
+    /// Gets the 90th percentile duration.
     /// </summary>
-    public TimeSpan ResponseTimePercentile95 { get; internal set; }
+    public TimeSpan DurationPercentile90 { get; internal set; }
 
     /// <summary>
-    /// Gets the 99th percentile response time.
+    /// Gets the 95th percentile duration.
     /// </summary>
-    public TimeSpan ResponseTimePercentile99 { get; internal set; }
+    public TimeSpan DurationPercentile95 { get; internal set; }
+
+    /// <summary>
+    /// Gets the 99th percentile duration.
+    /// </summary>
+    public TimeSpan DurationPercentile99 { get; internal set; }
 
     internal AssertStats(Stats stats)
     {
-        RequestCount = stats.RequestCount;
-        RequestsPerSecond = stats.RequestsPerSecond;
-        ResponseTimeMin = stats.ResponseTimeMin;
-        ResponseTimeMax = stats.ResponseTimeMax;
-        ResponseTimeMean = stats.ResponseTimeMean;
-        ResponseTimeStandardDeviation = stats.ResponseTimeStandardDeviation;
-        ResponseTimeMedian = stats.ResponseTimeMedian;
-        ResponseTimePercentile75 = stats.ResponseTimePercentile75;
-        ResponseTimePercentile95 = stats.ResponseTimePercentile95;
-        ResponseTimePercentile99 = stats.ResponseTimePercentile99;
+        Count = stats.Count;
+        PerSecond = stats.PerSecond;
+        DurationMin = stats.DurationMin;
+        DurationMax = stats.DurationMax;
+        DurationMean = stats.DurationMean;
+        DurationStandardDeviation = stats.DurationStandardDeviation;
+        DurationMedian = stats.DurationMedian;
+        DurationPercentile75 = stats.DurationPercentile75;
+        DurationPercentile90 = stats.DurationPercentile90;
+        DurationPercentile95 = stats.DurationPercentile95;
+        DurationPercentile99 = stats.DurationPercentile99;
     }
 }

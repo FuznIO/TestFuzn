@@ -1,4 +1,5 @@
 ﻿using Fuzn.TestFuzn.Contracts;
+using Fuzn.TestFuzn.Internals.Cluster;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
 using Fuzn.TestFuzn.Internals.InputData;
@@ -31,6 +32,12 @@ internal class InitManager
             _testExecutionState.LoadCollectors[scenario.Name].MarkPhaseAsStarted(LoadTestPhase.Init, startedTimestamp);
         }
 
+        var cluster = _testExecutionState.TestSession.Cluster;
+        if (cluster.Role == ClusterRole.LoadChild)
+            OnceHooks.ApplyOnceData(_testExecutionState);
+        else if (_testExecutionState.TestType == TestType.Load)
+            await OnceHooks.RunBefore(_testExecutionState, _serviceProvider);
+
         await ExecuteBeforeTestMethod();
         
         var initPerScenarioTasks = new List<Task>();
@@ -40,12 +47,19 @@ internal class InitManager
         
         await Task.WhenAll(initPerScenarioTasks);
 
-         _inputDataFeeder.Init(_testExecutionState);
+        _inputDataFeeder.Init(_testExecutionState);
+
+        if (cluster.Role == ClusterRole.LoadChild)
+            RecordInputDataFingerprints();
 
         await SetupSimulations();
 
+        // The descriptions keep the total load; the split below only changes what this worker runs.
         foreach (var scenario in _testExecutionState.Scenarios)
             _testExecutionState.LoadCollectors[scenario.Name].CacheSimulationDescriptions(scenario);
+
+        if (cluster.WorkerCount > 1 && _testExecutionState.TestType == TestType.Load)
+            SplitSimulations(cluster);
 
         var timestamp = DateTime.UtcNow;
 
@@ -68,7 +82,7 @@ internal class InitManager
     {
         if (scenario.BeforeScenario != null)
         {
-            var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "BeforeScenario", _testExecutionState.CancellationToken);
+            var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "BeforeScenario", _testExecutionState.CancellationToken, scenario);
             await scenario.BeforeScenario(context);
         }
 
@@ -77,8 +91,33 @@ internal class InitManager
 
         if (scenario.InputDataInfo.SourceType == InputDataSourceType.Action)
         {
-            var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "InputData", _testExecutionState.CancellationToken);
+            var context = ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "InputData", _testExecutionState.CancellationToken, scenario);
             scenario.InputDataInfo.InputDataList = await scenario.InputDataInfo.InputDataAction(context);
+        }
+    }
+
+    private void RecordInputDataFingerprints()
+    {
+        foreach (var scenario in _testExecutionState.Scenarios)
+        {
+            var inputData = scenario.InputDataInfo.InputDataList;
+            if (!scenario.InputDataInfo.HasInputData || inputData == null)
+                continue;
+
+            _testExecutionState.LoadCollectors[scenario.Name].SetInputDataInfo(inputData.Count, InputDataFingerprint.Hash(inputData));
+        }
+    }
+
+    private void SplitSimulations(ClusterSessionInfo cluster)
+    {
+        foreach (var scenario in _testExecutionState.Scenarios)
+        {
+            var parts = scenario.SimulationsInternal
+                .Select(simulation => simulation.Split(cluster.WorkerIndex, cluster.WorkerCount, cluster.Seed))
+                .ToList();
+
+            scenario.SimulationsInternal.Clear();
+            scenario.SimulationsInternal.AddRange(parts);
         }
     }
 
@@ -99,12 +138,12 @@ internal class InitManager
                 if (scenario.WarmupAction != null)
                 {
                     await scenario.WarmupAction(
-                        ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "Warmup", _testExecutionState.CancellationToken),
+                        ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "Warmup", _testExecutionState.CancellationToken, scenario),
                         new SimulationsBuilder(scenario, isWarmup: true));
                 }
 
                 await scenario.SimulationsAction(
-                    ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "Simulations", _testExecutionState.CancellationToken),
+                    ContextFactory.CreateScenarioContext(_testExecutionState.TestSession, _serviceProvider, _testExecutionState.TestFramework, "Simulations", _testExecutionState.CancellationToken, scenario),
                     new SimulationsBuilder(scenario, isWarmup: false));
             }
 

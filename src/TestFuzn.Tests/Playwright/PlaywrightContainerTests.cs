@@ -7,9 +7,11 @@ using Microsoft.Playwright;
 namespace Fuzn.TestFuzn.Tests.Playwright;
 
 [TestClass]
+[Tags("integration")]
 public class PlaywrightContainerTests : Test
 {
     [Test]
+    [Tags("load")]
     public async Task Verify_configuration_is_singleton()
     {
         var identities = new ConcurrentBag<int>();
@@ -20,13 +22,13 @@ public class PlaywrightContainerTests : Test
                 var config = context.ServicesProvider.GetRequiredService<PlaywrightPluginConfiguration>();
                 identities.Add(RuntimeHelpers.GetHashCode(config));
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5));
 
         Assert.AreEqual(1, identities.Distinct().Count());
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_playwright_instance_is_shared_across_iterations()
     {
         var identities = new ConcurrentBag<int>();
@@ -37,13 +39,13 @@ public class PlaywrightContainerTests : Test
                 var playwright = context.GetPlaywright();
                 identities.Add(RuntimeHelpers.GetHashCode(playwright));
             })
-            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
-            .Run();
+            .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5));
 
         Assert.AreEqual(1, identities.Distinct().Count());
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_browser_context_isolation_across_iterations()
     {
         await Scenario()
@@ -76,9 +78,8 @@ public class PlaywrightContainerTests : Test
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(5))
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(5, stats.Ok.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(5, stats.Ok.Count);
+            });
     }
 
     [Test]
@@ -108,11 +109,11 @@ public class PlaywrightContainerTests : Test
                 var leaked = page2Cookies.Where(c => c.Name == "page1-only").ToList();
 
                 Assert.AreEqual(0, leaked.Count);
-            })
-            .Run();
+            });
     }
 
     [Test]
+    [Tags("load")]
     public async Task Verify_page_creation_works_after_prior_iteration_cleanup()
     {
         var iterationCount = 0;
@@ -131,9 +132,8 @@ public class PlaywrightContainerTests : Test
             .Load().Simulations((context, simulations) => simulations.OneTimeLoad(3))
             .Load().AssertWhenDone((context, stats) =>
             {
-                Assert.AreEqual(3, stats.Ok.RequestCount);
-            })
-            .Run();
+                Assert.AreEqual(3, stats.Ok.Count);
+            });
 
         Assert.AreEqual(3, iterationCount);
     }
@@ -149,7 +149,6 @@ public class PlaywrightContainerTests : Test
 
                 var playwright = context.GetPlaywright();
                 Assert.IsNotNull(playwright);
-            })
-            .Run();
+            });
     }
 }

@@ -62,6 +62,10 @@ internal class ProducerManager
                         await Task.Delay(TimeSpan.FromMilliseconds(100), _testExecutionState.CancellationToken);
 
                     loadCollector!.MarkPhaseAsCompleted(LoadTestPhase.Warmup, DateTime.UtcNow);
+
+                    var loadChild = _testExecutionState.TestSession.Cluster.LoadChild;
+                    if (loadChild != null)
+                        await loadChild.WarmupDoneAndWaitForMeasurement(scenario.Name);
                 }
             }
 

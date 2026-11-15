@@ -7,28 +7,31 @@
     <File Path="../.github/workflows/publish-package.yml" />
     <File Path="../README.md" />
     <File Path="../UPGRADING.md" />
-    <File Path="Start-TestServices.ps1" />
+    <File Path="../Start-Dev.ps1" />
   </Folder>
   <Folder Name="/Docs/">
     <File Path="../docs/api-reference.md" />
+    <File Path="../docs/cockpit.md" />
     <File Path="../docs/configuration.md" />
     <File Path="../docs/environments.md" />
     <File Path="../docs/filtering.md" />
     <File Path="../docs/getting-started.md" />
     <File Path="../docs/http-testing.md" />
-    <File Path="../docs/influxdb-grafana.md" />
     <File Path="../docs/input-data.md" />
     <File Path="../docs/lifecycle.md" />
     <File Path="../docs/load-testing.md" />
     <File Path="../docs/mstest.md" />
+    <File Path="../docs/pipelines.md" />
     <File Path="../docs/playwright-testing.md" />
     <File Path="../docs/README.md" />
+    <File Path="../docs/cluster-runs.md" />
     <File Path="../docs/scenarios.md" />
     <File Path="../docs/shared-data.md" />
     <File Path="../docs/shared-steps.md" />
     <File Path="../docs/test-runners.md" />
     <File Path="../docs/steps.md" />
     <File Path="../docs/test-reports.md" />
+    <File Path="../docs/worker-setup.md" />
     <File Path="../UPGRADING.md" />
   </Folder>
   <Folder Name="/Sample/">
@@ -40,9 +43,10 @@
   <Project Path="TestFuzn.Plugins.Http/TestFuzn.Plugins.Http.csproj" />
   <Project Path="TestFuzn.Plugins.Playwright/TestFuzn.Plugins.Playwright.csproj" />
   <Project Path="TestFuzn.Plugins.WebSocket/TestFuzn.Plugins.WebSocket.csproj" />
-  <Project Path="TestFuzn.Sinks.InfluxDB/TestFuzn.Sinks.InfluxDB.csproj" />
   <Project Path="TestFuzn.Tests/TestFuzn.Tests.csproj" />
   <Project Path="TestFuzn.Tests.Attributes/TestFuzn.Tests.Attributes.csproj" />
+  <Project Path="TestFuzn.Tests.Cluster/TestFuzn.Tests.Cluster.csproj" />
   <Project Path="TestFuzn.Tests.DefaultHttpClient/TestFuzn.Tests.DefaultHttpClient.csproj" />
+  <Project Path="TestFuzn.Worker/TestFuzn.Worker.csproj" />
   <Project Path="TestWebApp/TestWebApp.csproj" />
 </Solution>

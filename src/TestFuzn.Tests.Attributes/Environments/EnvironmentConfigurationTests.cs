@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Attributes.Environments;
 
 [TestClass]
+[Tags("integration")]
 public class EnvironmentConfigurationTests : Test
 {
     [Test]
@@ -24,7 +25,6 @@ public class EnvironmentConfigurationTests : Test
 
                 Assert.AreEqual("test", context.Info.TargetEnvironment);
                 Assert.AreEqual("dev", context.Info.ExecutionEnvironment);
-            })
-            .Run();
+            });
     }
 }

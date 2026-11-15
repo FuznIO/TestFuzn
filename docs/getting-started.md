@@ -16,7 +16,7 @@ Built on top of **MSTest v4**, TestFuzn provides a fluent, scenario-based approa
 - 💻 **C# / .NET first** — Write all your tests in C#. Leverages the power of .NET to keep things fast and flexible.
 - ✅ **MSTest compatible** — Built-in support for the widely used MSTest framework — reuse what you already know and love.
 - 🖥️ **Live load test view** — Run load tests with `--runner=testfuzn` and watch the phases, per-step stats and errors live in the terminal. See [Test Runners](test-runners.md).
-- 📈 **Real-time statistics** — Stream load test metrics to InfluxDB/Grafana for live monitoring.
+- 🌍 **Cluster runs** — Run a load test on one or many worker machines with `--cluster`, watch it live and get the report back. See [Cluster Runs](cluster-runs.md).
 
 ### 💸 License & Usage
 
@@ -52,11 +52,7 @@ For Playwright/browser testing support:
 dotnet add package Fuzn.TestFuzn.Plugins.Playwright
 ```
 
-For InfluxDB real-time statistics:
-
-```bash
-dotnet add package Fuzn.TestFuzn.Sinks.InfluxDB
-```
+Cluster runs need no extra package: they are part of TestFuzn (see [Cluster Runs](cluster-runs.md)).
 
 ### Project Setup
 
@@ -67,17 +63,13 @@ Your test project should use `MSTest.Sdk`:
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
-    <EnableMSTestRunner>true</EnableMSTestRunner>
-    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fuzn.TestFuzn" Version="0.7.6" />
-    <PackageReference Include="Fuzn.TestFuzn.Adapters.MSTest" Version="0.7.6" />
-    <PackageReference Include="Fuzn.TestFuzn.Plugins.Http" Version="0.7.6" />
+    <PackageReference Include="Fuzn.TestFuzn" Version="0.9.0" />
+    <PackageReference Include="Fuzn.TestFuzn.Adapters.MSTest" Version="0.9.0" />
+    <PackageReference Include="Fuzn.TestFuzn.Plugins.Http" Version="0.9.0" />
   </ItemGroup>
 
 </Project>
@@ -85,7 +77,9 @@ Your test project should use `MSTest.Sdk`:
 
 ### Microsoft.Testing.Platform
 
-`EnableMSTestRunner` runs your tests on [Microsoft.Testing.Platform](https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro), Microsoft's lightweight, portable alternative to VSTest and the runner MSTest v4 is built around. It's embedded directly in your test project — no `vstest.console`, no external runner. Your test project simply compiles to an executable you can run anywhere, including CI.
+`MSTest.Sdk` runs your tests on [Microsoft.Testing.Platform](https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro), Microsoft's lightweight, portable alternative to VSTest and the runner MSTest v4 is built around. It's embedded directly in your test project — no `vstest.console`, no external runner. Your test project simply compiles to an executable you can run anywhere, including CI.
+
+`Fuzn.TestFuzn.Adapters.MSTest` adds the entry point of that executable. It starts TestFuzn before the first test and writes the reports after the last test, so you need no `Program.cs` and no setup code. To write your own `Main`, see [Test Runners](test-runners.md#your-own-main).
 
 ### IDE setup
 
@@ -101,7 +95,7 @@ For live console output while a load test runs, see [Test Runners](test-runners.
 
 ### 1. Create a Startup Class
 
-Every test project needs a `Startup` class to initialize TestFuzn:
+Every test project needs one `Startup` class. It configures TestFuzn:
 
 ```csharp
 using Fuzn.TestFuzn;
@@ -109,21 +103,8 @@ using Fuzn.TestFuzn.Plugins.Http;
 
 namespace SampleApp.Tests;
 
-[TestClass]
 public class Startup : IStartup
 {
-    [AssemblyInitialize]
-    public static async Task Initialize(TestContext testContext)
-    {
-        await TestFuznIntegration.Init<Startup>(testContext);
-    }
-
-    [AssemblyCleanup]
-    public static async Task Cleanup(TestContext testContext)
-    {
-        await TestFuznIntegration.Cleanup(testContext);
-    }
-
     public void Configure(TestFuznConfiguration configuration)
     {
         // For HTTP testing, optional.
@@ -157,8 +138,7 @@ public class ProductHttpTests : Test
             .Step("Step 2 - Verify", context =>
             {
                 Assert.IsTrue(true);
-            })
-            .Run();
+            });
     }
 }
 ```

@@ -1,50 +1,17 @@
-﻿using Fuzn.TestFuzn.Internals;
-using Fuzn.TestFuzn.Plugins.Http;
+﻿using Fuzn.TestFuzn.Plugins.Http;
 using Fuzn.TestFuzn.Plugins.Playwright;
 using Fuzn.TestFuzn.Plugins.WebSocket;
-using Fuzn.TestFuzn.Sinks.InfluxDB;
 using Fuzn.TestFuzn.Tests.Cancellation;
 using Fuzn.TestFuzn.Tests.IocContainer;
-using Fuzn.TestFuzn.Tests.Lifecycle;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Fuzn.TestFuzn.Tests;
 
-[TestClass]
 public class Startup : IStartup, IBeforeSuite, IAfterSuite
 {
     public static bool BeforeSuiteExecuted = false;
     public static bool AfterSuiteExecuted = false;
     public static readonly TrackingContextPlugin TrackingPlugin = new();
-
-    [AssemblyInitialize]
-    public static async Task Initialize(TestContext testContext)
-    {
-        await TestFuznIntegration.Init<Startup>(testContext);
-    }
-
-    [AssemblyCleanup]
-    public static async Task Cleanup(TestContext testContext)
-    {
-        if (ClassLifecycleTests.AnyTestExecuted)
-        {
-            Assert.AreEqual(1, ClassLifecycleTests.BeforeClassCallCount, "IBeforeClass.BeforeClass should be called exactly once.");
-            Assert.IsTrue(ClassLifecycleTests.AfterClassCalled, "IAfterClass.AfterClass was not called.");
-        }
-
-        await TestFuznIntegration.Cleanup(testContext);
-        Assert.IsTrue(AfterSuiteExecuted);
-
-        var sessions = TestSessionRegistry.TestSessions;
-        if (sessions == null)
-            return;
-
-        var testFramework = new MsTestRunnerAdapter(testContext);
-        foreach (var session in sessions)
-        {
-            await session.Value.Cleanup(testFramework);
-        }
-    }
 
     public void Configure(TestFuznConfiguration configuration)
     {
@@ -105,7 +72,6 @@ public class Startup : IStartup, IBeforeSuite, IAfterSuite
             // Configure custom serializer for WebSocket JSON messages
             // config.Serializer = new NewtonsoftSerializerProvider();
         });
-        configuration.UseInfluxDB();
         configuration.AddContextPlugin(TrackingPlugin);
 
         configuration.Services.AddSingleton<SingletonMarker>();

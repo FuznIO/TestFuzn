@@ -1,6 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
+[Tags("integration")]
 public class SkipTests : Test
 {
     [Test]
@@ -17,8 +18,7 @@ public class SkipTests : Test
                 Assert.IsTrue(state.TestExecutionState.TestClassInstance.TestInfo.Skipped);
                 Assert.IsTrue(state.TestExecutionState.TestClassInstance.TestInfo.HasSkipAttribute);
                 Assert.IsTrue(string.IsNullOrEmpty(state.TestExecutionState.TestClassInstance.TestInfo.SkipReason));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -35,7 +35,6 @@ public class SkipTests : Test
                 Assert.IsTrue(state.TestExecutionState.TestClassInstance.TestInfo.Skipped);
                 Assert.IsTrue(state.TestExecutionState.TestClassInstance.TestInfo.HasSkipAttribute);
                 Assert.IsFalse(string.IsNullOrEmpty(state.TestExecutionState.TestClassInstance.TestInfo.SkipReason));
-            })
-            .Run();
+            });
     }
 }

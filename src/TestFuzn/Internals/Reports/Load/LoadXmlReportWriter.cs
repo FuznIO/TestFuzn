@@ -1,4 +1,5 @@
 using System.Text;
+using System.Globalization;
 using System.Xml;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Results.Load;
@@ -68,6 +69,38 @@ internal class LoadXmlReportWriter : ILoadReport
                 writer.WriteElementString("ExecutionEnvironment", _testSession.Configuration?.ExecutionEnvironment);
 
                 WriteTest(writer, loadReportData.Test);
+
+                if (loadReportData.Workers.Count > 0)
+                {
+                    var inv = CultureInfo.InvariantCulture;
+                    writer.WriteStartElement("Workers");
+                    foreach (var worker in loadReportData.Workers)
+                    {
+                        writer.WriteStartElement("Worker");
+                        writer.WriteElementString("Id", worker.Id);
+                        writer.WriteElementString("State", worker.State);
+                        writer.WriteElementString("Os", worker.Os);
+                        writer.WriteElementString("CpuCores", worker.CpuCores.ToString(inv));
+                        writer.WriteElementString("Iterations", worker.Iterations.ToString(inv));
+                        writer.WriteElementString("Errors", worker.Errors.ToString(inv));
+                        writer.WriteElementString("CpuAveragePercent", worker.CpuAveragePercent.ToString(inv));
+                        writer.WriteElementString("CpuMaxPercent", worker.CpuMaxPercent.ToString(inv));
+                        writer.WriteElementString("MemoryMaxMb", worker.MemoryMaxMb.ToString(inv));
+                        writer.WriteElementString("IterationStartLagMaxMs", worker.IterationStartLagMaxMs.ToString(inv));
+                        writer.WriteElementString("CpuWarning", worker.HasCpuWarning ? "true" : "false");
+                        writer.WriteElementString("LogFolder", worker.LogFolder);
+                        writer.WriteEndElement();
+                    }
+                    writer.WriteEndElement();
+                }
+
+                if (loadReportData.Warnings.Count > 0)
+                {
+                    writer.WriteStartElement("Warnings");
+                    foreach (var warning in loadReportData.Warnings)
+                        writer.WriteElementString("Warning", warning);
+                    writer.WriteEndElement();
+                }
 
                 writer.WriteStartElement("Scenarios");
                 foreach (var scenarioResult in loadReportData.ScenarioResults)
@@ -203,9 +236,71 @@ internal class LoadXmlReportWriter : ILoadReport
 
         WriteSteps(writer, scenarioResult.Steps.Values.ToList());
 
+        if (scenarioResult.Hooks.Count > 0)
+        {
+            writer.WriteStartElement("Hooks");
+            foreach (var hook in scenarioResult.Hooks)
+                WriteStep(writer, hook);
+            writer.WriteEndElement();
+        }
+
         WriteSnapshots(writer, data, scenarioResult.ScenarioName);
+        WriteTimeline(writer, data, scenarioResult.ScenarioName);
+        WriteDistribution(writer, data, scenarioResult.ScenarioName);
 
         writer.WriteEndElement();
+    }
+
+    private static void WriteTimeline(XmlWriter writer, LoadReportData data, string scenarioName)
+    {
+        if (!data.Timelines.TryGetValue(scenarioName, out var timeline))
+            return;
+
+        writer.WriteStartElement("Timeline");
+        foreach (var point in timeline)
+        {
+            writer.WriteStartElement("Point");
+            writer.WriteElementString("Time", point.Time.ToString("o"));
+            writer.WriteElementString("ElapsedMs", XmlConvert.ToString(point.ElapsedMs));
+            writer.WriteElementString("Seconds", XmlConvert.ToString(point.Seconds));
+            writer.WriteElementString("OkCount", XmlConvert.ToString(point.OkCount));
+            writer.WriteElementString("FailedCount", XmlConvert.ToString(point.FailedCount));
+            writer.WriteElementString("OkPerSecond", XmlConvert.ToString(point.OkPerSecond));
+            writer.WriteElementString("FailedPerSecond", XmlConvert.ToString(point.FailedPerSecond));
+            WriteOptional(writer, "MeanMs", point.MeanMs);
+            WriteOptional(writer, "P50Ms", point.P50Ms);
+            WriteOptional(writer, "P90Ms", point.P90Ms);
+            WriteOptional(writer, "P95Ms", point.P95Ms);
+            WriteOptional(writer, "P99Ms", point.P99Ms);
+            WriteOptional(writer, "VirtualUsers", point.VirtualUsers);
+            WriteOptional(writer, "TargetPerSecond", point.TargetPerSecond);
+            writer.WriteEndElement();
+        }
+        writer.WriteEndElement();
+    }
+
+    private static void WriteDistribution(XmlWriter writer, LoadReportData data, string scenarioName)
+    {
+        if (!data.Distributions.TryGetValue(scenarioName, out var buckets) || buckets.Count == 0)
+            return;
+
+        writer.WriteStartElement("Distribution");
+        foreach (var bucket in buckets)
+        {
+            writer.WriteStartElement("Bucket");
+            writer.WriteElementString("FromMs", XmlConvert.ToString(bucket.FromMs));
+            writer.WriteElementString("ToMs", XmlConvert.ToString(bucket.ToMs));
+            writer.WriteElementString("OkCount", XmlConvert.ToString(bucket.OkCount));
+            writer.WriteElementString("FailedCount", XmlConvert.ToString(bucket.FailedCount));
+            writer.WriteEndElement();
+        }
+        writer.WriteEndElement();
+    }
+
+    private static void WriteOptional(XmlWriter writer, string name, double? value)
+    {
+        if (value.HasValue)
+            writer.WriteElementString(name, XmlConvert.ToString(value.Value));
     }
 
     private void WriteSteps(XmlWriter writer, List<StepLoadResult> steps)
@@ -237,6 +332,19 @@ internal class LoadXmlReportWriter : ILoadReport
             writer.WriteEndElement();
         }
 
+        if (stepResult.StatusCodes != null && stepResult.StatusCodes.Count > 0)
+        {
+            writer.WriteStartElement("StatusCodes");
+            foreach (var code in stepResult.StatusCodes.OrderBy(code => code.Key))
+            {
+                writer.WriteStartElement("StatusCode");
+                writer.WriteElementString("Code", code.Key.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                writer.WriteElementString("Count", code.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                writer.WriteEndElement();
+            }
+            writer.WriteEndElement();
+        }
+
         if (stepResult.Steps != null && stepResult.Steps.Count > 0)
             WriteSteps(writer, stepResult.Steps);
 
@@ -255,16 +363,17 @@ internal class LoadXmlReportWriter : ILoadReport
         void Write(Stats stats)
         {
             writer.WriteElementString("TotalExecutionDuration", stats.TotalExecutionDuration.ToString());
-            writer.WriteElementString("RequestCount", stats.RequestCount.ToString());
-            writer.WriteElementString("RequestsPerSecond", stats.RequestsPerSecond.ToString());
-            writer.WriteElementString("Mean", stats.ResponseTimeMean.ToString());
-            writer.WriteElementString("Min", stats.ResponseTimeMin.ToString());
-            writer.WriteElementString("Max", stats.ResponseTimeMax.ToString());
-            writer.WriteElementString("StdDev", stats.ResponseTimeStandardDeviation.ToString());
-            writer.WriteElementString("Median", stats.ResponseTimeMedian.ToString());
-            writer.WriteElementString("P75", stats.ResponseTimePercentile75.ToString());
-            writer.WriteElementString("P95", stats.ResponseTimePercentile95.ToString());
-            writer.WriteElementString("P99", stats.ResponseTimePercentile99.ToString());
+            writer.WriteElementString("Count", stats.Count.ToString());
+            writer.WriteElementString("PerSecond", stats.PerSecond.ToString());
+            writer.WriteElementString("Mean", stats.DurationMean.ToString());
+            writer.WriteElementString("Min", stats.DurationMin.ToString());
+            writer.WriteElementString("Max", stats.DurationMax.ToString());
+            writer.WriteElementString("StdDev", stats.DurationStandardDeviation.ToString());
+            writer.WriteElementString("Median", stats.DurationMedian.ToString());
+            writer.WriteElementString("P75", stats.DurationPercentile75.ToString());
+            writer.WriteElementString("P90", stats.DurationPercentile90.ToString());
+            writer.WriteElementString("P95", stats.DurationPercentile95.ToString());
+            writer.WriteElementString("P99", stats.DurationPercentile99.ToString());
         }
     }
 

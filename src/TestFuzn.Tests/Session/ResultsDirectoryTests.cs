@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Internals.AppConfiguration;
 namespace Fuzn.TestFuzn.Tests.Session;
 
 [TestClass]
+[Tags("integration")]
 public class ResultsDirectoryTests : Test, IStartup
 {
     private static string _tempBaseDirectory = null!;
@@ -66,8 +67,7 @@ public class ResultsDirectoryTests : Test, IStartup
                 var assemblyName = typeof(ResultsDirectoryTests).Assembly.GetName().Name!;
                 var expectedPrefix = Path.Combine(_tempBaseDirectory, assemblyName);
                 Assert.StartsWith(expectedPrefix, TestSession.Current.TestsResultsDirectory);
-            })
-            .Run();
+            });
     }
 
     [Test(TestSessionId = nameof(ResultsDirectoryTests))]
@@ -94,12 +94,11 @@ public class ResultsDirectoryTests : Test, IStartup
             })
             .Step("Verify TestFuznResults sits next to MSTest TestResults (not inside it)", context =>
             {
-                // The MSTest adapter returns the parent of the TestResults folder, so the
-                // resulting path should NOT contain a "TestResults/TestFuznResults" segment.
+                // The MSTest adapter returns the test exe's folder, so the resulting path
+                // should NOT contain a "TestResults/TestFuznResults" segment.
                 var combined = Path.Combine("TestResults", "TestFuznResults");
                 Assert.DoesNotContain(combined, defaultSession.TestsResultsDirectory);
-            })
-            .Run();
+            });
     }
 
     [Test(TestSessionId = nameof(ResultsDirectoryTests))]
@@ -110,8 +109,7 @@ public class ResultsDirectoryTests : Test, IStartup
             {
                 var markerPath = Path.Combine(TestSession.Current.TestsResultsDirectory, ".testfuzn");
                 Assert.IsTrue(File.Exists(markerPath), $"Marker file not found at {markerPath}");
-            })
-            .Run();
+            });
     }
 
     [Test(TestSessionId = nameof(ResultsDirectoryTests))]
@@ -160,7 +158,6 @@ public class ResultsDirectoryTests : Test, IStartup
             {
                 var unmarkedExists = Directory.Exists(Path.Combine(_assemblyOutputDirectory, "not-a-testfuzn-run"));
                 Assert.IsTrue(unmarkedExists, "Directory without .testfuzn marker should not be deleted");
-            })
-            .Run();
+            });
     }
 }

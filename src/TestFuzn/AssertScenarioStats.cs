@@ -8,27 +8,27 @@ namespace Fuzn.TestFuzn;
 public class AssertScenarioStats
 {
     /// <summary>
-    /// Gets the total number of requests executed in the scenario.
+    /// Gets the number of iterations of the scenario.
     /// </summary>
-    public int RequestCount { get; }
+    public int Count { get; }
 
     /// <summary>
-    /// Gets the statistics for successful requests.
+    /// Gets the statistics of the ok iterations.
     /// </summary>
     public AssertStats Ok { get; }
 
     /// <summary>
-    /// Gets the statistics for failed requests.
+    /// Gets the statistics of the failed iterations.
     /// </summary>
     public AssertStats Failed { get; }
 
     /// <summary>
-    /// Gets the rate of successful requests (0.0 to 1.0).
+    /// Gets the share of ok iterations (0.0 to 1.0).
     /// </summary>
     public double OkRate { get; }
 
     /// <summary>
-    /// Gets the rate of failed requests (0.0 to 1.0).
+    /// Gets the share of failed iterations (0.0 to 1.0).
     /// </summary>
     public double FailedRate { get; }
 
@@ -36,11 +36,11 @@ public class AssertScenarioStats
 
     internal AssertScenarioStats(ScenarioLoadResult scenarioResult)
     {
-        RequestCount = scenarioResult.RequestCount;
+        Count = scenarioResult.Count;
         Ok = new AssertStats(scenarioResult.Ok);
         Failed = new AssertStats(scenarioResult.Failed);
-        OkRate = RequestCount == 0 ? 0 : (double)Ok.RequestCount / RequestCount;
-        FailedRate = RequestCount == 0 ? 0 : (double)Failed.RequestCount / RequestCount;
+        OkRate = Count == 0 ? 0 : (double)Ok.Count / Count;
+        FailedRate = Count == 0 ? 0 : (double)Failed.Count / Count;
 
         _assertStepMetrics = new();
         foreach (var step in scenarioResult.Steps)

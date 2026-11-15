@@ -1,0 +1,10 @@
+<Project>
+  <!-- Adds a Main that calls TestFuznHost.Run(args). Set TestFuznGenerateEntryPoint to false to write your own Main.
+       This runs in a target, because MSTest.Sdk sets OutputType after the package build files load. -->
+  <Target Name="_TestFuznIncludeEntryPoint" BeforeTargets="BeforeCompile;XamlPreCompile"
+          Condition="'$(TestFuznGenerateEntryPoint)' != 'false' And '$(OutputType)' == 'Exe' And '$(Language)' == 'C#' And '$(GenerateTestingPlatformEntryPoint)' == 'false'">
+    <ItemGroup>
+      <Compile Include="$(MSBuildThisFileDirectory)TestFuznEntryPoint.cs" Visible="false" />
+    </ItemGroup>
+  </Target>
+</Project>

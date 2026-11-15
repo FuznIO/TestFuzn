@@ -30,8 +30,7 @@ await Scenario()
     {
         var token = context.GetSharedData<string>("authToken");
         // Use token...
-    })
-    .Run();
+    });
 ```
 
 ---
@@ -59,8 +58,7 @@ await Scenario()
     {
         var token = context.GetSharedData<string>("authToken");
         // Use token...
-    })
-    .Run();
+    });
 ```
 
 ---
@@ -95,8 +93,7 @@ await Scenario()
     {
         var token = context.GetSharedData<string>("authToken");
         // Use token...
-    })
-    .Run();
+    });
 ```
 
 ---

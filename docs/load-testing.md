@@ -35,8 +35,7 @@ public async Task Single_scenario_load_test()
             simulations.Pause(TimeSpan.FromSeconds(5));
             simulations.FixedConcurrentLoad(1000, TimeSpan.FromSeconds(100));
             simulations.RandomLoadPerSecond(10, 50, TimeSpan.FromSeconds(100));
-        })
-        .Run();
+        });
 }
 ```
 
@@ -48,6 +47,8 @@ Multiple-scenario load tests let you run several scenarios concurrently to simul
 
 Each scenario runs **independently** with its own load simulations and statistics.
 TestFuzn does **not** merge or aggregate load, timing, or metrics across scenarios—results are reported **per scenario only**.
+
+Give each scenario a name with `Scenario("...")`. The main scenario defaults to the test name. A scenario passed to `IncludeScenario` must have a name.
 
 ```csharp
 [Test]
@@ -89,8 +90,7 @@ public async Task Multiple_scenarios_load_test()
             simulations.FixedConcurrentLoad(1000, TimeSpan.FromSeconds(100));
             simulations.RandomLoadPerSecond(10, 50, TimeSpan.FromSeconds(100));
         })
-        .Load().IncludeScenario(browseScenario)
-        .Run();
+        .Load().IncludeScenario(browseScenario);
 }
 ```
 
@@ -118,7 +118,7 @@ Some failures during warmup are expected, so use conditions like minimum iterati
 .Load().AssertWhileWarmingUp((context, warmup) =>
 {
     // Stop if more than 80% of iterations fail after at least 10 have completed
-    if (warmup.TotalCount >= 10 && warmup.FailedRate > 0.8)
+    if (warmup.Count >= 10 && warmup.FailedRate > 0.8)
         throw new Exception("Too many failures during warmup");
 })
 ```
@@ -127,12 +127,12 @@ Available properties on `WarmupStats`:
 
 | Property | Description |
 |----------|-------------|
-| `OkCount` | Number of successful warmup iterations |
-| `FailedCount` | Number of failed warmup iterations |
-| `TotalCount` | Total warmup iterations (OkCount + FailedCount) |
-| `OkRate` | Rate of successful iterations (0.0 to 1.0) |
-| `FailedRate` | Rate of failed iterations (0.0 to 1.0) |
-| `Duration` | Time since warmup started |
+| `Count` | Number of warmup iterations |
+| `Ok.Count` | Number of ok warmup iterations |
+| `Failed.Count` | Number of failed warmup iterations |
+| `OkRate` | Share of ok iterations (0.0 to 1.0) |
+| `FailedRate` | Share of failed iterations (0.0 to 1.0) |
+| `Elapsed` | Time since warmup started |
 
 ---
 
@@ -140,62 +140,102 @@ Available properties on `WarmupStats`:
 
 Under the default MSTest runner there is no console output while a load test runs. Pass `--runner=testfuzn` to run it under TestFuzn's own runner instead, which prints live statistics as the test executes. See [Test Runners](test-runners.md).
 
+To run the load on other machines, see [Cluster Runs](cluster-runs.md).
+
+Under the MSTest runner, tests can run in parallel. That is fine for short load tests. Mark a long load test with `[DoNotParallelize]`, so it runs alone and other tests do not take its CPU and change its numbers. The TestFuzn runner runs one test at a time.
+
+In the load report, the charts over time show each interval on its own: the iterations per second (ok, failed and the planned target), the P50, P95 and P99 duration, and the virtual users, which is the average number of iterations running at the same time. Each point covers the iterations that ended since the point before. A spike late in a long run therefore shows. A run keeps at most 100 points, evenly spread: 3 s apart at first, and further apart as the run gets longer. The snapshot table shows the totals from the start of the measurement.
+
+## Run-Once Hooks
+
+`.Load().BeforeScenarioOnce` runs once before the load starts and may return data; read it anywhere in the scenario with `context.OnceData<T>()`. `.Load().AfterScenarioOnce` runs once after the load, also after a stop or failure:
+
+```csharp
+await Scenario()
+    .Load().BeforeScenarioOnce(async context => await api.CreateItems(100))
+    .InputDataFromList(context => context.OnceData<List<Item>>().Cast<object>().ToList())
+    .Step("Use item", async context => { /* ... */ })
+    .Load().Simulations((context, simulations) => simulations.OneTimeLoad(100))
+    .Load().AfterScenarioOnce(async context => await api.DeleteItems(context.OnceData<List<Item>>()));
+```
+
+The data must be JSON-serializable: in a cluster run the hooks run once on the controller and the data goes to every load worker as JSON.
+
 ## Simulations
 
-Define load patterns to simulate real-world traffic:
+Define load patterns to simulate real-world traffic. A **rate** is iterations started per second, unless you give an interval. A **count** is a total, or a number running at the same time. A rate is spread evenly over each second or interval instead of started in one burst, and a simulation with a duration stops starting iterations when its duration ends.
+
+| Simulation | What it does |
+|---|---|
+| `OneTimeLoad(count)` | Starts `count` iterations all at once |
+| `FixedLoad(rate, duration)` | Starts `rate` iterations per second |
+| `FixedLoad(rate, interval, duration)` | Starts `rate` iterations per interval |
+| `GradualLoadIncrease(startRate, endRate, duration)` | Changes the rate per second evenly from `startRate` to `endRate`; a lower `endRate` ramps down |
+| `FixedConcurrentLoad(count, duration)` | Keeps `count` iterations running at the same time (virtual users) |
+| `RandomLoadPerSecond(minRate, maxRate, duration)` | Starts a random number per second, between `minRate` and `maxRate` |
+| `Pause(duration)` | Starts nothing |
+
+Invalid values throw an `ArgumentOutOfRangeException` when the simulation is built: a count or rate below 0, a duration or interval of 0 or less (a pause may be 0), or `minRate` above `maxRate`.
 
 ### One-Time Load
 
-Execute a specific number of iterations:
+Start a number of iterations all at once:
 
 ```csharp
-simulations.OneTimeLoad(1000); // Execute 1000 times
+simulations.OneTimeLoad(1000); // 1000 iterations at once
 ```
 
 ### Gradual Load Increase
 
-Ramp up load gradually:
+Change the rate evenly over a duration:
 
 ```csharp
 simulations.GradualLoadIncrease(
-    startRate: 1, 
-    endRate: 100, 
-    duration: TimeSpan.FromSeconds(30)
+    startRate: 1,                          // 1 per second at the start
+    endRate: 100,                          // 100 per second at the end
+    duration: TimeSpan.FromSeconds(30)     // about 1,515 iterations in total
 );
+
+simulations.GradualLoadIncrease(100, 10, TimeSpan.FromSeconds(30)); // ramps down
 ```
 
 ### Fixed Load
 
-Maintain constant requests per second:
+Start a fixed number of iterations per second:
 
 ```csharp
 simulations.FixedLoad(
-    rate: 50,                              // Requests per second
+    rate: 50,                              // 50 per second
+    duration: TimeSpan.FromMinutes(5)      // 15,000 iterations in total
+);
+
+// Or per interval of your choice
+simulations.FixedLoad(
+    rate: 100,                             // 100 every 2 seconds
+    interval: TimeSpan.FromSeconds(2),
     duration: TimeSpan.FromMinutes(5)
 );
 
-// Or with custom interval
-simulations.FixedLoad(
-    rate: 100,
-    interval: TimeSpan.FromSeconds(1),
-    duration: TimeSpan.FromMinutes(5)
-);
+// 50 in total, spread evenly over 30 seconds
+simulations.FixedLoad(50, interval: TimeSpan.FromSeconds(30), duration: TimeSpan.FromSeconds(30));
 ```
+
+The load stops when the duration ends, also partway through an interval.
 
 ### Fixed Concurrent Load
 
-Maintain a constant number of concurrent users:
+Keep a number of iterations running at the same time. A new iteration starts as soon as one finishes:
 
 ```csharp
 simulations.FixedConcurrentLoad(
-    count: 500,                            // Concurrent users
+    count: 500,                            // 500 virtual users
     duration: TimeSpan.FromMinutes(10)
 );
 ```
 
 ### Random Load Per Second
 
-Vary load randomly within a range:
+Start a random number of iterations each second, spread over the second:
 
 ```csharp
 simulations.RandomLoadPerSecond(
@@ -246,9 +286,9 @@ Continuous validation during the test. If assertion fails, the test stops:
 ```csharp
 .Load().AssertWhileRunning((context, stats) =>
 {
-    Assert.IsTrue(stats.RequestCount < 10000, "Too many requests");
-    Assert.IsTrue(stats.Ok.ResponseTimeMean < TimeSpan.FromSeconds(1), "Response too slow");
-    Assert.AreEqual(0, stats.Failed.RequestCount, "Should have no failures");
+    Assert.IsTrue(stats.Count < 10000, "Too many iterations");
+    Assert.IsTrue(stats.Ok.DurationMean < TimeSpan.FromSeconds(1), "Response too slow");
+    Assert.AreEqual(0, stats.Failed.Count, "Should have no failures");
 })
 ```
 
@@ -259,13 +299,13 @@ Final validation after test completion:
 ```csharp
 .Load().AssertWhenDone((context, stats) =>
 {
-    Assert.AreEqual(0, stats.Failed.RequestCount, "Expected no failures");
-    Assert.IsTrue(stats.Ok.ResponseTimeMean < TimeSpan.FromSeconds(0.5));
-    Assert.IsTrue(stats.Ok.ResponseTimePercentile99 < TimeSpan.FromSeconds(1));
+    Assert.AreEqual(0, stats.Failed.Count, "Expected no failures");
+    Assert.IsTrue(stats.Ok.DurationMean < TimeSpan.FromSeconds(0.5));
+    Assert.IsTrue(stats.Ok.DurationPercentile99 < TimeSpan.FromSeconds(1));
     
     // Per-step assertions
     var createProductStats = stats.GetStep("Call POST /Products to create a new product");
-    Assert.IsTrue(createProductStats.Ok.ResponseTimeMean < TimeSpan.FromMilliseconds(300));
+    Assert.IsTrue(createProductStats.Ok.DurationMean < TimeSpan.FromMilliseconds(300));
 })
 ```
 
@@ -273,29 +313,37 @@ Final validation after test completion:
 
 ## Statistics
 
-Available metrics for assertions:
+One pass through the scenario is an iteration. The scenario stats count iterations; the stats of a step (`stats.GetStep("name")`) count the times that step ran. Both have the same shape:
 
 | Metric | Description |
 |--------|-------------|
-| `RequestCount` | Total number of requests |
-| `OkRate` | Rate of successful requests (0.0 to 1.0) |
-| `FailedRate` | Rate of failed requests (0.0 to 1.0) |
-| `RequestsPerSecond` | Requests per second |
-| `ResponseTimeMin` | Minimum response time |
-| `ResponseTimeMax` | Maximum response time |
-| `ResponseTimeMean` | Average response time |
-| `ResponseTimeMedian` | 50th percentile response time |
-| `ResponseTimePercentile75` | 75th percentile response time |
-| `ResponseTimePercentile95` | 95th percentile response time |
-| `ResponseTimePercentile99` | 99th percentile response time |
-| `ResponseTimeStandardDeviation` | Response time standard deviation |
+| `Count` | Number of iterations (or step runs) |
+| `OkRate` | Share of ok iterations (0.0 to 1.0) |
+| `FailedRate` | Share of failed iterations (0.0 to 1.0) |
+| `Ok`, `Failed` | The statistics below, for the ok and the failed ones |
 
-Access statistics separately for successful (`Ok`) and failed (`Failed`) requests:
+On `Ok` and `Failed`:
+
+| Metric | Description |
+|--------|-------------|
+| `Count` | Number of iterations (or step runs) |
+| `PerSecond` | Iterations (or step runs) per second |
+| `DurationMin` | Shortest duration |
+| `DurationMax` | Longest duration |
+| `DurationMean` | Average duration |
+| `DurationMedian` | 50th percentile duration |
+| `DurationPercentile75` | 75th percentile duration |
+| `DurationPercentile90` | 90th percentile duration |
+| `DurationPercentile95` | 95th percentile duration |
+| `DurationPercentile99` | 99th percentile duration |
+| `DurationStandardDeviation` | Standard deviation of the durations |
 
 ```csharp
-stats.Ok.RequestCount        // Successful requests
-stats.Failed.RequestCount    // Failed requests
-stats.Ok.ResponseTimeMean    // Average response time for successful requests
+stats.Count                  // All iterations
+stats.Ok.Count               // Ok iterations
+stats.Failed.Count           // Failed iterations
+stats.Ok.DurationMean        // Average duration of the ok iterations
+stats.GetStep("Login").Ok.PerSecond   // Ok runs of the Login step per second
 ```
 
 ---

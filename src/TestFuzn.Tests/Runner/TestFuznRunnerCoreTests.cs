@@ -6,6 +6,7 @@ using Fuzn.TestFuzn.Tests.Terminal;
 namespace Fuzn.TestFuzn.Tests.Runner;
 
 [TestClass]
+[Tags("integration")]
 public class TestFuznRunnerCoreTests : Test
 {
     private static readonly string UsageEvent = FakeTestFrameworkAdapter.MarkupEventPrefix + "[red]" + TestFuznRunnerCore.TestNameUsage + "[/]";
@@ -56,6 +57,29 @@ public class TestFuznRunnerCoreTests : Test
     }
 
     [Test]
+    public async Task Verify_help_lists_the_arguments_and_runs_nothing()
+    {
+        await Scenario()
+            .Step("--help, -h and -? exit 0 and write every help line through the adapter, and nothing else", async context =>
+            {
+                foreach (var helpArgument in new[] { "--help", "-h", "-?", "--HELP" })
+                {
+                    var events = new List<string>();
+                    var exitCode = await new TestFuznRunnerCore().Run<FakeStartup>(typeof(TestFuznRunnerCoreTests).Assembly, new[] { "--test-name", helpArgument }, () => new FakeTestFrameworkAdapter(events));
+
+                    Assert.AreEqual(0, exitCode);
+                    CollectionAssert.AreEqual(TestFuznRunnerCore.HelpLines.Select(line => FakeTestFrameworkAdapter.MarkupEventPrefix + line).ToList(), events);
+                }
+            })
+            .Step("The help names every argument the runner reads", context =>
+            {
+                var help = string.Join(Environment.NewLine, TestFuznRunnerCore.HelpLines);
+                foreach (var argument in new[] { "--test-name=", "--target-environment=", "--execution-environment=", "--keep-last-n-runs=", "--cluster ", "--run-name=", "--cockpit-source=", "--runner=" })
+                    Assert.Contains(argument, help);
+            });
+    }
+
+    [Test]
     public async Task Verify_a_test_name_without_a_value_is_an_invocation_error()
     {
         await Scenario()
@@ -97,8 +121,7 @@ public class TestFuznRunnerCoreTests : Test
                 Assert.AreEqual(0, host.DetectCapabilitiesCallCount);
                 Assert.AreEqual(0, host.CreateTerminalWriterCallCount);
                 Assert.AreEqual(0, host.CreateTerminalReaderCallCount);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -186,8 +209,7 @@ public class TestFuznRunnerCoreTests : Test
                 var assembly = Assert.ContainsSingle(discoverTests.Assemblies);
                 Assert.AreSame(typeof(TestFuznRunnerCoreTests).Assembly, assembly);
                 Assert.ThrowsExactly<ArgumentNullException>(() => new TestFuznRunnerCore(host, null!));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -261,7 +283,6 @@ public class TestFuznRunnerCoreTests : Test
                 Assert.IsEmpty(events);
                 Assert.AreEqual(TestSelectionMenu.Prompt + Environment.NewLine, host.Writer.Writes[host.Writer.Writes.Count - 1]);
                 gate.Set();
-            })
-            .Run();
+            });
     }
 }

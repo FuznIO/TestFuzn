@@ -1,7 +1,7 @@
 ﻿namespace Fuzn.TestFuzn.Tests.Steps;
 
 [TestClass]
-[Tags("Tag1_Class")]
+[Tags("Tag1_Class", "integration")]
 public class TagsTests : Test
 {
     [Tags("Tag1")]
@@ -18,8 +18,7 @@ public class TagsTests : Test
                 var tags = state.TestExecutionState.TestClassInstance.TestInfo.Tags;
                 Assert.Contains("Tag1_Class", tags);
                 Assert.Contains("Tag1", tags);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -36,7 +35,6 @@ public class TagsTests : Test
                 var tags = state.TestExecutionState.TestClassInstance.TestInfo.Tags;
                 Assert.Contains("Category1", tags);
                 Assert.Contains("Category2", tags);
-            })
-            .Run();
+            });
     }
 }

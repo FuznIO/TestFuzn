@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿using Fuzn.TestFuzn.Internals.Cluster;
 using Fuzn.TestFuzn.Internals.State;
 
 namespace Fuzn.TestFuzn.Internals.Execution.Producers.Simulations;
@@ -20,36 +20,34 @@ internal class RandomLoadPerSecondHandler : ILoadHandler
     }
 
     public async Task Execute()
-    {   
-        var minRate = _configuration.MinRate;
-        var maxRate = _configuration.MaxRate;
-        var random = new Random();
-        var stopwatch = new Stopwatch();
+    {
+        Random random;
+        if (_configuration.Seed.HasValue)
+            random = new Random(_configuration.Seed.Value);
+        else
+            random = new Random();
 
-        var end = DateTime.UtcNow.Add(_configuration.Duration);
+        await TimedStarts.Run(
+            StartTimes(_configuration, random),
+            _configuration.Duration,
+            _scenario,
+            _configuration.IsWarmup,
+            _testExecutionState);
+    }
 
-        while (DateTime.UtcNow < end
-            && _testExecutionState.ExecutionStatus != ExecutionStatus.Stopped)
+    internal static IEnumerable<TimeSpan> StartTimes(RandomLoadPerSecondConfiguration configuration, Random random)
+    {
+        if (configuration.MaxRate <= 0)
+            yield break;
+
+        for (long second = 0; second * TimeSpan.TicksPerSecond < configuration.Duration.Ticks; second++)
         {
-            var currentRate = random.Next(minRate, maxRate + 1);
+            var rate = random.Next(configuration.MinRate, configuration.MaxRate + 1);
+            if (configuration.WorkerCount > 1)
+                rate = LoadSplit.Part(rate, configuration.WorkerIndex, configuration.WorkerCount, configuration.IsWarmup);
 
-            stopwatch.Reset();
-            stopwatch.Start();
-
-            for (int i = 0; i < currentRate; i++)
-            {
-                if (_testExecutionState.ExecutionStatus == ExecutionStatus.Stopped)
-                    return;
-
-                var message = new ExecuteScenarioMessage(_scenario, _configuration.IsWarmup);
-
-                _testExecutionState.EnqueueScenarioExecution(message);
-            }
-            stopwatch.Stop();
-
-            var sleep = 1000 - stopwatch.ElapsedMilliseconds;
-            if (sleep > 0)
-                await Task.Delay(TimeSpan.FromMilliseconds(sleep), _testExecutionState.CancellationToken);
+            for (var index = 0; index < rate; index++)
+                yield return TimeSpan.FromTicks(second * TimeSpan.TicksPerSecond + index * TimeSpan.TicksPerSecond / rate);
         }
     }
 }

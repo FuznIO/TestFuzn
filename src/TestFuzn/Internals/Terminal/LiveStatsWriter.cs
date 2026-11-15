@@ -53,6 +53,11 @@ internal sealed class LiveStatsWriter
         }
     }
 
+    public void WriteWorkers(IReadOnlyList<Cluster.WorkerSummary> workers)
+    {
+        WriteLine(WorkersLayout.Line(workers));
+    }
+
     public void WriteFinal(IReadOnlyList<LiveMetricsSnapshot> snapshots, bool isStopped)
     {
         if (snapshots == null)
@@ -88,8 +93,8 @@ internal sealed class LiveStatsWriter
         var line = new StringBuilder(Prefix(snapshot));
         line.Append("elapsed ").Append(LiveDashboardLayout.FormatClock(snapshot.Duration));
         AppendTotals(line, snapshot);
-        line.Append(FieldSeparator).Append("requests/sec ").Append(CurrentRateText(snapshot));
-        AppendResponseTimePercentile95(line, snapshot);
+        line.Append(FieldSeparator).Append("iterations/s ").Append(CurrentRateText(snapshot));
+        AppendDurationPercentile95(line, snapshot);
         return line.ToString();
     }
 
@@ -102,7 +107,7 @@ internal sealed class LiveStatsWriter
         line.Append(FinalStatus(snapshot, isStopped));
         line.Append(FieldSeparator).Append("elapsed ").Append(LiveDashboardLayout.FormatClock(snapshot.Duration));
         AppendTotals(line, snapshot);
-        AppendResponseTimePercentile95(line, snapshot);
+        AppendDurationPercentile95(line, snapshot);
         if (snapshot.StatusDetail != null)
             line.Append(FieldSeparator).Append("reason: ").Append(snapshot.StatusDetail);
 
@@ -128,19 +133,19 @@ internal sealed class LiveStatsWriter
 
     private static void AppendTotals(StringBuilder line, LiveMetricsSnapshot snapshot)
     {
-        line.Append(FieldSeparator).Append("requests ").Append(LiveDashboardLayout.FormatCount((long)snapshot.RequestCountOk + snapshot.RequestCountFailed));
-        line.Append(FieldSeparator).Append("successful ").Append(LiveDashboardLayout.FormatCount(snapshot.RequestCountOk));
-        line.Append(FieldSeparator).Append("failed ").Append(LiveDashboardLayout.FormatCount(snapshot.RequestCountFailed));
+        line.Append(FieldSeparator).Append("iterations ").Append(LiveDashboardLayout.FormatCount((long)snapshot.OkCount + snapshot.FailedCount));
+        line.Append(FieldSeparator).Append("successful ").Append(LiveDashboardLayout.FormatCount(snapshot.OkCount));
+        line.Append(FieldSeparator).Append("failed ").Append(LiveDashboardLayout.FormatCount(snapshot.FailedCount));
     }
 
-    private static void AppendResponseTimePercentile95(StringBuilder line, LiveMetricsSnapshot snapshot)
+    private static void AppendDurationPercentile95(StringBuilder line, LiveMetricsSnapshot snapshot)
     {
-        line.Append(FieldSeparator).Append("p95 ").Append(snapshot.Ok.ResponseTimePercentile95.ToTestFuznResponseTime());
+        line.Append(FieldSeparator).Append("p95 ").Append(snapshot.Ok.DurationPercentile95.ToTestFuznDuration());
     }
 
     private static string CurrentRateText(LiveMetricsSnapshot snapshot)
     {
-        var series = snapshot.RequestsPerSecondSeries;
+        var series = snapshot.PerSecondSeries;
         if (series.Count == 0)
             return NoDataText;
 

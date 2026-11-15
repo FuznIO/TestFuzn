@@ -53,8 +53,7 @@ public async Task Verify_login_flow()
         .Step("Verify login success", async (context) =>
         {
             await Assertions.Expect(page.Locator("h1")).ToContainTextAsync("Welcome, Administrator!");
-        })
-        .Run();
+        });
 }
 ```
 
@@ -76,8 +75,7 @@ public async Task Verify_mobile_layout()
 
             // The page now has iPhone 13 viewport, user agent, touch support, etc.
             await Assertions.Expect(page.Locator(".mobile-menu")).ToBeVisibleAsync();
-        })
-        .Run();
+        });
 }
 ```
 
@@ -109,8 +107,7 @@ public async Task Verify_custom_viewport()
                 options.Locale = "en-US";
             });
             await page.GotoAsync("https://localhost:44316/");
-        })
-        .Run();
+        });
 }
 ```
 
@@ -166,8 +163,7 @@ public async Task UI_load_test()
             var loginInfo = context.InputData<LoginInfo>();
 
             await Assertions.Expect(page.Locator("h1")).ToContainTextAsync($"Welcome, {loginInfo.Name}!");
-        })
-        .Run();
+        });
 }
 ```
 

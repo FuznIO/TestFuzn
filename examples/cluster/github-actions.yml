@@ -1,0 +1,16 @@
+# Runs one load test on the worker pool; the job passes or fails with it.
+name: load-test
+on: workflow_dispatch
+jobs:
+  load:
+    runs-on: ubuntu-latest                 # only needs outbound access to Cockpit
+    env:
+      TESTFUZN_COCKPIT_URL: https://cockpit.example.com
+      TESTFUZN_COCKPIT_API_KEY: ${{ secrets.COCKPIT_API_KEY }}   # the project's API key; the run belongs to that project
+      TESTFUZN_COCKPIT_SOURCE: nightly     # required: Cockpit's name for the kind of run; without it, the run stops before it starts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with: { dotnet-version: '10.0.x' }
+      - run: dotnet build MyTests/MyTests.csproj -c Release
+      - run: dotnet MyTests/bin/Release/net10.0/MyTests.dll --cluster --test-name=MyTests.ProductLoadTests.Load_products

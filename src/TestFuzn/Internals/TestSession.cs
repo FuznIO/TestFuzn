@@ -2,6 +2,8 @@ using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Reports;
 using Fuzn.TestFuzn.Contracts.Sinks;
 using Fuzn.TestFuzn.Internals.Cleanup;
+using Fuzn.TestFuzn.Internals.Cluster;
+using Fuzn.TestFuzn.Internals.Cockpit;
 using Fuzn.TestFuzn.Internals.ConsoleOutput;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Execution.Consumers;
@@ -65,8 +67,11 @@ internal class TestSession
     internal StandardResultManager ResultManager { get; } = new();
     internal IStartup StartupInstance { get; set; }
     internal string Id { get; }
+    internal System.Collections.Concurrent.ConcurrentDictionary<string, string> TestIds { get; } = new();
 
     internal IServiceProvider ServiceProvider { get; set; }
+
+    internal ClusterSessionInfo Cluster { get; set; } = new();
 
     internal TestSession(string id)
     {
@@ -111,7 +116,16 @@ internal class TestSession
     {
         StartupInstance = new TStartup();
         TestRunStartTime = DateTime.UtcNow;
-        TestRunId = $"{DateTime.Now:yyyy-MM-dd_HH-mm}__{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+        if (Cluster.RunId != null)
+            TestRunId = Cluster.RunId;
+        else
+            TestRunId = $"{DateTime.Now:yyyy-MM-dd_HH-mm}__{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+        var remote = argumentParser.GetValueFromArgsOrEnvironmentVariable(
+                                        args, ClusterSessionInfo.ClusterArgument, ClusterSessionInfo.ClusterVariable);
+        if (string.Equals(remote, ArgumentsParser.FlagValue, StringComparison.OrdinalIgnoreCase) && Cluster.Role == ClusterRole.None)
+            Cluster.RunLoadTestsOnCluster = true;
+        if (args != null)
+            Cluster.Args = new Dictionary<string, string>(args, StringComparer.OrdinalIgnoreCase);
         var targetEnvironment = argumentParser.GetValueFromArgsOrEnvironmentVariable(
                                         args, TargetEnvironmentArgument, TargetEnvironmentVariable);
         var executionEnvironment = argumentParser.GetValueFromArgsOrEnvironmentVariable(
@@ -175,28 +189,46 @@ internal class TestSession
         configuration.TagsFilterInclude = tagsFilterInclude;
         configuration.TagsFilterExclude = tagsFilterExclude;
         StartupInstance.Configure(configuration);
+
+        var cockpit = CockpitSettings.Load(configurationManager, args);
+        if (cockpit.IsComplete && Cluster.Role != ClusterRole.Controller)
+            configuration.AddSinkPlugin(new CockpitSink(cockpit));
+
         Configuration = configuration;
 
         // Build the service provider after all plugins have registered their services
         ServiceProvider = configuration.BuildServiceProvider();
 
-        if (StartupInstance is IBeforeSuite initGlobalInstance)
+        if (Cluster.LoadChild != null)
+            Cluster.LoadChild.ResultsDirectory = TestsResultsDirectory;
+
+        if (!Cluster.SkipSuiteHooks && StartupInstance is IBeforeSuite initGlobalInstance)
         {
             var context = ContextFactory.CreateContext(this, ServiceProvider, testFramework, "Init");
             await initGlobalInstance.BeforeSuite(context);
         }
 
-        foreach (var plugin in ServiceProvider.GetServices<ISinkPlugin>())
-            await plugin.InitSuite();
+        if (Cluster.SinksEnabled)
+        {
+            foreach (var plugin in ServiceProvider.GetServices<ISinkPlugin>())
+                await plugin.InitSuite();
+        }
 
-        foreach (var plugin in Configuration.ContextPlugins)
-            await plugin.InitSuite();
+        if (!Cluster.SkipSuiteHooks)
+        {
+            foreach (var plugin in Configuration.ContextPlugins)
+                await plugin.InitSuite();
+        }
 
         await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(fileSystem, "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Styles.testfuzn.css",
                                         Path.Combine(TestsResultsDirectory, "Data/Assets/styles/testfuzn.css"));
 
-        await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(fileSystem, "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Scripts.chart.js",
-                                        Path.Combine(TestsResultsDirectory, "Data/Assets/scripts/chart.js"));
+        await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(fileSystem, "Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Scripts.testfuzn-charts.js",
+                                        Path.Combine(TestsResultsDirectory, "Data/Assets/scripts/testfuzn-charts.js"));
+
+        foreach (var logo in new[] { "testfuzn-logo.png", "testfuzn-logo-dark.png" })
+            await EmbeddedResourceHelper.WriteEmbeddedResourceToFile(fileSystem, $"Fuzn.TestFuzn.Internals.Reports.EmbeddedResources.Images.{logo}",
+                                        Path.Combine(TestsResultsDirectory, $"Data/Assets/images/{logo}"));
 
         IsInitializeGlobalExecuted = true;
     }
@@ -235,7 +267,7 @@ internal class TestSession
         if (StartupInstance == null)
             throw new InvalidOperationException("TestFuznIntegration has not been initialized. Please call TestFuznIntegration.InitSuite() before running tests.");
 
-        if (StartupInstance is IAfterSuite cleanupGlobalInstance)
+        if (!Cluster.SkipSuiteHooks && StartupInstance is IAfterSuite cleanupGlobalInstance)
         {
             await cleanupGlobalInstance.AfterSuite(ContextFactory.CreateContext(this, ServiceProvider, testFramework, "Cleanup"));
         }
@@ -245,14 +277,26 @@ internal class TestSession
         if (!IsInitializeGlobalExecuted)
             return;
 
-        var standardReportManager = ServiceProvider.GetRequiredService<StandardReportManager>();
-        await standardReportManager.WriteStandardReports(ResultManager);
+        if (Cluster.ReportsEnabled)
+        {
+            var standardReportManager = ServiceProvider.GetRequiredService<StandardReportManager>();
+            await standardReportManager.WriteStandardReports(ResultManager);
+        }
 
-        foreach (var plugin in Configuration.ContextPlugins)
-            await plugin.CleanupSuite();
+        if (!Cluster.SkipSuiteHooks)
+        {
+            foreach (var plugin in Configuration.ContextPlugins)
+                await plugin.CleanupSuite();
+        }
 
-        foreach (var plugin in ServiceProvider.GetServices<ISinkPlugin>())
-            await plugin.CleanupSuite();
+        if (Cluster.SinksEnabled)
+        {
+            foreach (var plugin in ServiceProvider.GetServices<ISinkPlugin>())
+                await plugin.CleanupSuite();
+        }
+
+        if (Cluster.Role == ClusterRole.Controller)
+            await Configuration.ClusterRuntime.AfterControllerSession(this);
 
         CleanupOldRuns();
     }

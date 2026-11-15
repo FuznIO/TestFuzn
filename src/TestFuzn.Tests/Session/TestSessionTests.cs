@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Internals.AppConfiguration;
 namespace Fuzn.TestFuzn.Tests.Session;
 
 [TestClass]
+[Tags("integration")]
 public class TestSessionTests : Test, IStartup
 {
     [ClassInitialize]
@@ -34,7 +35,6 @@ public class TestSessionTests : Test, IStartup
                 .Step("Step 1", (context) =>
                 {
                     Assert.AreEqual("TestSessionOverride", context.Info.TestRunId);
-                })
-                .Run();
+                });
     }
 }

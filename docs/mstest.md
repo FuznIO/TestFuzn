@@ -29,8 +29,8 @@ TestFuzn is built on top of **MSTest v4** and reuses several MSTest concepts. Th
 
 | MSTest | TestFuzn | Status | Notes |
 |--------|----------|--------|-------|
-| `[AssemblyInitialize]` | `[AssemblyInitialize]` + `IBeforeSuite` | ✅ **Same** | `[AssemblyInitialize]` is required to call `TestFuznIntegration.Init<Startup>()`. For suite-level setup logic, implement `IBeforeSuite` on the `Startup` class. See [Lifecycle Hooks](lifecycle.md). |
-| `[AssemblyCleanup]` | `[AssemblyCleanup]` + `IAfterSuite` | ✅ **Same** | `[AssemblyCleanup]` is required to call `TestFuznIntegration.Cleanup()`. For suite-level teardown logic, implement `IAfterSuite` on the `Startup` class. See [Lifecycle Hooks](lifecycle.md). |
+| `[AssemblyInitialize]` | `IBeforeSuite` | 🔄 **Replaced** | Implement `IBeforeSuite` on the `Startup` class. `[AssemblyInitialize]` still works, but it runs only under the MSTest runner. See [Lifecycle Hooks](lifecycle.md). |
+| `[AssemblyCleanup]` | `IAfterSuite` | 🔄 **Replaced** | Implement `IAfterSuite` on the `Startup` class. `[AssemblyCleanup]` still works, but it runs only under the MSTest runner, and before TestFuzn writes its reports. See [Lifecycle Hooks](lifecycle.md). |
 | `[TestInitialize]` | `IBeforeTest` | 🔄 **Replaced** | Implement `IBeforeTest` on your test class. See [Lifecycle Hooks](lifecycle.md). |
 | `[TestCleanup]` | `IAfterTest` | 🔄 **Replaced** | Implement `IAfterTest` on your test class. See [Lifecycle Hooks](lifecycle.md). |
 | `[ClassInitialize]` | `IBeforeClass` | 🔄 **Replaced** | Implement `IBeforeClass` on your test class. See [Lifecycle Hooks](lifecycle.md). |
@@ -109,8 +109,7 @@ public class ProductHttpTests : Test, IBeforeTest, IAfterTest
             {
                 // Test logic
                 Assert.IsTrue(true);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -126,8 +125,7 @@ public class ProductHttpTests : Test, IBeforeTest, IAfterTest
                 var product = context.InputData<Product>();
                 // Test with input data
                 Assert.IsNotNull(product.Name);
-            })
-            .Run();
+            });
     }
 }
 ```
@@ -136,26 +134,11 @@ public class ProductHttpTests : Test, IBeforeTest, IAfterTest
 
 ## Startup Class
 
-TestFuzn requires a `Startup` class that uses MSTest's `[AssemblyInitialize]` and `[AssemblyCleanup]` to wire up the framework. For suite-level setup and teardown logic, implement `IBeforeSuite` and `IAfterSuite` on the same class:
+TestFuzn needs one `Startup` class. The MSTest adapter starts TestFuzn before the first test and cleans it up after the last test, so the class needs no MSTest attributes. For suite-level setup and teardown logic, implement `IBeforeSuite` and `IAfterSuite` on the same class:
 
 ```csharp
-[TestClass]
 public class Startup : IStartup, IBeforeSuite, IAfterSuite
 {
-    [AssemblyInitialize]
-    public static async Task Initialize(TestContext testContext)
-    {
-        // Required: wires up TestFuzn (triggers IBeforeSuite after initialization)
-        await TestFuznIntegration.Init<Startup>(testContext);
-    }
-
-    [AssemblyCleanup]
-    public static async Task Cleanup(TestContext testContext)
-    {
-        // Required: tears down TestFuzn (triggers IAfterSuite before cleanup)
-        await TestFuznIntegration.Cleanup(testContext);
-    }
-
     public void Configure(TestFuznConfiguration configuration)
     {
         // Configure plugins here
@@ -202,7 +185,7 @@ Assert.IsNotNull(response.Data);
 | **Test categorization** | `[TestCategory]` | `[Tags]` |
 | **Test lifecycle** | `[TestInitialize]` / `[TestCleanup]` | `IBeforeTest` / `IAfterTest` interfaces |
 | **Class lifecycle** | `[ClassInitialize]` / `[ClassCleanup]` | `IBeforeClass` / `IAfterClass` interfaces |
-| **Suite lifecycle** | `[AssemblyInitialize]` / `[AssemblyCleanup]` | Same (required for wiring) + `IBeforeSuite` / `IAfterSuite` for user logic |
+| **Suite lifecycle** | `[AssemblyInitialize]` / `[AssemblyCleanup]` | `IBeforeSuite` / `IAfterSuite` interfaces on the `Startup` class |
 | **Data sharing** | Class fields | `SetSharedData()` / `GetSharedData()` or custom context models |
 | **Load testing** | Not available | Built-in via `Load().Simulations()` |
 | **Reporting** | TRX files | HTML + XML reports with step details |

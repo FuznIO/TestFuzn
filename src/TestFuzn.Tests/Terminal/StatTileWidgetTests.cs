@@ -3,6 +3,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class StatTileWidgetTests : Test
 {
     [Test]
@@ -31,8 +32,7 @@ public class StatTileWidgetTests : Test
                 AssertLines(
                     new[] { "\u001b[2mReque…\u001b[0m", "\u001b[1m12345…\u001b[0m" },
                     StatTileWidget.Render("Requests", "1234567", 6, ColorMode.TrueColor));
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -57,8 +57,7 @@ public class StatTileWidgetTests : Test
             .Step("A width below 1 renders nothing", context =>
             {
                 Assert.IsEmpty(StatTileWidget.Render("Requests", "12", 0, ColorMode.None));
-            })
-            .Run();
+            });
     }
 
     private static void AssertLines(IReadOnlyList<string> expectedLines, IReadOnlyList<RenderedLine> actualLines)

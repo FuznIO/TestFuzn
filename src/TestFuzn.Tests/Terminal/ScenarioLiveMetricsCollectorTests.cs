@@ -7,6 +7,7 @@ using Fuzn.TestFuzn.Internals.Terminal;
 namespace Fuzn.TestFuzn.Tests.Terminal;
 
 [TestClass]
+[Tags("unit")]
 public class ScenarioLiveMetricsCollectorTests : Test
 {
     private const string CheckoutStepName = "Checkout step";
@@ -68,7 +69,7 @@ public class ScenarioLiveMetricsCollectorTests : Test
 
                 var view = metrics.Current;
                 Assert.AreEqual(LoadTestPhase.Warmup, view.Phase);
-                Assert.AreEqual(15, view.WarmupRequestCountOk);
+                Assert.AreEqual(15, view.WarmupOkCount);
                 Assert.HasCount(3, view.Samples);
                 foreach (var sample in view.Samples)
                     Assert.AreEqual(5, sample.OkDelta);
@@ -98,14 +99,13 @@ public class ScenarioLiveMetricsCollectorTests : Test
 
                 var view = metrics.Current;
                 Assert.AreEqual(LoadTestPhase.Measurement, view.Phase);
-                Assert.AreEqual(10, view.WarmupRequestCountOk);
-                Assert.AreEqual(6, view.RequestCountOk);
+                Assert.AreEqual(10, view.WarmupOkCount);
+                Assert.AreEqual(6, view.OkCount);
                 Assert.HasCount(3, view.Samples);
                 Assert.AreEqual(5, view.Samples[0].OkDelta);
                 Assert.AreEqual(5, view.Samples[1].OkDelta);
                 Assert.AreEqual(6, view.Samples[2].OkDelta);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -153,8 +153,7 @@ public class ScenarioLiveMetricsCollectorTests : Test
                 var view = metrics.Current;
                 Assert.AreEqual(TestPhasesLayout.TotalPhase, LiveDashboardLayout.PhaseName(view));
                 Assert.AreEqual(TimeSpan.FromSeconds(12), view.Duration);
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -175,10 +174,10 @@ public class ScenarioLiveMetricsCollectorTests : Test
                 metrics.Record(collector.GetCurrentResult(true), SyntheticLoadSnapshots.At(5));
 
                 var row = Assert.ContainsSingle(metrics.Current.Steps);
-                Assert.AreEqual(2, row.RequestCountOk);
-                Assert.AreEqual(2, row.RequestCountFailed);
-                Assert.AreEqual(0.8, row.RequestsPerSecond, 1e-9);
-                Assert.AreEqual(0.8, row.AverageRequestsPerSecond, 1e-9);
+                Assert.AreEqual(2, row.OkCount);
+                Assert.AreEqual(2, row.FailedCount);
+                Assert.AreEqual(0.8, row.PerSecond, 1e-9);
+                Assert.AreEqual(0.8, row.AveragePerSecond, 1e-9);
             })
             .Step("Under a ramp the current interval rate diverges from the lifetime average", context =>
             {
@@ -196,10 +195,9 @@ public class ScenarioLiveMetricsCollectorTests : Test
                 metrics.Record(collector.GetCurrentResult(true), SyntheticLoadSnapshots.At(2));
 
                 var row = Assert.ContainsSingle(metrics.Current.Steps);
-                Assert.AreEqual(2.0, row.RequestsPerSecond, 1e-9);
-                Assert.AreEqual(6.0, row.AverageRequestsPerSecond, 1e-9);
-            })
-            .Run();
+                Assert.AreEqual(2.0, row.PerSecond, 1e-9);
+                Assert.AreEqual(6.0, row.AveragePerSecond, 1e-9);
+            });
     }
 
     [Test]
@@ -244,7 +242,6 @@ public class ScenarioLiveMetricsCollectorTests : Test
                 metrics.Record(collector.GetCurrentResult(true), SyntheticLoadSnapshots.At(1));
 
                 Assert.AreEqual("Warmup error rate too high", metrics.Current.StatusDetail);
-            })
-            .Run();
+            });
     }
 }

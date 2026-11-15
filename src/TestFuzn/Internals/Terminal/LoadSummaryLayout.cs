@@ -106,7 +106,7 @@ internal static class LoadSummaryLayout
 
         AddSection(lines, TestPhasesLayout.Header, TestPhasesLayout.Render(PhaseRows(result), width, colorMode, SimulationsOf(scenario)), width, colorMode);
 
-        AddSection(lines, LiveDashboardLayout.RequestsHeader, TotalsLines(result, width, colorMode), width, colorMode);
+        AddSection(lines, LiveDashboardLayout.IterationsHeader, TotalsLines(result, width, colorMode), width, colorMode);
 
         AddSection(lines, StepPerformanceLayout.Header, StepPerformanceLayout.Render(StepRows(result), width, colorMode), width, colorMode);
 
@@ -199,7 +199,7 @@ internal static class LoadSummaryLayout
     private static void AddStatsRows(List<IReadOnlyList<string?>> rows, string name, Stats ok, Stats failed, bool alwaysShowFailed)
     {
         rows.Add(StatsRow(name, isOk: true, ok));
-        if (alwaysShowFailed || failed != null && failed.RequestCount > 0)
+        if (alwaysShowFailed || failed != null && failed.Count > 0)
             rows.Add(StatsRow(string.Empty, isOk: false, failed));
     }
 
@@ -208,15 +208,15 @@ internal static class LoadSummaryLayout
         if (stats == null)
             stats = new Stats();
 
-        return StepPerformanceLayout.Row(name, isOk, stats.RequestCount, stats.RequestsPerSecond, stats.ResponseTimeMean, stats.ResponseTimeMedian,
-            stats.ResponseTimePercentile75, stats.ResponseTimePercentile95, stats.ResponseTimePercentile99,
-            stats.ResponseTimeMin, stats.ResponseTimeMax, stats.ResponseTimeStandardDeviation);
+        return StepPerformanceLayout.Row(name, isOk, stats.Count, stats.PerSecond, stats.DurationMean, stats.DurationMedian,
+            stats.DurationPercentile75, stats.DurationPercentile90, stats.DurationPercentile95, stats.DurationPercentile99,
+            stats.DurationMin, stats.DurationMax, stats.DurationStandardDeviation);
     }
 
     private static IReadOnlyList<RenderedLine> TotalsLines(ScenarioLoadResult result, int width, ColorMode colorMode)
     {
-        return LiveDashboardLayout.TotalsLines(result.RequestCount, result.Ok.RequestCount, result.Failed.RequestCount,
-            result.Ok.RequestsPerSecond, result.HasWarmupStep(), (long)result.WarmupRequestCountOk + result.WarmupRequestCountFailed, width, colorMode);
+        return LiveDashboardLayout.TotalsLines(result.Count, result.Ok.Count, result.Failed.Count,
+            result.Ok.PerSecond, result.HasWarmupStep(), (long)result.WarmupOkCount + result.WarmupFailedCount, width, colorMode);
     }
 
     private static List<string?> ErrorLines(ScenarioLoadResult result, int width)
@@ -225,7 +225,8 @@ internal static class LoadSummaryLayout
         if (result.Steps == null)
             return lines;
 
-        foreach (var step in result.Steps)
+        var sources = result.Hooks.Select(hook => new KeyValuePair<string, StepLoadResult>(hook.Name, hook)).Concat(result.Steps);
+        foreach (var step in sources)
         {
             if (step.Value == null || step.Value.Errors == null || step.Value.Errors.Count == 0)
                 continue;
@@ -234,10 +235,15 @@ internal static class LoadSummaryLayout
             foreach (var error in step.Value.Errors)
             {
                 var count = 0;
+                var message = error.Key;
                 if (error.Value != null)
+                {
                     count = error.Value.Count;
+                    if (!string.IsNullOrEmpty(error.Value.Message))
+                        message = error.Value.Message;
+                }
 
-                var text = MarkupText.SanitizeControlCharacters(NameOf(error.Key)) + " (Count: " + LiveDashboardLayout.FormatCount(count) + ")";
+                var text = MarkupText.SanitizeControlCharacters(NameOf(message)) + " (Count: " + LiveDashboardLayout.FormatCount(count) + ")";
                 var wrapped = WrapText(text, width - ErrorContinuationIndent.Length);
                 for (var index = 0; index < wrapped.Count; index++)
                 {

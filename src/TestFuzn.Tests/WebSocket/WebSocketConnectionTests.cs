@@ -4,6 +4,7 @@ using Fuzn.TestFuzn.Plugins.WebSocket;
 namespace Fuzn.TestFuzn.Tests.WebSocket;
 
 [TestClass]
+[Tags("integration")]
 public class WebSocketConnectionTests : Test
 {
     private const string WebSocketServerUrl = "wss://localhost:7058/ws";
@@ -22,8 +23,7 @@ public class WebSocketConnectionTests : Test
                 await connection.Close();
 
                 Assert.IsFalse(connection.IsConnected, "Connection should be closed");
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -39,8 +39,7 @@ public class WebSocketConnectionTests : Test
                 Assert.IsTrue(connection.IsConnected);
 
                 await connection.Close();
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -56,8 +55,7 @@ public class WebSocketConnectionTests : Test
                 Assert.IsTrue(connection.IsConnected);
 
                 await connection.Close();
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -73,7 +71,6 @@ public class WebSocketConnectionTests : Test
                 await connection.DisposeAsync();
 
                 Assert.IsFalse(connection.IsConnected);
-            })
-            .Run();
+            });
     }
 }

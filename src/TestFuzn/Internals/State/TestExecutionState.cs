@@ -2,6 +2,7 @@
 using Fuzn.TestFuzn.Contracts;
 using Fuzn.TestFuzn.Contracts.Adapters;
 using Fuzn.TestFuzn.Contracts.Results.Standard;
+using Fuzn.TestFuzn.Internals.Cluster;
 using Fuzn.TestFuzn.Internals.Execution;
 using Fuzn.TestFuzn.Internals.Reports.Load;
 using Fuzn.TestFuzn.Internals.Results.Load;
@@ -12,6 +13,8 @@ internal class TestExecutionState : IDisposable
 {
     private volatile ExecutionStatus _executionStatus = ExecutionStatus.NotStarted;
     private CancellationTokenSource? _cancellationTokenSource;
+    private long _maxIterationStartLagTicks;
+    private volatile List<WorkerSummary> _workers = new();
 
     public ITestFrameworkAdapter TestFramework { get; private set; } = null!;
     public List<Scenario> Scenarios { get; private set; } = new();
@@ -28,14 +31,29 @@ internal class TestExecutionState : IDisposable
     public CancellationToken CancellationToken => _cancellationTokenSource?.Token ?? CancellationToken.None;
     public Exception? ExecutionStoppedReason { get; set; }
     public Exception? FirstException { get; set; }
+    public string? FailedIn { get; set; }
     public BlockingCollection<ExecuteScenarioMessage> MessageQueue { get; } = new();
     public Dictionary<string, ConcurrentDictionary<Guid, bool>> ConstantMessageQueue { get; } = new();
+    public Dictionary<string, SemaphoreSlim> ConstantSlotFreed { get; } = new();
     public ConcurrentDictionary<string, int> MessageCountPerScenario { get; } = new();
     public ConcurrentDictionary<string, bool> ProducersCompleted { get; } = new();
     public bool IsConsumingCompleted { get; private set; }
     public readonly ConcurrentDictionary<string, DateTime> LastSinkWrite = new();
     public readonly ConcurrentDictionary<string, SemaphoreSlim> SinkSemaphores = new();
     public TestSession TestSession { get; internal set; }
+
+    // Load workers of a cluster run; replaced as a whole on every tick so readers never see a half update.
+    public List<WorkerSummary> Workers
+    {
+        get => _workers;
+        set => _workers = value;
+    }
+
+    public List<string> Warnings { get; } = new();
+
+    // What each scenario's sinks got last time, so the next write can send only the interval since then.
+    public ConcurrentDictionary<string, ScenarioStatsState> PreviousSinkStates { get; } = new();
+    public LocalWorker LocalWorker { get; } = new();
 
     public TestExecutionState(TestSession testSession)
     {
@@ -67,6 +85,9 @@ internal class TestExecutionState : IDisposable
         {
             if (!ConstantMessageQueue.ContainsKey(scenario.Name))
                 ConstantMessageQueue.TryAdd(scenario.Name, new ConcurrentDictionary<Guid, bool>());
+
+            if (!ConstantSlotFreed.ContainsKey(scenario.Name))
+                ConstantSlotFreed.TryAdd(scenario.Name, new SemaphoreSlim(0));
 
             MessageCountPerScenario[scenario.Name] = 0;
 
@@ -110,7 +131,8 @@ internal class TestExecutionState : IDisposable
         MessageCountPerScenario.AddOrUpdate(message.ScenarioName, 0, (key, oldValue) => oldValue - 1);
 
         var queue = ConstantMessageQueue[message.ScenarioName];
-        queue.Remove(message.MessageId, out _);   
+        if (queue.Remove(message.MessageId, out _))
+            ConstantSlotFreed[message.ScenarioName].Release();
     }
 
     public void MarkScenarioProducersCompleted(string scenarioName)
@@ -159,6 +181,25 @@ internal class TestExecutionState : IDisposable
             return DateTime.UtcNow - start;
 
         return end - start;
+    }
+
+    public void RecordIterationStartLag(TimeSpan lag)
+    {
+        var ticks = lag.Ticks;
+        var current = Interlocked.Read(ref _maxIterationStartLagTicks);
+        while (ticks > current)
+        {
+            var previous = Interlocked.CompareExchange(ref _maxIterationStartLagTicks, ticks, current);
+            if (previous == current)
+                return;
+
+            current = previous;
+        }
+    }
+
+    public TimeSpan TakeMaxIterationStartLag()
+    {
+        return TimeSpan.FromTicks(Interlocked.Exchange(ref _maxIterationStartLagTicks, 0));
     }
 
     public void Dispose()

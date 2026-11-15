@@ -5,6 +5,7 @@ using Microsoft.Playwright;
 namespace SampleApp.Tests;
 
 [TestClass]
+[Tags("ui")]
 public class LoginUITests : Test
 {
     [Test]
@@ -26,8 +27,7 @@ public class LoginUITests : Test
             .Step("Verify login success", async (context) =>
             {
                 await Assertions.Expect(page.Locator("h1")).ToContainTextAsync("Welcome, Administrator!");
-            })
-            .Run();
+            });
     }
 
     [Test]
@@ -55,8 +55,7 @@ public class LoginUITests : Test
                 var loginInfo = context.InputData<LoginInfo>();
 
                 await Assertions.Expect(page.Locator("h1")).ToContainTextAsync($"Welcome, {loginInfo.Name}!");
-            })
-            .Run();
+            });
     }
 
     private record LoginInfo(string Name, string Username, string Password);

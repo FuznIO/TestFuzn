@@ -5,7 +5,7 @@
 | Method | Description |
 |--------|-------------|
 | `Id(string)` | Set scenario ID |
-| `Description(string)` | Set scenario description, shown in reports |
+| `Description(string)` | Set scenario description, shown in reports. In a standard test it is the test description, unless `[Test(Description = ...)]` is set |
 | `BeforeScenario(Action/Func)` | Add scenario initialization hook |
 | `AfterScenario(Action/Func)` | Add scenario cleanup hook |
 | `BeforeIteration(Action/Func)` | Add iteration initialization hook |
@@ -17,7 +17,7 @@
 | `Step(string, Action/Func)` | Add a step |
 | `Step(string, string, Action/Func)` | Add a step with ID |
 | `Load()` | Access load testing configuration |
-| `Run()` | Execute the scenario |
+| `await` | Run the scenario: `await Scenario().Step(...)` |
 
 ---
 
@@ -78,7 +78,23 @@
 | `Simulations(Action/Func)` | Configure load simulations |
 | `AssertWhileRunning(Action)` | Add runtime assertions |
 | `AssertWhenDone(Action)` | Add post-execution assertions |
+| `BeforeScenarioOnce(Func)` | Run once before the load starts; the returned data is read with `context.OnceData<T>()` |
+| `AfterScenarioOnce(Func/Action)` | Run once after the load, also after a stop or failure |
 | `IncludeScenario(ScenarioBuilder)` | Include an additional scenario to execute in parallel with the main scenario. Multiple calls add multiple scenarios. |
+
+---
+
+## Cluster
+
+| Member | Description |
+|--------|-------------|
+| `context.OnceData<T>()` | The data `BeforeScenarioOnce` returned |
+| `context.Info.WorkerIndex` / `WorkerCount` | This load worker's index and the number of workers (0 and 1 on one machine) |
+
+| Argument | Description |
+|----------|-------------|
+| `--cluster` | Run the load test on the pool's workers (or `TESTFUZN_CLUSTER=true`) |
+| `--run-name="..."` | A readable name on Cockpit's cluster page |
 
 ---
 
@@ -86,12 +102,13 @@
 
 | Method | Description |
 |--------|-------------|
-| `OneTimeLoad(count)` | Execute N iterations |
-| `GradualLoadIncrease(start, end, duration)` | Ramp load gradually |
-| `FixedLoad(rate, duration)` | Constant requests/second |
-| `FixedConcurrentLoad(count, duration)` | Constant concurrent users |
-| `RandomLoadPerSecond(min, max, duration)` | Random load in range |
-| `Pause(duration)` | Pause between simulations |
+| `OneTimeLoad(count)` | Starts `count` iterations all at once |
+| `GradualLoadIncrease(start, end, duration)` | Changes the rate per second evenly from `start` to `end`; a lower `end` ramps down |
+| `FixedLoad(rate, duration)` | Starts `rate` iterations per second |
+| `FixedLoad(rate, interval, duration)` | Starts `rate` iterations per interval |
+| `FixedConcurrentLoad(count, duration)` | Keeps `count` iterations running at the same time (virtual users) |
+| `RandomLoadPerSecond(min, max, duration)` | Starts a random number per second, between `min` and `max` |
+| `Pause(duration)` | Starts nothing |
 
 ---
 
