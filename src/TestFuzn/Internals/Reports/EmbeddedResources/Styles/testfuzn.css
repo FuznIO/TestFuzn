@@ -16,11 +16,18 @@
     --lift: 0 1px 2px rgba(11, 18, 32, .04), 0 4px 16px rgba(11, 18, 32, .06);
     --focus-ring: 0 0 0 3px rgba(37, 99, 235, .25);
 
-    --ok:   #16a34a; --ok-bg:   #eafcef; --ok-line:   #b6f1c9; --ok-text:   #00793d;
+    --ok:   #16a32e; --ok-bg:   #eafced; --ok-line:   #b6f1c0; --ok-text:   #007914;
     --warn: #f57c00; --warn-bg: #fff7ed; --warn-line: #fed7aa; --warn-text: #c2410c;
     --bad:  #dc2626; --bad-bg:  #fef4f3; --bad-line:  #ffcac6; --bad-text:  #a0202a;
     --info: #2563eb; --info-bg: var(--blue-50); --info-line: var(--blue-200); --info-text: var(--blue-700);
     --neu:  #64748b; --neu-bg:  #f8fafc; --neu-line:  #d3d9e1; --neu-text:  #475569;
+
+    --ok-hi: color-mix(in srgb, var(--ok) 60%, transparent); --ok-lo: color-mix(in srgb, var(--ok) 90%, transparent);
+    --bad-hi: color-mix(in srgb, var(--bad) 60%, transparent); --bad-lo: color-mix(in srgb, var(--bad) 90%, transparent);
+    --accent-hi: color-mix(in srgb, var(--accent) 60%, transparent); --accent-lo: color-mix(in srgb, var(--accent) 90%, transparent);
+    --ok-grad: linear-gradient(90deg, var(--ok-hi), var(--ok-lo));
+    --bad-grad: linear-gradient(90deg, var(--bad-hi), var(--bad-lo));
+    --accent-grad: linear-gradient(90deg, var(--accent-hi), var(--accent-lo));
 
     --backdrop-base: #f3f6fe; --backdrop-fade: rgb(255 255 255 / .75);
     --tip-bg: var(--navy); --tip-text: #ffffff;
@@ -42,7 +49,7 @@
         --lift: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .25);
         --focus-ring: 0 0 0 3px rgba(59, 130, 246, .35);
 
-        --ok-bg: rgba(34, 197, 94, .14); --ok-line: rgba(34, 197, 94, .38); --ok-text: #4ade80;
+        --ok-bg: rgba(34, 197, 65, .14); --ok-line: rgba(34, 197, 65, .38); --ok-text: #4ade63;
         --warn-bg: rgba(249, 115, 22, .14); --warn-line: rgba(249, 115, 22, .38); --warn-text: #fdba74;
         --bad-bg: rgba(239, 68, 68, .14); --bad-line: rgba(239, 68, 68, .4); --bad-text: #fca5a5;
         --neu-bg: #16203a; --neu-line: #2c3a55; --neu-text: #a8b3c4;
@@ -55,6 +62,8 @@
 
 /* ── Base ── */
 * { box-sizing: border-box; }
+
+.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 body {
     margin: 0;
@@ -163,8 +172,8 @@ code { font-family: var(--mono); font-size: 0.9em; background: var(--panel2); bo
 .ring { position: relative; flex: none; }
 .ring svg { display: block; }
 .seg { fill: none; }
-.seg.ok { stroke: var(--ok); }
-.seg.bad { stroke: var(--bad); }
+.seg.ok { stroke: url(#tf-ok); }
+.seg.bad { stroke: url(#tf-bad); }
 .seg.neu { stroke: var(--neu); }
 .donut-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
 .donut-center b { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -173,8 +182,8 @@ code { font-family: var(--mono); font-size: 0.9em; background: var(--panel2); bo
 .legend li { display: grid; grid-template-columns: 20px max-content minmax(8px, 1fr) max-content 42px; align-items: center;
     gap: 8px; padding: 6px 8px; border-radius: 8px; font-size: 13px; }
 .legend .mark { width: 12px; height: 12px; border-radius: 50%; justify-self: center; }
-.legend .mark.ok { background: var(--ok); }
-.legend .mark.bad { background: var(--bad); }
+.legend .mark.ok { background: var(--ok-grad); }
+.legend .mark.bad { background: var(--bad-grad); }
 .legend .mark.neu { background: var(--neu); }
 .legend-label { font-weight: 500; grid-column: 2; }
 .legend-count { grid-column: 4; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
@@ -338,9 +347,9 @@ details.link-toggle[open] summary .t-hide { display: inline; }
 .tf-key.mutedkey { color: var(--faint); }
 .tf-swatch { width: 12px; height: 3px; border-radius: 2px; background: var(--neu); }
 .tf-swatch.box { width: 10px; height: 10px; border-radius: 3px; }
-.tf-swatch.ok { background: var(--ok); }
-.tf-swatch.bad { background: var(--bad); }
-.tf-swatch.accent { background: var(--accent); }
+.tf-swatch.ok { background: var(--ok-grad); }
+.tf-swatch.bad { background: var(--bad-grad); }
+.tf-swatch.accent { background: var(--accent-grad); }
 .tf-swatch.dash { background: repeating-linear-gradient(90deg, var(--neu) 0 4px, transparent 4px 7px); }
 .tf-swatch.muted { background: var(--faint); height: 2px; }
 .tf-swatch.dash.muted { background: repeating-linear-gradient(90deg, var(--faint) 0 4px, transparent 4px 7px); }
@@ -365,8 +374,8 @@ details.link-toggle[open] summary .t-hide { display: inline; }
 .tf-dot.accent { fill: var(--accent); }
 .tf-pdot { fill: var(--accent); stroke: var(--panel); stroke-width: 2; }
 .tf-pdot.on { stroke: var(--text); }
-.tf-bar.ok { fill: var(--ok); opacity: .85; }
-.tf-bar.bad { fill: var(--bad); opacity: .85; }
+.tf-bar.ok { fill: url(#tf-ok); opacity: .85; }
+.tf-bar.bad { fill: url(#tf-bad); opacity: .85; }
 .tf-bar.on { opacity: 1; }
 .tf-marker { stroke: var(--text-2); stroke-width: 1.4; stroke-dasharray: 4 4; }
 .tf-mlab { fill: var(--text-2); font-size: 11.5px; font-weight: 500; text-anchor: middle; }

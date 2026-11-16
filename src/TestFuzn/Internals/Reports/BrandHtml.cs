@@ -88,6 +88,10 @@ internal static class BrandHtml
 
     public static void WriteMasthead(StringBuilder b, string assetsPath, string? rightSlotHtml = null)
     {
+        b.AppendLine(@"<svg class=""defs"" aria-hidden=""true"" focusable=""false""><defs>");
+        foreach (var tone in new[] { "ok", "bad", "accent" })
+            b.AppendLine($@"<linearGradient id=""tf-{tone}"" x1=""0"" y1=""0"" x2=""0"" y2=""1""><stop offset=""0"" style=""stop-color: var(--{tone}-hi)"" /><stop offset=""1"" style=""stop-color: var(--{tone}-lo)"" /></linearGradient>");
+        b.AppendLine("</defs></svg>");
         b.AppendLine(@"<header class=""masthead"">");
         b.AppendLine(@"<picture class=""testfuzn-logo"">");
         b.AppendLine($@"<source srcset=""{assetsPath}images/testfuzn-logo-dark.png"" media=""(prefers-color-scheme: dark)"">");
