@@ -68,8 +68,35 @@ internal static class BrandHtml
         ["folder"] = ["M3.5 6.5a1.5 1.5 0 0 1 1.5-1.5h4.2l2 2.2H19a1.5 1.5 0 0 1 1.5 1.5v9.3A1.5 1.5 0 0 1 19 19.5H5a1.5 1.5 0 0 1-1.5-1.5z"],
         ["percent"] = ["M18.5 5.5 5.5 18.5", "M7 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z", "M17 19.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"],
         ["code"] = ["m8 8-4 4 4 4", "m16 8 4 4-4 4"],
-        ["groups"] = ["M3.6 4.8h7.2v6h-7.2z", "M13.2 4.8h7.2v6h-7.2z", "M3.6 13.2h7.2v6h-7.2z", "M13.2 13.2h7.2v6h-7.2z"]
+        ["groups"] = ["M3.6 4.8h7.2v6h-7.2z", "M13.2 4.8h7.2v6h-7.2z", "M3.6 13.2h7.2v6h-7.2z", "M13.2 13.2h7.2v6h-7.2z"],
+        ["slow"] = ["M12 3.6a8.4 8.4 0 1 0 0 16.8 8.4 8.4 0 0 0 0-16.8z", "M12 7.2V12l3.2 2"],
+        ["runs"] = ["M4.5 5.5h15a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-11a1 1 0 0 1 1-1z", "M10.2 9.4l4.6 2.6-4.6 2.6z"],
+        ["bug"] = ["M8.4 8.4a3.6 3.6 0 0 1 7.2 0v1.2H8.4z", "M7.2 9.6h9.6v4.8a4.8 4.8 0 0 1-9.6 0z", "M12 9.6v9.6", "M3.6 13.2h3.6", "M16.8 13.2h3.6", "M4.8 7.2l2.4 2.4", "M19.2 7.2l-2.4 2.4", "M4.8 19.2l2.4-2.4", "M19.2 19.2l-2.4-2.4"],
+        ["clip"] = ["M20 11.5l-8 8a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"],
+        ["comment"] = ["M4 5h16v11H9l-5 4z"],
+        ["copy"] = ["M9 9h10v10H9z", "M5 15V5h10"],
+        ["chevron"] = ["M6 9l6 6 6-6"]
     };
+
+    // Same status glyphs as Cockpit's StatusMark.
+    public static string StatusGlyph(string status) =>
+        status switch
+        {
+            "Passed" => "m8.4 12.2 2.6 2.6 4.6-5.2",
+            "Failed" => "m9 9 6 6M15 9l-6 6",
+            _ => "M8.4 12h7.2"
+        };
+
+    public static string StatusTone(string status) =>
+        status switch
+        {
+            "Passed" => "ok",
+            "Failed" => "bad",
+            _ => "neu"
+        };
+
+    public static string StatusMark(string status, int size = 16) =>
+        $@"<span class=""mark {StatusTone(status)}"" title=""{E(status)}""><svg width=""{size}"" height=""{size}"" viewBox=""0 0 24 24"" role=""img"" aria-label=""{E(status)}""><circle cx=""12"" cy=""12"" r=""9""/><path d=""{StatusGlyph(status)}""/></svg></span>";
 
     public static string Icon(string name, int size = 18)
     {
@@ -92,14 +119,11 @@ internal static class BrandHtml
         foreach (var tone in new[] { "ok", "bad", "accent" })
             b.AppendLine($@"<linearGradient id=""tf-{tone}"" x1=""0"" y1=""0"" x2=""0"" y2=""1""><stop offset=""0"" style=""stop-color: var(--{tone}-hi)"" /><stop offset=""1"" style=""stop-color: var(--{tone}-lo)"" /></linearGradient>");
         b.AppendLine("</defs></svg>");
-        b.AppendLine(@"<header class=""masthead"">");
-        b.AppendLine(@"<picture class=""testfuzn-logo"">");
-        b.AppendLine($@"<source srcset=""{assetsPath}images/testfuzn-logo-dark.png"" media=""(prefers-color-scheme: dark)"">");
-        b.AppendLine($@"<img src=""{assetsPath}images/testfuzn-logo.png"" alt=""TestFuzn"" height=""32"">");
-        b.AppendLine("</picture>");
+        b.AppendLine(@"<header class=""masthead""><div class=""masthead-inner"">");
+        b.AppendLine($@"<span class=""testfuzn-logo""><img src=""{assetsPath}images/testfuzn-logo-dark.png"" alt=""TestFuzn"" height=""28""></span>");
         if (!string.IsNullOrEmpty(rightSlotHtml))
             b.AppendLine(rightSlotHtml);
-        b.AppendLine("</header>");
+        b.AppendLine("</div></header>");
     }
 
     public static void WritePageTitle(StringBuilder b, string icon, string title, string subtitle)

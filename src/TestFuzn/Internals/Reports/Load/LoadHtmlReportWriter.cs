@@ -56,9 +56,8 @@ internal class LoadHtmlReportWriter : ILoadReport
         b.AppendLine("<script src='Assets/scripts/testfuzn-charts.js'></script>");
         b.AppendLine("</head>");
         b.AppendLine("<body>");
-        b.AppendLine(@"<div class=""page-container"">");
-
         BrandHtml.WriteMasthead(b, "Assets/", @"<a class=""masthead-link"" href=""../TestReport.html"">&larr; Back to report</a>");
+        b.AppendLine(@"<div class=""page-container"">");
 
         BrandHtml.WritePageTitle(b, "load", loadReportData.Test.Name, "Load test report");
 
@@ -819,9 +818,11 @@ internal class LoadHtmlReportWriter : ILoadReport
         if (!loadReportData.Snapshots.TryGetValue(scenario.ScenarioName, out var snapshots) || snapshots == null || snapshots.Count == 0)
             return;
 
-        b.AppendLine(@"<details class=""lr-snapshots"">");
-        b.AppendLine("<summary>Snapshot details</summary>");
-        b.AppendLine(@"<p class=""lr-note"">Totals from the start of the measurement up to each snapshot. The charts above show each interval on its own.</p>");
+        b.AppendLine(@"<details class=""card lr-snapshots"">");
+        b.AppendLine($@"<summary class=""card-head""><span class=""card-icon"">{BrandHtml.Icon("layers", 20)}</span>"
+            + @"<div class=""card-title""><h3>Snapshot details</h3><p>Totals from the start of the measurement up to each snapshot. The charts above show each interval on its own.</p></div>"
+            + $@"<span class=""card-actions"">{BrandHtml.Icon("chevron", 18).Replace(@"class=""ico""", @"class=""ico card-chev""")}</span></summary>");
+        b.AppendLine(@"<div class=""card-body""><div class=""table-scroll"">");
 
         b.AppendLine("<table>");
         b.AppendLine("<thead>");
@@ -855,6 +856,7 @@ internal class LoadHtmlReportWriter : ILoadReport
 
         b.AppendLine("</tbody>");
         b.AppendLine("</table>");
+        b.AppendLine("</div></div>");
         b.AppendLine("</details>");
     }
 
